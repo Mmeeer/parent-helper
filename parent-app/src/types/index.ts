@@ -167,6 +167,7 @@ export type RootStackParamList = {
   PairDevice: { childId: string; childName: string };
   DeviceDetail: { deviceId: string };
   Reports: { childId: string; childName: string };
+  Geofences: { childId: string; childName: string };
   ForgotPassword: undefined;
   AddChild: undefined;
 };

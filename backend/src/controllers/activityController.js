@@ -30,15 +30,20 @@ exports.sync = async (req, res, next) => {
       lastSeen: new Date(),
     });
 
-    // Emit real-time location if present
+    // Emit real-time location if present + check geofences
     if (location && location.length > 0) {
       const device = await Device.findById(deviceId);
       if (device) {
         const io = req.app.get('io');
+        const lastLoc = location[location.length - 1];
         io.to(`parent:${device.parentId}`).emit('location:update', {
           childId,
-          location: location[location.length - 1],
+          location: lastLoc,
         });
+
+        // Check geofence triggers for the latest location
+        const { checkLocation } = require('./geofenceController');
+        await checkLocation(childId, lastLoc.lat, lastLoc.lng, io);
       }
     }
 

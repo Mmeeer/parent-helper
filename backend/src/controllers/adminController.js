@@ -1,6 +1,8 @@
 const User = require('../models/User');
 const Child = require('../models/Child');
 const Device = require('../models/Device');
+const Alert = require('../models/Alert');
+const ActivityLog = require('../models/ActivityLog');
 const ContentFilter = require('../models/ContentFilter');
 
 // GET /admin/users — List all users with pagination & search
@@ -185,6 +187,90 @@ exports.deleteFilter = async (req, res, next) => {
     }
 
     res.json({ message: 'Filter removed', domain });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// PUT /admin/users/:id/plan — Update user subscription plan
+exports.updateUserPlan = async (req, res, next) => {
+  try {
+    const { plan } = req.body;
+    if (!['free', 'premium', 'family'].includes(plan)) {
+      return res.status(400).json({ error: 'Invalid plan. Must be free, premium, or family.' });
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    user.plan = plan;
+    await user.save();
+
+    res.json({
+      message: `Plan updated to ${plan}`,
+      user: { id: user._id, email: user.email, name: user.name, plan: user.plan },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// GET /admin/health — System health overview
+exports.getSystemHealth = async (req, res, next) => {
+  try {
+    const now = new Date();
+    const oneHourAgo = new Date(now - 60 * 60 * 1000);
+    const oneDayAgo = new Date(now - 24 * 60 * 60 * 1000);
+    const sevenDaysAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
+
+    const [
+      onlineDevices,
+      offlineDevices,
+      totalDevices,
+      alertsToday,
+      alertsByType,
+      activityLogsToday,
+      recentUsers,
+    ] = await Promise.all([
+      Device.countDocuments({ paired: true, status: 'online' }),
+      Device.countDocuments({ paired: true, status: 'offline' }),
+      Device.countDocuments({ paired: true }),
+      Alert.countDocuments({ createdAt: { $gte: oneDayAgo } }),
+      Alert.aggregate([
+        { $match: { createdAt: { $gte: sevenDaysAgo } } },
+        { $group: { _id: '$type', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+      ]),
+      ActivityLog.countDocuments({ updatedAt: { $gte: oneDayAgo } }),
+      User.countDocuments({ createdAt: { $gte: sevenDaysAgo } }),
+    ]);
+
+    const alertsByTypeMap = {};
+    alertsByType.forEach((a) => {
+      alertsByTypeMap[a._id] = a.count;
+    });
+
+    res.json({
+      devices: {
+        total: totalDevices,
+        online: onlineDevices,
+        offline: offlineDevices,
+      },
+      alerts: {
+        today: alertsToday,
+        byType: alertsByTypeMap,
+      },
+      activity: {
+        logsToday: activityLogsToday,
+      },
+      users: {
+        newThisWeek: recentUsers,
+      },
+      serverTime: now.toISOString(),
+      uptime: process.uptime(),
+    });
   } catch (err) {
     next(err);
   }

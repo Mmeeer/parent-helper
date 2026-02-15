@@ -5,11 +5,15 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.work.*
 import com.parenthelper.child.ParentHelperApp
 import com.parenthelper.child.R
 import com.parenthelper.child.collectors.LocationCollector
+import com.parenthelper.child.collectors.ScreenTimeCollector
+import com.parenthelper.child.data.api.ApiClient
+import com.parenthelper.child.data.models.ActivitySyncRequest
 import com.parenthelper.child.enforcement.DomainBlockList
 import com.parenthelper.child.enforcement.RuleManager
 import com.parenthelper.child.enforcement.ScreenTimeLimiter
@@ -18,6 +22,8 @@ import com.parenthelper.child.realtime.SocketManager
 import com.parenthelper.child.ui.main.MainActivity
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
+import java.text.SimpleDateFormat
+import java.util.*
 import java.util.concurrent.TimeUnit
 
 class MonitoringService : Service() {
@@ -40,8 +46,9 @@ class MonitoringService : Service() {
             // Start WebSocket connection
             SocketManager.connect(deviceToken)
 
-            // Fetch rules on startup
+            // Fetch rules on startup with app suspension support
             RuleManager.init(prefs)
+            RuleManager.setAppBlocker(com.parenthelper.child.enforcement.AppBlocker(this@MonitoringService))
             RuleManager.fetchRules(childId)
 
             // Sync domain block list and start VPN web filter
@@ -60,12 +67,98 @@ class MonitoringService : Service() {
             screenTimeLimiter = ScreenTimeLimiter(this@MonitoringService, prefs)
             screenTimeLimiter?.startMonitoring()
 
+            // Register remote command handler
+            registerCommandHandler()
+
             // Schedule periodic workers
             scheduleHeartbeat()
             scheduleActivitySync()
         }
 
         return START_STICKY
+    }
+
+    private fun registerCommandHandler() {
+        SocketManager.setCommandHandler { command ->
+            serviceScope.launch {
+                Log.d(TAG, "Executing command: ${command.command}")
+                when (command.command) {
+                    "lock" -> executeLock()
+                    "unlock" -> executeUnlock()
+                    "locate" -> executeLocate()
+                    "sync" -> executeSync()
+                }
+            }
+        }
+    }
+
+    private fun executeLock() {
+        // Bring our lock-screen activity to front
+        val intent = Intent(this@MonitoringService, MainActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            putExtra("locked", true)
+        }
+        startActivity(intent)
+        isDeviceLocked = true
+    }
+
+    private fun executeUnlock() {
+        isDeviceLocked = false
+    }
+
+    private suspend fun executeLocate() {
+        try {
+            val prefs = (application as ParentHelperApp).prefsManager
+            val childId = prefs.childId.first() ?: return
+            val deviceId = prefs.deviceId.first() ?: return
+
+            val locations = LocationCollector.getRecentLocations()
+            if (locations.isNotEmpty()) {
+                val today = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+                ApiClient.service.syncActivity(
+                    ActivitySyncRequest(
+                        childId = childId,
+                        deviceId = deviceId,
+                        date = today,
+                        apps = null,
+                        web = null,
+                        location = locations,
+                        blockedAttempts = null,
+                    )
+                )
+                LocationCollector.clearRecentLocations()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Locate command failed", e)
+        }
+    }
+
+    private suspend fun executeSync() {
+        try {
+            val prefs = (application as ParentHelperApp).prefsManager
+            val childId = prefs.childId.first() ?: return
+            val deviceId = prefs.deviceId.first() ?: return
+
+            val today = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+            val screenTimeCollector = ScreenTimeCollector(this@MonitoringService)
+            val appUsage = screenTimeCollector.getTodayAppUsage()
+            val locations = LocationCollector.getRecentLocations()
+
+            ApiClient.service.syncActivity(
+                ActivitySyncRequest(
+                    childId = childId,
+                    deviceId = deviceId,
+                    date = today,
+                    apps = appUsage,
+                    web = null,
+                    location = locations,
+                    blockedAttempts = null,
+                )
+            )
+            LocationCollector.clearRecentLocations()
+        } catch (e: Exception) {
+            Log.e(TAG, "Sync command failed", e)
+        }
     }
 
     private fun scheduleHeartbeat() {
@@ -141,6 +234,9 @@ class MonitoringService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     companion object {
+        private const val TAG = "MonitoringService"
         const val NOTIFICATION_ID = 1001
+        @Volatile
+        var isDeviceLocked = false
     }
 }

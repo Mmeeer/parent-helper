@@ -13,22 +13,43 @@ object RuleManager {
     val currentRules: StateFlow<Rule?> = _currentRules
 
     private var prefsManager: PrefsManager? = null
+    private var appBlocker: AppBlocker? = null
+    private var previousBlockedApps: List<String> = emptyList()
 
     fun init(prefs: PrefsManager) {
         prefsManager = prefs
     }
 
+    fun setAppBlocker(blocker: AppBlocker) {
+        appBlocker = blocker
+    }
+
     suspend fun fetchRules(childId: String) {
         try {
             val rules = ApiClient.service.getRules(childId)
-            _currentRules.value = rules
+            applyRules(rules)
             prefsManager?.cacheRules(rules)
         } catch (_: Exception) {
             // Load from cache on failure
             val cached = prefsManager?.cachedRules?.first()
             if (cached != null) {
-                _currentRules.value = cached
+                applyRules(cached)
             }
+        }
+    }
+
+    private fun applyRules(rules: Rule) {
+        val oldBlocked = _currentRules.value?.blockedApps ?: emptyList()
+        _currentRules.value = rules
+
+        // Sync system-level app suspension
+        val newBlocked = rules.blockedApps
+        appBlocker?.syncSuspendedApps(newBlocked)
+
+        // Unsuspend apps that were removed from the block list
+        val unblocked = oldBlocked.filter { it !in newBlocked }
+        if (unblocked.isNotEmpty()) {
+            appBlocker?.unsuspendApps(unblocked)
         }
     }
 

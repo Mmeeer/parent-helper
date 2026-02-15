@@ -86,5 +86,23 @@ export function useApi() {
     async suspendUser(userId: string) {
       return request(`/admin/users/${userId}/suspend`, { method: 'PUT' });
     },
+
+    async updateUserPlan(userId: string, plan: 'free' | 'premium' | 'family') {
+      return request(`/admin/users/${userId}/plan`, {
+        method: 'PUT',
+        body: JSON.stringify({ plan }),
+      });
+    },
+
+    async getSystemHealth() {
+      return request<{
+        devices: { total: number; online: number; offline: number };
+        alerts: { today: number; byType: Record<string, number> };
+        activity: { logsToday: number };
+        users: { newThisWeek: number };
+        serverTime: string;
+        uptime: number;
+      }>('/admin/health');
+    },
   };
 }

@@ -46,6 +46,8 @@ const navItems = [
   { path: '/', label: 'Dashboard', icon: '📊' },
   { path: '/users', label: 'Users', icon: '👥' },
   { path: '/analytics', label: 'Analytics', icon: '📈' },
+  { path: '/subscriptions', label: 'Subscriptions', icon: '💳' },
+  { path: '/health', label: 'System Health', icon: '🖥️' },
   { path: '/filters', label: 'Content Filters', icon: '🛡️' },
 ];
 

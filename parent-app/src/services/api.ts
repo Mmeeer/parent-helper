@@ -302,3 +302,44 @@ export async function decideApproval(
     body: JSON.stringify({ action }),
   });
 }
+
+// ─── Geofences ──────────────────────────────────────────
+export interface Geofence {
+  _id: string;
+  childId: string;
+  name: string;
+  lat: number;
+  lng: number;
+  radiusMeters: number;
+  alertOnEntry: boolean;
+  alertOnExit: boolean;
+  active: boolean;
+}
+
+export async function getGeofences(childId: string): Promise<Geofence[]> {
+  return request<Geofence[]>(`/geofences/${childId}`);
+}
+
+export async function createGeofence(
+  childId: string,
+  data: { name: string; lat: number; lng: number; radiusMeters?: number; alertOnEntry?: boolean; alertOnExit?: boolean },
+): Promise<Geofence> {
+  return request<Geofence>(`/geofences/${childId}`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateGeofence(
+  id: string,
+  data: Partial<Omit<Geofence, '_id' | 'childId'>>,
+): Promise<Geofence> {
+  return request<Geofence>(`/geofences/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteGeofence(id: string): Promise<void> {
+  await request(`/geofences/${id}`, { method: 'DELETE' });
+}

@@ -14,6 +14,7 @@ import { COLORS } from '../../utils/constants';
 import { formatDuration } from '../../utils/formatters';
 import * as api from '../../services/api';
 import { onSocketEvent } from '../../services/socket';
+import type { DailyBreakdownEntry } from '../../services/api';
 import type { Child, ActivitySummary, Alert as AlertType } from '../../types';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../types';
@@ -25,6 +26,7 @@ type Props = {
 export default function DashboardScreen({ navigation }: Props) {
   const [children, setChildren] = useState<Child[]>([]);
   const [summaries, setSummaries] = useState<Record<string, ActivitySummary>>({});
+  const [breakdowns, setBreakdowns] = useState<Record<string, DailyBreakdownEntry[]>>({});
   const [alerts, setAlerts] = useState<AlertType[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -38,18 +40,25 @@ export default function DashboardScreen({ navigation }: Props) {
       setChildren(childrenData);
       setAlerts(alertsData.alerts);
 
-      // Load summaries for each child
+      // Load summaries and breakdowns for each child
       const summaryMap: Record<string, ActivitySummary> = {};
+      const breakdownMap: Record<string, DailyBreakdownEntry[]> = {};
       await Promise.all(
         childrenData.map(async (child) => {
           try {
-            summaryMap[child._id] = await api.getActivitySummary(child._id, 'day');
+            const [sum, bd] = await Promise.all([
+              api.getActivitySummary(child._id, 'day'),
+              api.getDailyBreakdown(child._id, 7),
+            ]);
+            summaryMap[child._id] = sum;
+            breakdownMap[child._id] = bd.breakdown;
           } catch {
             // Child may not have activity yet
           }
         }),
       );
       setSummaries(summaryMap);
+      setBreakdowns(breakdownMap);
     } catch {
       // Handle error silently on refresh
     } finally {
@@ -121,6 +130,7 @@ export default function DashboardScreen({ navigation }: Props) {
           <Text style={styles.sectionTitle}>Today's Overview</Text>
           {children.map((child) => {
             const summary = summaries[child._id];
+            const childBreakdown = breakdowns[child._id] || [];
             return (
               <TouchableOpacity
                 key={child._id}
@@ -169,6 +179,36 @@ export default function DashboardScreen({ navigation }: Props) {
                   </View>
                 ) : (
                   <Text style={styles.noData}>No activity data yet</Text>
+                )}
+
+                {/* Weekly Screen Time Mini Chart */}
+                {childBreakdown.length > 0 && (
+                  <View style={styles.miniChart}>
+                    <Text style={styles.miniChartTitle}>This Week</Text>
+                    <View style={styles.miniChartBars}>
+                      {childBreakdown.map((day, i) => {
+                        const maxMin = Math.max(...childBreakdown.map((d) => d.screenTimeMin), 1);
+                        const pct = Math.max((day.screenTimeMin / maxMin) * 100, 3);
+                        const dayLabel = ['S', 'M', 'T', 'W', 'T', 'F', 'S'][new Date(day.date + 'T00:00:00').getDay()];
+                        return (
+                          <View key={i} style={styles.miniBarCol}>
+                            <View style={styles.miniBarTrack}>
+                              <View
+                                style={[
+                                  styles.miniBar,
+                                  {
+                                    height: `${pct}%`,
+                                    backgroundColor: day.screenTimeMin > 180 ? COLORS.warning : COLORS.primary,
+                                  },
+                                ]}
+                              />
+                            </View>
+                            <Text style={styles.miniBarLabel}>{dayLabel}</Text>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  </View>
                 )}
 
                 {/* Top Apps */}
@@ -388,5 +428,42 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: COLORS.primary,
     fontWeight: '500',
+  },
+  miniChart: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+  miniChartTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.textSecondary,
+    marginBottom: 8,
+  },
+  miniChartBars: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 4,
+  },
+  miniBarCol: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  miniBarTrack: {
+    height: 48,
+    width: '70%',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  miniBar: {
+    width: '100%',
+    borderRadius: 3,
+    minHeight: 2,
+  },
+  miniBarLabel: {
+    fontSize: 10,
+    color: COLORS.textLight,
+    marginTop: 4,
   },
 });

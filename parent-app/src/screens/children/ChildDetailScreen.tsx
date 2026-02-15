@@ -147,6 +147,14 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
           <Ionicons name="bar-chart-outline" size={28} color={COLORS.primary} />
           <Text style={styles.actionLabel}>Reports</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.actionCard}
+          onPress={() => navigation.navigate('Geofences', { childId, childName })}
+        >
+          <Ionicons name="navigate-outline" size={28} color={COLORS.info} />
+          <Text style={styles.actionLabel}>Geofences</Text>
+        </TouchableOpacity>
       </View>
 
       {/* App Usage List */}
