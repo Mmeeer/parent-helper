@@ -5,7 +5,10 @@ const Alert = require('../models/Alert');
 
 exports.sync = async (req, res, next) => {
   try {
-    const { childId, deviceId, date, apps, web, location, blockedAttempts } = req.body;
+    // Use authenticated device identity instead of trusting request body
+    const childId = req.device.childId;
+    const deviceId = req.device._id;
+    const { date, apps, web, location, blockedAttempts } = req.body;
 
     // Upsert: merge activity for the same child+device+date
     const log = await ActivityLog.findOneAndUpdate(

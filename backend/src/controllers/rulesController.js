@@ -20,6 +20,11 @@ exports.get = async (req, res, next) => {
   try {
     const { childId } = req.params;
 
+    // Verify the authenticated device belongs to this child
+    if (req.device.childId.toString() !== childId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
     const rules = await Rule.findOne({ childId });
     if (!rules) {
       return res.status(404).json({ error: 'Rules not found' });

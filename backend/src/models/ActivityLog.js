@@ -31,7 +31,7 @@ const activityLogSchema = new mongoose.Schema({
     timestamp: Date,
   }],
   blockedAttempts: [{
-    type: { type: String, enum: ['app', 'web'] },
+    type: { type: String, enum: ['app', 'web', 'new_app'] },
     target: String,
     timestamp: Date,
   }],

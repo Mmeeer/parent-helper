@@ -6,8 +6,10 @@ import android.content.IntentFilter
 import android.os.BatteryManager
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.parenthelper.child.ParentHelperApp
 import com.parenthelper.child.data.api.ApiClient
 import com.parenthelper.child.data.models.HeartbeatRequest
+import kotlinx.coroutines.flow.first
 
 class HeartbeatWorker(
     context: Context,
@@ -16,6 +18,9 @@ class HeartbeatWorker(
 
     override suspend fun doWork(): Result {
         return try {
+            val prefs = (applicationContext as ParentHelperApp).prefsManager
+            if (!prefs.isPaired.first()) return Result.success()
+
             val batteryLevel = getBatteryLevel()
             ApiClient.service.heartbeat(HeartbeatRequest(batteryLevel = batteryLevel))
             Result.success()
