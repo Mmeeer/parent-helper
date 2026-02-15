@@ -21,7 +21,7 @@ exports.get = async (req, res, next) => {
     const { childId } = req.params;
 
     // Verify the authenticated device belongs to this child
-    if (req.device.childId.toString() !== childId) {
+    if (!req.device.childId || req.device.childId.toString() !== childId) {
       return res.status(403).json({ error: 'Access denied' });
     }
 

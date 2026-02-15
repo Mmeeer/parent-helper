@@ -20,6 +20,8 @@ class ActivitySyncWorker(
     override suspend fun doWork(): Result {
         return try {
             val prefs = (applicationContext as ParentHelperApp).prefsManager
+            if (!prefs.isPaired.first()) return Result.success()
+
             val childId = prefs.childId.first() ?: return Result.failure()
             val deviceId = prefs.deviceId.first() ?: return Result.failure()
 

@@ -105,15 +105,15 @@ exports.summary = async (req, res, next) => {
     let totalWebVisits = 0;
 
     for (const log of logs) {
-      for (const app of log.apps) {
+      for (const app of (log.apps || [])) {
         totalScreenTimeMin += app.durationMin || 0;
         if (!appUsage[app.packageName]) {
           appUsage[app.packageName] = { packageName: app.packageName, appName: app.appName, durationMin: 0 };
         }
         appUsage[app.packageName].durationMin += app.durationMin || 0;
       }
-      totalBlocked += log.blockedAttempts.length;
-      totalWebVisits += log.web.length;
+      totalBlocked += (log.blockedAttempts || []).length;
+      totalWebVisits += (log.web || []).length;
     }
 
     res.json({

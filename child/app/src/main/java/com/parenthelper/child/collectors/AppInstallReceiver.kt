@@ -34,6 +34,8 @@ class AppInstallReceiver : BroadcastReceiver() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val prefs = (context.applicationContext as ParentHelperApp).prefsManager
+                if (!prefs.isPaired.first()) return@launch
+
                 val childId = prefs.childId.first() ?: return@launch
                 val deviceId = prefs.deviceId.first() ?: return@launch
 
