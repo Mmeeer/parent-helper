@@ -1,9 +1,10 @@
 const router = require('express').Router();
 const auth = require('../middleware/auth');
+const deviceAuth = require('../middleware/deviceAuth');
 const activityController = require('../controllers/activityController');
 
-// Child device uploads activity (no parent auth)
-router.post('/sync', activityController.sync);
+// Child device uploads activity
+router.post('/sync', deviceAuth, activityController.sync);
 
 // Parent endpoints
 router.get('/:childId/summary', auth, activityController.summary);

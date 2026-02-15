@@ -1,10 +1,11 @@
 const router = require('express').Router();
 const auth = require('../middleware/auth');
+const deviceAuth = require('../middleware/deviceAuth');
 const devicesController = require('../controllers/devicesController');
 
-// Child device endpoint (no parent auth)
+// Child device endpoints
 router.post('/complete-pairing', devicesController.completePairing);
-router.post('/heartbeat', devicesController.heartbeat);
+router.post('/heartbeat', deviceAuth, devicesController.heartbeat);
 
 // Parent endpoints
 router.post('/pair', auth, devicesController.pair);

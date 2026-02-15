@@ -2,7 +2,9 @@ const Alert = require('../models/Alert');
 
 exports.list = async (req, res, next) => {
   try {
-    const { page = 1, limit = 20, unreadOnly } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const { unreadOnly } = req.query;
 
     const filter = { parentId: req.user._id };
     if (unreadOnly === 'true') {
@@ -12,14 +14,14 @@ exports.list = async (req, res, next) => {
     const alerts = await Alert.find(filter)
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
-      .limit(Number(limit))
+      .limit(limit)
       .populate('childId', 'name');
 
     const total = await Alert.countDocuments(filter);
 
     res.json({
       alerts,
-      page: Number(page),
+      page,
       totalPages: Math.ceil(total / limit),
       total,
     });

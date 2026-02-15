@@ -42,15 +42,34 @@ app.get('/health', (_req, res) => {
 app.use(errorHandler);
 
 // WebSocket
+const jwt = require('jsonwebtoken');
+const Device = require('./models/Device');
+
 io.on('connection', (socket) => {
   console.log(`Client connected: ${socket.id}`);
 
-  socket.on('join:parent', (parentId) => {
-    socket.join(`parent:${parentId}`);
+  // Parent joins with JWT token
+  socket.on('join:parent', async (token) => {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      socket.join(`parent:${decoded.id}`);
+    } catch {
+      socket.emit('error', { message: 'Invalid token' });
+    }
   });
 
-  socket.on('join:device', (deviceId) => {
-    socket.join(`device:${deviceId}`);
+  // Device joins with device token
+  socket.on('join:device', async (deviceToken) => {
+    try {
+      const device = await Device.findOne({ deviceToken, paired: true });
+      if (device) {
+        socket.join(`device:${device._id}`);
+      } else {
+        socket.emit('error', { message: 'Invalid device token' });
+      }
+    } catch {
+      socket.emit('error', { message: 'Authentication failed' });
+    }
   });
 
   socket.on('disconnect', () => {

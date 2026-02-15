@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const Device = require('../models/Device');
 const Child = require('../models/Child');
 
@@ -41,12 +42,14 @@ exports.completePairing = async (req, res, next) => {
     device.appVersion = appVersion;
     device.status = 'online';
     device.lastSeen = new Date();
+    device.deviceToken = crypto.randomBytes(32).toString('hex');
     await device.save();
 
     res.json({
       deviceId: device._id,
       childId: device.childId,
       parentId: device.parentId,
+      deviceToken: device.deviceToken,
     });
   } catch (err) {
     next(err);
@@ -110,17 +113,12 @@ exports.sendCommand = async (req, res, next) => {
 
 exports.heartbeat = async (req, res, next) => {
   try {
-    const { deviceId, batteryLevel } = req.body;
+    const { batteryLevel } = req.body;
 
-    const device = await Device.findByIdAndUpdate(deviceId, {
-      status: 'online',
-      lastSeen: new Date(),
-      batteryLevel,
-    }, { new: true });
-
-    if (!device) {
-      return res.status(404).json({ error: 'Device not found' });
-    }
+    req.device.status = 'online';
+    req.device.lastSeen = new Date();
+    req.device.batteryLevel = batteryLevel;
+    await req.device.save();
 
     res.json({ status: 'ok' });
   } catch (err) {

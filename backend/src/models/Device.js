@@ -50,6 +50,11 @@ const deviceSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
+  deviceToken: {
+    type: String,
+    unique: true,
+    sparse: true,
+  },
 }, { timestamps: true });
 
 deviceSchema.index({ parentId: 1 });

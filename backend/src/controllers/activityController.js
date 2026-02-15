@@ -77,21 +77,22 @@ exports.summary = async (req, res, next) => {
     }
 
     const now = new Date();
+    const today = now.toISOString().split('T')[0];
     let startDate;
     if (period === 'month') {
-      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+        .toISOString().split('T')[0];
     } else if (period === 'week') {
-      startDate = new Date(now);
-      startDate.setDate(now.getDate() - 7);
+      const weekAgo = new Date(now);
+      weekAgo.setDate(now.getDate() - 7);
+      startDate = weekAgo.toISOString().split('T')[0];
     } else {
-      startDate = new Date(now.toISOString().split('T')[0]);
+      startDate = today;
     }
-
-    const dateStr = startDate.toISOString().split('T')[0];
 
     const logs = await ActivityLog.find({
       childId,
-      date: { $gte: dateStr },
+      date: { $gte: startDate, $lte: today },
     }).sort({ date: -1 });
 
     // Aggregate

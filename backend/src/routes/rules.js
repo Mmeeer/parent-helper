@@ -1,9 +1,10 @@
 const router = require('express').Router();
 const auth = require('../middleware/auth');
+const deviceAuth = require('../middleware/deviceAuth');
 const rulesController = require('../controllers/rulesController');
 
-// Child device can fetch rules without parent auth
-router.get('/:childId', rulesController.get);
+// Child device fetches rules
+router.get('/:childId', deviceAuth, rulesController.get);
 
 // Parent endpoints
 router.put('/:childId/screen-time', auth, rulesController.setScreenTime);
