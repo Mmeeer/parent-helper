@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const Child = require('../models/Child');
 const Device = require('../models/Device');
+const ContentFilter = require('../models/ContentFilter');
 
 // GET /admin/users — List all users with pagination & search
 exports.getUsers = async (req, res, next) => {
@@ -140,14 +141,14 @@ exports.getAnalytics = async (req, res, next) => {
 // GET /admin/filters — Get content filter database
 exports.getFilters = async (req, res, next) => {
   try {
-    // For now, return a static list of categories
-    // A ContentFilter model can be added later for persistence
     const categories = [
       'adult', 'gambling', 'violence', 'drugs', 'weapons',
       'hate', 'malware', 'phishing', 'social_media', 'gaming', 'streaming',
     ];
 
-    res.json({ categories, domains: [] });
+    const domains = await ContentFilter.find().sort({ category: 1, domain: 1 }).lean();
+
+    res.json({ categories, domains });
   } catch (err) {
     next(err);
   }
@@ -161,8 +162,13 @@ exports.updateFilter = async (req, res, next) => {
       return res.status(400).json({ error: 'Domain and category are required' });
     }
 
-    // Placeholder — store in DB when ContentFilter model is created
-    res.json({ message: 'Filter updated', domain, category });
+    const filter = await ContentFilter.findOneAndUpdate(
+      { domain: domain.toLowerCase().trim() },
+      { category },
+      { upsert: true, new: true },
+    );
+
+    res.json({ message: 'Filter updated', filter });
   } catch (err) {
     next(err);
   }
@@ -173,7 +179,11 @@ exports.deleteFilter = async (req, res, next) => {
   try {
     const { domain } = req.params;
 
-    // Placeholder — delete from DB when ContentFilter model is created
+    const result = await ContentFilter.findOneAndDelete({ domain: decodeURIComponent(domain).toLowerCase() });
+    if (!result) {
+      return res.status(404).json({ error: 'Domain not found in filters' });
+    }
+
     res.json({ message: 'Filter removed', domain });
   } catch (err) {
     next(err);

@@ -128,6 +128,10 @@ export async function logout(): Promise<void> {
   await clearTokens();
 }
 
+export async function getMe(): Promise<User> {
+  return request<User>('/auth/me');
+}
+
 // ─── Children ────────────────────────────────────────────
 export async function getChildren(): Promise<Child[]> {
   return request<Child[]>('/children');
@@ -175,6 +179,10 @@ export async function sendDeviceCommand(
 }
 
 // ─── Rules ───────────────────────────────────────────────
+export async function getRules(childId: string): Promise<Rules> {
+  return request<Rules>(`/rules/${childId}/view`);
+}
+
 export async function updateScreenTime(
   childId: string,
   data: { dailyLimitMin?: number; perApp?: { appId: string; appName: string; limitMin: number }[]; schedule?: { days: string[]; startTime: string; endTime: string; blocked: boolean }[] },

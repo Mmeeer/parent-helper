@@ -15,4 +15,7 @@ router.post('/login', [
 
 router.post('/refresh', authController.refresh);
 
+const auth = require('../middleware/auth');
+router.get('/me', auth, authController.me);
+
 module.exports = router;

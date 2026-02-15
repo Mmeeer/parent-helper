@@ -31,10 +31,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await api.loadTokens();
         const token = api.getAccessToken();
         if (token) {
-          // Verify token still works by fetching children (lightweight check)
-          await api.getChildren();
-          // Token works — we don't have user info stored, so set minimal state
-          setState({ user: null, isLoading: false, isAuthenticated: true });
+          // Verify token and fetch user profile
+          const user = await api.getMe();
+          setState({ user, isLoading: false, isAuthenticated: true });
           connectSocket();
         } else {
           setState({ user: null, isLoading: false, isAuthenticated: false });

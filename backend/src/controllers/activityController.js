@@ -42,17 +42,29 @@ exports.sync = async (req, res, next) => {
       }
     }
 
-    // Generate alerts for blocked attempts
+    // Generate alerts for blocked attempts and new app installs
     if (blockedAttempts && blockedAttempts.length > 0) {
       const device = await Device.findById(deviceId);
       if (device) {
-        const alerts = blockedAttempts.map((attempt) => ({
-          parentId: device.parentId,
-          childId,
-          type: 'blocked_content',
-          message: `Blocked ${attempt.type}: ${attempt.target}`,
-          data: attempt,
-        }));
+        const alerts = blockedAttempts.map((attempt) => {
+          // New app installs get a separate alert type for the approval flow
+          if (attempt.type === 'new_app') {
+            return {
+              parentId: device.parentId,
+              childId,
+              type: 'new_app_installed',
+              message: `New app installed: ${attempt.target}`,
+              data: { packageName: attempt.target, status: 'pending', timestamp: attempt.timestamp },
+            };
+          }
+          return {
+            parentId: device.parentId,
+            childId,
+            type: 'blocked_content',
+            message: `Blocked ${attempt.type}: ${attempt.target}`,
+            data: attempt,
+          };
+        });
         await Alert.insertMany(alerts);
 
         const io = req.app.get('io');
@@ -147,7 +159,7 @@ exports.apps = async (req, res, next) => {
 
     const appUsage = {};
     for (const log of logs) {
-      for (const app of log.apps) {
+      for (const app of (log.apps || [])) {
         if (!appUsage[app.packageName]) {
           appUsage[app.packageName] = { packageName: app.packageName, appName: app.appName, durationMin: 0 };
         }
@@ -176,7 +188,7 @@ exports.web = async (req, res, next) => {
       date: { $gte: today },
     });
 
-    const webHistory = logs.flatMap((log) => log.web).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    const webHistory = logs.flatMap((log) => log.web || []).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
     res.json(webHistory);
   } catch (err) {
@@ -199,7 +211,7 @@ exports.location = async (req, res, next) => {
       date: { $gte: today },
     });
 
-    const locations = logs.flatMap((log) => log.location).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    const locations = logs.flatMap((log) => log.location || []).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
     res.json(locations);
   } catch (err) {

@@ -36,6 +36,33 @@ exports.get = async (req, res, next) => {
   }
 };
 
+// Parent-auth: parent views rules for their child
+exports.getForParent = async (req, res, next) => {
+  try {
+    const { childId } = req.params;
+
+    const child = await verifyChild(childId, req.user._id);
+    if (!child) {
+      return res.status(404).json({ error: 'Child not found' });
+    }
+
+    let rules = await Rule.findOne({ childId });
+    if (!rules) {
+      // Return defaults if no rules set yet
+      rules = {
+        childId,
+        screenTime: { dailyLimitMin: 120, perApp: [], schedule: [] },
+        blockedApps: [],
+        webFilter: { categories: ['adult', 'gambling', 'violence'], customBlock: [], customAllow: [] },
+      };
+    }
+
+    res.json(rules);
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.setScreenTime = async (req, res, next) => {
   try {
     const { childId } = req.params;

@@ -1,4 +1,5 @@
 const Alert = require('../models/Alert');
+const User = require('../models/User');
 
 exports.list = async (req, res, next) => {
   try {
@@ -56,6 +57,40 @@ exports.markAllRead = async (req, res, next) => {
     );
 
     res.json({ message: 'All alerts marked as read' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// GET /alerts/settings — Get alert preferences
+exports.getSettings = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id).select('alertSettings');
+    res.json(user?.alertSettings || {
+      screen_time_limit: true,
+      new_app_installed: true,
+      blocked_content: true,
+      geofence_trigger: true,
+      device_offline: true,
+      unusual_pattern: true,
+      uninstall_attempt: true,
+      pushEnabled: true,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POST /alerts/settings — Update alert preferences
+exports.updateSettings = async (req, res, next) => {
+  try {
+    const settings = req.body;
+
+    await User.findByIdAndUpdate(req.user._id, {
+      $set: { alertSettings: settings },
+    });
+
+    res.json({ message: 'Alert settings updated', settings });
   } catch (err) {
     next(err);
   }

@@ -72,6 +72,19 @@ exports.login = async (req, res, next) => {
   }
 };
 
+exports.me = async (req, res, next) => {
+  try {
+    res.json({
+      id: req.user._id,
+      email: req.user.email,
+      name: req.user.name,
+      plan: req.user.plan,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.refresh = async (req, res, next) => {
   try {
     const { refreshToken } = req.body;

@@ -6,6 +6,9 @@ const rulesController = require('../controllers/rulesController');
 // Child device fetches rules
 router.get('/:childId', deviceAuth, rulesController.get);
 
+// Parent fetches rules (must come before PUT routes)
+router.get('/:childId/view', auth, rulesController.getForParent);
+
 // Parent endpoints
 router.put('/:childId/screen-time', auth, rulesController.setScreenTime);
 router.put('/:childId/apps', auth, rulesController.setApps);

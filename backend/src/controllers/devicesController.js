@@ -35,6 +35,11 @@ exports.completePairing = async (req, res, next) => {
       return res.status(404).json({ error: 'Invalid or expired pairing code' });
     }
 
+    // Check if pairing code has expired
+    if (device.pairingExpiresAt && device.pairingExpiresAt < new Date()) {
+      return res.status(410).json({ error: 'Pairing code has expired. Please generate a new one.' });
+    }
+
     device.paired = true;
     device.platform = platform || 'android';
     device.model = model;

@@ -28,6 +28,11 @@ const deviceSchema = new mongoose.Schema({
   pairingCode: {
     type: String,
     unique: true,
+    sparse: true,
+  },
+  pairingExpiresAt: {
+    type: Date,
+    default: null,
   },
   paired: {
     type: Boolean,
@@ -62,7 +67,8 @@ deviceSchema.index({ childId: 1 });
 
 deviceSchema.pre('save', function (next) {
   if (!this.pairingCode) {
-    this.pairingCode = crypto.randomBytes(3).toString('hex').toUpperCase();
+    this.pairingCode = crypto.randomBytes(4).toString('hex').toUpperCase();
+    this.pairingExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
   }
   next();
 });

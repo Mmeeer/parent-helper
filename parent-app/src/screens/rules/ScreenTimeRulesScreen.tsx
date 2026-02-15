@@ -15,7 +15,7 @@ import { COLORS, DAYS_OF_WEEK } from '../../utils/constants';
 import { formatDuration } from '../../utils/formatters';
 import * as api from '../../services/api';
 import type { RouteProp } from '@react-navigation/native';
-import type { RootStackParamList, Schedule } from '../../types';
+import type { RootStackParamList, Schedule, PerAppLimit } from '../../types';
 
 type Props = {
   route: RouteProp<RootStackParamList, 'ScreenTimeRules'>;
@@ -24,9 +24,15 @@ type Props = {
 export default function ScreenTimeRulesScreen({ route }: Props) {
   const { childId } = route.params;
   const [dailyLimit, setDailyLimit] = useState('120');
+  const [perAppLimits, setPerAppLimits] = useState<PerAppLimit[]>([]);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  // Per-app form
+  const [newAppId, setNewAppId] = useState('');
+  const [newAppName, setNewAppName] = useState('');
+  const [newAppLimit, setNewAppLimit] = useState('30');
 
   useFocusEffect(
     useCallback(() => {
@@ -36,10 +42,15 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
 
   const loadRules = async () => {
     try {
-      // Attempt to get current summary to infer existing rules
-      // The rules endpoint is device-auth only, so we set via PUT
-      setLoading(false);
+      const rules = await api.getRules(childId);
+      if (rules.screenTime) {
+        setDailyLimit(String(rules.screenTime.dailyLimitMin ?? 120));
+        setPerAppLimits(rules.screenTime.perApp ?? []);
+        setSchedules(rules.screenTime.schedule ?? []);
+      }
     } catch {
+      // No rules set yet — use defaults
+    } finally {
       setLoading(false);
     }
   };
@@ -55,6 +66,7 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
     try {
       await api.updateScreenTime(childId, {
         dailyLimitMin: limitMin,
+        perApp: perAppLimits,
         schedule: schedules,
       });
       Alert.alert('Saved', 'Screen time rules updated.');
@@ -65,6 +77,34 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
     }
   };
 
+  // ─── Per-App Limits ────────────────────────────────
+  const addPerAppLimit = () => {
+    const pkg = newAppId.trim();
+    const name = newAppName.trim() || pkg;
+    const limit = parseInt(newAppLimit, 10);
+    if (!pkg) {
+      Alert.alert('Error', 'Please enter a package name.');
+      return;
+    }
+    if (isNaN(limit) || limit <= 0) {
+      Alert.alert('Error', 'Please enter a valid time limit.');
+      return;
+    }
+    if (perAppLimits.some((a) => a.appId === pkg)) {
+      Alert.alert('Duplicate', 'This app already has a limit set.');
+      return;
+    }
+    setPerAppLimits([...perAppLimits, { appId: pkg, appName: name, limitMin: limit }]);
+    setNewAppId('');
+    setNewAppName('');
+    setNewAppLimit('30');
+  };
+
+  const removePerAppLimit = (index: number) => {
+    setPerAppLimits(perAppLimits.filter((_, i) => i !== index));
+  };
+
+  // ─── Schedules ─────────────────────────────────────
   const addSchedule = () => {
     setSchedules([
       ...schedules,
@@ -146,6 +186,71 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
             </TouchableOpacity>
           ))}
         </View>
+      </View>
+
+      {/* Per-App Limits */}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Per-App Limits</Text>
+        </View>
+        <Text style={styles.sectionHint}>
+          Set individual time limits for specific apps.
+        </Text>
+
+        {/* Add per-app form */}
+        <View style={styles.addAppForm}>
+          <TextInput
+            style={styles.addAppInput}
+            value={newAppId}
+            onChangeText={setNewAppId}
+            placeholder="com.example.app"
+            placeholderTextColor={COLORS.textLight}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          <TextInput
+            style={styles.addAppInput}
+            value={newAppName}
+            onChangeText={setNewAppName}
+            placeholder="App Name (optional)"
+            placeholderTextColor={COLORS.textLight}
+          />
+          <View style={styles.addAppRow}>
+            <TextInput
+              style={[styles.addAppInput, { flex: 1 }]}
+              value={newAppLimit}
+              onChangeText={setNewAppLimit}
+              placeholder="30"
+              placeholderTextColor={COLORS.textLight}
+              keyboardType="number-pad"
+              maxLength={4}
+            />
+            <Text style={styles.addAppUnit}>min</Text>
+            <TouchableOpacity style={styles.addAppButton} onPress={addPerAppLimit}>
+              <Ionicons name="add" size={22} color={COLORS.white} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Per-app list */}
+        {perAppLimits.length === 0 ? (
+          <Text style={styles.emptyText}>No per-app limits set.</Text>
+        ) : (
+          perAppLimits.map((app, index) => (
+            <View key={index} style={styles.perAppRow}>
+              <View style={styles.perAppInfo}>
+                <Text style={styles.perAppName} numberOfLines={1}>
+                  {app.appName || app.appId}
+                </Text>
+                <Text style={styles.perAppId} numberOfLines={1}>{app.appId}</Text>
+              </View>
+              <Text style={styles.perAppLimit}>{formatDuration(app.limitMin)}</Text>
+              <TouchableOpacity onPress={() => removePerAppLimit(index)}>
+                <Ionicons name="close-circle" size={22} color={COLORS.textLight} />
+              </TouchableOpacity>
+            </View>
+          ))
+        )}
       </View>
 
       {/* Schedules */}
@@ -326,6 +431,64 @@ const styles = StyleSheet.create({
   presetTextActive: {
     color: COLORS.white,
   },
+  // Per-App Limits
+  addAppForm: {
+    gap: 8,
+    marginBottom: 12,
+  },
+  addAppInput: {
+    backgroundColor: COLORS.background,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: COLORS.text,
+  },
+  addAppRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  addAppUnit: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+  },
+  addAppButton: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 10,
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  perAppRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    gap: 10,
+  },
+  perAppInfo: {
+    flex: 1,
+  },
+  perAppName: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: COLORS.text,
+  },
+  perAppId: {
+    fontSize: 11,
+    color: COLORS.textLight,
+    fontFamily: 'monospace',
+    marginTop: 2,
+  },
+  perAppLimit: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.primary,
+  },
+  // Schedules
   scheduleCard: {
     backgroundColor: COLORS.background,
     borderRadius: 12,
