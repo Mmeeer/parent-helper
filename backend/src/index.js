@@ -13,6 +13,7 @@ const rulesRoutes = require('./routes/rules');
 const activityRoutes = require('./routes/activity');
 const alertsRoutes = require('./routes/alerts');
 const approvalsRoutes = require('./routes/approvals');
+const adminRoutes = require('./routes/admin');
 
 const app = express();
 const server = http.createServer(app);
@@ -34,6 +35,7 @@ app.use('/rules', rulesRoutes);
 app.use('/activity', activityRoutes);
 app.use('/alerts', alertsRoutes);
 app.use('/approvals', approvalsRoutes);
+app.use('/admin', adminRoutes);
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

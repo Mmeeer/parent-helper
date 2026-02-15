@@ -23,6 +23,11 @@ const userSchema = new mongoose.Schema({
     enum: ['free', 'premium', 'family'],
     default: 'free',
   },
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user',
+  },
   refreshToken: {
     type: String,
   },
