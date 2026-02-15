@@ -10,8 +10,10 @@ import androidx.work.*
 import com.parenthelper.child.ParentHelperApp
 import com.parenthelper.child.R
 import com.parenthelper.child.collectors.LocationCollector
+import com.parenthelper.child.enforcement.DomainBlockList
 import com.parenthelper.child.enforcement.RuleManager
 import com.parenthelper.child.enforcement.ScreenTimeLimiter
+import com.parenthelper.child.enforcement.WebFilterVpnService
 import com.parenthelper.child.realtime.SocketManager
 import com.parenthelper.child.ui.main.MainActivity
 import kotlinx.coroutines.*
@@ -41,6 +43,14 @@ class MonitoringService : Service() {
             // Fetch rules on startup
             RuleManager.init(prefs)
             RuleManager.fetchRules(childId)
+
+            // Sync domain block list and start VPN web filter
+            val webFilter = RuleManager.currentRules.value?.webFilter
+            if (webFilter != null && webFilter.categories.isNotEmpty()) {
+                DomainBlockList.syncFromServer(webFilter.categories)
+                DomainBlockList.addDomains(webFilter.customBlock)
+                startVpnFilter()
+            }
 
             // Start location collection
             locationCollector = LocationCollector(this@MonitoringService)
@@ -90,6 +100,18 @@ class MonitoringService : Service() {
             ExistingPeriodicWorkPolicy.KEEP,
             syncWork,
         )
+    }
+
+    private fun startVpnFilter() {
+        // VPN requires user consent via VpnService.prepare(), which is handled in MainActivity
+        // If VPN is already prepared, start the service directly
+        val vpnIntent = android.net.VpnService.prepare(this)
+        if (vpnIntent == null) {
+            // VPN permission already granted
+            val intent = Intent(this, WebFilterVpnService::class.java)
+            startService(intent)
+        }
+        // If vpnIntent is not null, the UI must prompt the user — handled in MainActivity
     }
 
     private fun createNotification(): Notification {

@@ -2,8 +2,11 @@ package com.parenthelper.child.ui.main
 
 import android.Manifest
 import android.app.AppOpsManager
+import android.app.admin.DevicePolicyManager
+import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.VpnService
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -17,6 +20,8 @@ import com.google.android.material.button.MaterialButton
 import com.parenthelper.child.ParentHelperApp
 import com.parenthelper.child.R
 import com.parenthelper.child.collectors.ScreenTimeCollector
+import com.parenthelper.child.enforcement.ParentHelperDeviceAdmin
+import com.parenthelper.child.enforcement.WebFilterVpnService
 import com.parenthelper.child.services.MonitoringService
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -31,6 +36,20 @@ class MainActivity : AppCompatActivity() {
     private val locationPermissionRequest = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
+        checkPermissionsAndStart()
+    }
+
+    private val vpnConsentRequest = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            startService(Intent(this, WebFilterVpnService::class.java))
+        }
+    }
+
+    private val deviceAdminRequest = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { _ ->
         checkPermissionsAndStart()
     }
 
@@ -105,6 +124,37 @@ class MainActivity : AppCompatActivity() {
     private fun startMonitoringService() {
         val intent = Intent(this, MonitoringService::class.java)
         ContextCompat.startForegroundService(this, intent)
+
+        // Request device admin if not already active
+        requestDeviceAdmin()
+
+        // Request VPN consent if not already granted
+        requestVpnConsent()
+    }
+
+    private fun requestDeviceAdmin() {
+        val dpm = getSystemService(DevicePolicyManager::class.java)
+        val adminComponent = ParentHelperDeviceAdmin.getComponentName(this)
+        if (!dpm.isAdminActive(adminComponent)) {
+            val intent = Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).apply {
+                putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminComponent)
+                putExtra(
+                    DevicePolicyManager.EXTRA_ADD_EXPLANATION,
+                    "Enable device admin to prevent unauthorized app removal."
+                )
+            }
+            deviceAdminRequest.launch(intent)
+        }
+    }
+
+    private fun requestVpnConsent() {
+        val vpnIntent = VpnService.prepare(this)
+        if (vpnIntent != null) {
+            vpnConsentRequest.launch(vpnIntent)
+        } else {
+            // VPN already prepared, start the filter service
+            startService(Intent(this, WebFilterVpnService::class.java))
+        }
     }
 
     private fun updateScreenTimeDisplay() {

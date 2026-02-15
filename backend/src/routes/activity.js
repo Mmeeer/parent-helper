@@ -11,5 +11,6 @@ router.get('/:childId/summary', auth, activityController.summary);
 router.get('/:childId/apps', auth, activityController.apps);
 router.get('/:childId/web', auth, activityController.web);
 router.get('/:childId/location', auth, activityController.location);
+router.get('/:childId/daily-breakdown', auth, activityController.dailyBreakdown);
 
 module.exports = router;

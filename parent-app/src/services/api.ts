@@ -128,6 +128,20 @@ export async function logout(): Promise<void> {
   await clearTokens();
 }
 
+export async function forgotPassword(email: string): Promise<{ message: string; resetCode?: string }> {
+  return request('/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function resetPassword(email: string, code: string, newPassword: string): Promise<{ message: string }> {
+  return request('/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({ email, code, newPassword }),
+  });
+}
+
 export async function getMe(): Promise<User> {
   return request<User>('/auth/me');
 }
@@ -167,6 +181,10 @@ export async function getDeviceStatus(deviceId: string): Promise<DeviceStatus> {
   return request<DeviceStatus>(`/devices/${deviceId}/status`);
 }
 
+export async function getChildDevices(childId: string): Promise<DeviceStatus[]> {
+  return request<DeviceStatus[]>(`/devices/child/${childId}`);
+}
+
 export async function sendDeviceCommand(
   deviceId: string,
   command: 'lock' | 'unlock' | 'locate' | 'sync',
@@ -176,6 +194,10 @@ export async function sendDeviceCommand(
     method: 'POST',
     body: JSON.stringify({ command, params }),
   });
+}
+
+export async function unpairDevice(deviceId: string): Promise<{ message: string }> {
+  return request(`/devices/${deviceId}`, { method: 'DELETE' });
 }
 
 // ─── Rules ───────────────────────────────────────────────
@@ -228,6 +250,20 @@ export async function getWebActivity(childId: string): Promise<WebEntry[]> {
 
 export async function getLocationHistory(childId: string): Promise<LocationEntry[]> {
   return request<LocationEntry[]>(`/activity/${childId}/location`);
+}
+
+export interface DailyBreakdownEntry {
+  date: string;
+  screenTimeMin: number;
+  blocked: number;
+  webVisits: number;
+}
+
+export async function getDailyBreakdown(
+  childId: string,
+  days: number = 7,
+): Promise<{ childId: string; days: number; breakdown: DailyBreakdownEntry[] }> {
+  return request(`/activity/${childId}/daily-breakdown?days=${days}`);
 }
 
 // ─── Alerts ──────────────────────────────────────────────

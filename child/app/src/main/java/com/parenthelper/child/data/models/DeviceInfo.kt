@@ -24,3 +24,8 @@ data class HeartbeatRequest(
 data class HeartbeatResponse(
     val status: String,
 )
+
+data class ContentFilterEntry(
+    val domain: String,
+    val category: String,
+)

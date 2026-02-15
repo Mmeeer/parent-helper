@@ -163,7 +163,10 @@ export type RootStackParamList = {
   AppRules: { childId: string; childName: string };
   WebFilter: { childId: string; childName: string };
   LocationMap: { childId: string; childName: string };
+  DevicesList: { childId: string; childName: string };
   PairDevice: { childId: string; childName: string };
   DeviceDetail: { deviceId: string };
+  Reports: { childId: string; childName: string };
+  ForgotPassword: undefined;
   AddChild: undefined;
 };

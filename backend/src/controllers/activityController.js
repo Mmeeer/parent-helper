@@ -57,6 +57,16 @@ exports.sync = async (req, res, next) => {
               data: { packageName: attempt.target, status: 'pending', timestamp: attempt.timestamp },
             };
           }
+          // Uninstall attempts get their own alert type
+          if (attempt.type === 'uninstall_attempt') {
+            return {
+              parentId: device.parentId,
+              childId,
+              type: 'uninstall_attempt',
+              message: `Uninstall attempt detected on ${device.model || 'device'}`,
+              data: { deviceId: device._id, timestamp: attempt.timestamp },
+            };
+          }
           return {
             parentId: device.parentId,
             childId,
@@ -214,6 +224,56 @@ exports.location = async (req, res, next) => {
     const locations = logs.flatMap((log) => log.location || []).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
     res.json(locations);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// GET /activity/:childId/daily-breakdown?days=7
+exports.dailyBreakdown = async (req, res, next) => {
+  try {
+    const { childId } = req.params;
+    const days = parseInt(req.query.days) || 7;
+
+    const child = await Child.findOne({ _id: childId, parentId: req.user._id });
+    if (!child) {
+      return res.status(404).json({ error: 'Child not found' });
+    }
+
+    const now = new Date();
+    const startDate = new Date(now);
+    startDate.setDate(now.getDate() - (days - 1));
+    const startStr = startDate.toISOString().split('T')[0];
+    const endStr = now.toISOString().split('T')[0];
+
+    const logs = await ActivityLog.find({
+      childId,
+      date: { $gte: startStr, $lte: endStr },
+    }).sort({ date: 1 });
+
+    const breakdown = [];
+    for (let i = 0; i < days; i++) {
+      const d = new Date(startDate);
+      d.setDate(startDate.getDate() + i);
+      const dateStr = d.toISOString().split('T')[0];
+      const dayLogs = logs.filter((l) => l.date === dateStr);
+
+      let screenTimeMin = 0;
+      let blocked = 0;
+      let webVisits = 0;
+
+      for (const log of dayLogs) {
+        for (const app of (log.apps || [])) {
+          screenTimeMin += app.durationMin || 0;
+        }
+        blocked += (log.blockedAttempts || []).length;
+        webVisits += (log.web || []).length;
+      }
+
+      breakdown.push({ date: dateStr, screenTimeMin, blocked, webVisits });
+    }
+
+    res.json({ childId, days, breakdown });
   } catch (err) {
     next(err);
   }

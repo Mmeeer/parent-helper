@@ -134,10 +134,18 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
 
         <TouchableOpacity
           style={styles.actionCard}
-          onPress={() => navigation.navigate('PairDevice', { childId, childName })}
+          onPress={() => navigation.navigate('DevicesList', { childId, childName })}
         >
           <Ionicons name="phone-portrait-outline" size={28} color={COLORS.secondary} />
           <Text style={styles.actionLabel}>Devices</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.actionCard}
+          onPress={() => navigation.navigate('Reports', { childId, childName })}
+        >
+          <Ionicons name="bar-chart-outline" size={28} color={COLORS.primary} />
+          <Text style={styles.actionLabel}>Reports</Text>
         </TouchableOpacity>
       </View>
 

@@ -15,6 +15,8 @@ const alertsRoutes = require('./routes/alerts');
 const approvalsRoutes = require('./routes/approvals');
 const adminRoutes = require('./routes/admin');
 
+const { startOfflineDetector } = require('./jobs/offlineDetector');
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -36,6 +38,20 @@ app.use('/activity', activityRoutes);
 app.use('/alerts', alertsRoutes);
 app.use('/approvals', approvalsRoutes);
 app.use('/admin', adminRoutes);
+
+// Content filters endpoint for child devices
+const deviceAuth = require('./middleware/deviceAuth');
+const ContentFilter = require('./models/ContentFilter');
+app.get('/filters', deviceAuth, async (req, res, next) => {
+  try {
+    const categories = req.query.categories;
+    const filter = categories ? { category: { $in: [].concat(categories) } } : {};
+    const domains = await ContentFilter.find(filter).select('domain category').lean();
+    res.json(domains);
+  } catch (err) {
+    next(err);
+  }
+});
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -83,6 +99,7 @@ const PORT = process.env.PORT || 3000;
 
 const start = async () => {
   await connectDB();
+  startOfflineDetector(io);
   server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });

@@ -35,6 +35,14 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.Mixed,
     default: null,
   },
+  resetCode: {
+    type: String,
+    default: null,
+  },
+  resetCodeExpiresAt: {
+    type: Date,
+    default: null,
+  },
 }, { timestamps: true });
 
 userSchema.pre('save', async function (next) {

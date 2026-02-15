@@ -16,4 +16,7 @@ interface ApiService {
 
     @POST("activity/sync")
     suspend fun syncActivity(@Body request: ActivitySyncRequest): ActivitySyncResponse
+
+    @GET("filters")
+    suspend fun getContentFilters(@Query("categories") categories: List<String>): List<ContentFilterEntry>
 }

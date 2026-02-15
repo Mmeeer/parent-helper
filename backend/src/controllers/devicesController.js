@@ -116,6 +116,53 @@ exports.sendCommand = async (req, res, next) => {
   }
 };
 
+exports.listByChild = async (req, res, next) => {
+  try {
+    const { childId } = req.params;
+
+    // Verify child belongs to parent
+    const child = await Child.findOne({ _id: childId, parentId: req.user._id });
+    if (!child) {
+      return res.status(404).json({ error: 'Child not found' });
+    }
+
+    const devices = await Device.find({ childId, paired: true })
+      .select('_id status lastSeen batteryLevel platform model osVersion appVersion')
+      .sort({ lastSeen: -1 });
+
+    res.json(devices.map((d) => ({
+      id: d._id,
+      status: d.status,
+      lastSeen: d.lastSeen,
+      batteryLevel: d.batteryLevel,
+      platform: d.platform,
+      model: d.model,
+      osVersion: d.osVersion,
+      appVersion: d.appVersion,
+    })));
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.unpair = async (req, res, next) => {
+  try {
+    const device = await Device.findById(req.params.id);
+    if (!device) {
+      return res.status(404).json({ error: 'Device not found' });
+    }
+
+    if (device.parentId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    await Device.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Device unpaired successfully' });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.heartbeat = async (req, res, next) => {
   try {
     const { batteryLevel } = req.body;

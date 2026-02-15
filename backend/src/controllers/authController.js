@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
 const User = require('../models/User');
@@ -109,6 +110,73 @@ exports.refresh = async (req, res, next) => {
     await user.save();
 
     res.json(tokens);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POST /auth/forgot-password — Generate a 6-digit reset code
+exports.forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    if (!user) {
+      // Don't reveal whether email exists
+      return res.json({ message: 'If that email is registered, a reset code has been sent.' });
+    }
+
+    const resetCode = crypto.randomInt(100000, 999999).toString();
+    user.resetCode = resetCode;
+    user.resetCodeExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    await user.save();
+
+    // In production, send email here. For now, log it (and return in dev mode).
+    console.log(`[Password Reset] Code for ${email}: ${resetCode}`);
+
+    const response = { message: 'If that email is registered, a reset code has been sent.' };
+    if (process.env.NODE_ENV !== 'production') {
+      response.resetCode = resetCode; // Only in dev/test
+    }
+    res.json(response);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POST /auth/reset-password — Verify code and set new password
+exports.resetPassword = async (req, res, next) => {
+  try {
+    const { email, code, newPassword } = req.body;
+
+    if (!email || !code || !newPassword) {
+      return res.status(400).json({ error: 'Email, code, and newPassword are required' });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters' });
+    }
+
+    const user = await User.findOne({
+      email: email.toLowerCase().trim(),
+      resetCode: code,
+      resetCodeExpiresAt: { $gt: new Date() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: 'Invalid or expired reset code' });
+    }
+
+    user.passwordHash = newPassword; // Will be hashed by pre-save hook
+    user.resetCode = null;
+    user.resetCodeExpiresAt = null;
+    user.refreshToken = null; // Invalidate existing sessions
+    await user.save();
+
+    res.json({ message: 'Password has been reset successfully. Please log in.' });
   } catch (err) {
     next(err);
   }

@@ -9,7 +9,9 @@ router.post('/heartbeat', deviceAuth, devicesController.heartbeat);
 
 // Parent endpoints
 router.post('/pair', auth, devicesController.pair);
+router.get('/child/:childId', auth, devicesController.listByChild);
 router.get('/:id/status', auth, devicesController.getStatus);
 router.post('/:id/command', auth, devicesController.sendCommand);
+router.delete('/:id', auth, devicesController.unpair);
 
 module.exports = router;

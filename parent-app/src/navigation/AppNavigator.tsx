@@ -11,6 +11,7 @@ import type { RootStackParamList } from '../types';
 // Auth Screens
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
+import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 
 // Main Screens
 import DashboardScreen from '../screens/dashboard/DashboardScreen';
@@ -26,7 +27,9 @@ import ScreenTimeRulesScreen from '../screens/rules/ScreenTimeRulesScreen';
 import AppRulesScreen from '../screens/rules/AppRulesScreen';
 import WebFilterScreen from '../screens/rules/WebFilterScreen';
 import LocationScreen from '../screens/location/LocationScreen';
+import DevicesListScreen from '../screens/devices/DevicesListScreen';
 import PairDeviceScreen from '../screens/devices/PairDeviceScreen';
+import ReportsScreen from '../screens/reports/ReportsScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator();
@@ -155,9 +158,19 @@ export default function AppNavigator() {
               options={{ title: 'Location' }}
             />
             <Stack.Screen
+              name="DevicesList"
+              component={DevicesListScreen}
+              options={{ title: 'Devices' }}
+            />
+            <Stack.Screen
               name="PairDevice"
               component={PairDeviceScreen}
               options={{ title: 'Pair Device' }}
+            />
+            <Stack.Screen
+              name="Reports"
+              component={ReportsScreen}
+              options={{ title: 'Reports' }}
             />
           </>
         ) : (
@@ -170,6 +183,11 @@ export default function AppNavigator() {
             <Stack.Screen
               name="Register"
               component={RegisterScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="ForgotPassword"
+              component={ForgotPasswordScreen}
               options={{ headerShown: false }}
             />
           </>
