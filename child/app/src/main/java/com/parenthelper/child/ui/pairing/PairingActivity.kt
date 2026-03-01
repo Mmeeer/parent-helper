@@ -29,17 +29,6 @@ class PairingActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // If already paired, skip to main
-        lifecycleScope.launch {
-            val paired = (application as ParentHelperApp).prefsManager.isPaired.first()
-            if (paired) {
-                startActivity(Intent(this@PairingActivity, MainActivity::class.java))
-                finish()
-                return@launch
-            }
-        }
-
         setContentView(R.layout.activity_pairing)
 
         etPairingCode = findViewById(R.id.etPairingCode)
@@ -49,6 +38,15 @@ class PairingActivity : AppCompatActivity() {
         tvError = findViewById(R.id.tvError)
 
         btnPair.setOnClickListener { attemptPairing() }
+
+        // If already paired, skip to main
+        lifecycleScope.launch {
+            val paired = (application as ParentHelperApp).prefsManager.isPaired.first()
+            if (paired) {
+                startActivity(Intent(this@PairingActivity, MainActivity::class.java))
+                finish()
+            }
+        }
     }
 
     private fun attemptPairing() {
@@ -58,19 +56,18 @@ class PairingActivity : AppCompatActivity() {
             return
         }
 
-        val serverUrl = etServerUrl.text?.toString()?.trim()
-        if (!serverUrl.isNullOrEmpty()) {
-            val url = if (serverUrl.endsWith("/")) serverUrl else "$serverUrl/"
-            lifecycleScope.launch {
-                (application as ParentHelperApp).prefsManager.saveBaseUrl(url)
-                ApiClient.init(url, (application as ParentHelperApp).prefsManager)
-            }
-        }
-
         setLoading(true)
 
         lifecycleScope.launch {
             try {
+                // Update server URL before making the API call (must be sequential)
+                val serverUrl = etServerUrl.text?.toString()?.trim()
+                if (!serverUrl.isNullOrEmpty()) {
+                    val url = if (serverUrl.endsWith("/")) serverUrl else "$serverUrl/"
+                    (application as ParentHelperApp).prefsManager.saveBaseUrl(url)
+                    ApiClient.init(url, (application as ParentHelperApp).prefsManager)
+                }
+
                 val request = PairingRequest(
                     pairingCode = code,
                     platform = "android",

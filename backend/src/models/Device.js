@@ -73,4 +73,19 @@ deviceSchema.pre('save', function (next) {
   next();
 });
 
+// Create a device with retry on pairing code collision
+deviceSchema.statics.createWithUniquePairingCode = async function (data, maxRetries = 5) {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await this.create(data);
+    } catch (err) {
+      if (err.code === 11000 && err.keyPattern && err.keyPattern.pairingCode) {
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw new Error('Failed to generate a unique pairing code. Please try again.');
+};
+
 module.exports = mongoose.model('Device', deviceSchema);

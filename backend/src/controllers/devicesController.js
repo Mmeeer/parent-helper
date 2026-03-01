@@ -12,7 +12,14 @@ exports.pair = async (req, res, next) => {
       return res.status(404).json({ error: 'Child not found' });
     }
 
-    const device = await Device.create({
+    // Clean up expired unpaired devices for this child to free up pairing codes
+    await Device.deleteMany({
+      childId,
+      paired: false,
+      pairingExpiresAt: { $lt: new Date() },
+    });
+
+    const device = await Device.createWithUniquePairingCode({
       childId,
       parentId: req.user._id,
     });
@@ -20,6 +27,7 @@ exports.pair = async (req, res, next) => {
     res.status(201).json({
       deviceId: device._id,
       pairingCode: device.pairingCode,
+      expiresAt: device.pairingExpiresAt,
     });
   } catch (err) {
     next(err);
@@ -30,7 +38,13 @@ exports.completePairing = async (req, res, next) => {
   try {
     const { pairingCode, platform, model, osVersion, appVersion } = req.body;
 
-    const device = await Device.findOne({ pairingCode, paired: false });
+    if (!pairingCode || typeof pairingCode !== 'string') {
+      return res.status(400).json({ error: 'Pairing code is required' });
+    }
+
+    const normalizedCode = pairingCode.trim().toUpperCase();
+
+    const device = await Device.findOne({ pairingCode: normalizedCode, paired: false });
     if (!device) {
       return res.status(404).json({ error: 'Invalid or expired pairing code' });
     }
@@ -48,6 +62,9 @@ exports.completePairing = async (req, res, next) => {
     device.status = 'online';
     device.lastSeen = new Date();
     device.deviceToken = crypto.randomBytes(32).toString('hex');
+    // Clear pairing code after successful pairing to free up the unique index slot
+    device.pairingCode = null;
+    device.pairingExpiresAt = null;
     await device.save();
 
     res.json({
