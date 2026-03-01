@@ -3,6 +3,22 @@ plugins {
     alias(libs.plugins.android.application)
 }
 
+// Load .env file for build configuration
+val envFile = rootProject.file(".env")
+val envProps = java.util.Properties().apply {
+    if (envFile.exists()) {
+        envFile.reader().use { reader ->
+            reader.readLines().forEach { line ->
+                val trimmed = line.trim()
+                if (trimmed.isNotEmpty() && !trimmed.startsWith("#") && trimmed.contains("=")) {
+                    val (key, value) = trimmed.split("=", limit = 2)
+                    setProperty(key.trim(), value.trim())
+                }
+            }
+        }
+    }
+}
+
 android {
     namespace = "com.parenthelper.child"
     compileSdk = 36
@@ -15,6 +31,16 @@ android {
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField(
+            "String",
+            "SERVER_URL",
+            "\"${envProps.getProperty("SERVER_URL", "http://10.0.2.2:3000/")}\""
+        )
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     buildTypes {
