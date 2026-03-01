@@ -3,7 +3,7 @@ export function useApi() {
   const baseUrl = config.public.apiBaseUrl;
   const token = useCookie('admin_token');
 
-  async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  async function request<T>(path: string, options: Record<string, any> = {}): Promise<T> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(options.headers as Record<string, string>),
@@ -13,11 +13,20 @@ export function useApi() {
       headers['Authorization'] = `Bearer ${token.value}`;
     }
 
-    const res = await $fetch<T>(`${baseUrl}${path}`, {
-      ...options,
-      headers,
-    });
-    return res;
+    try {
+      const res = await $fetch<T>(`${baseUrl}${path}`, {
+        ...options,
+        headers,
+      });
+      return res;
+    } catch (err: any) {
+      // Auto-redirect to login on auth failures
+      if (err?.status === 401 || err?.status === 403) {
+        token.value = null;
+        navigateTo('/login');
+      }
+      throw err;
+    }
   }
 
   return {
