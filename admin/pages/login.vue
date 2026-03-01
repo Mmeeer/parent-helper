@@ -28,6 +28,7 @@
         </div>
 
         <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
+        <p v-if="success" class="text-sm text-green-600">{{ success }}</p>
 
         <button
           type="submit"
@@ -37,6 +38,17 @@
           {{ loading ? 'Signing in...' : 'Sign In' }}
         </button>
       </form>
+
+      <div class="mt-6 pt-4 border-t border-gray-100">
+        <p class="text-xs text-gray-400 text-center mb-3">First time setup?</p>
+        <button
+          :disabled="seeding"
+          class="w-full text-sm text-gray-500 border border-gray-200 py-2 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
+          @click="handleSeed"
+        >
+          {{ seeding ? 'Creating...' : 'Create Admin Account' }}
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -45,21 +57,54 @@
 definePageMeta({ layout: 'auth' });
 
 const { login } = useApi();
+const config = useRuntimeConfig();
 const email = ref('');
 const password = ref('');
 const loading = ref(false);
+const seeding = ref(false);
 const error = ref('');
+const success = ref('');
 
 async function handleLogin() {
   loading.value = true;
   error.value = '';
+  success.value = '';
   try {
-    await login(email.value, password.value);
+    const data = await login(email.value, password.value);
+    if (data.user?.role !== 'admin') {
+      // Not an admin — clear the token and show error
+      const token = useCookie('admin_token');
+      token.value = null;
+      error.value = 'Access denied. Admin account required.';
+      return;
+    }
     navigateTo('/');
   } catch (e: any) {
-    error.value = e.message || 'Invalid credentials';
+    error.value = e?.data?.error || e.message || 'Invalid credentials';
   } finally {
     loading.value = false;
+  }
+}
+
+async function handleSeed() {
+  seeding.value = true;
+  error.value = '';
+  success.value = '';
+  try {
+    const res = await $fetch<{ message: string; email: string }>(`${config.public.apiBaseUrl}/admin/seed`, {
+      method: 'POST',
+    });
+    success.value = `Admin account created: ${res.email}. Default password: admin123456`;
+    email.value = res.email;
+  } catch (e: any) {
+    const msg = e?.data?.error || e.message || 'Failed to create admin account';
+    if (msg.includes('already exists')) {
+      error.value = 'Admin account already exists. Please sign in.';
+    } else {
+      error.value = msg;
+    }
+  } finally {
+    seeding.value = false;
   }
 }
 </script>

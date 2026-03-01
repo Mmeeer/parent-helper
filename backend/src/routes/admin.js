@@ -3,7 +3,10 @@ const router = express.Router();
 const adminAuth = require('../middleware/adminAuth');
 const adminController = require('../controllers/adminController');
 
-// All admin routes require admin authentication
+// Seed route — no auth required, creates the first admin account
+router.post('/seed', adminController.seed);
+
+// All remaining admin routes require admin authentication
 router.use(adminAuth);
 
 router.get('/users', adminController.getUsers);

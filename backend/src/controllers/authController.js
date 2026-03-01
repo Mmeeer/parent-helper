@@ -65,7 +65,7 @@ exports.login = async (req, res, next) => {
     await user.save();
 
     res.json({
-      user: { id: user._id, email: user.email, name: user.name, plan: user.plan },
+      user: { id: user._id, email: user.email, name: user.name, plan: user.plan, role: user.role },
       ...tokens,
     });
   } catch (err) {
@@ -80,6 +80,7 @@ exports.me = async (req, res, next) => {
       email: req.user.email,
       name: req.user.name,
       plan: req.user.plan,
+      role: req.user.role,
     });
   } catch (err) {
     next(err);

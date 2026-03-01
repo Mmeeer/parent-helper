@@ -5,6 +5,35 @@ const Alert = require('../models/Alert');
 const ActivityLog = require('../models/ActivityLog');
 const ContentFilter = require('../models/ContentFilter');
 
+// POST /admin/seed — Create initial admin account (only if no admin exists)
+exports.seed = async (req, res, next) => {
+  try {
+    const existingAdmin = await User.findOne({ role: 'admin' });
+    if (existingAdmin) {
+      return res.status(409).json({ error: 'Admin account already exists' });
+    }
+
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@parenthelper.com';
+    const adminPassword = process.env.ADMIN_PASSWORD || 'admin123456';
+
+    const admin = new User({
+      email: adminEmail,
+      passwordHash: adminPassword,
+      name: 'Admin',
+      role: 'admin',
+      plan: 'family',
+    });
+    await admin.save();
+
+    res.status(201).json({
+      message: 'Admin account created',
+      email: adminEmail,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // GET /admin/users — List all users with pagination & search
 exports.getUsers = async (req, res, next) => {
   try {
