@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "Parent Helper",
+    "slug": "parent-helper",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#4A90D9"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.parenthelper.parent"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#4A90D9"
+      },
+      "package": "com.parenthelper.parent"
+    },
+    "plugins": [
+      "expo-secure-store"
+    ]
+  }
+}

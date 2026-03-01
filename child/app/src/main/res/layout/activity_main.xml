@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="32dp">
+
+    <ImageView
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:layout_marginBottom="24dp"
+        android:contentDescription="@string/app_name"
+        android:src="@mipmap/ic_launcher" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:text="@string/status_protected"
+        android:textColor="@android:color/holo_green_dark"
+        android:textSize="28sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
+        android:text="@string/status_connected"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/tvMonitoringStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="32dp"
+        android:text="@string/status_monitoring"
+        android:textSize="14sp"
+        android:textColor="@android:color/darker_gray" />
+
+    <TextView
+        android:id="@+id/tvScreenTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:text="Screen time today: 0 min"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/tvDailyLimit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="32dp"
+        android:text="Daily limit: --"
+        android:textSize="14sp"
+        android:textColor="@android:color/darker_gray" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnRequestPermissions"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="Grant Permissions"
+        android:visibility="gone" />
+
+</LinearLayout>

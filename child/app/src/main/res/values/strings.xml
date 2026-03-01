@@ -1,3 +1,16 @@
 <resources>
-    <string name="app_name">My Application</string>
+    <string name="app_name">Parent Helper</string>
+    <string name="pairing_title">Pair This Device</string>
+    <string name="pairing_instruction">Enter the 6-character code from the Parent Helper app</string>
+    <string name="pairing_hint">Pairing code</string>
+    <string name="pairing_button">Pair Device</string>
+    <string name="pairing_error_empty">Please enter the pairing code</string>
+    <string name="pairing_error_failed">Pairing failed. Please check the code and try again.</string>
+    <string name="status_protected">Device Protected</string>
+    <string name="status_connected">Connected to parent account</string>
+    <string name="status_monitoring">Monitoring active</string>
+    <string name="monitoring_notification_title">Parent Helper Active</string>
+    <string name="monitoring_notification_text">Device monitoring is running</string>
+    <string name="channel_monitoring">Monitoring Service</string>
+    <string name="channel_alerts">Alerts</string>
 </resources>
