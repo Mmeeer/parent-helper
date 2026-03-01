@@ -18,6 +18,11 @@ import com.parenthelper.child.data.models.PairingRequest
 import com.parenthelper.child.ui.main.MainActivity
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import org.json.JSONObject
+import retrofit2.HttpException
+import java.net.ConnectException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 
 class PairingActivity : AppCompatActivity() {
 
@@ -89,8 +94,20 @@ class PairingActivity : AppCompatActivity() {
 
                 startActivity(Intent(this@PairingActivity, MainActivity::class.java))
                 finish()
+            } catch (e: HttpException) {
+                val errorMsg = try {
+                    val body = e.response()?.errorBody()?.string()
+                    body?.let { JSONObject(it).optString("error") }
+                } catch (_: Exception) { null }
+                showError(errorMsg ?: getString(R.string.pairing_error_failed))
+            } catch (e: ConnectException) {
+                showError("Cannot connect to server. Check the server URL and ensure the server is running.")
+            } catch (e: UnknownHostException) {
+                showError("Server not found. Check the server URL.")
+            } catch (e: SocketTimeoutException) {
+                showError("Connection timed out. Check your network and server URL.")
             } catch (e: Exception) {
-                showError(getString(R.string.pairing_error_failed))
+                showError(e.message ?: getString(R.string.pairing_error_failed))
             } finally {
                 setLoading(false)
             }
