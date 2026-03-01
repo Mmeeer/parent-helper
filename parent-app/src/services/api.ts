@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL } from '../utils/constants';
 import type {
+  User,
   AuthResponse,
   TokenPair,
   Child,
