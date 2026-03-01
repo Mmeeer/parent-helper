@@ -14,9 +14,11 @@ object ApiClient {
 
     private var retrofit: Retrofit? = null
     private var prefsManager: PrefsManager? = null
+    private var _service: ApiService? = null
 
     fun init(baseUrl: String, prefsManager: PrefsManager) {
         this.prefsManager = prefsManager
+        this._service = null
 
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
@@ -52,6 +54,9 @@ object ApiClient {
     }
 
     val service: ApiService
-        get() = retrofit?.create(ApiService::class.java)
-            ?: throw IllegalStateException("ApiClient not initialized. Call init() first.")
+        get() {
+            _service?.let { return it }
+            val r = retrofit ?: throw IllegalStateException("ApiClient not initialized. Call init() first.")
+            return r.create(ApiService::class.java).also { _service = it }
+        }
 }
