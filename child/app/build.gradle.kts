@@ -1,11 +1,14 @@
+import java.util.Properties
+
 plugins {
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 // Load .env file for build configuration
 val envFile = rootProject.file(".env")
-val envProps = java.util.Properties().apply {
+val envProps = Properties().apply {
     if (envFile.exists()) {
         envFile.reader().use { reader ->
             reader.readLines().forEach { line ->
@@ -21,12 +24,12 @@ val envProps = java.util.Properties().apply {
 
 android {
     namespace = "com.parenthelper.child"
-    compileSdk = 36
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.parenthelper.child"
         minSdk = 26
-        targetSdk = 36
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0.0"
 
@@ -53,11 +56,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
 }
 
