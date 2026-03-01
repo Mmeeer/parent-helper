@@ -37,6 +37,9 @@ class PairingActivity : AppCompatActivity() {
         progressBar = findViewById(R.id.progressBar)
         tvError = findViewById(R.id.tvError)
 
+        // Pre-populate server URL from BuildConfig (sourced from .env)
+        etServerUrl.setText(BuildConfig.SERVER_URL)
+
         btnPair.setOnClickListener { attemptPairing() }
 
         // If already paired, skip to main
@@ -60,13 +63,12 @@ class PairingActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
-                // Update server URL before making the API call (must be sequential)
+                // Use server URL from the input field, falling back to BuildConfig value
                 val serverUrl = etServerUrl.text?.toString()?.trim()
-                if (!serverUrl.isNullOrEmpty()) {
-                    val url = if (serverUrl.endsWith("/")) serverUrl else "$serverUrl/"
-                    (application as ParentHelperApp).prefsManager.saveBaseUrl(url)
-                    ApiClient.init(url, (application as ParentHelperApp).prefsManager)
-                }
+                    .takeIf { !it.isNullOrEmpty() } ?: BuildConfig.SERVER_URL
+                val url = if (serverUrl.endsWith("/")) serverUrl else "$serverUrl/"
+                (application as ParentHelperApp).prefsManager.saveBaseUrl(url)
+                ApiClient.init(url, (application as ParentHelperApp).prefsManager)
 
                 val request = PairingRequest(
                     pairingCode = code,

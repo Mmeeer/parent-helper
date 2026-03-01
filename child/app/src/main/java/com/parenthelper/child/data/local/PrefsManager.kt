@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
+import com.parenthelper.child.BuildConfig
 import com.parenthelper.child.data.models.Rule
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.Flow
@@ -30,7 +31,7 @@ class PrefsManager(private val context: Context) {
     val childId: Flow<String?> = context.dataStore.data.map { it[KEY_CHILD_ID] }
     val parentId: Flow<String?> = context.dataStore.data.map { it[KEY_PARENT_ID] }
     val isPaired: Flow<Boolean> = context.dataStore.data.map { it[KEY_PAIRED] ?: false }
-    val baseUrl: Flow<String> = context.dataStore.data.map { it[KEY_BASE_URL] ?: "http://10.0.2.2:3000/" }
+    val baseUrl: Flow<String> = context.dataStore.data.map { it[KEY_BASE_URL] ?: BuildConfig.SERVER_URL }
 
     suspend fun savePairingData(
         deviceToken: String,
