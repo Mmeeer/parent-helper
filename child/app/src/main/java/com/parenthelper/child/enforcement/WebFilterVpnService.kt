@@ -9,6 +9,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.parenthelper.child.ParentHelperApp
 import com.parenthelper.child.R
+import com.parenthelper.child.collectors.WebActivityCollector
 import com.parenthelper.child.ui.main.MainActivity
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
@@ -102,6 +103,7 @@ class WebFilterVpnService : VpnService() {
                     if (domain != null && shouldBlockDomain(domain)) {
                         Log.d(TAG, "Blocking domain: $domain")
                         BlockedAttemptLogger.logBlocked(domain)
+                        WebActivityCollector.recordBlocked(domain)
                         val response = buildNxDomainResponse(packet.array(), length)
                         if (response != null) {
                             outputMutex.withLock {
@@ -110,6 +112,10 @@ class WebFilterVpnService : VpnService() {
                             }
                             continue
                         }
+                    }
+                    // Record allowed domain visit
+                    if (domain != null) {
+                        WebActivityCollector.recordVisit(domain)
                     }
                     // Forward allowed DNS queries to real DNS
                     forwardPacket(packet.array(), length, output)
@@ -218,37 +224,42 @@ class WebFilterVpnService : VpnService() {
                 val ipHeaderLen = (packetCopy[0].toInt() and 0xF) * 4
                 val dnsPayload = packetCopy.copyOfRange(ipHeaderLen + 8, length)
 
-        // Try multiple DNS servers for reliability
-        for (dns in DNS_SERVERS) {
-            var socket: DatagramSocket? = null
-            try {
-                socket = DatagramSocket()
-                protect(socket) // Prevent VPN loop
+                // Try multiple DNS servers for reliability
+                for (dns in DNS_SERVERS) {
+                    var socket: DatagramSocket? = null
+                    try {
+                        socket = DatagramSocket()
+                        protect(socket) // Prevent VPN loop
 
-                val dnsAddress = InetAddress.getByName(dns)
-                val sendPacket = DatagramPacket(dnsPayload, dnsPayload.size, dnsAddress, 53)
-                socket.soTimeout = 3000
-                socket.send(sendPacket)
+                        val dnsAddress = InetAddress.getByName(dns)
+                        val sendPacket = DatagramPacket(dnsPayload, dnsPayload.size, dnsAddress, 53)
+                        socket.soTimeout = 3000
+                        socket.send(sendPacket)
 
-                val responseBuffer = ByteArray(MTU_SIZE)
-                val receivePacket = DatagramPacket(responseBuffer, responseBuffer.size)
-                socket.receive(receivePacket)
+                        val responseBuffer = ByteArray(MTU_SIZE)
+                        val receivePacket = DatagramPacket(responseBuffer, responseBuffer.size)
+                        socket.receive(receivePacket)
 
-                val responseData = receivePacket.data.copyOf(receivePacket.length)
-                val fullResponse = buildResponsePacket(packetCopy, ipHeaderLen, responseData)
-                if (fullResponse != null) {
-                    outputMutex.withLock {
-                        output.write(fullResponse)
-                        output.flush()
+                        val responseData = receivePacket.data.copyOf(receivePacket.length)
+                        val fullResponse = buildResponsePacket(packetCopy, ipHeaderLen, responseData)
+                        if (fullResponse != null) {
+                            outputMutex.withLock {
+                                output.write(fullResponse)
+                                output.flush()
+                            }
+                        }
+                        return@launch // Success, stop trying other servers
+                    } catch (e: Exception) {
+                        Log.w(TAG, "DNS forward failed with $dns: ${e.message}")
+                    } finally {
+                        socket?.close()
                     }
                 }
+                Log.e(TAG, "All DNS servers failed for query")
             } catch (e: Exception) {
-                Log.w(TAG, "DNS forward failed: ${e.message}")
+                Log.e(TAG, "Forward packet error: ${e.message}")
             }
         }
-
-        Log.e(TAG, "All DNS servers failed for query")
-        return null
     }
 
     private fun buildResponsePacket(
@@ -303,6 +314,33 @@ class WebFilterVpnService : VpnService() {
         }
     }
 
+    /**
+     * Recalculates the IPv4 header checksum after modifying packet fields.
+     * Zeroes the existing checksum, computes one's complement sum over the header,
+     * and writes the result back.
+     */
+    private fun recalculateIpChecksum(packet: ByteArray, ipHeaderLen: Int) {
+        // Zero existing checksum
+        packet[10] = 0
+        packet[11] = 0
+
+        var sum = 0L
+        for (i in 0 until ipHeaderLen step 2) {
+            val word = ((packet[i].toInt() and 0xFF) shl 8) or
+                (if (i + 1 < ipHeaderLen) (packet[i + 1].toInt() and 0xFF) else 0)
+            sum += word
+        }
+
+        // Fold 32-bit sum into 16 bits
+        while (sum shr 16 > 0) {
+            sum = (sum and 0xFFFF) + (sum shr 16)
+        }
+
+        val checksum = sum.toInt().inv() and 0xFFFF
+        packet[10] = ((checksum shr 8) and 0xFF).toByte()
+        packet[11] = (checksum and 0xFF).toByte()
+    }
+
     private fun createVpnNotification(): Notification {
         val intent = Intent(this, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(
@@ -340,5 +378,6 @@ class WebFilterVpnService : VpnService() {
         private const val VPN_ADDRESS = "10.0.0.2"
         private const val REAL_DNS = "8.8.8.8"
         private const val MTU_SIZE = 1500
+        private val DNS_SERVERS = listOf("8.8.8.8", "8.8.4.4")
     }
 }

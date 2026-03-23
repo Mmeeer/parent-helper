@@ -37,17 +37,25 @@ class ActivitySyncWorker(
             // Collect location data
             val locations = LocationCollector.getRecentLocations()
 
-            // Collect blocked domain attempts
+            // Atomically drain web entries and blocked attempts from WebActivityCollector
+            val (webEntries, webBlockedAttempts) = WebActivityCollector.drainAll()
+
+            // Also drain VPN-level blocked attempts from BlockedAttemptLogger
             val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
             dateFormat.timeZone = TimeZone.getTimeZone("UTC")
             val rawAttempts = BlockedAttemptLogger.drainAttempts()
-            val blockedAttempts = rawAttempts.map { attempt ->
+            val loggerBlockedAttempts = rawAttempts.map { attempt ->
                 BlockedAttempt(
                     type = "web_filter",
                     target = attempt.domain,
                     timestamp = dateFormat.format(Date(attempt.timestamp)),
                 )
-            }.ifEmpty { null }
+            }
+
+            // Combine blocked attempts from both sources, deduplicated by target+type
+            val allBlockedAttempts = (webBlockedAttempts + loggerBlockedAttempts)
+                .distinctBy { "${it.type}:${it.target}" }
+                .ifEmpty { null }
 
             val request = ActivitySyncRequest(
                 childId = childId,
@@ -56,7 +64,7 @@ class ActivitySyncWorker(
                 apps = appUsage,
                 web = if (webEntries.isNotEmpty()) webEntries else null,
                 location = locations,
-                blockedAttempts = blockedAttempts,
+                blockedAttempts = allBlockedAttempts,
             )
 
             ApiClient.service.syncActivity(request)
