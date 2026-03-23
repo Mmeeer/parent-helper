@@ -3,9 +3,12 @@ package com.parenthelper.child.enforcement
 import android.content.Intent
 import android.net.VpnService
 import android.os.ParcelFileDescriptor
+import android.util.Log
 import com.parenthelper.child.ParentHelperApp
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.net.InetAddress
@@ -20,6 +23,7 @@ class WebFilterVpnService : VpnService() {
 
     private var vpnInterface: ParcelFileDescriptor? = null
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val outputMutex = Mutex()
     @Volatile
     private var isRunning = false
 
@@ -37,15 +41,26 @@ class WebFilterVpnService : VpnService() {
         if (isRunning) return
         isRunning = true
 
-        val builder = Builder()
-            .setSession("ParentHelper WebFilter")
-            .addAddress(VPN_ADDRESS, 32)
-            .addRoute(DNS_SERVER, 32)  // Only route DNS traffic
-            .addDnsServer(VPN_ADDRESS) // Redirect DNS through our VPN
-            .setMtu(MTU_SIZE)
-            .setBlocking(true)
+        try {
+            val builder = Builder()
+                .setSession("ParentHelper WebFilter")
+                .addAddress(VPN_ADDRESS, 24)
+                .addRoute(REAL_DNS, 32)     // Route traffic to real DNS through VPN
+                .addDnsServer(REAL_DNS)      // Tell system to use real DNS (traffic will pass through TUN)
+                .setMtu(MTU_SIZE)
+                .setBlocking(true)
 
-        vpnInterface = builder.establish() ?: run {
+            // Exclude our own app from the VPN to prevent loops
+            try { builder.addDisallowedApplication(packageName) } catch (_: Exception) {}
+
+            vpnInterface = builder.establish() ?: run {
+                Log.e(TAG, "VPN interface establish() returned null")
+                isRunning = false
+                return
+            }
+            Log.i(TAG, "VPN tunnel established")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to establish VPN", e)
             isRunning = false
             return
         }
@@ -75,19 +90,20 @@ class WebFilterVpnService : VpnService() {
                 if (isDnsRequest(packet.array(), length)) {
                     val domain = extractDomainFromDns(packet.array(), length)
                     if (domain != null && shouldBlockDomain(domain)) {
-                        // Send NXDOMAIN response
+                        Log.d(TAG, "Blocking domain: $domain")
                         val response = buildNxDomainResponse(packet.array(), length)
                         if (response != null) {
-                            output.write(response)
-                            output.flush()
+                            outputMutex.withLock {
+                                output.write(response)
+                                output.flush()
+                            }
                             continue
                         }
                     }
+                    // Forward allowed DNS queries to real DNS
+                    forwardPacket(packet.array(), length, output)
                 }
-
-                // Forward non-blocked packets
-                // For DNS requests to non-blocked domains, forward to real DNS
-                forwardPacket(packet.array(), length, output)
+                // Non-DNS packets are dropped since we only route DNS
             } catch (e: Exception) {
                 if (isRunning) {
                     delay(100)
@@ -205,13 +221,11 @@ class WebFilterVpnService : VpnService() {
     }
 
     private fun forwardPacket(packet: ByteArray, length: Int, output: FileOutputStream) {
-        // For a local VPN filter, we need to forward legitimate DNS to the real DNS server
-        // This is done by creating a DatagramSocket, protecting it from the VPN,
-        // sending the DNS query to the real DNS, and writing the response back
+        val packetCopy = packet.copyOf(length)
         serviceScope.launch {
             try {
-                val ipHeaderLen = (packet[0].toInt() and 0xF) * 4
-                val dnsPayload = packet.copyOfRange(ipHeaderLen + 8, length)
+                val ipHeaderLen = (packetCopy[0].toInt() and 0xF) * 4
+                val dnsPayload = packetCopy.copyOfRange(ipHeaderLen + 8, length)
 
                 val socket = java.net.DatagramSocket()
                 protect(socket) // Prevent VPN loop
@@ -226,17 +240,16 @@ class WebFilterVpnService : VpnService() {
                 socket.receive(receivePacket)
                 socket.close()
 
-                // Rebuild IP/UDP packet with the DNS response
                 val responseData = receivePacket.data.copyOf(receivePacket.length)
-                val fullResponse = buildResponsePacket(packet, ipHeaderLen, responseData)
+                val fullResponse = buildResponsePacket(packetCopy, ipHeaderLen, responseData)
                 if (fullResponse != null) {
-                    withContext(Dispatchers.IO) {
+                    outputMutex.withLock {
                         output.write(fullResponse)
                         output.flush()
                     }
                 }
-            } catch (_: Exception) {
-                // DNS timeout or error - silently drop
+            } catch (e: Exception) {
+                Log.w(TAG, "DNS forward failed: ${e.message}")
             }
         }
     }
@@ -316,9 +329,9 @@ class WebFilterVpnService : VpnService() {
     }
 
     companion object {
+        private const val TAG = "WebFilterVpn"
         const val ACTION_STOP = "com.parenthelper.child.STOP_VPN"
         private const val VPN_ADDRESS = "10.0.0.2"
-        private const val DNS_SERVER = "10.0.0.1"
         private const val REAL_DNS = "8.8.8.8"
         private const val MTU_SIZE = 1500
     }
