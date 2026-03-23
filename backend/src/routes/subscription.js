@@ -32,7 +32,7 @@ router.get('/', auth, async (req, res, next) => {
         currentKids: childrenCount,
         expiresAt: sub.expiresAt,
         activatedAt: sub.activatedAt,
-        durationDays: sub.durationDays,
+        durationMonths: sub.durationMonths,
         status: sub.status,
       },
     });
@@ -64,15 +64,21 @@ router.post('/activate', auth, async (req, res, next) => {
       return res.status(410).json({ error: 'This key has expired' });
     }
 
-    // Check if user already has an active subscription
+    // Check if user already has an active key (one key per parent)
     const user = await User.findById(req.user._id).populate('subscriptionKey');
-    if (user.subscriptionKey && user.subscriptionKey.status === 'active') {
-      return res.status(409).json({ error: 'You already have an active subscription. It must expire before activating a new key.' });
+    if (user.subscriptionKey) {
+      const existingKey = user.subscriptionKey;
+      if (existingKey.status === 'active') {
+        return res.status(409).json({ error: 'You already have an active subscription.' });
+      }
+      // Unlink old expired key so user can activate a new one
+      // Clear the activatedBy on the old key so the unique index frees up
+      await SubscriptionKey.findByIdAndUpdate(existingKey._id, { activatedBy: null });
     }
 
     // Activate the key
     const now = new Date();
-    const expiresAt = new Date(now.getTime() + subKey.durationDays * 24 * 60 * 60 * 1000);
+    const expiresAt = SubscriptionKey.addMonths(now, subKey.durationMonths);
 
     subKey.status = 'active';
     subKey.activatedBy = req.user._id;
@@ -91,7 +97,7 @@ router.post('/activate', auth, async (req, res, next) => {
         maxKids: subKey.maxKids,
         expiresAt,
         activatedAt: now,
-        durationDays: subKey.durationDays,
+        durationMonths: subKey.durationMonths,
         status: 'active',
       },
     });

@@ -18,15 +18,12 @@
           />
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-500 mb-1">Duration (days)</label>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Duration</label>
           <select
-            v-model.number="newKey.durationDays"
+            v-model.number="newKey.durationMonths"
             class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
           >
-            <option :value="30">30 days</option>
-            <option :value="90">90 days</option>
-            <option :value="180">180 days</option>
-            <option :value="365">1 year</option>
+            <option v-for="m in 12" :key="m" :value="m">{{ m }} month{{ m > 1 ? 's' : '' }}</option>
           </select>
         </div>
         <div class="flex-1 min-w-[200px]">
@@ -108,7 +105,7 @@
               </span>
             </td>
             <td class="px-6 py-4 text-sm text-gray-600">{{ k.maxKids }}</td>
-            <td class="px-6 py-4 text-sm text-gray-600">{{ k.durationDays }}d</td>
+            <td class="px-6 py-4 text-sm text-gray-600">{{ k.durationMonths }}mo</td>
             <td class="px-6 py-4 text-sm text-gray-600">
               <span v-if="k.activatedBy">{{ k.activatedBy.name }} ({{ k.activatedBy.email }})</span>
               <span v-else class="text-gray-400">—</span>
@@ -128,17 +125,24 @@
             <td class="px-6 py-4">
               <div class="flex gap-2">
                 <button
-                  v-if="k.status !== 'active'"
-                  class="px-2 py-1 text-xs text-red-600 border border-red-200 rounded hover:bg-red-50"
-                  @click="handleDelete(k)"
+                  v-if="k.status === 'active' || k.status === 'expired'"
+                  class="px-2 py-1 text-xs text-green-600 border border-green-200 rounded hover:bg-green-50"
+                  @click="openExtend(k)"
                 >
-                  Delete
+                  Extend
                 </button>
                 <button
                   class="px-2 py-1 text-xs text-blue-600 border border-blue-200 rounded hover:bg-blue-50"
                   @click="openEdit(k)"
                 >
                   Edit
+                </button>
+                <button
+                  v-if="k.status !== 'active'"
+                  class="px-2 py-1 text-xs text-red-600 border border-red-200 rounded hover:bg-red-50"
+                  @click="handleDelete(k)"
+                >
+                  Delete
                 </button>
               </div>
             </td>
@@ -213,11 +217,41 @@
         </div>
       </div>
     </div>
+    <!-- Extend Modal -->
+    <div v-if="extendData" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50" @click.self="extendData = null">
+      <div class="bg-white rounded-xl p-6 w-full max-w-sm mx-4">
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">Extend Subscription</h3>
+        <p class="text-sm text-gray-500 mb-4">Key: <code class="font-mono font-medium">{{ extendData.key.key }}</code></p>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Add months</label>
+          <select
+            v-model.number="extendData.months"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none"
+          >
+            <option v-for="m in 12" :key="m" :value="m">{{ m }} month{{ m > 1 ? 's' : '' }}</option>
+          </select>
+        </div>
+        <div class="flex gap-3 mt-6">
+          <button
+            class="flex-1 px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+            @click="extendData = null"
+          >
+            Cancel
+          </button>
+          <button
+            class="flex-1 px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
+            @click="handleExtend"
+          >
+            Extend
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-const { getKeys, createKey, updateKey, deleteKey } = useApi();
+const { getKeys, createKey, updateKey, deleteKey, extendKey } = useApi();
 
 const keys = ref<any[]>([]);
 const loading = ref(true);
@@ -229,7 +263,8 @@ const statusFilter = ref('');
 const createdKey = ref('');
 const editKey = ref<any>(null);
 
-const newKey = ref({ maxKids: 2, durationDays: 30, note: '' });
+const newKey = ref({ maxKids: 2, durationMonths: 1, note: '' });
+const extendData = ref<{ key: any; months: number } | null>(null);
 
 function statusBadge(status: string) {
   switch (status) {
@@ -276,7 +311,7 @@ async function handleCreate() {
   creating.value = true;
   createdKey.value = '';
   try {
-    const data = await createKey(newKey.value.maxKids, newKey.value.durationDays, newKey.value.note);
+    const data = await createKey(newKey.value.maxKids, newKey.value.durationMonths, newKey.value.note);
     createdKey.value = data.key;
     newKey.value.note = '';
     loadKeys();
@@ -310,6 +345,21 @@ async function handleDelete(k: any) {
   if (!confirm(`Delete key ${k.key}?`)) return;
   try {
     await deleteKey(k._id);
+    loadKeys();
+  } catch {
+    // Handle error
+  }
+}
+
+function openExtend(k: any) {
+  extendData.value = { key: k, months: 1 };
+}
+
+async function handleExtend() {
+  if (!extendData.value) return;
+  try {
+    await extendKey(extendData.value.key._id, extendData.value.months);
+    extendData.value = null;
     loadKeys();
   } catch {
     // Handle error

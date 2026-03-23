@@ -15,10 +15,11 @@ const subscriptionKeySchema = new mongoose.Schema({
     min: 1,
     max: 20,
   },
-  durationDays: {
+  durationMonths: {
     type: Number,
     required: true,
     min: 1,
+    max: 12,
   },
   expiresAt: {
     type: Date,
@@ -50,13 +51,21 @@ const subscriptionKeySchema = new mongoose.Schema({
 }, { timestamps: true });
 
 subscriptionKeySchema.index({ status: 1 });
-subscriptionKeySchema.index({ activatedBy: 1 });
+// One key per parent — only one active key can reference a given user
+subscriptionKeySchema.index({ activatedBy: 1 }, { unique: true, sparse: true });
 
 // Generate a readable key like "PH-XXXX-XXXX-XXXX"
 subscriptionKeySchema.statics.generateKey = function () {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no I/O/0/1 for clarity
   const seg = () => Array.from({ length: 4 }, () => chars[crypto.randomInt(chars.length)]).join('');
   return `PH-${seg()}-${seg()}-${seg()}`;
+};
+
+// Add N months to a date
+subscriptionKeySchema.statics.addMonths = function (date, months) {
+  const d = new Date(date);
+  d.setMonth(d.getMonth() + months);
+  return d;
 };
 
 module.exports = mongoose.model('SubscriptionKey', subscriptionKeySchema);

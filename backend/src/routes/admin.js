@@ -22,6 +22,7 @@ router.delete('/filters/:domain', adminController.deleteFilter);
 router.post('/keys', adminController.createKey);
 router.get('/keys', adminController.getKeys);
 router.put('/keys/:id', adminController.updateKey);
+router.put('/keys/:id/extend', adminController.extendKey);
 router.delete('/keys/:id', adminController.deleteKey);
 
 module.exports = router;

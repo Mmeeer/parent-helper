@@ -221,16 +221,19 @@ exports.deleteFilter = async (req, res, next) => {
 // POST /admin/keys — Create subscription key
 exports.createKey = async (req, res, next) => {
   try {
-    const { maxKids, durationDays, note } = req.body;
-    if (!maxKids || !durationDays) {
-      return res.status(400).json({ error: 'maxKids and durationDays are required' });
+    const { maxKids, durationMonths, note } = req.body;
+    if (!maxKids || !durationMonths) {
+      return res.status(400).json({ error: 'maxKids and durationMonths are required' });
+    }
+    if (durationMonths < 1 || durationMonths > 12) {
+      return res.status(400).json({ error: 'durationMonths must be between 1 and 12' });
     }
 
     const key = SubscriptionKey.generateKey();
     const subKey = await SubscriptionKey.create({
       key,
       maxKids,
-      durationDays,
+      durationMonths,
       note: note || '',
       createdBy: req.user._id,
     });
@@ -287,6 +290,32 @@ exports.updateKey = async (req, res, next) => {
     if (!key) return res.status(404).json({ error: 'Key not found' });
 
     res.json(key);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// PUT /admin/keys/:id/extend — Extend key expiration
+exports.extendKey = async (req, res, next) => {
+  try {
+    const { months } = req.body;
+    if (!months || months < 1 || months > 12) {
+      return res.status(400).json({ error: 'months must be between 1 and 12' });
+    }
+
+    const key = await SubscriptionKey.findById(req.params.id);
+    if (!key) return res.status(404).json({ error: 'Key not found' });
+    if (key.status === 'unused') {
+      return res.status(400).json({ error: 'Cannot extend an unused key. Change durationMonths instead.' });
+    }
+
+    // Extend from current expiry (or from now if already expired)
+    const baseDate = key.expiresAt && new Date(key.expiresAt) > new Date() ? key.expiresAt : new Date();
+    key.expiresAt = SubscriptionKey.addMonths(baseDate, months);
+    key.status = 'active';
+    await key.save();
+
+    res.json({ message: `Extended by ${months} month(s)`, key });
   } catch (err) {
     next(err);
   }

@@ -105,10 +105,10 @@ export function useApi() {
       );
     },
 
-    async createKey(maxKids: number, durationDays: number, note = '') {
+    async createKey(maxKids: number, durationMonths: number, note = '') {
       return request<any>('/admin/keys', {
         method: 'POST',
-        body: JSON.stringify({ maxKids, durationDays, note }),
+        body: JSON.stringify({ maxKids, durationMonths, note }),
       });
     },
 
@@ -116,6 +116,13 @@ export function useApi() {
       return request<any>(`/admin/keys/${keyId}`, {
         method: 'PUT',
         body: JSON.stringify(data),
+      });
+    },
+
+    async extendKey(keyId: string, months: number) {
+      return request<any>(`/admin/keys/${keyId}/extend`, {
+        method: 'PUT',
+        body: JSON.stringify({ months }),
       });
     },
 
