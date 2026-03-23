@@ -17,7 +17,12 @@
       "adaptiveIcon": {
         "backgroundColor": "#4A90D9"
       },
-      "package": "com.parenthelper.parent"
+      "package": "com.parenthelper.parent",
+      "config": {
+        "googleMaps": {
+          "apiKey": "YOUR_GOOGLE_MAPS_API_KEY"
+        }
+      }
     },
     "plugins": [
       "expo-secure-store"

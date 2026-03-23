@@ -6,6 +6,7 @@ import androidx.work.WorkerParameters
 import com.parenthelper.child.ParentHelperApp
 import com.parenthelper.child.collectors.LocationCollector
 import com.parenthelper.child.collectors.ScreenTimeCollector
+import com.parenthelper.child.collectors.WebActivityCollector
 import com.parenthelper.child.data.api.ApiClient
 import com.parenthelper.child.data.models.ActivitySyncRequest
 import kotlinx.coroutines.flow.first
@@ -34,14 +35,17 @@ class ActivitySyncWorker(
             // Collect location data
             val locations = LocationCollector.getRecentLocations()
 
+            // Atomically drain web entries to prevent double-counting
+            val (webEntries, blockedAttempts) = WebActivityCollector.drainAll()
+
             val request = ActivitySyncRequest(
                 childId = childId,
                 deviceId = deviceId,
                 date = today,
                 apps = appUsage,
-                web = null,
+                web = if (webEntries.isNotEmpty()) webEntries else null,
                 location = locations,
-                blockedAttempts = null,
+                blockedAttempts = if (blockedAttempts.isNotEmpty()) blockedAttempts else null,
             )
 
             ApiClient.service.syncActivity(request)

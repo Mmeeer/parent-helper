@@ -1,0 +1,40 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs grep:*)",
+      "Bash(find /c/Users/friday/OneDrive/Desktop/Coding/olzii/mobile/src -type f \\\\\\(-name *.ts -o -name *.tsx -o -name *.js -o -name *.jsx \\\\\\))",
+      "Bash(netsh advfirewall:*)",
+      "Bash(curl -s http://10.0.2.2:3000/health)",
+      "Bash(adb devices:*)",
+      "Read(//c/Users/friday/OneDrive/Desktop/Coding/parent/$LOCALAPPDATA/Android/Sdk/platform-tools/**)",
+      "Bash(\"$LOCALAPPDATA/Android/Sdk/platform-tools/adb.exe\" devices:*)",
+      "Bash(\"$LOCALAPPDATA/Android/Sdk/platform-tools/adb.exe\" shell:*)",
+      "Bash(\"$LOCALAPPDATA/Android/Sdk/platform-tools/adb.exe\" reverse:*)",
+      "Bash(./gradlew installDebug)",
+      "Bash(./gradlew clean:*)",
+      "Bash(find /c/Users/friday/OneDrive/Desktop/Coding/parent/parent-app/src/components -type f \\\\\\(-name *.tsx -o -name *.ts \\\\\\))",
+      "Bash(find /c/Users/friday/OneDrive/Desktop/Coding/parent/parent-app/src -type f \\\\\\(-name *.ts* -o -name *.js \\\\\\))",
+      "Bash(grep -r \"$push\" /c/Users/friday/OneDrive/Desktop/Coding/parent/backend/src --include=\"*.js\")",
+      "Bash(\"$LOCALAPPDATA/Android/Sdk/platform-tools/adb.exe\" logcat:*)",
+      "Bash(ADB=\"$LOCALAPPDATA/Android/Sdk/platform-tools/adb.exe\")",
+      "Bash(\"$ADB\" logcat:*)",
+      "Bash(\"/c/Users/friday/AppData/Local/Android/Sdk/platform-tools/adb.exe\" logcat:*)",
+      "Bash(\"/c/Users/friday/AppData/Local/Android/Sdk/platform-tools/adb.exe\" shell:*)",
+      "Bash(curl -s http://localhost:3000/auth/login -H 'Content-Type: application/json' -d '{\"\"email\"\":\"\"test@test.com\"\",\"\"password\"\":\"\"test123456\"\"}')",
+      "Bash(/tmp/analysis.txt:*)",
+      "Read(//tmp/**)",
+      "Bash(\"/c/Users/friday/AppData/Local/Android/Sdk/platform-tools/adb.exe\" devices:*)",
+      "Bash(\"/c/Users/friday/AppData/Local/Android/Sdk/platform-tools/adb.exe\" reverse:*)",
+      "Bash(find /c/Users/friday/OneDrive/Desktop/Coding/parent/parent-app/src -type f -name *.tsx -o -name *.ts)",
+      "Bash(find /c/Users/friday/OneDrive/Desktop/Coding/parent/parent-app/src -name *.ts -path */types*)",
+      "Bash(grep -r \"browser\\\\|BrowserHistory\\\\|HistoryProvider\\\\|Usage Event\\\\|getHistory\" /c/Users/friday/OneDrive/Desktop/Coding/parent/child/app/src/main/java --include=*.kt)",
+      "Bash(find /c/Users/friday/OneDrive/Desktop/Coding/parent/parent-app/src -type f -name *.ts -o -name *.js -o -name *.tsx -o -name *.jsx)",
+      "Bash(./gradlew assembleDebug)",
+      "Bash(./gradlew --stop)",
+      "Bash(npx expo:*)"
+    ],
+    "additionalDirectories": [
+      "\\tmp"
+    ]
+  }
+}

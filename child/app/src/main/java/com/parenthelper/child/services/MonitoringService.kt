@@ -1,10 +1,14 @@
 package com.parenthelper.child.services
 
+import android.app.AlarmManager
 import android.app.Notification
 import android.app.PendingIntent
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.os.IBinder
+import android.os.PowerManager
+import android.os.SystemClock
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.work.*
@@ -12,6 +16,7 @@ import com.parenthelper.child.ParentHelperApp
 import com.parenthelper.child.R
 import com.parenthelper.child.collectors.LocationCollector
 import com.parenthelper.child.collectors.ScreenTimeCollector
+import com.parenthelper.child.collectors.WebActivityCollector
 import com.parenthelper.child.data.api.ApiClient
 import com.parenthelper.child.data.models.ActivitySyncRequest
 import com.parenthelper.child.enforcement.DomainBlockList
@@ -31,10 +36,12 @@ class MonitoringService : Service() {
     private val serviceScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private var locationCollector: LocationCollector? = null
     private var screenTimeLimiter: ScreenTimeLimiter? = null
+    private var wakeLock: PowerManager.WakeLock? = null
 
     override fun onCreate() {
         super.onCreate()
         startForeground(NOTIFICATION_ID, createNotification())
+        acquireWakeLock()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -109,10 +116,28 @@ class MonitoringService : Service() {
     private suspend fun executeLocate() {
         try {
             val prefs = (application as ParentHelperApp).prefsManager
-            val childId = prefs.childId.first() ?: return
-            val deviceId = prefs.deviceId.first() ?: return
+            val childId = prefs.childId.first() ?: run {
+                Log.e(TAG, "Locate: no childId in prefs")
+                return
+            }
+            val deviceId = prefs.deviceId.first() ?: run {
+                Log.e(TAG, "Locate: no deviceId in prefs")
+                return
+            }
 
-            val locations = LocationCollector.getRecentLocations()
+            var locations = LocationCollector.getRecentLocations()
+            Log.d(TAG, "Locate: ${locations.size} recent location(s) available")
+
+            // If no recent locations, try to get an immediate one
+            if (locations.isEmpty()) {
+                Log.d(TAG, "Locate: fetching immediate location...")
+                val immediate = locationCollector?.getImmediateLocation()
+                if (immediate != null) {
+                    locations = listOf(immediate)
+                    Log.d(TAG, "Locate: got immediate location: ${immediate.lat}, ${immediate.lng}")
+                }
+            }
+
             if (locations.isNotEmpty()) {
                 val today = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
                 ApiClient.service.syncActivity(
@@ -126,7 +151,10 @@ class MonitoringService : Service() {
                         blockedAttempts = null,
                     )
                 )
+                Log.d(TAG, "Locate: synced ${locations.size} location(s) to server")
                 LocationCollector.clearRecentLocations()
+            } else {
+                Log.w(TAG, "Locate: no location available (check permissions)")
             }
         } catch (e: Exception) {
             Log.e(TAG, "Locate command failed", e)
@@ -143,6 +171,8 @@ class MonitoringService : Service() {
             val screenTimeCollector = ScreenTimeCollector(this@MonitoringService)
             val appUsage = screenTimeCollector.getTodayAppUsage()
             val locations = LocationCollector.getRecentLocations()
+            // Atomically drain web entries to prevent double-counting
+            val (webEntries, blockedAttempts) = WebActivityCollector.drainAll()
 
             ApiClient.service.syncActivity(
                 ActivitySyncRequest(
@@ -150,9 +180,9 @@ class MonitoringService : Service() {
                     deviceId = deviceId,
                     date = today,
                     apps = appUsage,
-                    web = null,
+                    web = if (webEntries.isNotEmpty()) webEntries else null,
                     location = locations,
-                    blockedAttempts = null,
+                    blockedAttempts = if (blockedAttempts.isNotEmpty()) blockedAttempts else null,
                 )
             )
             LocationCollector.clearRecentLocations()
@@ -223,12 +253,58 @@ class MonitoringService : Service() {
             .build()
     }
 
+    private fun acquireWakeLock() {
+        val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+        wakeLock = pm.newWakeLock(
+            PowerManager.PARTIAL_WAKE_LOCK,
+            "ParentHelper::MonitoringWakeLock"
+        ).apply {
+            acquire()
+        }
+        Log.d(TAG, "WakeLock acquired")
+    }
+
+    private fun releaseWakeLock() {
+        wakeLock?.let {
+            if (it.isHeld) {
+                it.release()
+                Log.d(TAG, "WakeLock released")
+            }
+        }
+        wakeLock = null
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        Log.d(TAG, "Task removed — scheduling service restart")
+        scheduleRestart()
+        super.onTaskRemoved(rootIntent)
+    }
+
+    private fun scheduleRestart() {
+        val restartIntent = Intent(this, MonitoringService::class.java).apply {
+            setPackage(packageName)
+        }
+        val pendingIntent = PendingIntent.getService(
+            this, RESTART_REQUEST_CODE, restartIntent,
+            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        alarmManager.setExactAndAllowWhileIdle(
+            AlarmManager.ELAPSED_REALTIME_WAKEUP,
+            SystemClock.elapsedRealtime() + 3000,
+            pendingIntent,
+        )
+    }
+
     override fun onDestroy() {
-        super.onDestroy()
+        Log.d(TAG, "Service destroyed — scheduling restart")
+        scheduleRestart()
+        releaseWakeLock()
         serviceScope.cancel()
         locationCollector?.stopTracking()
         screenTimeLimiter?.stopMonitoring()
         SocketManager.disconnect()
+        super.onDestroy()
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -236,6 +312,7 @@ class MonitoringService : Service() {
     companion object {
         private const val TAG = "MonitoringService"
         const val NOTIFICATION_ID = 1001
+        private const val RESTART_REQUEST_CODE = 9999
         @Volatile
         var isDeviceLocked = false
     }

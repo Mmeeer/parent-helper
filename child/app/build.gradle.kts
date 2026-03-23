@@ -2,7 +2,6 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.serialization)
 }
 
@@ -25,6 +24,14 @@ val envProps = Properties().apply {
 android {
     namespace = "com.parenthelper.child"
     compileSdk = 35
+
+    // Configure built-in Kotlin support
+    kotlin {
+        version = libs.versions.kotlin.get()
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        }
+    }
 
     defaultConfig {
         applicationId = "com.parenthelper.child"
@@ -58,9 +65,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-    }
-    kotlinOptions {
-        jvmTarget = "17"
     }
 }
 

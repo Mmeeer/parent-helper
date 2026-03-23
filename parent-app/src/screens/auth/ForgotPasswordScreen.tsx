@@ -1,18 +1,15 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Pressable,
 } from 'react-native';
+import { Text, TextInput, Button, IconButton } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../../utils/constants';
+import { colors } from '../../theme';
 import * as api from '../../services/api';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../types';
@@ -30,6 +27,8 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [secureText, setSecureText] = useState(true);
+  const [secureConfirm, setSecureConfirm] = useState(true);
 
   const handleRequestCode = async () => {
     if (!email.trim()) {
@@ -76,219 +75,190 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
 
   if (step === 'done') {
     return (
-      <View style={styles.container}>
-        <View style={styles.successContainer}>
-          <View style={styles.successIcon}>
-            <Ionicons name="checkmark-circle" size={64} color={COLORS.secondary} />
-          </View>
-          <Text style={styles.successTitle}>Password Reset!</Text>
-          <Text style={styles.successSubtitle}>
-            Your password has been updated. Please log in with your new password.
-          </Text>
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={() => navigation.navigate('Login')}
-          >
-            <Text style={styles.primaryButtonText}>Go to Login</Text>
-          </TouchableOpacity>
+      <View className="flex-1 bg-surface-secondary justify-center items-center px-10">
+        <View className="w-20 h-20 rounded-full bg-accent-50 items-center justify-center mb-6">
+          <Ionicons name="checkmark-circle" size={56} color={colors.secondary} />
         </View>
+        <Text
+          variant="headlineSmall"
+          className="text-slate-700 font-bold text-center mb-3"
+        >
+          Password Reset!
+        </Text>
+        <Text
+          variant="bodyLarge"
+          className="text-slate-500 text-center leading-6 mb-8"
+        >
+          Your password has been updated. Please log in with your new password.
+        </Text>
+        <Button
+          mode="contained"
+          onPress={() => navigation.navigate('Login')}
+          buttonColor={colors.primary}
+          textColor={colors.white}
+          contentStyle={{ paddingVertical: 6 }}
+          labelStyle={{ fontSize: 16, fontWeight: '600' }}
+          className="w-full rounded-xl"
+        >
+          Go to Login
+        </Button>
       </View>
     );
   }
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      className="flex-1 bg-surface-secondary"
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.text} />
-        </TouchableOpacity>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 40 }}
+        keyboardShouldPersistTaps="handled"
+        className="px-6 pt-14"
+      >
+        {/* Back button */}
+        <IconButton
+          icon={() => <Ionicons name="arrow-back" size={22} color={colors.text} />}
+          size={22}
+          onPress={() => navigation.goBack()}
+          mode="contained"
+          containerColor={colors.white}
+          className="mb-4 self-start rounded-xl"
+        />
 
-        <Text style={styles.title}>Reset Password</Text>
-        <Text style={styles.subtitle}>
+        {/* Header */}
+        <Text
+          variant="headlineMedium"
+          className="text-slate-700 font-bold mb-2"
+        >
+          Reset Password
+        </Text>
+        <Text
+          variant="bodyLarge"
+          className="text-slate-500 leading-6 mb-8"
+        >
           {step === 'email'
-            ? 'Enter your email address and we\'ll send you a reset code.'
+            ? "Enter your email address and we'll send you a reset code."
             : 'Enter the code sent to your email and set a new password.'}
         </Text>
 
         {step === 'email' ? (
-          <>
-            <Text style={styles.label}>Email</Text>
+          <View className="gap-4">
             <TextInput
-              style={styles.input}
+              mode="outlined"
+              label="Email"
               placeholder="you@example.com"
-              placeholderTextColor={COLORS.textLight}
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
               keyboardType="email-address"
               autoComplete="email"
+              left={<TextInput.Icon icon={() => <Ionicons name="mail-outline" size={20} color={colors.textSecondary} />} />}
+              outlineColor={colors.border}
+              activeOutlineColor={colors.primary}
+              outlineStyle={{ borderRadius: 12 }}
+              theme={{ colors: { background: colors.white } }}
             />
 
-            <TouchableOpacity
-              style={[styles.primaryButton, loading && styles.buttonDisabled]}
+            <Button
+              mode="contained"
               onPress={handleRequestCode}
+              loading={loading}
               disabled={loading}
+              buttonColor={colors.primary}
+              textColor={colors.white}
+              contentStyle={{ paddingVertical: 6 }}
+              labelStyle={{ fontSize: 16, fontWeight: '600' }}
+              className="mt-4 rounded-xl"
             >
-              {loading ? (
-                <ActivityIndicator color={COLORS.white} />
-              ) : (
-                <Text style={styles.primaryButtonText}>Send Reset Code</Text>
-              )}
-            </TouchableOpacity>
-          </>
+              Send Reset Code
+            </Button>
+          </View>
         ) : (
-          <>
-            <Text style={styles.label}>Reset Code</Text>
+          <View className="gap-4">
             <TextInput
-              style={styles.input}
+              mode="outlined"
+              label="Reset Code"
               placeholder="6-digit code"
-              placeholderTextColor={COLORS.textLight}
               value={code}
               onChangeText={setCode}
               keyboardType="number-pad"
               maxLength={6}
+              left={<TextInput.Icon icon={() => <Ionicons name="key-outline" size={20} color={colors.textSecondary} />} />}
+              outlineColor={colors.border}
+              activeOutlineColor={colors.primary}
+              outlineStyle={{ borderRadius: 12 }}
+              theme={{ colors: { background: colors.white } }}
             />
 
-            <Text style={styles.label}>New Password</Text>
             <TextInput
-              style={styles.input}
+              mode="outlined"
+              label="New Password"
               placeholder="Min. 8 characters"
-              placeholderTextColor={COLORS.textLight}
               value={newPassword}
               onChangeText={setNewPassword}
-              secureTextEntry
+              secureTextEntry={secureText}
+              left={<TextInput.Icon icon={() => <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} />} />}
+              right={
+                <TextInput.Icon
+                  icon={() => <Ionicons name={secureText ? 'eye-off-outline' : 'eye-outline'} size={20} color={colors.textSecondary} />}
+                  onPress={() => setSecureText(!secureText)}
+                />
+              }
+              outlineColor={colors.border}
+              activeOutlineColor={colors.primary}
+              outlineStyle={{ borderRadius: 12 }}
+              theme={{ colors: { background: colors.white } }}
             />
 
-            <Text style={styles.label}>Confirm Password</Text>
             <TextInput
-              style={styles.input}
+              mode="outlined"
+              label="Confirm Password"
               placeholder="Re-enter password"
-              placeholderTextColor={COLORS.textLight}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
-              secureTextEntry
+              secureTextEntry={secureConfirm}
+              left={<TextInput.Icon icon={() => <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} />} />}
+              right={
+                <TextInput.Icon
+                  icon={() => <Ionicons name={secureConfirm ? 'eye-off-outline' : 'eye-outline'} size={20} color={colors.textSecondary} />}
+                  onPress={() => setSecureConfirm(!secureConfirm)}
+                />
+              }
+              outlineColor={colors.border}
+              activeOutlineColor={colors.primary}
+              outlineStyle={{ borderRadius: 12 }}
+              theme={{ colors: { background: colors.white } }}
             />
 
-            <TouchableOpacity
-              style={[styles.primaryButton, loading && styles.buttonDisabled]}
+            <Button
+              mode="contained"
               onPress={handleResetPassword}
+              loading={loading}
               disabled={loading}
+              buttonColor={colors.primary}
+              textColor={colors.white}
+              contentStyle={{ paddingVertical: 6 }}
+              labelStyle={{ fontSize: 16, fontWeight: '600' }}
+              className="mt-4 rounded-xl"
             >
-              {loading ? (
-                <ActivityIndicator color={COLORS.white} />
-              ) : (
-                <Text style={styles.primaryButtonText}>Reset Password</Text>
-              )}
-            </TouchableOpacity>
+              Reset Password
+            </Button>
 
-            <TouchableOpacity
-              style={styles.linkButton}
+            <Pressable
+              className="items-center mt-2 py-2"
               onPress={() => setStep('email')}
             >
-              <Text style={styles.linkText}>Didn't receive a code? Try again</Text>
-            </TouchableOpacity>
-          </>
+              <Text
+                variant="bodyMedium"
+                className="text-primary-600 font-medium"
+              >
+                Didn't receive a code? Try again
+              </Text>
+            </Pressable>
+          </View>
         )}
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  scrollContent: {
-    padding: 24,
-    paddingTop: 60,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: COLORS.white,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: COLORS.text,
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 15,
-    color: COLORS.textSecondary,
-    lineHeight: 22,
-    marginBottom: 32,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginBottom: 8,
-    marginTop: 16,
-  },
-  input: {
-    backgroundColor: COLORS.white,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: COLORS.text,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  primaryButton: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 32,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  primaryButtonText: {
-    color: COLORS.white,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  linkButton: {
-    alignItems: 'center',
-    marginTop: 16,
-    paddingVertical: 8,
-  },
-  linkText: {
-    color: COLORS.primary,
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  successContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
-  },
-  successIcon: {
-    marginBottom: 24,
-  },
-  successTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: COLORS.text,
-    marginBottom: 12,
-  },
-  successSubtitle: {
-    fontSize: 15,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 32,
-  },
-});

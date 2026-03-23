@@ -5,24 +5,36 @@ const Child = require('../models/Child');
 exports.pair = async (req, res, next) => {
   try {
     const { childId } = req.body;
+    console.log('[PAIR] Request received:', { childId, parentId: req.user?._id });
+
+    if (!childId) {
+      console.log('[PAIR] ERROR: No childId provided');
+      return res.status(400).json({ error: 'childId is required' });
+    }
 
     // Verify child belongs to parent
     const child = await Child.findOne({ _id: childId, parentId: req.user._id });
     if (!child) {
+      console.log('[PAIR] ERROR: Child not found or does not belong to parent:', { childId, parentId: req.user._id });
       return res.status(404).json({ error: 'Child not found' });
     }
+    console.log('[PAIR] Child verified:', child.name);
 
     // Clean up expired unpaired devices for this child to free up pairing codes
-    await Device.deleteMany({
+    const cleaned = await Device.deleteMany({
       childId,
       paired: false,
       pairingExpiresAt: { $lt: new Date() },
     });
+    if (cleaned.deletedCount > 0) {
+      console.log('[PAIR] Cleaned up', cleaned.deletedCount, 'expired unpaired devices');
+    }
 
     const device = await Device.createWithUniquePairingCode({
       childId,
       parentId: req.user._id,
     });
+    console.log('[PAIR] SUCCESS: Device created with pairing code:', device.pairingCode, 'expires:', device.pairingExpiresAt);
 
     res.status(201).json({
       deviceId: device._id,
@@ -30,6 +42,7 @@ exports.pair = async (req, res, next) => {
       expiresAt: device.pairingExpiresAt,
     });
   } catch (err) {
+    console.error('[PAIR] ERROR:', err.message, err.code ? `(code: ${err.code})` : '');
     next(err);
   }
 };
@@ -37,20 +50,34 @@ exports.pair = async (req, res, next) => {
 exports.completePairing = async (req, res, next) => {
   try {
     const { pairingCode, platform, model, osVersion, appVersion } = req.body;
+    console.log('[COMPLETE-PAIRING] Request received:', { pairingCode, platform, model, osVersion, appVersion });
 
     if (!pairingCode || typeof pairingCode !== 'string') {
+      console.log('[COMPLETE-PAIRING] ERROR: Missing or invalid pairing code');
       return res.status(400).json({ error: 'Pairing code is required' });
     }
 
     const normalizedCode = pairingCode.trim().toUpperCase();
+    console.log('[COMPLETE-PAIRING] Looking up code:', normalizedCode);
+
+    // Debug: show all unpaired devices
+    const allUnpaired = await Device.find({ paired: false }).select('pairingCode pairingExpiresAt');
+    console.log('[COMPLETE-PAIRING] All unpaired devices in DB:', allUnpaired.map(d => ({
+      code: d.pairingCode,
+      expires: d.pairingExpiresAt,
+      expired: d.pairingExpiresAt ? d.pairingExpiresAt < new Date() : 'no-expiry',
+    })));
 
     const device = await Device.findOne({ pairingCode: normalizedCode, paired: false });
     if (!device) {
+      console.log('[COMPLETE-PAIRING] ERROR: No device found with code:', normalizedCode);
       return res.status(404).json({ error: 'Invalid or expired pairing code' });
     }
+    console.log('[COMPLETE-PAIRING] Device found:', { deviceId: device._id, childId: device.childId });
 
     // Check if pairing code has expired
     if (device.pairingExpiresAt && device.pairingExpiresAt < new Date()) {
+      console.log('[COMPLETE-PAIRING] ERROR: Code expired at:', device.pairingExpiresAt, 'now:', new Date());
       return res.status(410).json({ error: 'Pairing code has expired. Please generate a new one.' });
     }
 
@@ -65,7 +92,10 @@ exports.completePairing = async (req, res, next) => {
     // Clear pairing code after successful pairing to free up the unique index slot
     device.pairingCode = null;
     device.pairingExpiresAt = null;
+
+    console.log('[COMPLETE-PAIRING] Saving paired device...');
     await device.save();
+    console.log('[COMPLETE-PAIRING] SUCCESS: Device paired!', { deviceId: device._id, childId: device.childId, parentId: device.parentId });
 
     res.json({
       deviceId: device._id,
@@ -74,6 +104,7 @@ exports.completePairing = async (req, res, next) => {
       deviceToken: device.deviceToken,
     });
   } catch (err) {
+    console.error('[COMPLETE-PAIRING] ERROR:', err.message, err.code ? `(code: ${err.code})` : '', err.stack);
     next(err);
   }
 };
@@ -125,10 +156,19 @@ exports.sendCommand = async (req, res, next) => {
 
     // Push command to device via WebSocket
     const io = req.app.get('io');
-    io.to(`device:${device._id}`).emit('command', { command, params });
+    const room = `device:${device._id}`;
+    const sockets = await io.in(room).fetchSockets();
+    console.log(`[COMMAND] Sending '${command}' to room ${room} (${sockets.length} socket(s) in room)`);
+
+    if (sockets.length === 0) {
+      console.log('[COMMAND] WARNING: No sockets in device room — device may not be connected');
+    }
+
+    io.to(room).emit('command', { command, params });
 
     res.json({ message: `Command '${command}' sent to device` });
   } catch (err) {
+    console.error('[COMMAND] ERROR:', err.message);
     next(err);
   }
 };

@@ -29,7 +29,7 @@ class ParentHelperApp : Application() {
         val monitoringChannel = NotificationChannel(
             CHANNEL_MONITORING,
             getString(R.string.channel_monitoring),
-            NotificationManager.IMPORTANCE_LOW,
+            NotificationManager.IMPORTANCE_DEFAULT,
         ).apply {
             description = "Persistent notification for monitoring service"
             setShowBadge(false)

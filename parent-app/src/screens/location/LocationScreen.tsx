@@ -1,39 +1,56 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import {
   View,
-  Text,
-  StyleSheet,
+  ScrollView,
+  RefreshControl,
   ActivityIndicator,
   TouchableOpacity,
-  Dimensions,
+  Linking,
+  Platform,
 } from 'react-native';
-import MapView, { Marker, Polyline } from 'react-native-maps';
+import { Surface, Text, Button, FAB } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { COLORS } from '../../utils/constants';
+import { colors } from '../../theme';
 import { formatTime } from '../../utils/formatters';
 import * as api from '../../services/api';
 import { onSocketEvent } from '../../services/socket';
 import type { RouteProp } from '@react-navigation/native';
 import type { RootStackParamList, LocationEntry } from '../../types';
 
+let MapView: any = null;
+let Marker: any = null;
+let Polyline: any = null;
+
+try {
+  const maps = require('react-native-maps');
+  MapView = maps.default;
+  Marker = maps.Marker;
+  Polyline = maps.Polyline;
+} catch {
+  // react-native-maps not available
+}
+
 type Props = {
   route: RouteProp<RootStackParamList, 'LocationMap'>;
 };
-
-const { width } = Dimensions.get('window');
 
 export default function LocationScreen({ route }: Props) {
   const { childId, childName } = route.params;
   const [locations, setLocations] = useState<LocationEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [mapError, setMapError] = useState(false);
 
   const loadLocations = useCallback(async () => {
     try {
+      setError(null);
       const data = await api.getLocationHistory(childId);
       setLocations(data);
-    } catch {
-      // No location data
+    } catch (err: any) {
+      const msg = err?.message || 'Failed to load location data';
+      console.error('LocationScreen: Failed to load locations:', msg);
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -57,176 +74,207 @@ export default function LocationScreen({ route }: Props) {
 
   const latestLocation = locations.length > 0 ? locations[locations.length - 1] : null;
 
+  const openInExternalMap = (lat: number, lng: number) => {
+    const url = Platform.select({
+      ios: `maps:0,0?q=${lat},${lng}`,
+      android: `geo:${lat},${lng}?q=${lat},${lng}`,
+    }) || `https://maps.google.com/?q=${lat},${lng}`;
+    Linking.openURL(url).catch(() => {
+      Linking.openURL(`https://maps.google.com/?q=${lat},${lng}`);
+    });
+  };
+
   if (loading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+      <View className="flex-1 justify-center items-center bg-surface-secondary">
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View className="flex-1 justify-center items-center bg-surface-secondary px-10">
+        <Ionicons name="alert-circle-outline" size={64} color={colors.danger} />
+        <Text variant="titleMedium" className="font-semibold text-slate-800 mt-4">
+          Error Loading Location
+        </Text>
+        <Text variant="bodyMedium" className="text-slate-500 text-center mt-2">
+          {error}
+        </Text>
+        <Button
+          mode="contained"
+          onPress={loadLocations}
+          buttonColor={colors.primary}
+          textColor={colors.white}
+          className="mt-5 rounded-lg"
+        >
+          Retry
+        </Button>
       </View>
     );
   }
 
   if (!latestLocation) {
     return (
-      <View style={styles.centered}>
-        <Ionicons name="location-outline" size={64} color={COLORS.textLight} />
-        <Text style={styles.emptyTitle}>No Location Data</Text>
-        <Text style={styles.emptySubtitle}>
-          Location updates from {childName}'s device will appear here.
+      <View className="flex-1 justify-center items-center bg-surface-secondary px-10">
+        <Ionicons name="location-outline" size={64} color={colors.textMuted} />
+        <Text variant="titleMedium" className="font-semibold text-slate-800 mt-4">
+          No Location Data
         </Text>
+        <Text variant="bodyMedium" className="text-slate-500 text-center mt-2">
+          Location updates from {childName}'s device will appear here.
+          Try sending a Locate command from the Devices screen.
+        </Text>
+        <Button
+          mode="contained"
+          onPress={loadLocations}
+          buttonColor={colors.primary}
+          textColor={colors.white}
+          className="mt-5 rounded-lg"
+        >
+          Refresh
+        </Button>
       </View>
     );
   }
 
-  return (
-    <View style={styles.container}>
-      <MapView
-        style={styles.map}
-        initialRegion={{
-          latitude: latestLocation.lat,
-          longitude: latestLocation.lng,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        }}
-      >
-        {/* Location trail */}
-        {locations.length > 1 && (
-          <Polyline
-            coordinates={locations.map((l) => ({
-              latitude: l.lat,
-              longitude: l.lng,
-            }))}
-            strokeColor={COLORS.primary}
-            strokeWidth={3}
-          />
-        )}
+  // If MapView is available and hasn't errored, try to render it
+  const showMap = MapView && !mapError;
 
-        {/* Current location marker */}
-        <Marker
-          coordinate={{
+  return (
+    <View className="flex-1">
+      {showMap ? (
+        <MapView
+          style={{ flex: 1 }}
+          initialRegion={{
             latitude: latestLocation.lat,
             longitude: latestLocation.lng,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
           }}
-          title={childName}
-          description={`Last updated: ${formatTime(latestLocation.timestamp)}`}
-        />
+          onMapReady={() => console.log('Map ready')}
+        >
+          {/* Location trail */}
+          {locations.length > 1 && (
+            <Polyline
+              coordinates={locations.map((l: LocationEntry) => ({
+                latitude: l.lat,
+                longitude: l.lng,
+              }))}
+              strokeColor={colors.primary}
+              strokeWidth={3}
+            />
+          )}
 
-        {/* History markers */}
-        {locations.slice(0, -1).map((loc, index) => (
+          {/* Current location marker */}
           <Marker
-            key={index}
-            coordinate={{ latitude: loc.lat, longitude: loc.lng }}
-            title={formatTime(loc.timestamp)}
-            pinColor={COLORS.textLight}
-            opacity={0.5}
+            coordinate={{
+              latitude: latestLocation.lat,
+              longitude: latestLocation.lng,
+            }}
+            title={childName}
+            description={`Last updated: ${formatTime(latestLocation.timestamp)}`}
           />
-        ))}
-      </MapView>
+
+          {/* History markers */}
+          {locations.slice(0, -1).map((loc: LocationEntry, index: number) => (
+            <Marker
+              key={index}
+              coordinate={{ latitude: loc.lat, longitude: loc.lng }}
+              title={formatTime(loc.timestamp)}
+              pinColor={colors.textMuted}
+              opacity={0.5}
+            />
+          ))}
+        </MapView>
+      ) : (
+        <ScrollView
+          className="flex-1 bg-surface-secondary"
+          refreshControl={
+            <RefreshControl refreshing={false} onRefresh={loadLocations} />
+          }
+        >
+          <View className="items-center py-10 gap-y-3">
+            <Ionicons name="map-outline" size={48} color={colors.textMuted} />
+            <Text variant="bodyMedium" className="text-slate-500">
+              Map view unavailable
+            </Text>
+            <Button
+              mode="contained"
+              icon={() => <Ionicons name="open-outline" size={18} color={colors.white} />}
+              onPress={() => openInExternalMap(latestLocation.lat, latestLocation.lng)}
+              buttonColor={colors.primary}
+              textColor={colors.white}
+              className="mt-2 rounded-lg"
+            >
+              Open in Maps
+            </Button>
+          </View>
+
+          {/* Location list */}
+          {locations.map((loc, index) => (
+            <TouchableOpacity
+              key={index}
+              onPress={() => openInExternalMap(loc.lat, loc.lng)}
+            >
+              <Surface className="mx-4 mb-2 rounded-xl p-3.5 flex-row items-center gap-x-3" elevation={1}>
+                <Ionicons
+                  name={index === locations.length - 1 ? 'location' : 'location-outline'}
+                  size={20}
+                  color={index === locations.length - 1 ? colors.primary : colors.textSecondary}
+                />
+                <View className="flex-1">
+                  <Text variant="bodyMedium" className="font-medium text-slate-800" style={{ fontFamily: 'monospace' }}>
+                    {loc.lat.toFixed(6)}, {loc.lng.toFixed(6)}
+                  </Text>
+                  <Text variant="labelSmall" className="text-slate-500 mt-0.5">
+                    {formatTime(loc.timestamp)}
+                  </Text>
+                </View>
+                <Ionicons name="open-outline" size={16} color={colors.textMuted} />
+              </Surface>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
 
       {/* Info Panel */}
-      <View style={styles.infoPanel}>
-        <View style={styles.infoPanelHeader}>
-          <Ionicons name="location" size={20} color={COLORS.primary} />
-          <Text style={styles.infoPanelTitle}>Last Known Location</Text>
+      <Surface
+        className="absolute bottom-5 left-4 right-4 rounded-2xl p-4"
+        elevation={3}
+      >
+        <View className="flex-row items-center gap-x-2 mb-2">
+          <Ionicons name="location" size={20} color={colors.primary} />
+          <Text variant="titleSmall" className="font-semibold text-slate-800">
+            Last Known Location
+          </Text>
         </View>
-        <Text style={styles.infoPanelCoords}>
-          {latestLocation.lat.toFixed(6)}, {latestLocation.lng.toFixed(6)}
-        </Text>
-        <Text style={styles.infoPanelTime}>
+        <TouchableOpacity onPress={() => openInExternalMap(latestLocation.lat, latestLocation.lng)}>
+          <Text
+            variant="bodySmall"
+            className="text-primary-600 underline"
+            style={{ fontFamily: 'monospace' }}
+          >
+            {latestLocation.lat.toFixed(6)}, {latestLocation.lng.toFixed(6)}
+          </Text>
+        </TouchableOpacity>
+        <Text variant="bodySmall" className="text-slate-500 mt-1">
           Updated: {formatTime(latestLocation.timestamp)}
         </Text>
-        <Text style={styles.infoPanelPoints}>
+        <Text variant="labelSmall" className="text-slate-400 mt-1">
           {locations.length} location point{locations.length !== 1 ? 's' : ''} today
         </Text>
-      </View>
+      </Surface>
 
-      {/* Refresh Button */}
-      <TouchableOpacity style={styles.refreshButton} onPress={loadLocations}>
-        <Ionicons name="refresh" size={22} color={COLORS.white} />
-      </TouchableOpacity>
+      {/* Refresh FAB */}
+      <FAB
+        icon={() => <Ionicons name="refresh" size={22} color={colors.white} />}
+        onPress={loadLocations}
+        className="absolute top-4 right-4 bg-primary-600"
+        color={colors.white}
+        size="small"
+      />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: COLORS.background,
-    paddingHorizontal: 40,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginTop: 16,
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    marginTop: 8,
-  },
-  map: {
-    flex: 1,
-  },
-  infoPanel: {
-    position: 'absolute',
-    bottom: 20,
-    left: 16,
-    right: 16,
-    backgroundColor: COLORS.white,
-    borderRadius: 16,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  infoPanelHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
-  },
-  infoPanelTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.text,
-  },
-  infoPanelCoords: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    fontFamily: 'monospace',
-  },
-  infoPanelTime: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    marginTop: 4,
-  },
-  infoPanelPoints: {
-    fontSize: 12,
-    color: COLORS.textLight,
-    marginTop: 4,
-  },
-  refreshButton: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    backgroundColor: COLORS.primary,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-});

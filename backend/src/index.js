@@ -27,6 +27,12 @@ const io = new Server(server, {
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
+// Request logger for debugging
+app.use((req, res, next) => {
+  console.log(`[HTTP] ${req.method} ${req.originalUrl} from ${req.ip}`);
+  next();
+});
+
 // Make io accessible to routes
 app.set('io', io);
 
@@ -66,34 +72,43 @@ const jwt = require('jsonwebtoken');
 const Device = require('./models/Device');
 
 io.on('connection', (socket) => {
-  console.log(`Client connected: ${socket.id}`);
+  const transport = socket.conn.transport.name;
+  const origin = socket.handshake.headers.origin || socket.handshake.headers.referer || 'unknown';
+  console.log(`[SOCKET] Client connected: ${socket.id} (transport: ${transport}, origin: ${origin})`);
 
   // Parent joins with JWT token
   socket.on('join:parent', async (token) => {
+    console.log(`[SOCKET] join:parent requested by ${socket.id}`);
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       socket.join(`parent:${decoded.id}`);
-    } catch {
+      console.log(`[SOCKET] Parent joined room: parent:${decoded.id}`);
+    } catch (err) {
+      console.log(`[SOCKET] join:parent failed for ${socket.id}:`, err.message);
       socket.emit('error', { message: 'Invalid token' });
     }
   });
 
   // Device joins with device token
   socket.on('join:device', async (deviceToken) => {
+    console.log(`[SOCKET] join:device requested by ${socket.id}, token: ${deviceToken ? deviceToken.substring(0, 8) + '...' : 'EMPTY'}`);
     try {
       const device = await Device.findOne({ deviceToken, paired: true });
       if (device) {
         socket.join(`device:${device._id}`);
+        console.log(`[SOCKET] Device joined room: device:${device._id}`);
       } else {
+        console.log(`[SOCKET] join:device failed: no paired device found for token`);
         socket.emit('error', { message: 'Invalid device token' });
       }
-    } catch {
+    } catch (err) {
+      console.log(`[SOCKET] join:device error for ${socket.id}:`, err.message);
       socket.emit('error', { message: 'Authentication failed' });
     }
   });
 
-  socket.on('disconnect', () => {
-    console.log(`Client disconnected: ${socket.id}`);
+  socket.on('disconnect', (reason) => {
+    console.log(`[SOCKET] Client disconnected: ${socket.id} (reason: ${reason})`);
   });
 });
 

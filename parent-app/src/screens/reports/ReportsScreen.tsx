@@ -1,16 +1,14 @@
 import React, { useCallback, useState } from 'react';
 import {
   View,
-  Text,
-  StyleSheet,
   ScrollView,
-  TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
+import { Surface, Text, Chip } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { COLORS } from '../../utils/constants';
+import { colors } from '../../theme';
 import { formatDuration } from '../../utils/formatters';
 import * as api from '../../services/api';
 import type { DailyBreakdownEntry } from '../../services/api';
@@ -71,179 +69,178 @@ export default function ReportsScreen({ route }: Props) {
 
   if (loading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+      <View className="flex-1 justify-center items-center bg-surface-secondary">
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
     <ScrollView
-      style={styles.container}
+      className="flex-1 bg-surface-secondary"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadData(); }} />}
     >
-      <Text style={styles.header}>Reports for {childName}</Text>
+      <Text variant="headlineSmall" className="font-bold text-slate-800 mx-4 mt-5 mb-4">
+        Reports for {childName}
+      </Text>
 
       {/* Period Toggle */}
-      <View style={styles.periodRow}>
+      <View className="flex-row mx-4 bg-white rounded-xl p-1 mb-4">
         {(['week', 'month'] as const).map((p) => (
-          <TouchableOpacity
+          <View
             key={p}
-            style={[styles.periodButton, period === p && styles.periodActive]}
-            onPress={() => { setPeriod(p); setLoading(true); }}
+            className={`flex-1 rounded-lg ${period === p ? 'bg-primary-600' : ''}`}
           >
-            <Text style={[styles.periodText, period === p && styles.periodTextActive]}>
+            <Chip
+              selected={period === p}
+              onPress={() => { setPeriod(p); setLoading(true); }}
+              showSelectedCheck={false}
+              className={`rounded-lg ${period === p ? 'bg-primary-600' : 'bg-transparent'}`}
+              textStyle={{
+                color: period === p ? colors.white : colors.textSecondary,
+                fontWeight: '500',
+                fontSize: 14,
+                textAlign: 'center',
+                width: '100%',
+              }}
+              style={{ alignItems: 'center' }}
+            >
               {p === 'week' ? 'This Week' : 'This Month'}
-            </Text>
-          </TouchableOpacity>
+            </Chip>
+          </View>
         ))}
       </View>
 
       {/* Summary Cards */}
       {summary && (
-        <View style={styles.summaryRow}>
-          <View style={[styles.summaryCard, { backgroundColor: COLORS.primary + '15' }]}>
-            <Ionicons name="time-outline" size={24} color={COLORS.primary} />
-            <Text style={styles.summaryValue}>{formatDuration(summary.totalScreenTimeMin)}</Text>
-            <Text style={styles.summaryLabel}>Total Screen Time</Text>
-          </View>
-          <View style={[styles.summaryCard, { backgroundColor: COLORS.danger + '15' }]}>
-            <Ionicons name="shield-outline" size={24} color={COLORS.danger} />
-            <Text style={styles.summaryValue}>{summary.totalBlocked}</Text>
-            <Text style={styles.summaryLabel}>Blocked</Text>
-          </View>
-          <View style={[styles.summaryCard, { backgroundColor: COLORS.secondary + '15' }]}>
-            <Ionicons name="globe-outline" size={24} color={COLORS.secondary} />
-            <Text style={styles.summaryValue}>{summary.totalWebVisits}</Text>
-            <Text style={styles.summaryLabel}>Web Visits</Text>
-          </View>
+        <View className="flex-row mx-3 gap-x-2 mb-4">
+          <Surface className="flex-1 rounded-2xl p-3.5 items-center bg-primary-50 mx-1" elevation={0}>
+            <Ionicons name="time-outline" size={24} color={colors.primary} />
+            <Text variant="titleMedium" className="font-bold text-slate-800 mt-1.5">
+              {formatDuration(summary.totalScreenTimeMin)}
+            </Text>
+            <Text variant="labelSmall" className="text-slate-500 text-center mt-1">
+              Total Screen Time
+            </Text>
+          </Surface>
+          <Surface className="flex-1 rounded-2xl p-3.5 items-center bg-danger-50 mx-1" elevation={0}>
+            <Ionicons name="shield-outline" size={24} color={colors.danger} />
+            <Text variant="titleMedium" className="font-bold text-slate-800 mt-1.5">
+              {summary.totalBlocked}
+            </Text>
+            <Text variant="labelSmall" className="text-slate-500 text-center mt-1">
+              Blocked
+            </Text>
+          </Surface>
+          <Surface className="flex-1 rounded-2xl p-3.5 items-center bg-accent-50 mx-1" elevation={0}>
+            <Ionicons name="globe-outline" size={24} color={colors.secondary} />
+            <Text variant="titleMedium" className="font-bold text-slate-800 mt-1.5">
+              {summary.totalWebVisits}
+            </Text>
+            <Text variant="labelSmall" className="text-slate-500 text-center mt-1">
+              Web Visits
+            </Text>
+          </Surface>
         </View>
       )}
 
       {/* Daily Screen Time Chart */}
-      <View style={styles.chartCard}>
-        <Text style={styles.chartTitle}>Daily Screen Time</Text>
-        <View style={styles.chartContainer}>
+      <Surface className="mx-4 mb-4 rounded-2xl p-4" elevation={1}>
+        <Text variant="titleSmall" className="font-semibold text-slate-800 mb-4">
+          Daily Screen Time
+        </Text>
+        <View className="flex-row items-end gap-x-1">
           {breakdown.map((day, i) => (
-            <View key={i} style={styles.barColumn}>
-              <View style={styles.barWrapper}>
+            <View key={i} className="flex-1 items-center">
+              <View className="h-[120px] w-full justify-end items-center">
                 <View
-                  style={[
-                    styles.bar,
-                    {
-                      height: `${Math.max((day.screenTimeMin / maxScreenTime) * 100, 2)}%`,
-                      backgroundColor: day.screenTimeMin > 180 ? COLORS.danger : COLORS.primary,
-                    },
-                  ]}
+                  className="w-[60%] rounded"
+                  style={{
+                    height: `${Math.max((day.screenTimeMin / maxScreenTime) * 100, 2)}%`,
+                    backgroundColor: day.screenTimeMin > 180 ? colors.danger : colors.primary,
+                    minHeight: 2,
+                  }}
                 />
               </View>
-              <Text style={styles.barLabel}>
+              <Text variant="labelSmall" className="text-slate-400 mt-1.5" style={{ fontSize: 10 }}>
                 {period === 'week' ? formatDate(day.date) : formatShortDate(day.date)}
               </Text>
-              <Text style={styles.barValue}>
+              <Text variant="labelSmall" className="text-slate-300 mt-0.5" style={{ fontSize: 9 }}>
                 {day.screenTimeMin > 0 ? formatDuration(day.screenTimeMin) : '-'}
               </Text>
             </View>
           ))}
         </View>
-      </View>
+      </Surface>
 
-      {/* Daily Blocked Items */}
-      <View style={styles.chartCard}>
-        <Text style={styles.chartTitle}>Blocked Attempts</Text>
+      {/* Blocked Attempts */}
+      <Surface className="mx-4 mb-4 rounded-2xl p-4" elevation={1}>
+        <Text variant="titleSmall" className="font-semibold text-slate-800 mb-4">
+          Blocked Attempts
+        </Text>
         {breakdown.filter((d) => d.blocked > 0).length === 0 ? (
-          <Text style={styles.noDataText}>No blocked attempts in this period</Text>
+          <Text variant="bodyMedium" className="text-slate-400 text-center py-5">
+            No blocked attempts in this period
+          </Text>
         ) : (
-          <View style={styles.blockedList}>
+          <View className="gap-y-2">
             {breakdown.filter((d) => d.blocked > 0).map((day, i) => (
-              <View key={i} style={styles.blockedRow}>
-                <Text style={styles.blockedDate}>{day.date}</Text>
-                <View style={styles.blockedBadge}>
-                  <Text style={styles.blockedCount}>{day.blocked}</Text>
+              <View key={i} className="flex-row justify-between items-center py-1.5">
+                <Text variant="bodyMedium" className="text-slate-800">
+                  {day.date}
+                </Text>
+                <View className="bg-danger-50 px-3 py-1 rounded-xl">
+                  <Text variant="labelMedium" className="font-semibold text-danger-600">
+                    {day.blocked}
+                  </Text>
                 </View>
               </View>
             ))}
           </View>
         )}
-      </View>
+      </Surface>
 
       {/* Top Apps */}
-      <View style={styles.chartCard}>
-        <Text style={styles.chartTitle}>Top Apps</Text>
+      <Surface className="mx-4 mb-4 rounded-2xl p-4" elevation={1}>
+        <Text variant="titleSmall" className="font-semibold text-slate-800 mb-4">
+          Top Apps
+        </Text>
         {topApps.length === 0 ? (
-          <Text style={styles.noDataText}>No app usage data</Text>
+          <Text variant="bodyMedium" className="text-slate-400 text-center py-5">
+            No app usage data
+          </Text>
         ) : (
           topApps.map((app, i) => {
             const maxTime = topApps[0]?.durationMin || 1;
             const pct = (app.durationMin / maxTime) * 100;
             return (
-              <View key={i} style={styles.appRow}>
-                <View style={styles.appRank}>
-                  <Text style={styles.appRankText}>{i + 1}</Text>
+              <View key={i} className="flex-row items-center gap-x-3 py-2">
+                <View className="w-7 h-7 rounded-full bg-surface-tertiary justify-center items-center">
+                  <Text variant="labelSmall" className="font-semibold text-slate-500">
+                    {i + 1}
+                  </Text>
                 </View>
-                <View style={styles.appInfo}>
-                  <Text style={styles.appName} numberOfLines={1}>
+                <View className="flex-1 gap-y-1">
+                  <Text variant="bodyMedium" className="font-medium text-slate-800" numberOfLines={1}>
                     {app.appName || app.packageName}
                   </Text>
-                  <View style={styles.appBarBg}>
-                    <View style={[styles.appBarFill, { width: `${pct}%` }]} />
+                  <View className="h-1.5 bg-surface-tertiary rounded-full">
+                    <View
+                      className="h-1.5 bg-primary-600 rounded-full"
+                      style={{ width: `${pct}%` }}
+                    />
                   </View>
                 </View>
-                <Text style={styles.appTime}>{formatDuration(app.durationMin)}</Text>
+                <Text variant="labelLarge" className="font-semibold text-slate-500 min-w-[50px] text-right">
+                  {formatDuration(app.durationMin)}
+                </Text>
               </View>
             );
           })
         )}
-      </View>
+      </Surface>
 
-      <View style={{ height: 32 }} />
+      <View className="h-8" />
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background },
-  header: { fontSize: 22, fontWeight: '700', color: COLORS.text, marginHorizontal: 16, marginTop: 20, marginBottom: 16 },
-  periodRow: {
-    flexDirection: 'row', marginHorizontal: 16, backgroundColor: COLORS.white,
-    borderRadius: 12, padding: 4, marginBottom: 16,
-  },
-  periodButton: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 10 },
-  periodActive: { backgroundColor: COLORS.primary },
-  periodText: { fontSize: 14, fontWeight: '500', color: COLORS.textSecondary },
-  periodTextActive: { color: COLORS.white },
-  summaryRow: { flexDirection: 'row', marginHorizontal: 12, gap: 8, marginBottom: 16 },
-  summaryCard: {
-    flex: 1, borderRadius: 14, padding: 14, alignItems: 'center', gap: 6,
-    marginHorizontal: 4,
-  },
-  summaryValue: { fontSize: 18, fontWeight: '700', color: COLORS.text },
-  summaryLabel: { fontSize: 11, color: COLORS.textSecondary, textAlign: 'center' },
-  chartCard: {
-    backgroundColor: COLORS.white, marginHorizontal: 16, marginBottom: 16,
-    borderRadius: 16, padding: 16,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
-  },
-  chartTitle: { fontSize: 16, fontWeight: '600', color: COLORS.text, marginBottom: 16 },
-  chartContainer: { flexDirection: 'row', alignItems: 'flex-end', gap: 4 },
-  barColumn: { flex: 1, alignItems: 'center' },
-  barWrapper: { height: 120, width: '100%', justifyContent: 'flex-end', alignItems: 'center' },
-  bar: { width: '60%', borderRadius: 4, minHeight: 2 },
-  barLabel: { fontSize: 10, color: COLORS.textSecondary, marginTop: 6 },
-  barValue: { fontSize: 9, color: COLORS.textLight, marginTop: 2 },
-  blockedList: { gap: 8 },
-  blockedRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6 },
-  blockedDate: { fontSize: 14, color: COLORS.text },
-  blockedBadge: { backgroundColor: COLORS.danger + '20', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
-  blockedCount: { fontSize: 13, fontWeight: '600', color: COLORS.danger },
-  noDataText: { fontSize: 14, color: COLORS.textLight, textAlign: 'center', paddingVertical: 20 },
-  appRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 },
-  appRank: { width: 28, height: 28, borderRadius: 14, backgroundColor: COLORS.background, justifyContent: 'center', alignItems: 'center' },
-  appRankText: { fontSize: 12, fontWeight: '600', color: COLORS.textSecondary },
-  appInfo: { flex: 1, gap: 4 },
-  appName: { fontSize: 14, fontWeight: '500', color: COLORS.text },
-  appBarBg: { height: 6, backgroundColor: COLORS.background, borderRadius: 3 },
-  appBarFill: { height: 6, backgroundColor: COLORS.primary, borderRadius: 3 },
-  appTime: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary, minWidth: 50, textAlign: 'right' },
-});

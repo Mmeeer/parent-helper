@@ -6,9 +6,11 @@ import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.net.VpnService
 import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
 import android.provider.Settings
 import android.view.View
 import android.widget.TextView
@@ -125,11 +127,24 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent(this, MonitoringService::class.java)
         ContextCompat.startForegroundService(this, intent)
 
+        // Request battery optimization exemption for persistent background operation
+        requestBatteryOptimizationExemption()
+
         // Request device admin if not already active
         requestDeviceAdmin()
 
         // Request VPN consent if not already granted
         requestVpnConsent()
+    }
+
+    private fun requestBatteryOptimizationExemption() {
+        val pm = getSystemService(PowerManager::class.java)
+        if (!pm.isIgnoringBatteryOptimizations(packageName)) {
+            val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                data = Uri.parse("package:$packageName")
+            }
+            startActivity(intent)
+        }
     }
 
     private fun requestDeviceAdmin() {

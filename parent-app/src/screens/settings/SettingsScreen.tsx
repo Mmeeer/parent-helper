@@ -1,14 +1,8 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
+import { View, ScrollView, Alert } from 'react-native';
+import { Surface, Text, Avatar, Chip, Button, TouchableRipple, Divider } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../../utils/constants';
+import { colors } from '../../theme';
 import { useAuth } from '../../store/AuthContext';
 
 export default function SettingsScreen() {
@@ -59,167 +53,81 @@ export default function SettingsScreen() {
   ];
 
   return (
-    <ScrollView style={styles.container}>
-      {/* User Info */}
-      <View style={styles.userCard}>
-        <View style={styles.userAvatar}>
-          <Ionicons name="person" size={32} color={COLORS.white} />
+    <ScrollView className="flex-1 bg-surface-secondary">
+      {/* User Info Card */}
+      <Surface elevation={1} className="flex-row items-center mx-4 mt-4 rounded-2xl p-5">
+        <Avatar.Icon
+          size={56}
+          icon={() => <Ionicons name="person" size={28} color={colors.white} />}
+          color={colors.white}
+          style={{ backgroundColor: colors.primary }}
+        />
+        <View className="flex-1 ml-3.5">
+          <Text variant="titleMedium" className="font-bold text-slate-800">
+            {user?.name || 'Parent'}
+          </Text>
+          <Text variant="bodySmall" className="text-slate-500 mt-0.5">
+            {user?.email || ''}
+          </Text>
+          <Chip
+            compact
+            textStyle={{ fontSize: 11, fontWeight: '700', color: colors.primary }}
+            className="self-start mt-1.5 bg-primary-50"
+          >
+            {(user?.plan || 'free').toUpperCase()}
+          </Chip>
         </View>
-        <View style={styles.userInfo}>
-          <Text style={styles.userName}>{user?.name || 'Parent'}</Text>
-          <Text style={styles.userEmail}>{user?.email || ''}</Text>
-          <View style={styles.planBadge}>
-            <Text style={styles.planText}>
-              {(user?.plan || 'free').toUpperCase()}
-            </Text>
-          </View>
-        </View>
-      </View>
+      </Surface>
 
       {/* Settings Items */}
-      <View style={styles.section}>
+      <Surface elevation={1} className="mx-4 mt-5 rounded-2xl overflow-hidden">
         {items.map((item, index) => (
-          <TouchableOpacity
-            key={index}
-            style={[styles.settingRow, index < items.length - 1 && styles.settingRowBorder]}
-            onPress={item.onPress}
-          >
-            <View style={styles.settingIcon}>
-              <Ionicons name={item.icon} size={22} color={COLORS.primary} />
-            </View>
-            <View style={styles.settingContent}>
-              <Text style={styles.settingTitle}>{item.title}</Text>
-              <Text style={styles.settingSubtitle}>{item.subtitle}</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={COLORS.textLight} />
-          </TouchableOpacity>
+          <React.Fragment key={index}>
+            <TouchableRipple
+              onPress={item.onPress}
+              rippleColor="rgba(79, 70, 229, 0.06)"
+            >
+              <View className="flex-row items-center p-4">
+                <View className="w-9 h-9 rounded-[10px] bg-surface-tertiary items-center justify-center mr-3">
+                  <Ionicons name={item.icon} size={22} color={colors.primary} />
+                </View>
+                <View className="flex-1">
+                  <Text variant="bodyLarge" className="font-medium text-slate-800">
+                    {item.title}
+                  </Text>
+                  <Text variant="labelSmall" className="text-slate-500 mt-0.5">
+                    {item.subtitle}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+              </View>
+            </TouchableRipple>
+            {index < items.length - 1 && <Divider className="ml-16" />}
+          </React.Fragment>
         ))}
+      </Surface>
+
+      {/* Sign Out Button */}
+      <View className="mx-4 mt-5">
+        <Button
+          mode="outlined"
+          onPress={handleLogout}
+          icon={({ size }) => (
+            <Ionicons name="log-out-outline" size={size} color={colors.danger} />
+          )}
+          textColor={colors.danger}
+          contentStyle={{ paddingVertical: 4 }}
+          labelStyle={{ fontSize: 16, fontWeight: '600' }}
+          style={{ borderColor: colors.danger, borderRadius: 16 }}
+        >
+          Sign Out
+        </Button>
       </View>
 
-      {/* Logout */}
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Ionicons name="log-out-outline" size={22} color={COLORS.danger} />
-        <Text style={styles.logoutText}>Sign Out</Text>
-      </TouchableOpacity>
-
-      <Text style={styles.version}>Parent Helper v1.0.0</Text>
-      <View style={{ height: 32 }} />
+      {/* Version */}
+      <Text variant="labelSmall" className="text-center text-slate-400 mt-5 mb-8">
+        Parent Helper v1.0.0
+      </Text>
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  userCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.white,
-    marginHorizontal: 16,
-    marginTop: 16,
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  userAvatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: COLORS.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  userInfo: {
-    flex: 1,
-    marginLeft: 14,
-  },
-  userName: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: COLORS.text,
-  },
-  userEmail: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    marginTop: 2,
-  },
-  planBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: COLORS.primary + '20',
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    marginTop: 6,
-  },
-  planText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: COLORS.primary,
-  },
-  section: {
-    backgroundColor: COLORS.white,
-    marginHorizontal: 16,
-    marginTop: 20,
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  settingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-  },
-  settingRowBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  settingIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: COLORS.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  settingContent: {
-    flex: 1,
-  },
-  settingTitle: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: COLORS.text,
-  },
-  settingSubtitle: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    marginTop: 2,
-  },
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: COLORS.white,
-    marginHorizontal: 16,
-    marginTop: 20,
-    borderRadius: 16,
-    padding: 16,
-    gap: 8,
-  },
-  logoutText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.danger,
-  },
-  version: {
-    textAlign: 'center',
-    fontSize: 12,
-    color: COLORS.textLight,
-    marginTop: 20,
-  },
-});
