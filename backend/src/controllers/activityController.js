@@ -54,12 +54,14 @@ exports.sync = async (req, res, next) => {
         const alerts = blockedAttempts.map((attempt) => {
           // New app installs get a separate alert type for the approval flow
           if (attempt.type === 'new_app') {
+            // attempt.target is appName, attempt.packageName is the package (if provided)
+            const appName = attempt.target || 'Unknown App';
             return {
               parentId: device.parentId,
               childId,
               type: 'new_app_installed',
-              message: `New app installed: ${attempt.target}`,
-              data: { packageName: attempt.target, status: 'pending', timestamp: attempt.timestamp },
+              message: `New app installed: ${appName}`,
+              data: { appName, packageName: attempt.packageName || appName, status: 'pending', timestamp: attempt.timestamp },
             };
           }
           // Uninstall attempts get their own alert type

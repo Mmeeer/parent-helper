@@ -201,6 +201,17 @@ export async function unpairDevice(deviceId: string): Promise<{ message: string 
   return request(`/devices/${deviceId}`, { method: 'DELETE' });
 }
 
+// ─── Installed Apps ──────────────────────────────────────
+export interface InstalledApp {
+  packageName: string;
+  appName: string;
+  installedAt: string;
+}
+
+export async function getInstalledApps(deviceId: string): Promise<InstalledApp[]> {
+  return request<InstalledApp[]>(`/devices/${deviceId}/installed-apps`);
+}
+
 // ─── Rules ───────────────────────────────────────────────
 export async function getRules(childId: string): Promise<Rules> {
   return request<Rules>(`/rules/${childId}/view`);

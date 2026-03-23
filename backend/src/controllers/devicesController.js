@@ -180,6 +180,44 @@ exports.unpair = async (req, res, next) => {
   }
 };
 
+// POST /devices/sync-apps — child device syncs its installed apps list
+exports.syncInstalledApps = async (req, res, next) => {
+  try {
+    const { apps } = req.body; // [{ packageName, appName }]
+    if (!Array.isArray(apps)) {
+      return res.status(400).json({ error: 'apps array is required' });
+    }
+
+    req.device.installedApps = apps.map(a => ({
+      packageName: a.packageName,
+      appName: a.appName,
+      installedAt: a.installedAt || new Date(),
+    }));
+    await req.device.save();
+
+    res.json({ status: 'ok', count: req.device.installedApps.length });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// GET /devices/:id/installed-apps — parent gets installed apps on a child device
+exports.getInstalledApps = async (req, res, next) => {
+  try {
+    const device = await Device.findById(req.params.id);
+    if (!device) {
+      return res.status(404).json({ error: 'Device not found' });
+    }
+    if (device.parentId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    res.json(device.installedApps || []);
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.heartbeat = async (req, res, next) => {
   try {
     const { batteryLevel } = req.body;

@@ -10,6 +10,7 @@ import androidx.core.app.NotificationCompat
 import androidx.work.*
 import com.parenthelper.child.ParentHelperApp
 import com.parenthelper.child.R
+import com.parenthelper.child.collectors.InstalledAppsCollector
 import com.parenthelper.child.collectors.LocationCollector
 import com.parenthelper.child.collectors.ScreenTimeCollector
 import com.parenthelper.child.data.api.ApiClient
@@ -66,6 +67,9 @@ class MonitoringService : Service() {
                     }
                 }
             }
+
+            // Sync installed apps list to backend
+            syncInstalledApps()
 
             // Start location collection
             locationCollector = LocationCollector(this@MonitoringService)
@@ -201,6 +205,21 @@ class MonitoringService : Service() {
             ExistingPeriodicWorkPolicy.KEEP,
             syncWork,
         )
+    }
+
+    private fun syncInstalledApps() {
+        serviceScope.launch {
+            try {
+                val apps = InstalledAppsCollector.getInstalledApps(this@MonitoringService)
+                val request = com.parenthelper.child.data.models.InstalledAppsSyncRequest(
+                    apps = apps.map { com.parenthelper.child.data.models.InstalledAppEntry(it.packageName, it.appName) }
+                )
+                ApiClient.service.syncInstalledApps(request)
+                Log.d(TAG, "Synced ${apps.size} installed apps")
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to sync installed apps: ${e.message}")
+            }
+        }
     }
 
     private fun startVpnFilter() {

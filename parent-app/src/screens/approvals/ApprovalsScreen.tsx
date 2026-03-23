@@ -58,7 +58,8 @@ export default function ApprovalsScreen() {
 
   const renderApproval = ({ item }: { item: AlertType }) => {
     const isProcessing = processingId === item._id;
-    const appTarget = item.data?.target as string | undefined;
+    const appName = (item.data?.appName as string) || (item.data?.target as string) || 'Unknown App';
+    const packageName = item.data?.packageName as string | undefined;
 
     return (
       <View style={styles.card}>
@@ -68,13 +69,18 @@ export default function ApprovalsScreen() {
           </View>
           <View style={styles.cardInfo}>
             <Text style={styles.appName} numberOfLines={1}>
-              {appTarget || 'Unknown App'}
+              {appName}
             </Text>
+            {packageName && packageName !== appName && (
+              <Text style={styles.packageName} numberOfLines={1}>{packageName}</Text>
+            )}
             <Text style={styles.timestamp}>{formatTimeAgo(item.createdAt)}</Text>
           </View>
         </View>
 
-        <Text style={styles.message}>{item.message}</Text>
+        <Text style={styles.message}>
+          A new app was installed on your child's device. Would you like to allow or block it?
+        </Text>
 
         <View style={styles.actions}>
           <TouchableOpacity
@@ -187,6 +193,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: COLORS.text,
+  },
+  packageName: {
+    fontSize: 11,
+    color: COLORS.textLight,
+    marginTop: 1,
   },
   timestamp: {
     fontSize: 12,

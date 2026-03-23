@@ -19,4 +19,7 @@ interface ApiService {
 
     @GET("filters")
     suspend fun getContentFilters(@Query("categories") categories: List<String>): List<ContentFilterEntry>
+
+    @POST("devices/sync-apps")
+    suspend fun syncInstalledApps(@Body request: InstalledAppsSyncRequest): InstalledAppsSyncResponse
 }

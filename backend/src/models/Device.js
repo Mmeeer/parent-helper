@@ -60,6 +60,11 @@ const deviceSchema = new mongoose.Schema({
     unique: true,
     sparse: true,
   },
+  installedApps: [{
+    packageName: { type: String, required: true },
+    appName: { type: String, required: true },
+    installedAt: { type: Date, default: Date.now },
+  }],
 }, { timestamps: true });
 
 deviceSchema.index({ parentId: 1 });

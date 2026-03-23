@@ -40,19 +40,25 @@ exports.decide = async (req, res, next) => {
     alert.read = true;
     await alert.save();
 
-    // If blocked, add to blocked apps list
+    const io = req.app.get('io');
+    const devices = await Device.find({ childId: alert.childId, paired: true });
+
     if (action === 'block' && alert.data.packageName) {
+      // Add to blocked apps list
       await Rule.findOneAndUpdate(
         { childId: alert.childId },
         { $addToSet: { blockedApps: alert.data.packageName } },
       );
 
-      // Push updated rules to device
-      const io = req.app.get('io');
+      // Push updated rules to device (app stays suspended)
       const rules = await Rule.findOne({ childId: alert.childId });
-      const devices = await Device.find({ childId: alert.childId, paired: true });
       for (const device of devices) {
         io.to(`device:${device._id}`).emit('rules:updated', rules);
+      }
+    } else if (action === 'approve' && alert.data.packageName) {
+      // Unsuspend the app on the child's device
+      for (const device of devices) {
+        io.to(`device:${device._id}`).emit('app:unsuspend', { packageName: alert.data.packageName });
       }
     }
 

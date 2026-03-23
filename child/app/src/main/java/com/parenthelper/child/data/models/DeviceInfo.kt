@@ -29,3 +29,17 @@ data class ContentFilterEntry(
     val domain: String,
     val category: String,
 )
+
+data class InstalledAppEntry(
+    val packageName: String,
+    val appName: String,
+)
+
+data class InstalledAppsSyncRequest(
+    val apps: List<InstalledAppEntry>,
+)
+
+data class InstalledAppsSyncResponse(
+    val status: String,
+    val count: Int,
+)

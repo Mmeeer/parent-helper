@@ -4,6 +4,7 @@ import android.util.Log
 import com.google.gson.Gson
 import com.parenthelper.child.ParentHelperApp
 import com.parenthelper.child.data.models.Command
+import com.parenthelper.child.enforcement.AppBlocker
 import com.parenthelper.child.enforcement.RuleManager
 import io.socket.client.IO
 import io.socket.client.Socket
@@ -57,6 +58,21 @@ object SocketManager {
                     if (childId != null) {
                         RuleManager.fetchRules(childId)
                     }
+                }
+            }
+
+            // Listen for app unsuspend (parent approved a new app)
+            socket?.on("app:unsuspend") { args ->
+                val data = args.firstOrNull()?.toString() ?: return@on
+                try {
+                    val parsed = gson.fromJson(data, Map::class.java)
+                    val packageName = parsed["packageName"]?.toString() ?: return@on
+                    Log.d(TAG, "Unsuspending approved app: $packageName")
+                    val context = ParentHelperApp.instance.applicationContext
+                    val blocker = AppBlocker(context)
+                    blocker.unsuspendApps(listOf(packageName))
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to unsuspend app", e)
                 }
             }
 
