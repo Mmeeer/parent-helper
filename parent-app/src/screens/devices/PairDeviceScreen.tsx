@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   ActivityIndicator,
@@ -19,12 +19,36 @@ export default function PairDeviceScreen({ route }: Props) {
   const { childId, childName } = route.params;
   const [pairingData, setPairingData] = useState<PairDeviceResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, []);
+
+  const startCountdown = (expiresAt: string) => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    const update = () => {
+      const remaining = Math.max(0, Math.floor((new Date(expiresAt).getTime() - Date.now()) / 1000));
+      setCountdown(remaining);
+      if (remaining <= 0 && timerRef.current) clearInterval(timerRef.current);
+    };
+    update();
+    timerRef.current = setInterval(update, 1000);
+  };
+
+  const formatTime = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
 
   const handleGenerateCode = async () => {
     setLoading(true);
     try {
       const data = await api.pairDevice(childId);
       setPairingData(data);
+      if (data.expiresAt) startCountdown(data.expiresAt);
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to generate pairing code.');
     } finally {
@@ -55,9 +79,14 @@ export default function PairDeviceScreen({ route }: Props) {
             >
               {pairingData.pairingCode}
             </Text>
-            <Text variant="bodySmall" className="text-slate-500 text-center mt-4 leading-5">
+            <Text
+              variant="titleMedium"
+              className={`font-bold mt-3 ${countdown <= 60 ? 'text-red-500' : 'text-primary-600'}`}
+            >
+              {countdown > 0 ? formatTime(countdown) : 'Expired'}
+            </Text>
+            <Text variant="bodySmall" className="text-slate-500 text-center mt-2 leading-5">
               Enter this code in the Parent Helper app on the child's device.
-              The code expires in 10 minutes.
             </Text>
 
             <Button

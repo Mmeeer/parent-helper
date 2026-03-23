@@ -1,12 +1,22 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, ScrollView, Alert } from 'react-native';
 import { Surface, Text, Avatar, Chip, Button, TouchableRipple, Divider } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme';
 import { useAuth } from '../../store/AuthContext';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import * as api from '../../services/api';
+import type { RootStackParamList } from '../../types';
 
 export default function SettingsScreen() {
   const { user, logout } = useAuth();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const [subInfo, setSubInfo] = useState<api.SubscriptionInfo | null>(null);
+
+  useEffect(() => {
+    api.getSubscription().then(setSubInfo).catch(() => {});
+  }, []);
 
   const handleLogout = () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
@@ -28,9 +38,11 @@ export default function SettingsScreen() {
     },
     {
       title: 'Subscription',
-      icon: 'card-outline' as const,
-      subtitle: `Current plan: ${user?.plan || 'Free'}`,
-      onPress: () => {},
+      icon: 'key-outline' as const,
+      subtitle: subInfo?.active
+        ? `Active — ${subInfo.subscription?.maxKids} kids`
+        : 'No active subscription',
+      onPress: () => navigation.navigate('ActivateSubscription'),
     },
     {
       title: 'Notification Settings',
@@ -71,10 +83,10 @@ export default function SettingsScreen() {
           </Text>
           <Chip
             compact
-            textStyle={{ fontSize: 11, fontWeight: '700', color: colors.primary }}
-            className="self-start mt-1.5 bg-primary-50"
+            textStyle={{ fontSize: 11, fontWeight: '700', color: subInfo?.active ? '#166534' : '#dc2626' }}
+            className={`self-start mt-1.5 ${subInfo?.active ? 'bg-green-50' : 'bg-red-50'}`}
           >
-            {(user?.plan || 'free').toUpperCase()}
+            {subInfo?.active ? 'SUBSCRIBED' : 'NO SUBSCRIPTION'}
           </Chip>
         </View>
       </Surface>

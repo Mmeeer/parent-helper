@@ -20,6 +20,12 @@ exports.pair = async (req, res, next) => {
     }
     console.log('[PAIR] Child verified:', child.name);
 
+    // One device per kid — check if child already has a paired device
+    const existingDevice = await Device.findOne({ childId, paired: true });
+    if (existingDevice) {
+      return res.status(409).json({ error: 'This child already has a paired device. Unpair the current device first.' });
+    }
+
     // Clean up expired unpaired devices for this child to free up pairing codes
     const cleaned = await Device.deleteMany({
       childId,
@@ -36,10 +42,12 @@ exports.pair = async (req, res, next) => {
     });
     console.log('[PAIR] SUCCESS: Device created with pairing code:', device.pairingCode, 'expires:', device.pairingExpiresAt);
 
+    const expiresIn = Math.max(0, Math.floor((device.pairingExpiresAt - Date.now()) / 1000));
     res.status(201).json({
       deviceId: device._id,
       pairingCode: device.pairingCode,
       expiresAt: device.pairingExpiresAt,
+      expiresIn,
     });
   } catch (err) {
     console.error('[PAIR] ERROR:', err.message, err.code ? `(code: ${err.code})` : '');

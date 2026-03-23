@@ -3,7 +3,14 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  plan: 'free' | 'premium' | 'family';
+  subscription?: {
+    active: boolean;
+    key?: string;
+    maxKids?: number;
+    currentKids?: number;
+    expiresAt?: string;
+    status?: string;
+  };
 }
 
 export interface AuthResponse {
@@ -58,6 +65,21 @@ export interface DeviceStatus {
 export interface PairDeviceResponse {
   deviceId: string;
   pairingCode: string;
+  expiresAt: string;
+  expiresIn: number;
+}
+
+export interface SubscriptionInfo {
+  active: boolean;
+  subscription: {
+    key: string;
+    maxKids: number;
+    currentKids: number;
+    expiresAt: string;
+    activatedAt: string;
+    durationDays: number;
+    status: string;
+  } | null;
 }
 
 // ─── Rules ───────────────────────────────────────────────
@@ -170,4 +192,5 @@ export type RootStackParamList = {
   Geofences: { childId: string; childName: string };
   ForgotPassword: undefined;
   AddChild: undefined;
+  ActivateSubscription: undefined;
 };

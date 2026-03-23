@@ -33,7 +33,7 @@ exports.register = async (req, res, next) => {
     await user.save();
 
     res.status(201).json({
-      user: { id: user._id, email: user.email, name: user.name, plan: user.plan },
+      user: { id: user._id, email: user.email, name: user.name },
       ...tokens,
     });
   } catch (err) {
@@ -65,7 +65,7 @@ exports.login = async (req, res, next) => {
     await user.save();
 
     res.json({
-      user: { id: user._id, email: user.email, name: user.name, plan: user.plan, role: user.role },
+      user: { id: user._id, email: user.email, name: user.name, role: user.role },
       ...tokens,
     });
   } catch (err) {
@@ -75,12 +75,30 @@ exports.login = async (req, res, next) => {
 
 exports.me = async (req, res, next) => {
   try {
+    const SubscriptionKey = require('../models/SubscriptionKey');
+    const user = await User.findById(req.user._id).populate('subscriptionKey').lean();
+    const sub = user.subscriptionKey;
+    let subscriptionActive = false;
+    if (sub && sub.status === 'active') {
+      if (sub.expiresAt && new Date(sub.expiresAt) < new Date()) {
+        await SubscriptionKey.findByIdAndUpdate(sub._id, { status: 'expired' });
+      } else {
+        subscriptionActive = true;
+      }
+    }
+
     res.json({
-      id: req.user._id,
-      email: req.user.email,
-      name: req.user.name,
-      plan: req.user.plan,
-      role: req.user.role,
+      id: user._id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      subscription: sub ? {
+        active: subscriptionActive,
+        key: sub.key,
+        maxKids: sub.maxKids,
+        expiresAt: sub.expiresAt,
+        status: sub.status,
+      } : null,
     });
   } catch (err) {
     next(err);

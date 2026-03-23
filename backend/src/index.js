@@ -15,6 +15,7 @@ const alertsRoutes = require('./routes/alerts');
 const approvalsRoutes = require('./routes/approvals');
 const geofenceRoutes = require('./routes/geofences');
 const adminRoutes = require('./routes/admin');
+const subscriptionRoutes = require('./routes/subscription');
 
 const { startOfflineDetector } = require('./jobs/offlineDetector');
 
@@ -46,6 +47,7 @@ app.use('/alerts', alertsRoutes);
 app.use('/approvals', approvalsRoutes);
 app.use('/geofences', geofenceRoutes);
 app.use('/admin', adminRoutes);
+app.use('/subscription', subscriptionRoutes);
 
 // Content filters endpoint for child devices
 const deviceAuth = require('./middleware/deviceAuth');

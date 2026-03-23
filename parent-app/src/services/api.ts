@@ -315,6 +315,31 @@ export async function decideApproval(
   });
 }
 
+// ─── Subscription ───────────────────────────────────────
+export interface SubscriptionInfo {
+  active: boolean;
+  subscription: {
+    key: string;
+    maxKids: number;
+    currentKids: number;
+    expiresAt: string;
+    activatedAt: string;
+    durationDays: number;
+    status: string;
+  } | null;
+}
+
+export async function getSubscription(): Promise<SubscriptionInfo> {
+  return request<SubscriptionInfo>('/subscription');
+}
+
+export async function activateSubscription(key: string): Promise<{ message: string; subscription: any }> {
+  return request('/subscription/activate', {
+    method: 'POST',
+    body: JSON.stringify({ key }),
+  });
+}
+
 // ─── Geofences ──────────────────────────────────────────
 export interface Geofence {
   _id: string;

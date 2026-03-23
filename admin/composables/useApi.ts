@@ -96,11 +96,31 @@ export function useApi() {
       return request(`/admin/users/${userId}/suspend`, { method: 'PUT' });
     },
 
-    async updateUserPlan(userId: string, plan: 'free' | 'premium' | 'family') {
-      return request(`/admin/users/${userId}/plan`, {
-        method: 'PUT',
-        body: JSON.stringify({ plan }),
+    // Subscription keys
+    async getKeys(page = 1, limit = 20, status = '') {
+      const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+      if (status) params.append('status', status);
+      return request<{ keys: any[]; total: number; page: number; totalPages: number }>(
+        `/admin/keys?${params}`,
+      );
+    },
+
+    async createKey(maxKids: number, durationDays: number, note = '') {
+      return request<any>('/admin/keys', {
+        method: 'POST',
+        body: JSON.stringify({ maxKids, durationDays, note }),
       });
+    },
+
+    async updateKey(keyId: string, data: { maxKids?: number; note?: string }) {
+      return request<any>(`/admin/keys/${keyId}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+    },
+
+    async deleteKey(keyId: string) {
+      return request(`/admin/keys/${keyId}`, { method: 'DELETE' });
     },
 
     async getSystemHealth() {

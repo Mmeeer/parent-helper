@@ -4,6 +4,7 @@ const Device = require('../models/Device');
 const Alert = require('../models/Alert');
 const ActivityLog = require('../models/ActivityLog');
 const ContentFilter = require('../models/ContentFilter');
+const SubscriptionKey = require('../models/SubscriptionKey');
 
 // POST /admin/seed — Create initial admin account (only if no admin exists)
 exports.seed = async (req, res, next) => {
@@ -21,7 +22,6 @@ exports.seed = async (req, res, next) => {
       passwordHash: adminPassword,
       name: 'Admin',
       role: 'admin',
-      plan: 'family',
     });
     await admin.save();
 
@@ -138,30 +138,27 @@ exports.getAnalytics = async (req, res, next) => {
       activeUsers,
       totalChildren,
       totalDevices,
-      planDistribution,
+      subscribedUsers,
+      totalKeys,
+      activeKeys,
       recentRegistrations,
     ] = await Promise.all([
       User.countDocuments(),
       User.countDocuments({ updatedAt: { $gte: thirtyDaysAgo } }),
       Child.countDocuments(),
       Device.countDocuments({ paired: true }),
-      User.aggregate([
-        { $group: { _id: '$plan', count: { $sum: 1 } } },
-      ]),
+      User.countDocuments({ subscriptionKey: { $ne: null } }),
+      SubscriptionKey.countDocuments(),
+      SubscriptionKey.countDocuments({ status: 'active' }),
       User.countDocuments({ createdAt: { $gte: sevenDaysAgo } }),
     ]);
-
-    const planDist = {};
-    planDistribution.forEach((p) => {
-      planDist[p._id] = p.count;
-    });
 
     res.json({
       totalUsers,
       activeUsers,
       totalChildren,
       totalDevices,
-      planDistribution: planDist,
+      subscriptions: { subscribed: subscribedUsers, totalKeys, activeKeys },
       recentRegistrations,
     });
   } catch (err) {
@@ -221,26 +218,91 @@ exports.deleteFilter = async (req, res, next) => {
   }
 };
 
-// PUT /admin/users/:id/plan — Update user subscription plan
-exports.updateUserPlan = async (req, res, next) => {
+// POST /admin/keys — Create subscription key
+exports.createKey = async (req, res, next) => {
   try {
-    const { plan } = req.body;
-    if (!['free', 'premium', 'family'].includes(plan)) {
-      return res.status(400).json({ error: 'Invalid plan. Must be free, premium, or family.' });
+    const { maxKids, durationDays, note } = req.body;
+    if (!maxKids || !durationDays) {
+      return res.status(400).json({ error: 'maxKids and durationDays are required' });
     }
 
-    const user = await User.findById(req.params.id);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    user.plan = plan;
-    await user.save();
-
-    res.json({
-      message: `Plan updated to ${plan}`,
-      user: { id: user._id, email: user.email, name: user.name, plan: user.plan },
+    const key = SubscriptionKey.generateKey();
+    const subKey = await SubscriptionKey.create({
+      key,
+      maxKids,
+      durationDays,
+      note: note || '',
+      createdBy: req.user._id,
     });
+
+    res.status(201).json(subKey);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// GET /admin/keys — List all subscription keys
+exports.getKeys = async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const status = req.query.status;
+
+    const query = status ? { status } : {};
+    const [keys, total] = await Promise.all([
+      SubscriptionKey.find(query)
+        .populate('activatedBy', 'name email')
+        .populate('createdBy', 'name')
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean(),
+      SubscriptionKey.countDocuments(query),
+    ]);
+
+    // Check and mark expired keys
+    const now = new Date();
+    for (const k of keys) {
+      if (k.status === 'active' && k.expiresAt && new Date(k.expiresAt) < now) {
+        await SubscriptionKey.findByIdAndUpdate(k._id, { status: 'expired' });
+        k.status = 'expired';
+      }
+    }
+
+    res.json({ keys, total, page, totalPages: Math.ceil(total / limit) });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// PUT /admin/keys/:id — Update key (maxKids, note)
+exports.updateKey = async (req, res, next) => {
+  try {
+    const { maxKids, note } = req.body;
+    const update = {};
+    if (maxKids !== undefined) update.maxKids = maxKids;
+    if (note !== undefined) update.note = note;
+
+    const key = await SubscriptionKey.findByIdAndUpdate(req.params.id, update, { new: true });
+    if (!key) return res.status(404).json({ error: 'Key not found' });
+
+    res.json(key);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// DELETE /admin/keys/:id — Delete unused key
+exports.deleteKey = async (req, res, next) => {
+  try {
+    const key = await SubscriptionKey.findById(req.params.id);
+    if (!key) return res.status(404).json({ error: 'Key not found' });
+    if (key.status === 'active') {
+      return res.status(400).json({ error: 'Cannot delete an active key. It must expire first.' });
+    }
+
+    await SubscriptionKey.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Key deleted' });
   } catch (err) {
     next(err);
   }

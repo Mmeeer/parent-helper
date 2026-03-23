@@ -18,10 +18,10 @@ const userSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
-  plan: {
-    type: String,
-    enum: ['free', 'premium', 'family'],
-    default: 'free',
+  subscriptionKey: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'SubscriptionKey',
+    default: null,
   },
   role: {
     type: String,

@@ -1,12 +1,30 @@
 const { validationResult } = require('express-validator');
 const Child = require('../models/Child');
 const Rule = require('../models/Rule');
+const User = require('../models/User');
+const SubscriptionKey = require('../models/SubscriptionKey');
 
 exports.create = async (req, res, next) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
+    }
+
+    // Check subscription limits
+    const user = await User.findById(req.user._id).populate('subscriptionKey');
+    const sub = user.subscriptionKey;
+    if (!sub || sub.status !== 'active') {
+      return res.status(403).json({ error: 'Active subscription required to add children. Please activate a subscription key.' });
+    }
+    if (sub.expiresAt && new Date(sub.expiresAt) < new Date()) {
+      await SubscriptionKey.findByIdAndUpdate(sub._id, { status: 'expired' });
+      return res.status(403).json({ error: 'Your subscription has expired. Please activate a new key.' });
+    }
+
+    const currentKids = await Child.countDocuments({ parentId: req.user._id });
+    if (currentKids >= sub.maxKids) {
+      return res.status(403).json({ error: `You can have up to ${sub.maxKids} children with your current subscription.` });
     }
 
     const { name, age, avatar } = req.body;

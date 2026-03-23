@@ -32,6 +32,7 @@ import DevicesListScreen from '../screens/devices/DevicesListScreen';
 import PairDeviceScreen from '../screens/devices/PairDeviceScreen';
 import ReportsScreen from '../screens/reports/ReportsScreen';
 import GeofenceScreen from '../screens/geofences/GeofenceScreen';
+import ActivateSubscriptionScreen from '../screens/settings/ActivateSubscriptionScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator();
@@ -178,6 +179,11 @@ export default function AppNavigator() {
               name="Geofences"
               component={GeofenceScreen}
               options={{ title: 'Geofences' }}
+            />
+            <Stack.Screen
+              name="ActivateSubscription"
+              component={ActivateSubscriptionScreen}
+              options={{ title: 'Subscription' }}
             />
           </>
         ) : (
