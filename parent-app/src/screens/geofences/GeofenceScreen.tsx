@@ -1,20 +1,24 @@
 import React, { useCallback, useState, useRef } from 'react';
 import {
   View,
-  Text,
-  StyleSheet,
   ScrollView,
-  TouchableOpacity,
-  TextInput,
   ActivityIndicator,
   Alert,
-  Switch,
   RefreshControl,
 } from 'react-native';
+import {
+  Surface,
+  Text,
+  Button,
+  IconButton,
+  Chip,
+  Switch,
+  TextInput,
+} from 'react-native-paper';
 import MapView, { Marker, Circle } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { COLORS } from '../../utils/constants';
+import { colors } from '../../theme';
 import * as api from '../../services/api';
 import type { Geofence } from '../../services/api';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -187,18 +191,18 @@ export default function GeofenceScreen({ route }: Props) {
 
   if (loading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+      <View className="flex-1 justify-center items-center bg-surface-secondary">
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View className="flex-1">
       {/* Map */}
       <MapView
         ref={mapRef}
-        style={styles.map}
+        style={{ flex: 1 }}
         initialRegion={
           geofences.length > 0
             ? {
@@ -218,13 +222,13 @@ export default function GeofenceScreen({ route }: Props) {
               coordinate={{ latitude: g.lat, longitude: g.lng }}
               title={g.name}
               description={`${g.radiusMeters}m radius`}
-              pinColor={g.active ? COLORS.primary : COLORS.textLight}
+              pinColor={g.active ? colors.primary : colors.textMuted}
             />
             <Circle
               center={{ latitude: g.lat, longitude: g.lng }}
               radius={g.radiusMeters}
               fillColor={g.active ? 'rgba(74,144,217,0.15)' : 'rgba(153,153,153,0.1)'}
-              strokeColor={g.active ? COLORS.primary : COLORS.textLight}
+              strokeColor={g.active ? colors.primary : colors.textMuted}
               strokeWidth={2}
             />
           </React.Fragment>
@@ -240,13 +244,13 @@ export default function GeofenceScreen({ route }: Props) {
                 const { latitude, longitude } = e.nativeEvent.coordinate;
                 setForm((prev) => ({ ...prev, lat: latitude, lng: longitude }));
               }}
-              pinColor={COLORS.secondary}
+              pinColor={colors.secondary}
             />
             <Circle
               center={{ latitude: form.lat, longitude: form.lng }}
               radius={form.radiusMeters}
               fillColor="rgba(92,184,92,0.2)"
-              strokeColor={COLORS.secondary}
+              strokeColor={colors.secondary}
               strokeWidth={2}
             />
           </>
@@ -255,123 +259,152 @@ export default function GeofenceScreen({ route }: Props) {
 
       {/* Form Panel */}
       {showForm && (
-        <View style={styles.formPanel}>
+        <Surface
+          className="absolute bottom-0 left-0 right-0 rounded-t-3xl p-5"
+          elevation={4}
+          style={{ maxHeight: '55%' }}
+        >
           <ScrollView>
-            <Text style={styles.formTitle}>
+            <Text variant="titleMedium" className="font-bold text-slate-800 mb-1">
               {editingId ? 'Edit Geofence' : 'New Geofence'}
             </Text>
-            <Text style={styles.formHint}>Tap the map or drag the marker to set location</Text>
+            <Text variant="bodySmall" className="text-slate-500 mb-4">
+              Tap the map or drag the marker to set location
+            </Text>
 
-            <Text style={styles.label}>Name</Text>
             <TextInput
-              style={styles.input}
+              label="Name"
               value={form.name}
               onChangeText={(text) => setForm((prev) => ({ ...prev, name: text }))}
               placeholder="e.g. Home, School"
-              placeholderTextColor={COLORS.textLight}
+              mode="outlined"
+              className="mb-3 bg-white"
+              outlineColor={colors.border}
+              activeOutlineColor={colors.primary}
+              dense
             />
 
-            <Text style={styles.label}>Radius (meters)</Text>
-            <View style={styles.radiusRow}>
+            <Text variant="labelLarge" className="font-semibold text-slate-800 mb-2 mt-1">
+              Radius (meters)
+            </Text>
+            <View className="flex-row gap-x-2 mb-3">
               {[100, 200, 500, 1000].map((r) => (
-                <TouchableOpacity
+                <Chip
                   key={r}
-                  style={[styles.radiusChip, form.radiusMeters === r && styles.radiusChipActive]}
+                  selected={form.radiusMeters === r}
                   onPress={() => setForm((prev) => ({ ...prev, radiusMeters: r }))}
+                  showSelectedCheck={false}
+                  className={`${form.radiusMeters === r ? 'bg-primary-600' : 'bg-surface-tertiary'}`}
+                  textStyle={{
+                    color: form.radiusMeters === r ? colors.white : colors.textSecondary,
+                    fontWeight: '500',
+                  }}
                 >
-                  <Text
-                    style={[
-                      styles.radiusChipText,
-                      form.radiusMeters === r && styles.radiusChipTextActive,
-                    ]}
-                  >
-                    {r}m
-                  </Text>
-                </TouchableOpacity>
+                  {r}m
+                </Chip>
               ))}
             </View>
 
-            <View style={styles.switchRow}>
-              <Text style={styles.switchLabel}>Alert on Entry</Text>
+            <View className="flex-row justify-between items-center mt-2">
+              <Text variant="bodyMedium" className="text-slate-800">Alert on Entry</Text>
               <Switch
                 value={form.alertOnEntry}
                 onValueChange={(val) => setForm((prev) => ({ ...prev, alertOnEntry: val }))}
-                trackColor={{ true: COLORS.primary }}
+                color={colors.primary}
               />
             </View>
 
-            <View style={styles.switchRow}>
-              <Text style={styles.switchLabel}>Alert on Exit</Text>
+            <View className="flex-row justify-between items-center mt-2">
+              <Text variant="bodyMedium" className="text-slate-800">Alert on Exit</Text>
               <Switch
                 value={form.alertOnExit}
                 onValueChange={(val) => setForm((prev) => ({ ...prev, alertOnExit: val }))}
-                trackColor={{ true: COLORS.primary }}
+                color={colors.primary}
               />
             </View>
 
-            <View style={styles.formButtons}>
-              <TouchableOpacity style={styles.cancelButton} onPress={resetForm}>
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+            <View className="flex-row mt-5 gap-x-3">
+              <Button
+                mode="outlined"
+                onPress={resetForm}
+                textColor={colors.textSecondary}
+                className="flex-1 rounded-xl"
+                style={{ borderColor: colors.border }}
+              >
+                Cancel
+              </Button>
+              <Button
+                mode="contained"
                 onPress={handleSave}
                 disabled={saving}
+                buttonColor={colors.primary}
+                textColor={colors.white}
+                className="flex-1 rounded-xl"
               >
                 {saving ? (
-                  <ActivityIndicator size="small" color={COLORS.white} />
+                  <ActivityIndicator size="small" color={colors.white} />
                 ) : (
-                  <Text style={styles.saveButtonText}>
-                    {editingId ? 'Update' : 'Create'}
-                  </Text>
+                  editingId ? 'Update' : 'Create'
                 )}
-              </TouchableOpacity>
+              </Button>
             </View>
           </ScrollView>
-        </View>
+        </Surface>
       )}
 
       {/* Geofence List (shown when form is hidden) */}
       {!showForm && (
-        <View style={styles.listPanel}>
+        <Surface
+          className="absolute bottom-0 left-0 right-0 rounded-t-3xl pt-4 px-4"
+          elevation={4}
+          style={{ maxHeight: '45%' }}
+        >
           <ScrollView
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadGeofences(); }} />
             }
           >
-            <View style={styles.listHeader}>
-              <Text style={styles.listTitle}>
+            <View className="flex-row justify-between items-center mb-3">
+              <Text variant="titleMedium" className="font-bold text-slate-800">
                 Geofences ({geofences.length})
               </Text>
-              <TouchableOpacity
-                style={styles.addFab}
+              <Button
+                mode="contained"
+                icon={() => <Ionicons name="add" size={18} color={colors.white} />}
                 onPress={() => setShowForm(true)}
+                buttonColor={colors.primary}
+                textColor={colors.white}
+                compact
+                className="rounded-full"
               >
-                <Ionicons name="add" size={20} color={COLORS.white} />
-                <Text style={styles.addFabText}>Add</Text>
-              </TouchableOpacity>
+                Add
+              </Button>
             </View>
 
             {geofences.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Ionicons name="navigate-outline" size={48} color={COLORS.textLight} />
-                <Text style={styles.emptyTitle}>No Geofences</Text>
-                <Text style={styles.emptySubtitle}>
+              <View className="items-center py-6">
+                <Ionicons name="navigate-outline" size={48} color={colors.textMuted} />
+                <Text variant="titleSmall" className="font-semibold text-slate-800 mt-3">
+                  No Geofences
+                </Text>
+                <Text variant="bodySmall" className="text-slate-500 text-center mt-1.5 px-5">
                   Create geofences to get alerts when your child enters or leaves specific areas.
                 </Text>
               </View>
             ) : (
               geofences.map((geofence) => (
-                <View key={geofence._id} style={styles.geofenceCard}>
-                  <View style={styles.geofenceHeader}>
+                <Surface key={geofence._id} className="rounded-2xl p-3.5 mb-2.5 bg-surface-tertiary" elevation={0}>
+                  <View className="flex-row items-center gap-x-2.5">
                     <Ionicons
                       name="navigate-circle"
                       size={24}
-                      color={geofence.active ? COLORS.primary : COLORS.textLight}
+                      color={geofence.active ? colors.primary : colors.textMuted}
                     />
-                    <View style={styles.geofenceInfo}>
-                      <Text style={styles.geofenceName}>{geofence.name}</Text>
-                      <Text style={styles.geofenceDetail}>
+                    <View className="flex-1">
+                      <Text variant="bodyLarge" className="font-semibold text-slate-800">
+                        {geofence.name}
+                      </Text>
+                      <Text variant="labelSmall" className="text-slate-500 mt-0.5">
                         {geofence.radiusMeters}m radius
                         {geofence.alertOnEntry ? ' · Entry' : ''}
                         {geofence.alertOnExit ? ' · Exit' : ''}
@@ -380,19 +413,19 @@ export default function GeofenceScreen({ route }: Props) {
                     <Switch
                       value={geofence.active}
                       onValueChange={() => handleToggleActive(geofence)}
-                      trackColor={{ true: COLORS.primary }}
+                      color={colors.primary}
                     />
                   </View>
-                  <View style={styles.geofenceActions}>
-                    <TouchableOpacity
-                      style={styles.actionButton}
+                  <View className="flex-row mt-2.5 pl-9 gap-x-4">
+                    <IconButton
+                      icon={() => <Ionicons name="create-outline" size={18} color={colors.primary} />}
+                      size={18}
                       onPress={() => handleEdit(geofence)}
-                    >
-                      <Ionicons name="create-outline" size={18} color={COLORS.primary} />
-                      <Text style={styles.actionButtonText}>Edit</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.actionButton}
+                      className="m-0"
+                    />
+                    <IconButton
+                      icon={() => <Ionicons name="locate-outline" size={18} color={colors.primary} />}
+                      size={18}
                       onPress={() => {
                         mapRef.current?.animateToRegion({
                           latitude: geofence.lat,
@@ -401,252 +434,23 @@ export default function GeofenceScreen({ route }: Props) {
                           longitudeDelta: 0.01,
                         });
                       }}
-                    >
-                      <Ionicons name="locate-outline" size={18} color={COLORS.primary} />
-                      <Text style={styles.actionButtonText}>Show</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.actionButton}
+                      className="m-0"
+                    />
+                    <IconButton
+                      icon={() => <Ionicons name="trash-outline" size={18} color={colors.danger} />}
+                      size={18}
                       onPress={() => handleDelete(geofence)}
-                    >
-                      <Ionicons name="trash-outline" size={18} color={COLORS.danger} />
-                      <Text style={[styles.actionButtonText, { color: COLORS.danger }]}>Delete</Text>
-                    </TouchableOpacity>
+                      className="m-0"
+                    />
                   </View>
-                </View>
+                </Surface>
               ))
             )}
+
+            <View className="h-4" />
           </ScrollView>
-        </View>
+        </Surface>
       )}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: COLORS.background,
-  },
-  map: {
-    flex: 1,
-  },
-  // Form Panel
-  formPanel: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    maxHeight: '55%',
-    backgroundColor: COLORS.white,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  formTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: COLORS.text,
-    marginBottom: 4,
-  },
-  formHint: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginBottom: 6,
-    marginTop: 12,
-  },
-  input: {
-    backgroundColor: COLORS.background,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: COLORS.text,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  radiusRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 4,
-  },
-  radiusChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: COLORS.background,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  radiusChipActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-  },
-  radiusChipText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: COLORS.textSecondary,
-  },
-  radiusChipTextActive: {
-    color: COLORS.white,
-  },
-  switchRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 14,
-  },
-  switchLabel: {
-    fontSize: 15,
-    color: COLORS.text,
-  },
-  formButtons: {
-    flexDirection: 'row',
-    marginTop: 20,
-    gap: 12,
-  },
-  cancelButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    alignItems: 'center',
-  },
-  cancelButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: COLORS.textSecondary,
-  },
-  saveButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    backgroundColor: COLORS.primary,
-    alignItems: 'center',
-  },
-  saveButtonDisabled: {
-    opacity: 0.7,
-  },
-  saveButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: COLORS.white,
-  },
-  // List Panel
-  listPanel: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    maxHeight: '45%',
-    backgroundColor: COLORS.white,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingTop: 16,
-    paddingHorizontal: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  listHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  listTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: COLORS.text,
-  },
-  addFab: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    gap: 4,
-  },
-  addFabText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.white,
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: 24,
-  },
-  emptyTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginTop: 12,
-  },
-  emptySubtitle: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    marginTop: 6,
-    paddingHorizontal: 20,
-  },
-  geofenceCard: {
-    backgroundColor: COLORS.background,
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 10,
-  },
-  geofenceHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  geofenceInfo: {
-    flex: 1,
-  },
-  geofenceName: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: COLORS.text,
-  },
-  geofenceDetail: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    marginTop: 2,
-  },
-  geofenceActions: {
-    flexDirection: 'row',
-    marginTop: 10,
-    gap: 16,
-    paddingLeft: 34,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  actionButtonText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: COLORS.primary,
-  },
-});

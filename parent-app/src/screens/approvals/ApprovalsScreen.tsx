@@ -1,18 +1,10 @@
 import React, { useCallback, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  RefreshControl,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { View, FlatList, RefreshControl, ActivityIndicator, Alert } from 'react-native';
+import { Surface, Text, Button } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { COLORS } from '../../utils/constants';
 import { formatTimeAgo } from '../../utils/formatters';
+import { colors } from '../../theme';
 import * as api from '../../services/api';
 import type { Alert as AlertType } from '../../types';
 
@@ -62,10 +54,10 @@ export default function ApprovalsScreen() {
     const packageName = item.data?.packageName as string | undefined;
 
     return (
-      <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <View style={styles.appIcon}>
-            <Ionicons name="download-outline" size={24} color={COLORS.info} />
+      <Surface elevation={1} className="rounded-2xl p-4">
+        <View className="flex-row items-center mb-3">
+          <View className="w-12 h-12 rounded-xl bg-primary-50 items-center justify-center mr-3">
+            <Ionicons name="download-outline" size={24} color={colors.primary} />
           </View>
           <View style={styles.cardInfo}>
             <Text style={styles.appName} numberOfLines={1}>
@@ -82,62 +74,76 @@ export default function ApprovalsScreen() {
           A new app was installed on your child's device. Would you like to allow or block it?
         </Text>
 
-        <View style={styles.actions}>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.blockButton]}
+        <View className="flex-row gap-2.5">
+          <Button
+            mode="contained"
             onPress={() => handleDecision(item._id, 'block')}
             disabled={isProcessing}
-          >
-            {isProcessing ? (
-              <ActivityIndicator size="small" color={COLORS.white} />
-            ) : (
-              <>
-                <Ionicons name="ban" size={18} color={COLORS.white} />
-                <Text style={styles.actionTextLight}>Block</Text>
-              </>
+            loading={isProcessing}
+            icon={({ size }) => (
+              <Ionicons name="ban" size={size - 2} color={colors.white} />
             )}
-          </TouchableOpacity>
+            buttonColor={colors.danger}
+            textColor={colors.white}
+            className="flex-1"
+            contentStyle={{ paddingVertical: 2 }}
+            labelStyle={{ fontSize: 15, fontWeight: '600' }}
+          >
+            Block
+          </Button>
 
-          <TouchableOpacity
-            style={[styles.actionButton, styles.approveButton]}
+          <Button
+            mode="contained"
             onPress={() => handleDecision(item._id, 'approve')}
             disabled={isProcessing}
-          >
-            {isProcessing ? (
-              <ActivityIndicator size="small" color={COLORS.white} />
-            ) : (
-              <>
-                <Ionicons name="checkmark" size={18} color={COLORS.white} />
-                <Text style={styles.actionTextLight}>Approve</Text>
-              </>
+            loading={isProcessing}
+            icon={({ size }) => (
+              <Ionicons name="checkmark" size={size - 2} color={colors.white} />
             )}
-          </TouchableOpacity>
+            buttonColor={colors.secondary}
+            textColor={colors.white}
+            className="flex-1"
+            contentStyle={{ paddingVertical: 2 }}
+            labelStyle={{ fontSize: 15, fontWeight: '600' }}
+          >
+            Approve
+          </Button>
         </View>
-      </View>
+      </Surface>
     );
   };
 
   if (loading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+      <View className="flex-1 justify-center items-center bg-surface-secondary">
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View className="flex-1 bg-surface-secondary">
       <FlatList
         data={approvals}
         renderItem={renderApproval}
         keyExtractor={(item) => item._id}
-        contentContainerStyle={styles.list}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadApprovals(); }} />}
+        contentContainerStyle={{ padding: 16, gap: 12 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => {
+              setRefreshing(true);
+              loadApprovals();
+            }}
+          />
+        }
         ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Ionicons name="checkmark-done-circle-outline" size={64} color={COLORS.textLight} />
-            <Text style={styles.emptyTitle}>All Clear</Text>
-            <Text style={styles.emptySubtitle}>
+          <View className="items-center pt-20 px-10">
+            <Ionicons name="checkmark-done-circle-outline" size={64} color={colors.textMuted} />
+            <Text variant="titleLarge" className="font-semibold text-slate-800 mt-4">
+              All Clear
+            </Text>
+            <Text variant="bodyMedium" className="text-slate-500 text-center mt-2">
               No pending app approvals.
             </Text>
           </View>

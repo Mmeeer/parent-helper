@@ -6,6 +6,7 @@ import androidx.work.WorkerParameters
 import com.parenthelper.child.ParentHelperApp
 import com.parenthelper.child.collectors.LocationCollector
 import com.parenthelper.child.collectors.ScreenTimeCollector
+import com.parenthelper.child.collectors.WebActivityCollector
 import com.parenthelper.child.data.api.ApiClient
 import com.parenthelper.child.data.models.ActivitySyncRequest
 import com.parenthelper.child.data.models.BlockedAttempt
@@ -53,7 +54,7 @@ class ActivitySyncWorker(
                 deviceId = deviceId,
                 date = today,
                 apps = appUsage,
-                web = null,
+                web = if (webEntries.isNotEmpty()) webEntries else null,
                 location = locations,
                 blockedAttempts = blockedAttempts,
             )

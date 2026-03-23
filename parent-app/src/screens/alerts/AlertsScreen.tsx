@@ -1,17 +1,11 @@
 import React, { useCallback, useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  RefreshControl,
-  ActivityIndicator,
-} from 'react-native';
+import { View, FlatList, RefreshControl, ActivityIndicator } from 'react-native';
+import { Surface, Text, Badge, Button, TouchableRipple } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { COLORS, ALERT_TYPE_LABELS, ALERT_TYPE_COLORS } from '../../utils/constants';
+import { ALERT_TYPE_LABELS, ALERT_TYPE_COLORS } from '../../utils/constants';
 import { formatTimeAgo } from '../../utils/formatters';
+import { colors } from '../../theme';
 import * as api from '../../services/api';
 import { onSocketEvent } from '../../services/socket';
 import type { Alert as AlertType } from '../../types';
@@ -100,66 +94,93 @@ export default function AlertsScreen() {
 
   const renderAlert = ({ item }: { item: AlertType }) => {
     const iconName = ALERT_ICONS[item.type] || 'alert-circle-outline';
-    const color = ALERT_TYPE_COLORS[item.type] || COLORS.textSecondary;
+    const color = ALERT_TYPE_COLORS[item.type] || colors.textMuted;
 
     return (
-      <TouchableOpacity
-        style={[styles.alertCard, !item.read && styles.alertUnread]}
+      <TouchableRipple
         onPress={() => handleMarkRead(item._id)}
+        borderless
+        className="rounded-2xl"
+        rippleColor="rgba(79, 70, 229, 0.08)"
       >
-        <View style={[styles.iconContainer, { backgroundColor: color + '20' }]}>
-          <Ionicons name={iconName} size={22} color={color} />
-        </View>
-        <View style={styles.alertContent}>
-          <View style={styles.alertHeader}>
-            <Text style={styles.alertType}>
-              {ALERT_TYPE_LABELS[item.type] || item.type}
-            </Text>
-            <Text style={styles.alertTime}>{formatTimeAgo(item.createdAt)}</Text>
+        <Surface
+          elevation={1}
+          className={`flex-row rounded-2xl p-3.5 ${!item.read ? 'border-l-[3px] border-l-primary-600' : ''}`}
+        >
+          <View
+            className="w-11 h-11 rounded-xl items-center justify-center mr-3"
+            style={{ backgroundColor: color + '20' }}
+          >
+            <Ionicons name={iconName} size={22} color={color} />
           </View>
-          <Text style={styles.alertMessage} numberOfLines={2}>
-            {item.message}
-          </Text>
-          {!item.read && <View style={styles.unreadDot} />}
-        </View>
-      </TouchableOpacity>
+
+          <View className="flex-1">
+            <View className="flex-row justify-between items-center mb-1">
+              <Text variant="titleSmall" className="font-semibold text-slate-800">
+                {ALERT_TYPE_LABELS[item.type] || item.type}
+              </Text>
+              <Text variant="labelSmall" className="text-slate-400">
+                {formatTimeAgo(item.createdAt)}
+              </Text>
+            </View>
+
+            <Text variant="bodySmall" className="text-slate-500 leading-[18px]" numberOfLines={2}>
+              {item.message}
+            </Text>
+
+            {!item.read && (
+              <Badge size={8} className="absolute top-0 right-0 bg-primary-600" />
+            )}
+          </View>
+        </Surface>
+      </TouchableRipple>
     );
   };
 
   if (loading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+      <View className="flex-1 justify-center items-center bg-surface-secondary">
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View className="flex-1 bg-surface-secondary">
       {alerts.some((a) => !a.read) && (
-        <TouchableOpacity style={styles.markAllButton} onPress={handleMarkAllRead}>
-          <Text style={styles.markAllText}>Mark all as read</Text>
-        </TouchableOpacity>
+        <View className="items-end px-4 pt-2">
+          <Button
+            mode="text"
+            compact
+            textColor={colors.primary}
+            onPress={handleMarkAllRead}
+            labelStyle={{ fontSize: 14, fontWeight: '500' }}
+          >
+            Mark all as read
+          </Button>
+        </View>
       )}
 
       <FlatList
         data={alerts}
         renderItem={renderAlert}
         keyExtractor={(item) => item._id}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={{ padding: 16, gap: 10 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         onEndReached={onEndReached}
         onEndReachedThreshold={0.5}
         ListFooterComponent={
           loadingMore ? (
-            <ActivityIndicator style={{ paddingVertical: 16 }} color={COLORS.primary} />
+            <ActivityIndicator style={{ paddingVertical: 16 }} color={colors.primary} />
           ) : null
         }
         ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Ionicons name="notifications-off-outline" size={64} color={COLORS.textLight} />
-            <Text style={styles.emptyTitle}>No Alerts</Text>
-            <Text style={styles.emptySubtitle}>
+          <View className="items-center pt-20 px-10">
+            <Ionicons name="notifications-off-outline" size={64} color={colors.textMuted} />
+            <Text variant="titleLarge" className="font-semibold text-slate-800 mt-4">
+              No Alerts
+            </Text>
+            <Text variant="bodyMedium" className="text-slate-500 text-center mt-2">
               You'll be notified about important events here.
             </Text>
           </View>
@@ -168,104 +189,3 @@ export default function AlertsScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: COLORS.background,
-  },
-  list: {
-    padding: 16,
-    gap: 10,
-  },
-  markAllButton: {
-    alignSelf: 'flex-end',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginTop: 8,
-    marginRight: 16,
-  },
-  markAllText: {
-    fontSize: 14,
-    color: COLORS.primary,
-    fontWeight: '500',
-  },
-  alertCard: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.white,
-    borderRadius: 14,
-    padding: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  alertUnread: {
-    borderLeftWidth: 3,
-    borderLeftColor: COLORS.primary,
-  },
-  iconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  alertContent: {
-    flex: 1,
-  },
-  alertHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  alertType: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.text,
-  },
-  alertTime: {
-    fontSize: 12,
-    color: COLORS.textLight,
-  },
-  alertMessage: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    lineHeight: 18,
-  },
-  unreadDot: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: COLORS.primary,
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingTop: 80,
-    paddingHorizontal: 40,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginTop: 16,
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    marginTop: 8,
-  },
-});

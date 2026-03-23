@@ -16,6 +16,8 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.net.DatagramPacket
+import java.net.DatagramSocket
 import java.net.InetAddress
 import java.nio.ByteBuffer
 
@@ -71,6 +73,8 @@ class WebFilterVpnService : VpnService() {
             return
         }
 
+        Log.d(TAG, "VPN started")
+
         serviceScope.launch {
             runVpnLoop()
         }
@@ -113,6 +117,7 @@ class WebFilterVpnService : VpnService() {
                 // Non-DNS packets are dropped since we only route DNS
             } catch (e: Exception) {
                 if (isRunning) {
+                    Log.e(TAG, "VPN loop error: ${e.message}")
                     delay(100)
                 }
             }
@@ -197,6 +202,9 @@ class WebFilterVpnService : VpnService() {
             response[udpOffset + 6] = 0
             response[udpOffset + 7] = 0
 
+            // Recalculate IP checksum
+            recalculateIpChecksum(response, ipHeaderLen)
+
             return response
         } catch (_: Exception) {
             return null
@@ -210,18 +218,21 @@ class WebFilterVpnService : VpnService() {
                 val ipHeaderLen = (packetCopy[0].toInt() and 0xF) * 4
                 val dnsPayload = packetCopy.copyOfRange(ipHeaderLen + 8, length)
 
-                val socket = java.net.DatagramSocket()
+        // Try multiple DNS servers for reliability
+        for (dns in DNS_SERVERS) {
+            var socket: DatagramSocket? = null
+            try {
+                socket = DatagramSocket()
                 protect(socket) // Prevent VPN loop
 
-                val dnsAddress = InetAddress.getByName(REAL_DNS)
-                val sendPacket = java.net.DatagramPacket(dnsPayload, dnsPayload.size, dnsAddress, 53)
-                socket.soTimeout = 5000
+                val dnsAddress = InetAddress.getByName(dns)
+                val sendPacket = DatagramPacket(dnsPayload, dnsPayload.size, dnsAddress, 53)
+                socket.soTimeout = 3000
                 socket.send(sendPacket)
 
                 val responseBuffer = ByteArray(MTU_SIZE)
-                val receivePacket = java.net.DatagramPacket(responseBuffer, responseBuffer.size)
+                val receivePacket = DatagramPacket(responseBuffer, responseBuffer.size)
                 socket.receive(receivePacket)
-                socket.close()
 
                 val responseData = receivePacket.data.copyOf(receivePacket.length)
                 val fullResponse = buildResponsePacket(packetCopy, ipHeaderLen, responseData)
@@ -235,6 +246,9 @@ class WebFilterVpnService : VpnService() {
                 Log.w(TAG, "DNS forward failed: ${e.message}")
             }
         }
+
+        Log.e(TAG, "All DNS servers failed for query")
+        return null
     }
 
     private fun buildResponsePacket(
@@ -281,17 +295,7 @@ class WebFilterVpnService : VpnService() {
             System.arraycopy(dnsResponse, 0, response, ipHeaderLen + 8, dnsResponse.size)
 
             // Recalculate IP checksum
-            response[10] = 0
-            response[11] = 0
-            var checksum = 0
-            for (i in 0 until ipHeaderLen step 2) {
-                val word = ((response[i].toInt() and 0xFF) shl 8) or (response[i + 1].toInt() and 0xFF)
-                checksum += word
-            }
-            checksum = (checksum shr 16) + (checksum and 0xFFFF)
-            checksum = checksum.inv() and 0xFFFF
-            response[10] = ((checksum shr 8) and 0xFF).toByte()
-            response[11] = (checksum and 0xFF).toByte()
+            recalculateIpChecksum(response, ipHeaderLen)
 
             return response
         } catch (_: Exception) {
@@ -321,6 +325,7 @@ class WebFilterVpnService : VpnService() {
         serviceScope.cancel()
         vpnInterface?.close()
         vpnInterface = null
+        Log.d(TAG, "VPN stopped")
         super.onDestroy()
     }
 

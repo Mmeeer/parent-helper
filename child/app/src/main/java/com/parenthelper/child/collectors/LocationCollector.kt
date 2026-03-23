@@ -60,6 +60,42 @@ class LocationCollector(private val context: Context) {
         locationCallback = null
     }
 
+    /**
+     * Get a fresh location immediately (for locate command).
+     * Falls back to last known location if a fresh one isn't available.
+     */
+    @android.annotation.SuppressLint("MissingPermission")
+    suspend fun getImmediateLocation(): LocationEntry? {
+        if (ContextCompat.checkSelfPermission(
+                context, Manifest.permission.ACCESS_FINE_LOCATION,
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return null
+        }
+
+        return try {
+            val location = com.google.android.gms.tasks.Tasks.await(
+                fusedLocationClient.lastLocation,
+                10,
+                java.util.concurrent.TimeUnit.SECONDS,
+            )
+            if (location != null) {
+                val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply {
+                    timeZone = TimeZone.getTimeZone("UTC")
+                }
+                LocationEntry(
+                    lat = location.latitude,
+                    lng = location.longitude,
+                    timestamp = dateFormat.format(Date()),
+                )
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     companion object {
         private const val LOCATION_INTERVAL_MS = 10 * 60 * 1000L // 10 minutes
         private const val MIN_LOCATION_INTERVAL_MS = 5 * 60 * 1000L // 5 minutes

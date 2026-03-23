@@ -10,17 +10,23 @@ exports.sync = async (req, res, next) => {
     const deviceId = req.device._id;
     const { date, apps, web, location, blockedAttempts } = req.body;
 
-    // Upsert: merge activity for the same child+device+date
+    // Upsert: for apps use $set (child sends full daily snapshot each sync),
+    // for web/location/blockedAttempts use $push (discrete events that accumulate)
+    const update = {};
+    if (apps) {
+      update.$set = { apps };
+    }
+    const pushFields = {};
+    if (web) pushFields.web = { $each: web };
+    if (location) pushFields.location = { $each: location };
+    if (blockedAttempts) pushFields.blockedAttempts = { $each: blockedAttempts };
+    if (Object.keys(pushFields).length > 0) {
+      update.$push = pushFields;
+    }
+
     const log = await ActivityLog.findOneAndUpdate(
       { childId, deviceId, date },
-      {
-        $push: {
-          ...(apps && { apps: { $each: apps } }),
-          ...(web && { web: { $each: web } }),
-          ...(location && { location: { $each: location } }),
-          ...(blockedAttempts && { blockedAttempts: { $each: blockedAttempts } }),
-        },
-      },
+      update,
       { new: true, upsert: true },
     );
 
@@ -228,7 +234,7 @@ exports.location = async (req, res, next) => {
       date: { $gte: today },
     });
 
-    const locations = logs.flatMap((log) => log.location || []).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    const locations = logs.flatMap((log) => log.location || []).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
     res.json(locations);
   } catch (err) {

@@ -1,17 +1,15 @@
 import React, { useCallback, useState } from 'react';
 import {
   View,
-  Text,
-  StyleSheet,
   ScrollView,
-  TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { Surface, Text, Button, Chip, IconButton } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { COLORS } from '../../utils/constants';
+import { colors } from '../../theme';
 import { formatTimeAgo } from '../../utils/formatters';
 import * as api from '../../services/api';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -89,57 +87,62 @@ export default function DevicesListScreen({ navigation, route }: Props) {
 
   if (loading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+      <View className="flex-1 justify-center items-center bg-surface-secondary">
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
     <ScrollView
-      style={styles.container}
+      className="flex-1 bg-surface-secondary"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadDevices(); }} />}
     >
-      <Text style={styles.header}>Devices for {childName}</Text>
+      <Text variant="headlineSmall" className="font-bold text-slate-800 mx-4 mt-5 mb-4">
+        Devices for {childName}
+      </Text>
 
       {devices.length === 0 ? (
-        <View style={styles.emptyState}>
-          <Ionicons name="phone-portrait-outline" size={64} color={COLORS.textLight} />
-          <Text style={styles.emptyTitle}>No Devices Paired</Text>
-          <Text style={styles.emptySubtitle}>
+        <View className="items-center pt-16 px-10">
+          <Ionicons name="phone-portrait-outline" size={64} color={colors.textMuted} />
+          <Text variant="titleMedium" className="font-semibold text-slate-800 mt-4">
+            No Devices Paired
+          </Text>
+          <Text variant="bodyMedium" className="text-slate-500 text-center mt-2">
             Pair a device to start monitoring.
           </Text>
         </View>
       ) : (
         devices.map((device) => (
-          <View key={device.id} style={styles.deviceCard}>
-            <View style={styles.deviceHeader}>
-              <View style={styles.deviceIcon}>
-                <Ionicons name="phone-portrait" size={24} color={COLORS.primary} />
+          <Surface key={device.id} className="mx-4 mb-3 rounded-2xl p-4" elevation={1}>
+            {/* Device Header */}
+            <View className="flex-row items-center">
+              <View className="w-11 h-11 rounded-xl bg-primary-50 justify-center items-center">
+                <Ionicons name="phone-portrait" size={24} color={colors.primary} />
               </View>
-              <View style={styles.deviceInfo}>
-                <Text style={styles.deviceModel}>{device.model || 'Unknown Device'}</Text>
-                <Text style={styles.deviceMeta}>
+              <View className="flex-1 ml-3">
+                <Text variant="titleSmall" className="font-semibold text-slate-800">
+                  {device.model || 'Unknown Device'}
+                </Text>
+                <Text variant="labelSmall" className="text-slate-500 mt-0.5">
                   {device.platform} {device.osVersion} — v{device.appVersion}
                 </Text>
               </View>
               <View
-                style={[
-                  styles.statusBadge,
-                  { backgroundColor: device.status === 'online' ? COLORS.online + '20' : '#F5F5F5' },
-                ]}
+                className={`flex-row items-center px-2.5 py-1 rounded-xl gap-x-1 ${
+                  device.status === 'online' ? 'bg-accent-50' : 'bg-slate-100'
+                }`}
               >
                 <View
-                  style={[
-                    styles.statusDot,
-                    { backgroundColor: device.status === 'online' ? COLORS.online : COLORS.offline },
-                  ]}
+                  className={`w-2 h-2 rounded-full ${
+                    device.status === 'online' ? 'bg-accent-600' : 'bg-slate-400'
+                  }`}
                 />
                 <Text
-                  style={[
-                    styles.statusText,
-                    { color: device.status === 'online' ? COLORS.online : COLORS.offline },
-                  ]}
+                  variant="labelSmall"
+                  className={`font-semibold capitalize ${
+                    device.status === 'online' ? 'text-accent-600' : 'text-slate-400'
+                  }`}
                 >
                   {device.status}
                 </Text>
@@ -147,126 +150,115 @@ export default function DevicesListScreen({ navigation, route }: Props) {
             </View>
 
             {/* Device Stats */}
-            <View style={styles.statsRow}>
+            <View className="flex-row gap-x-2.5 mt-3">
               {device.batteryLevel != null && (
-                <View style={styles.statChip}>
-                  <Ionicons
-                    name={device.batteryLevel > 20 ? 'battery-half' : 'battery-dead'}
-                    size={16}
-                    color={device.batteryLevel > 20 ? COLORS.secondary : COLORS.danger}
-                  />
-                  <Text style={styles.statChipText}>{device.batteryLevel}%</Text>
-                </View>
+                <Chip
+                  icon={() => (
+                    <Ionicons
+                      name={device.batteryLevel! > 20 ? 'battery-half' : 'battery-dead'}
+                      size={16}
+                      color={device.batteryLevel! > 20 ? colors.secondary : colors.danger}
+                    />
+                  )}
+                  className="bg-surface-tertiary"
+                  textStyle={{ fontSize: 12, color: colors.textSecondary }}
+                  compact
+                >
+                  {device.batteryLevel}%
+                </Chip>
               )}
-              <View style={styles.statChip}>
-                <Ionicons name="time-outline" size={16} color={COLORS.textSecondary} />
-                <Text style={styles.statChipText}>
-                  {device.lastSeen ? formatTimeAgo(device.lastSeen) : 'Never'}
-                </Text>
-              </View>
+              <Chip
+                icon={() => (
+                  <Ionicons name="time-outline" size={16} color={colors.textSecondary} />
+                )}
+                className="bg-surface-tertiary"
+                textStyle={{ fontSize: 12, color: colors.textSecondary }}
+                compact
+              >
+                {device.lastSeen ? formatTimeAgo(device.lastSeen) : 'Never'}
+              </Chip>
             </View>
 
             {/* Remote Commands */}
-            <Text style={styles.commandsLabel}>Remote Commands</Text>
-            <View style={styles.commandsRow}>
-              <TouchableOpacity
-                style={styles.commandButton}
-                onPress={() => sendCommand(device.id, 'lock')}
-                disabled={commandingId === device.id}
-              >
-                <Ionicons name="lock-closed-outline" size={20} color={COLORS.danger} />
-                <Text style={styles.commandText}>Lock</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.commandButton}
-                onPress={() => sendCommand(device.id, 'unlock')}
-                disabled={commandingId === device.id}
-              >
-                <Ionicons name="lock-open-outline" size={20} color={COLORS.secondary} />
-                <Text style={styles.commandText}>Unlock</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.commandButton}
-                onPress={() => sendCommand(device.id, 'locate')}
-                disabled={commandingId === device.id}
-              >
-                <Ionicons name="locate-outline" size={20} color={COLORS.primary} />
-                <Text style={styles.commandText}>Locate</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.commandButton}
-                onPress={() => sendCommand(device.id, 'sync')}
-                disabled={commandingId === device.id}
-              >
-                <Ionicons name="sync-outline" size={20} color={COLORS.warning} />
-                <Text style={styles.commandText}>Sync</Text>
-              </TouchableOpacity>
+            <Text variant="labelMedium" className="font-semibold text-slate-500 mt-4 mb-2">
+              Remote Commands
+            </Text>
+            <View className="flex-row gap-x-2">
+              <View className="flex-1 items-center py-3 rounded-xl bg-surface-tertiary">
+                <IconButton
+                  icon={() => <Ionicons name="lock-closed-outline" size={20} color={colors.danger} />}
+                  size={20}
+                  onPress={() => sendCommand(device.id, 'lock')}
+                  disabled={commandingId === device.id}
+                  className="m-0 p-0"
+                />
+                <Text variant="labelSmall" className="text-slate-700 -mt-1">Lock</Text>
+              </View>
+              <View className="flex-1 items-center py-3 rounded-xl bg-surface-tertiary">
+                <IconButton
+                  icon={() => <Ionicons name="lock-open-outline" size={20} color={colors.secondary} />}
+                  size={20}
+                  onPress={() => sendCommand(device.id, 'unlock')}
+                  disabled={commandingId === device.id}
+                  className="m-0 p-0"
+                />
+                <Text variant="labelSmall" className="text-slate-700 -mt-1">Unlock</Text>
+              </View>
+              <View className="flex-1 items-center py-3 rounded-xl bg-surface-tertiary">
+                <IconButton
+                  icon={() => <Ionicons name="locate-outline" size={20} color={colors.primary} />}
+                  size={20}
+                  onPress={() => sendCommand(device.id, 'locate')}
+                  disabled={commandingId === device.id}
+                  className="m-0 p-0"
+                />
+                <Text variant="labelSmall" className="text-slate-700 -mt-1">Locate</Text>
+              </View>
+              <View className="flex-1 items-center py-3 rounded-xl bg-surface-tertiary">
+                <IconButton
+                  icon={() => <Ionicons name="sync-outline" size={20} color={colors.warning} />}
+                  size={20}
+                  onPress={() => sendCommand(device.id, 'sync')}
+                  disabled={commandingId === device.id}
+                  className="m-0 p-0"
+                />
+                <Text variant="labelSmall" className="text-slate-700 -mt-1">Sync</Text>
+              </View>
             </View>
 
             {commandingId === device.id && (
-              <ActivityIndicator style={{ marginTop: 8 }} color={COLORS.primary} />
+              <ActivityIndicator className="mt-2" color={colors.primary} />
             )}
 
             {/* Unpair */}
-            <TouchableOpacity
-              style={styles.unpairButton}
+            <Button
+              mode="text"
+              icon={() => <Ionicons name="unlink-outline" size={16} color={colors.danger} />}
               onPress={() => handleUnpair(device.id)}
+              textColor={colors.danger}
+              className="mt-3"
+              compact
             >
-              <Ionicons name="unlink-outline" size={16} color={COLORS.danger} />
-              <Text style={styles.unpairText}>Unpair Device</Text>
-            </TouchableOpacity>
-          </View>
+              Unpair Device
+            </Button>
+          </Surface>
         ))
       )}
 
       {/* Pair New Device */}
-      <TouchableOpacity
-        style={styles.pairButton}
-        onPress={() => navigation.navigate('PairDevice', { childId, childName })}
-      >
-        <Ionicons name="add-circle-outline" size={22} color={COLORS.primary} />
-        <Text style={styles.pairButtonText}>Pair New Device</Text>
-      </TouchableOpacity>
+      <Surface className="mx-4 mt-2 rounded-2xl" elevation={0}>
+        <Button
+          mode="outlined"
+          icon={() => <Ionicons name="add-circle-outline" size={20} color={colors.primary} />}
+          onPress={() => navigation.navigate('PairDevice', { childId, childName })}
+          textColor={colors.primary}
+          className="rounded-2xl py-1"
+        >
+          Pair New Device
+        </Button>
+      </Surface>
 
-      <View style={{ height: 32 }} />
+      <View className="h-8" />
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background },
-  header: { fontSize: 22, fontWeight: '700', color: COLORS.text, marginHorizontal: 16, marginTop: 20, marginBottom: 16 },
-  emptyState: { alignItems: 'center', paddingTop: 60, paddingHorizontal: 40 },
-  emptyTitle: { fontSize: 20, fontWeight: '600', color: COLORS.text, marginTop: 16 },
-  emptySubtitle: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center', marginTop: 8 },
-  deviceCard: {
-    backgroundColor: COLORS.white, marginHorizontal: 16, marginBottom: 12, borderRadius: 16, padding: 16,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
-  },
-  deviceHeader: { flexDirection: 'row', alignItems: 'center' },
-  deviceIcon: { width: 44, height: 44, borderRadius: 12, backgroundColor: COLORS.primary + '15', justifyContent: 'center', alignItems: 'center' },
-  deviceInfo: { flex: 1, marginLeft: 12 },
-  deviceModel: { fontSize: 16, fontWeight: '600', color: COLORS.text },
-  deviceMeta: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
-  statusBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, gap: 4 },
-  statusDot: { width: 7, height: 7, borderRadius: 4 },
-  statusText: { fontSize: 12, fontWeight: '600', textTransform: 'capitalize' },
-  statsRow: { flexDirection: 'row', gap: 10, marginTop: 12 },
-  statChip: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.background, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, gap: 4 },
-  statChipText: { fontSize: 12, color: COLORS.textSecondary, fontWeight: '500' },
-  commandsLabel: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary, marginTop: 16, marginBottom: 8 },
-  commandsRow: { flexDirection: 'row', gap: 8 },
-  commandButton: {
-    flex: 1, alignItems: 'center', paddingVertical: 12, borderRadius: 12,
-    backgroundColor: COLORS.background, gap: 4,
-  },
-  commandText: { fontSize: 11, fontWeight: '500', color: COLORS.text },
-  unpairButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 16, paddingVertical: 8 },
-  unpairText: { fontSize: 13, color: COLORS.danger, fontWeight: '500' },
-  pairButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginHorizontal: 16, marginTop: 8, paddingVertical: 16, backgroundColor: COLORS.white, borderRadius: 14 },
-  pairButtonText: { fontSize: 15, color: COLORS.primary, fontWeight: '600' },
-});

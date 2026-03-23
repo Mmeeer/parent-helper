@@ -73,7 +73,7 @@ deviceSchema.index({ childId: 1 });
 deviceSchema.pre('save', function (next) {
   if (!this.pairingCode && !this.paired) {
     this.pairingCode = crypto.randomBytes(3).toString('hex').toUpperCase();
-    this.pairingExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    this.pairingExpiresAt = new Date(Date.now() + 60 * 60 * 1000); // 60 minutes
   }
   next();
 });

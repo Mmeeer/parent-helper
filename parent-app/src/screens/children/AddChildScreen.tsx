@@ -1,16 +1,12 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { COLORS } from '../../utils/constants';
+import { TextInput, Button, Text } from 'react-native-paper';
+import { colors } from '../../theme';
 import * as api from '../../services/api';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../types';
@@ -48,85 +44,53 @@ export default function AddChildScreen({ navigation }: Props) {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      className="flex-1 bg-surface-secondary"
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={styles.content}>
-        <Text style={styles.label}>Child's Name</Text>
+      <View className="p-6">
+        <Text variant="headlineSmall" className="mb-6 font-bold text-slate-800">
+          Add Child Profile
+        </Text>
+
         <TextInput
-          style={styles.input}
+          mode="outlined"
+          label="Child's Name"
           placeholder="Enter name"
-          placeholderTextColor={COLORS.textLight}
           value={name}
           onChangeText={setName}
           autoFocus
+          outlineColor={colors.border}
+          activeOutlineColor={colors.primary}
+          className="mb-4 bg-white"
         />
 
-        <Text style={styles.label}>Age</Text>
         <TextInput
-          style={styles.input}
+          mode="outlined"
+          label="Age"
           placeholder="Enter age (1-18)"
-          placeholderTextColor={COLORS.textLight}
           value={age}
           onChangeText={setAge}
           keyboardType="number-pad"
           maxLength={2}
+          outlineColor={colors.border}
+          activeOutlineColor={colors.primary}
+          className="mb-8 bg-white"
         />
 
-        <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
+        <Button
+          mode="contained"
           onPress={handleCreate}
           disabled={loading}
+          loading={loading}
+          buttonColor={colors.primary}
+          textColor="#FFFFFF"
+          contentStyle={{ paddingVertical: 6 }}
+          className="rounded-xl"
+          labelStyle={{ fontSize: 18, fontWeight: '600' }}
         >
-          {loading ? (
-            <ActivityIndicator color={COLORS.white} />
-          ) : (
-            <Text style={styles.buttonText}>Add Child</Text>
-          )}
-        </TouchableOpacity>
+          Add Child
+        </Button>
       </View>
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  content: {
-    padding: 24,
-  },
-  label: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginBottom: 8,
-    marginTop: 16,
-  },
-  input: {
-    backgroundColor: COLORS.white,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: COLORS.text,
-  },
-  button: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 32,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: COLORS.white,
-    fontSize: 18,
-    fontWeight: '600',
-  },
-});

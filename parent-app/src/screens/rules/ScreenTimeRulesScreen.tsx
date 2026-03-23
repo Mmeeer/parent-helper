@@ -13,7 +13,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { COLORS, DAYS_OF_WEEK } from '../../utils/constants';
+import { colors } from '../../theme';
+import { DAYS_OF_WEEK } from '../../utils/constants';
 import { formatDuration } from '../../utils/formatters';
 import * as api from '../../services/api';
 import type { RouteProp } from '@react-navigation/native';
@@ -131,7 +132,7 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
     setPerAppLimits(perAppLimits.filter((_, i) => i !== index));
   };
 
-  // ─── Schedules ─────────────────────────────────────
+  // Schedules
   const addSchedule = () => {
     setSchedules([
       ...schedules,
@@ -168,8 +169,8 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
 
   if (loading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+      <View className="flex-1 justify-center items-center bg-surface-secondary">
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -178,50 +179,61 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
     <>
     <ScrollView style={styles.container}>
       {/* Daily Limit */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Daily Screen Time Limit</Text>
-        <View style={styles.limitRow}>
+      <Surface className="mx-4 mt-4 rounded-2xl p-4" elevation={1}>
+        <Text variant="titleMedium" className="font-bold text-slate-800">
+          Daily Screen Time Limit
+        </Text>
+        <View className="flex-row items-center mt-3 gap-2">
           <TextInput
-            style={styles.limitInput}
+            mode="outlined"
             value={dailyLimit}
             onChangeText={setDailyLimit}
             keyboardType="number-pad"
             maxLength={4}
+            className="w-24 text-center bg-white"
+            outlineColor={colors.border}
+            activeOutlineColor={colors.primary}
+            dense
           />
-          <Text style={styles.limitUnit}>minutes</Text>
-          <Text style={styles.limitFormatted}>({formatDuration(parseInt(dailyLimit, 10) || 0)})</Text>
+          <Text variant="bodyMedium" className="text-slate-500">minutes</Text>
+          <Text variant="bodySmall" className="text-primary-600 font-medium">
+            ({formatDuration(parseInt(dailyLimit, 10) || 0)})
+          </Text>
         </View>
 
         {/* Quick presets */}
-        <View style={styles.presetRow}>
+        <View className="flex-row mt-3 gap-2 flex-wrap">
           {[30, 60, 120, 180, 240].map((mins) => (
-            <TouchableOpacity
+            <Chip
               key={mins}
-              style={[
-                styles.presetButton,
-                parseInt(dailyLimit, 10) === mins && styles.presetActive,
-              ]}
+              selected={parseInt(dailyLimit, 10) === mins}
               onPress={() => setDailyLimit(String(mins))}
+              selectedColor={colors.white}
+              showSelectedOverlay
+              style={
+                parseInt(dailyLimit, 10) === mins
+                  ? { backgroundColor: colors.primary }
+                  : { backgroundColor: colors.surfaceTertiary }
+              }
+              textStyle={
+                parseInt(dailyLimit, 10) === mins
+                  ? { color: colors.white }
+                  : { color: colors.textSecondary }
+              }
+              compact
             >
-              <Text
-                style={[
-                  styles.presetText,
-                  parseInt(dailyLimit, 10) === mins && styles.presetTextActive,
-                ]}
-              >
-                {formatDuration(mins)}
-              </Text>
-            </TouchableOpacity>
+              {formatDuration(mins)}
+            </Chip>
           ))}
         </View>
-      </View>
+      </Surface>
 
       {/* Per-App Limits */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Per-App Limits</Text>
-        </View>
-        <Text style={styles.sectionHint}>
+      <Surface className="mx-4 mt-4 rounded-2xl p-4" elevation={1}>
+        <Text variant="titleMedium" className="font-bold text-slate-800">
+          Per-App Limits
+        </Text>
+        <Text variant="bodySmall" className="text-slate-500 mt-1 mb-3">
           Set individual time limits for specific apps.
         </Text>
 
@@ -236,13 +248,24 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
           </TouchableOpacity>
           <View style={styles.addAppRow}>
             <TextInput
-              style={[styles.addAppInput, { flex: 1 }]}
+              mode="outlined"
               value={newAppLimit}
               onChangeText={setNewAppLimit}
               placeholder="30"
-              placeholderTextColor={COLORS.textLight}
               keyboardType="number-pad"
               maxLength={4}
+              className="flex-1 bg-white"
+              outlineColor={colors.border}
+              activeOutlineColor={colors.primary}
+              dense
+            />
+            <Text variant="bodyMedium" className="text-slate-500">min</Text>
+            <IconButton
+              icon={() => <Ionicons name="add" size={22} color={colors.white} />}
+              mode="contained"
+              containerColor={colors.primary}
+              size={22}
+              onPress={addPerAppLimit}
             />
             <Text style={styles.addAppUnit}>min/day</Text>
             <TouchableOpacity style={styles.addAppButton} onPress={addPerAppLimit}>
@@ -253,117 +276,153 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
 
         {/* Per-app list */}
         {perAppLimits.length === 0 ? (
-          <Text style={styles.emptyText}>No per-app limits set.</Text>
+          <Text variant="bodySmall" className="text-slate-400 text-center py-4">
+            No per-app limits set.
+          </Text>
         ) : (
           perAppLimits.map((app, index) => (
-            <View key={index} style={styles.perAppRow}>
-              <View style={styles.perAppInfo}>
-                <Text style={styles.perAppName} numberOfLines={1}>
+            <View
+              key={index}
+              className="flex-row items-center py-2.5 border-b border-slate-200 gap-2.5"
+            >
+              <View className="flex-1">
+                <Text variant="bodyMedium" className="font-medium text-slate-800" numberOfLines={1}>
                   {app.appName || app.appId}
                 </Text>
-                <Text style={styles.perAppId} numberOfLines={1}>{app.appId}</Text>
+                <Text variant="labelSmall" className="text-slate-400 mt-0.5 font-mono" numberOfLines={1}>
+                  {app.appId}
+                </Text>
               </View>
-              <Text style={styles.perAppLimit}>{formatDuration(app.limitMin)}</Text>
-              <TouchableOpacity onPress={() => removePerAppLimit(index)}>
-                <Ionicons name="close-circle" size={22} color={COLORS.textLight} />
-              </TouchableOpacity>
+              <Text variant="bodyMedium" className="font-semibold text-primary-600">
+                {formatDuration(app.limitMin)}
+              </Text>
+              <IconButton
+                icon={() => <Ionicons name="close-circle-outline" size={20} color={colors.textLight} />}
+                size={20}
+                onPress={() => removePerAppLimit(index)}
+                className="m-0"
+              />
             </View>
           ))
         )}
-      </View>
+      </Surface>
 
       {/* Schedules */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Blocked Schedules</Text>
-          <TouchableOpacity onPress={addSchedule}>
-            <Ionicons name="add-circle" size={28} color={COLORS.primary} />
-          </TouchableOpacity>
+      <Surface className="mx-4 mt-4 rounded-2xl p-4" elevation={1}>
+        <View className="flex-row justify-between items-center">
+          <Text variant="titleMedium" className="font-bold text-slate-800">
+            Blocked Schedules
+          </Text>
+          <IconButton
+            icon={() => <Ionicons name="add-circle" size={26} color={colors.primary} />}
+            size={26}
+            onPress={addSchedule}
+            className="m-0"
+          />
         </View>
-        <Text style={styles.sectionHint}>
+        <Text variant="bodySmall" className="text-slate-500 mt-1 mb-3">
           Block device usage during specific times.
         </Text>
 
         {schedules.map((schedule, index) => (
-          <View key={index} style={styles.scheduleCard}>
-            <View style={styles.scheduleHeader}>
-              <Text style={styles.scheduleLabel}>Schedule {index + 1}</Text>
-              <TouchableOpacity onPress={() => removeSchedule(index)}>
-                <Ionicons name="trash-outline" size={20} color={COLORS.danger} />
-              </TouchableOpacity>
+          <Surface
+            key={index}
+            className="rounded-xl p-3.5 mt-2.5 bg-surface-secondary"
+            elevation={0}
+          >
+            <View className="flex-row justify-between items-center mb-2.5">
+              <Text variant="bodyMedium" className="font-semibold text-slate-800">
+                Schedule {index + 1}
+              </Text>
+              <IconButton
+                icon={() => <Ionicons name="trash-outline" size={20} color={colors.danger} />}
+                size={20}
+                onPress={() => removeSchedule(index)}
+                className="m-0"
+              />
             </View>
 
             {/* Days */}
-            <View style={styles.daysRow}>
+            <View className="flex-row flex-wrap gap-1.5">
               {DAYS_OF_WEEK.map((day) => (
-                <TouchableOpacity
+                <Chip
                   key={day}
-                  style={[
-                    styles.dayChip,
-                    schedule.days.includes(day) && styles.dayChipActive,
-                  ]}
+                  selected={schedule.days.includes(day)}
                   onPress={() => toggleDay(index, day)}
+                  compact
+                  style={
+                    schedule.days.includes(day)
+                      ? { backgroundColor: colors.primary }
+                      : { backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border }
+                  }
+                  textStyle={
+                    schedule.days.includes(day)
+                      ? { color: colors.white, fontSize: 12 }
+                      : { color: colors.textSecondary, fontSize: 12 }
+                  }
                 >
-                  <Text
-                    style={[
-                      styles.dayChipText,
-                      schedule.days.includes(day) && styles.dayChipTextActive,
-                    ]}
-                  >
-                    {day.slice(0, 3)}
-                  </Text>
-                </TouchableOpacity>
+                  {day.slice(0, 3)}
+                </Chip>
               ))}
             </View>
 
             {/* Time Range */}
-            <View style={styles.timeRow}>
-              <View style={styles.timeField}>
-                <Text style={styles.timeLabel}>Start</Text>
+            <View className="flex-row items-end mt-3 gap-2">
+              <View className="flex-1">
+                <Text variant="labelSmall" className="text-slate-500 mb-1">Start</Text>
                 <TextInput
-                  style={styles.timeInput}
+                  mode="outlined"
                   value={schedule.startTime}
                   onChangeText={(v) => updateScheduleTime(index, 'startTime', v)}
                   placeholder="08:00"
-                  placeholderTextColor={COLORS.textLight}
+                  className="bg-white text-center"
+                  outlineColor={colors.border}
+                  activeOutlineColor={colors.primary}
+                  dense
                 />
               </View>
-              <Text style={styles.timeSeparator}>to</Text>
-              <View style={styles.timeField}>
-                <Text style={styles.timeLabel}>End</Text>
+              <Text variant="bodyMedium" className="text-slate-500 pb-2">to</Text>
+              <View className="flex-1">
+                <Text variant="labelSmall" className="text-slate-500 mb-1">End</Text>
                 <TextInput
-                  style={styles.timeInput}
+                  mode="outlined"
                   value={schedule.endTime}
                   onChangeText={(v) => updateScheduleTime(index, 'endTime', v)}
                   placeholder="15:00"
-                  placeholderTextColor={COLORS.textLight}
+                  className="bg-white text-center"
+                  outlineColor={colors.border}
+                  activeOutlineColor={colors.primary}
+                  dense
                 />
               </View>
             </View>
-          </View>
+          </Surface>
         ))}
 
         {schedules.length === 0 && (
-          <Text style={styles.emptyText}>
+          <Text variant="bodySmall" className="text-slate-400 text-center py-4">
             No blocked schedules. Tap + to add one.
           </Text>
         )}
-      </View>
+      </Surface>
 
       {/* Save Button */}
-      <TouchableOpacity
-        style={[styles.saveButton, saving && styles.saveButtonDisabled]}
-        onPress={handleSave}
-        disabled={saving}
-      >
-        {saving ? (
-          <ActivityIndicator color={COLORS.white} />
-        ) : (
-          <Text style={styles.saveButtonText}>Save Changes</Text>
-        )}
-      </TouchableOpacity>
+      <View className="mx-4 mt-6">
+        <Button
+          mode="contained"
+          onPress={handleSave}
+          loading={saving}
+          disabled={saving}
+          buttonColor={colors.primary}
+          textColor={colors.white}
+          contentStyle={{ paddingVertical: 8 }}
+          className="rounded-xl"
+        >
+          Save Changes
+        </Button>
+      </View>
 
-      <View style={{ height: 40 }} />
+      <View className="h-10" />
     </ScrollView>
 
     {/* App Picker Modal */}

@@ -22,10 +22,22 @@ object SocketManager {
     private var commandHandler: ((Command) -> Unit)? = null
 
     fun connect(deviceToken: String) {
+        // Prevent multiple connections
+        if (socket?.connected() == true) {
+            Log.d(TAG, "Already connected, skipping")
+            return
+        }
+        // Clean up any existing socket before creating a new one
+        socket?.disconnect()
+        socket?.off()
+        socket = null
+
         try {
             val baseUrl = kotlinx.coroutines.runBlocking {
                 ParentHelperApp.instance.prefsManager.baseUrl.first()
             }.trimEnd('/')
+
+            Log.d(TAG, "Connecting to: $baseUrl with token: ${deviceToken.take(8)}...")
 
             val options = IO.Options().apply {
                 reconnection = true
@@ -33,17 +45,18 @@ object SocketManager {
                 reconnectionDelay = 1000
                 reconnectionDelayMax = 30000
                 timeout = 20000
+                transports = arrayOf("websocket")
             }
 
             socket = IO.socket(URI.create(baseUrl), options)
 
             socket?.on(Socket.EVENT_CONNECT) {
-                Log.d(TAG, "Connected to server")
+                Log.d(TAG, "Connected to server, joining device room...")
                 socket?.emit("join:device", deviceToken)
             }
 
-            socket?.on(Socket.EVENT_DISCONNECT) {
-                Log.d(TAG, "Disconnected from server")
+            socket?.on(Socket.EVENT_DISCONNECT) { args ->
+                Log.d(TAG, "Disconnected from server: ${args.firstOrNull()}")
             }
 
             socket?.on(Socket.EVENT_CONNECT_ERROR) { args ->

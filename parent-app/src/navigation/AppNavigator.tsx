@@ -1,11 +1,12 @@
 import React from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { View } from 'react-native';
+import { ActivityIndicator } from 'react-native-paper';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../store/AuthContext';
-import { COLORS } from '../utils/constants';
+import { colors } from '../theme';
 import type { RootStackParamList } from '../types';
 
 // Auth Screens
@@ -39,16 +40,16 @@ function MainTabs() {
   return (
     <Tab.Navigator
       screenOptions={{
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.textLight,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: {
-          backgroundColor: COLORS.white,
-          borderTopColor: COLORS.border,
+          backgroundColor: colors.white,
+          borderTopColor: colors.border,
           paddingBottom: 4,
           height: 56,
         },
-        headerStyle: { backgroundColor: COLORS.white },
-        headerTitleStyle: { fontWeight: '600', color: COLORS.text },
+        headerStyle: { backgroundColor: colors.white },
+        headerTitleStyle: { fontWeight: '600', color: colors.text },
       }}
     >
       <Tab.Screen
@@ -100,8 +101,8 @@ export default function AppNavigator() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background }}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+      <View className="flex-1 items-center justify-center bg-surface-secondary">
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -110,10 +111,10 @@ export default function AppNavigator() {
     <NavigationContainer>
       <Stack.Navigator
         screenOptions={{
-          headerStyle: { backgroundColor: COLORS.white },
-          headerTitleStyle: { fontWeight: '600', color: COLORS.text },
-          headerTintColor: COLORS.primary,
-          headerBackTitleVisible: false,
+          headerStyle: { backgroundColor: colors.white },
+          headerTitleStyle: { fontWeight: '600', color: colors.text },
+          headerTintColor: colors.primary,
+          headerBackButtonDisplayMode: 'minimal',
         }}
       >
         {isAuthenticated ? (
