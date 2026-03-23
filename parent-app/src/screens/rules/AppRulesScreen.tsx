@@ -1,19 +1,16 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
-  Text,
-  StyleSheet,
   ScrollView,
-  TouchableOpacity,
-  TextInput,
   ActivityIndicator,
   Alert,
   FlatList,
   Modal,
 } from 'react-native';
+import { Surface, Text, Button, TextInput, IconButton, TouchableRipple } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { COLORS } from '../../utils/constants';
+import { colors } from '../../theme';
 import * as api from '../../services/api';
 import type { RouteProp } from '@react-navigation/native';
 import type { RootStackParamList } from '../../types';
@@ -110,88 +107,112 @@ export default function AppRulesScreen({ route }: Props) {
 
   if (loading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+      <View className="flex-1 justify-center items-center bg-surface-secondary">
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View className="flex-1 bg-surface-secondary">
       <ScrollView>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Blocked Apps</Text>
-          <Text style={styles.sectionHint}>
+        <Surface className="mx-4 mt-4 rounded-2xl p-4" elevation={1}>
+          <Text variant="titleMedium" className="font-bold text-slate-800">
+            Blocked Apps
+          </Text>
+          <Text variant="bodySmall" className="text-slate-500 mt-1 mb-4">
             Tap + to choose apps to block from the child's device.
           </Text>
 
-          <TouchableOpacity style={styles.addButton} onPress={() => setPickerVisible(true)}>
-            <Ionicons name="add-circle" size={22} color={COLORS.white} />
-            <Text style={styles.addButtonText}>Block an App</Text>
-          </TouchableOpacity>
+          <Button
+            mode="contained"
+            icon={() => <Ionicons name="add-circle" size={20} color={colors.white} />}
+            onPress={() => setPickerVisible(true)}
+            className="rounded-xl mb-3"
+          >
+            Block an App
+          </Button>
 
           {blockedApps.length === 0 ? (
-            <Text style={styles.emptyText}>No apps blocked yet.</Text>
+            <Text variant="bodySmall" className="text-slate-400 text-center py-5">
+              No apps blocked yet.
+            </Text>
           ) : (
             blockedApps.map((app, index) => (
-              <View key={app.packageName} style={styles.appRow}>
-                <View style={styles.appIconCircle}>
-                  <Ionicons name="ban" size={18} color={COLORS.danger} />
+              <View key={app.packageName} className="flex-row items-center py-3 border-b border-slate-200 gap-x-3">
+                <View
+                  className="w-9 h-9 rounded-full justify-center items-center"
+                  style={{ backgroundColor: colors.dangerLight }}
+                >
+                  <Ionicons name="ban" size={18} color={colors.danger} />
                 </View>
-                <View style={styles.appInfo}>
-                  <Text style={styles.appName} numberOfLines={1}>{app.appName}</Text>
-                  <Text style={styles.appPackage} numberOfLines={1}>{app.packageName}</Text>
+                <View className="flex-1">
+                  <Text variant="bodyMedium" className="font-medium text-slate-800" numberOfLines={1}>
+                    {app.appName}
+                  </Text>
+                  <Text variant="labelSmall" className="text-slate-400 mt-0.5" numberOfLines={1}>
+                    {app.packageName}
+                  </Text>
                 </View>
-                <TouchableOpacity onPress={() => removeApp(index)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                  <Ionicons name="close-circle" size={24} color={COLORS.textLight} />
-                </TouchableOpacity>
+                <IconButton
+                  icon={() => <Ionicons name="close-circle" size={24} color={colors.textMuted} />}
+                  size={24}
+                  onPress={() => removeApp(index)}
+                  className="m-0"
+                />
               </View>
             ))
           )}
-        </View>
+        </Surface>
 
-        <TouchableOpacity
-          style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+        <Button
+          mode="contained"
           onPress={handleSave}
           disabled={saving}
+          loading={saving}
+          className="mx-4 mt-6 rounded-xl py-1"
         >
-          {saving ? (
-            <ActivityIndicator color={COLORS.white} />
-          ) : (
-            <Text style={styles.saveButtonText}>Save Changes</Text>
-          )}
-        </TouchableOpacity>
+          {saving ? '' : 'Save Changes'}
+        </Button>
 
-        <View style={{ height: 40 }} />
+        <View className="h-10" />
       </ScrollView>
 
       {/* App Picker Modal */}
       <Modal visible={pickerVisible} animationType="slide" presentationStyle="pageSheet">
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Choose App to Block</Text>
-            <TouchableOpacity onPress={() => { setPickerVisible(false); setSearchQuery(''); }}>
-              <Ionicons name="close" size={28} color={COLORS.text} />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.searchRow}>
-            <Ionicons name="search" size={20} color={COLORS.textLight} />
-            <TextInput
-              style={styles.searchInput}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholder="Search apps..."
-              placeholderTextColor={COLORS.textLight}
-              autoFocus
+        <View className="flex-1 bg-surface-secondary">
+          <View className="flex-row justify-between items-center px-4 pt-4 pb-3">
+            <Text variant="headlineSmall" className="font-bold text-slate-800">
+              Choose App to Block
+            </Text>
+            <IconButton
+              icon={() => <Ionicons name="close" size={24} color={colors.text} />}
+              size={24}
+              onPress={() => { setPickerVisible(false); setSearchQuery(''); }}
             />
           </View>
 
+          <Surface className="mx-4 rounded-xl mb-2 flex-row items-center px-3 gap-x-2" elevation={1}>
+            <Ionicons name="search" size={20} color={colors.textMuted} />
+            <TextInput
+              className="flex-1"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="Search apps..."
+              mode="flat"
+              underlineStyle={{ display: 'none' }}
+              style={{ backgroundColor: 'transparent' }}
+              autoFocus
+            />
+          </Surface>
+
           {installedApps.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Ionicons name="phone-portrait-outline" size={48} color={COLORS.textLight} />
-              <Text style={styles.emptyStateTitle}>No apps synced yet</Text>
-              <Text style={styles.emptyStateSubtitle}>
+            <View className="items-center pt-16 px-10">
+              <Ionicons name="phone-portrait-outline" size={48} color={colors.textMuted} />
+              <Text variant="titleMedium" className="font-semibold text-slate-800 mt-4">
+                No apps synced yet
+              </Text>
+              <Text variant="bodyMedium" className="text-slate-500 text-center mt-2">
                 The child's device hasn't synced its app list. Make sure the child app is running.
               </Text>
             </View>
@@ -200,19 +221,31 @@ export default function AppRulesScreen({ route }: Props) {
               data={availableApps}
               keyExtractor={item => item.packageName}
               renderItem={({ item }) => (
-                <TouchableOpacity style={styles.pickerRow} onPress={() => addApp(item)}>
-                  <View style={styles.pickerIcon}>
-                    <Ionicons name="cube-outline" size={24} color={COLORS.primary} />
-                  </View>
-                  <View style={styles.pickerInfo}>
-                    <Text style={styles.pickerAppName}>{item.appName}</Text>
-                    <Text style={styles.pickerPackage}>{item.packageName}</Text>
-                  </View>
-                  <Ionicons name="add-circle-outline" size={24} color={COLORS.primary} />
-                </TouchableOpacity>
+                <TouchableRipple
+                  className="flex-row items-center mx-4 mt-px py-3 px-4 gap-x-3 bg-white rounded-xl"
+                  onPress={() => addApp(item)}
+                >
+                  <>
+                    <View
+                      className="w-10 h-10 rounded-xl justify-center items-center"
+                      style={{ backgroundColor: colors.primaryLight }}
+                    >
+                      <Ionicons name="cube-outline" size={24} color={colors.primary} />
+                    </View>
+                    <View className="flex-1">
+                      <Text variant="bodyMedium" className="font-medium text-slate-800">
+                        {item.appName}
+                      </Text>
+                      <Text variant="labelSmall" className="text-slate-400 mt-0.5">
+                        {item.packageName}
+                      </Text>
+                    </View>
+                    <Ionicons name="add-circle-outline" size={24} color={colors.primary} />
+                  </>
+                </TouchableRipple>
               )}
               ListEmptyComponent={
-                <Text style={styles.emptyText}>
+                <Text variant="bodySmall" className="text-slate-400 text-center py-5">
                   {searchQuery ? 'No matching apps found.' : 'All apps are already blocked.'}
                 </Text>
               }
@@ -223,60 +256,3 @@ export default function AppRulesScreen({ route }: Props) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background },
-  section: { backgroundColor: COLORS.white, marginHorizontal: 16, marginTop: 16, borderRadius: 16, padding: 16 },
-  sectionTitle: { fontSize: 17, fontWeight: '700', color: COLORS.text },
-  sectionHint: { fontSize: 13, color: COLORS.textSecondary, marginTop: 4, marginBottom: 16 },
-  addButton: {
-    backgroundColor: COLORS.primary, borderRadius: 10, paddingVertical: 12, paddingHorizontal: 16,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 12,
-  },
-  addButtonText: { color: COLORS.white, fontSize: 15, fontWeight: '600' },
-  appRow: {
-    flexDirection: 'row', alignItems: 'center', paddingVertical: 12,
-    borderBottomWidth: 1, borderBottomColor: COLORS.border, gap: 12,
-  },
-  appIconCircle: {
-    width: 36, height: 36, borderRadius: 18, backgroundColor: COLORS.danger + '15',
-    justifyContent: 'center', alignItems: 'center',
-  },
-  appInfo: { flex: 1 },
-  appName: { fontSize: 15, fontWeight: '500', color: COLORS.text },
-  appPackage: { fontSize: 11, color: COLORS.textLight, marginTop: 2 },
-  emptyText: { fontSize: 13, color: COLORS.textLight, textAlign: 'center', paddingVertical: 20 },
-  saveButton: {
-    backgroundColor: COLORS.primary, marginHorizontal: 16, marginTop: 24,
-    borderRadius: 12, paddingVertical: 16, alignItems: 'center',
-  },
-  saveButtonDisabled: { opacity: 0.6 },
-  saveButtonText: { color: COLORS.white, fontSize: 17, fontWeight: '600' },
-  // Modal styles
-  modalContainer: { flex: 1, backgroundColor: COLORS.background },
-  modalHeader: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: 16, paddingTop: 16, paddingBottom: 12,
-  },
-  modalTitle: { fontSize: 20, fontWeight: '700', color: COLORS.text },
-  searchRow: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.white,
-    marginHorizontal: 16, borderRadius: 10, paddingHorizontal: 12, marginBottom: 8, gap: 8,
-  },
-  searchInput: { flex: 1, paddingVertical: 12, fontSize: 15, color: COLORS.text },
-  pickerRow: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.white,
-    marginHorizontal: 16, marginTop: 1, paddingVertical: 12, paddingHorizontal: 16, gap: 12,
-  },
-  pickerIcon: {
-    width: 40, height: 40, borderRadius: 10, backgroundColor: COLORS.primary + '15',
-    justifyContent: 'center', alignItems: 'center',
-  },
-  pickerInfo: { flex: 1 },
-  pickerAppName: { fontSize: 15, fontWeight: '500', color: COLORS.text },
-  pickerPackage: { fontSize: 11, color: COLORS.textLight, marginTop: 2 },
-  emptyState: { alignItems: 'center', paddingTop: 60, paddingHorizontal: 40 },
-  emptyStateTitle: { fontSize: 18, fontWeight: '600', color: COLORS.text, marginTop: 16 },
-  emptyStateSubtitle: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center', marginTop: 8 },
-});

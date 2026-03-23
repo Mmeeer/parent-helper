@@ -104,6 +104,34 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
     );
   }, [childId, childName]);
 
+  const handleBlockApp = useCallback((packageName: string, appName: string) => {
+    Alert.alert(
+      'Block App',
+      `Block "${appName}" on ${childName}'s devices?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Block',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const rules = await api.getRules(childId);
+              const currentBlocked = rules.blockedApps || [];
+              if (!currentBlocked.includes(packageName)) {
+                await api.updateBlockedApps(childId, [...currentBlocked, packageName]);
+                Alert.alert('Blocked', `${appName} has been blocked.`);
+              } else {
+                Alert.alert('Already Blocked', `${appName} is already blocked.`);
+              }
+            } catch {
+              Alert.alert('Error', 'Failed to block app.');
+            }
+          },
+        },
+      ],
+    );
+  }, [childId, childName]);
+
   useFocusEffect(
     useCallback(() => {
       loadData();
@@ -230,6 +258,12 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
               <Text variant="bodyMedium" className="font-semibold text-slate-500">
                 {formatDuration(app.durationMin)}
               </Text>
+              <IconButton
+                icon={() => <Ionicons name="ban-outline" size={16} color={colors.textMuted} />}
+                size={16}
+                onPress={() => handleBlockApp(app.packageName, app.appName || app.packageName)}
+                style={{ margin: 0 }}
+              />
             </View>
           ))}
         </Surface>

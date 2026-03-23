@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
-import { View, FlatList, RefreshControl, ActivityIndicator, Alert } from 'react-native';
-import { Surface, Text, Button } from 'react-native-paper';
+import { View, FlatList, RefreshControl, Alert } from 'react-native';
+import { Surface, Text, Button, ActivityIndicator } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { formatTimeAgo } from '../../utils/formatters';
@@ -59,18 +59,18 @@ export default function ApprovalsScreen() {
           <View className="w-12 h-12 rounded-xl bg-primary-50 items-center justify-center mr-3">
             <Ionicons name="download-outline" size={24} color={colors.primary} />
           </View>
-          <View style={styles.cardInfo}>
-            <Text style={styles.appName} numberOfLines={1}>
+          <View className="flex-1">
+            <Text variant="titleSmall" className="text-slate-800" numberOfLines={1}>
               {appName}
             </Text>
             {packageName && packageName !== appName && (
-              <Text style={styles.packageName} numberOfLines={1}>{packageName}</Text>
+              <Text variant="labelSmall" className="text-slate-500 mt-0.5" numberOfLines={1}>{packageName}</Text>
             )}
-            <Text style={styles.timestamp}>{formatTimeAgo(item.createdAt)}</Text>
+            <Text variant="labelSmall" className="text-slate-400 mt-0.5">{formatTimeAgo(item.createdAt)}</Text>
           </View>
         </View>
 
-        <Text style={styles.message}>
+        <Text variant="bodyMedium" className="text-slate-500 leading-5 mb-3.5">
           A new app was installed on your child's device. Would you like to allow or block it?
         </Text>
 
@@ -152,109 +152,3 @@ export default function ApprovalsScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: COLORS.background,
-  },
-  list: {
-    padding: 16,
-    gap: 12,
-  },
-  card: {
-    backgroundColor: COLORS.white,
-    borderRadius: 16,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  appIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: COLORS.info + '20',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  cardInfo: {
-    flex: 1,
-  },
-  appName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.text,
-  },
-  packageName: {
-    fontSize: 11,
-    color: COLORS.textLight,
-    marginTop: 1,
-  },
-  timestamp: {
-    fontSize: 12,
-    color: COLORS.textLight,
-    marginTop: 2,
-  },
-  message: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    lineHeight: 20,
-    marginBottom: 14,
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  actionButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    borderRadius: 10,
-    gap: 6,
-  },
-  blockButton: {
-    backgroundColor: COLORS.danger,
-  },
-  approveButton: {
-    backgroundColor: COLORS.secondary,
-  },
-  actionTextLight: {
-    color: COLORS.white,
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingTop: 80,
-    paddingHorizontal: 40,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginTop: 16,
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    marginTop: 8,
-  },
-});

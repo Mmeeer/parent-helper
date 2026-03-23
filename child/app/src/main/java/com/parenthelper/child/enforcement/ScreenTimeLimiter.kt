@@ -30,37 +30,51 @@ class ScreenTimeLimiter(
     }
 
     private suspend fun checkLimits() {
+        // Check schedule-based blocking first (highest priority)
+        if (checkSchedule()) return
+
         // Check daily limit
-        val dailyLimit = RuleManager.getDailyLimitMin() ?: return
+        val dailyLimit = RuleManager.getDailyLimitMin() ?: run {
+            // No limit set — make sure overlay is dismissed
+            dismissOverlayIfNotRemoteLocked()
+            return
+        }
         val totalScreenTime = screenTimeCollector.getTodayScreenTimeMin()
 
         if (totalScreenTime >= dailyLimit) {
-            // Daily limit exceeded — block usage
+            val remainingMsg = "Resets at midnight"
+            LockScreenOverlay.show(context, LockScreenOverlay.Reason.DAILY_LIMIT, remainingMsg)
             appBlocker.checkAndBlockIfNeeded()
             return
         }
 
         // Check per-app limits
-        val foregroundPackage = appBlocker.getCurrentForegroundPackage() ?: return
-        val appLimit = RuleManager.getAppLimitMin(foregroundPackage) ?: return
-        val appUsage = screenTimeCollector.getTodayAppUsage()
-        val appTime = appUsage.find { it.packageName == foregroundPackage }?.durationMin ?: 0
+        val foregroundPackage = appBlocker.getCurrentForegroundPackage()
+        if (foregroundPackage != null) {
+            val appLimit = RuleManager.getAppLimitMin(foregroundPackage)
+            if (appLimit != null) {
+                val appUsage = screenTimeCollector.getTodayAppUsage()
+                val appTime = appUsage.find { it.packageName == foregroundPackage }?.durationMin ?: 0
 
-        if (appTime >= appLimit) {
-            appBlocker.checkAndBlockIfNeeded()
+                if (appTime >= appLimit) {
+                    val appName = appUsage.find { it.packageName == foregroundPackage }?.appName ?: foregroundPackage
+                    LockScreenOverlay.show(context, LockScreenOverlay.Reason.APP_LIMIT, "Limit for $appName reached")
+                    appBlocker.checkAndBlockIfNeeded()
+                    return
+                }
+            }
         }
 
-        // Check schedule-based blocking
-        checkSchedule()
+        // All clear — dismiss overlay if it was showing for a limit reason
+        dismissOverlayIfNotRemoteLocked()
     }
 
-    private fun checkSchedule() {
-        val rules = RuleManager.currentRules.value ?: return
-        val schedules = rules.screenTime?.schedule ?: return
+    private fun checkSchedule(): Boolean {
+        val rules = RuleManager.currentRules.value ?: return false
+        val schedules = rules.screenTime?.schedule ?: return false
 
         val now = java.util.Calendar.getInstance()
         val dayOfWeek = now.get(java.util.Calendar.DAY_OF_WEEK) // 1=Sunday
-        // Convert to our format: 0=Sunday, 1=Monday, etc.
         val day = dayOfWeek - 1
 
         val currentTime = String.format(
@@ -75,9 +89,22 @@ class ScreenTimeLimiter(
                 currentTime >= schedule.startTime &&
                 currentTime <= schedule.endTime
             ) {
+                val detail = "Unlocks at ${schedule.endTime}"
+                LockScreenOverlay.show(context, LockScreenOverlay.Reason.SCHEDULE_BLOCKED, detail)
                 appBlocker.checkAndBlockIfNeeded()
-                return
+                return true
             }
+        }
+
+        return false
+    }
+
+    private fun dismissOverlayIfNotRemoteLocked() {
+        // Only dismiss if not remotely locked by parent
+        if (!com.parenthelper.child.services.MonitoringService.isDeviceLocked &&
+            LockScreenOverlay.isShowing
+        ) {
+            LockScreenOverlay.dismiss()
         }
     }
 

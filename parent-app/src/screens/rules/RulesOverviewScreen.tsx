@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, ScrollView } from 'react-native';
-import { Surface, Text, TouchableRipple } from 'react-native-paper';
+import { Surface, Text, TouchableRipple, ActivityIndicator } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { colors } from '../../theme';
+import * as api from '../../services/api';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
-import type { RootStackParamList } from '../../types';
+import type { RootStackParamList, Rules } from '../../types';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'RulesOverview'>;
@@ -14,6 +16,25 @@ type Props = {
 
 export default function RulesOverviewScreen({ navigation, route }: Props) {
   const { childId, childName } = route.params;
+  const [rules, setRules] = useState<Rules | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      api.getRules(childId)
+        .then(setRules)
+        .catch(() => {})
+        .finally(() => setLoading(false));
+    }, [childId]),
+  );
+
+  const dailyLimit = rules?.screenTime?.dailyLimitMin;
+  const perAppCount = rules?.screenTime?.perApp?.length || 0;
+  const scheduleCount = rules?.screenTime?.schedule?.length || 0;
+  const blockedAppsCount = rules?.blockedApps?.length || 0;
+  const webCategories = rules?.webFilter?.categories?.length || 0;
+  const customBlocked = rules?.webFilter?.customBlock?.length || 0;
 
   const ruleCategories = [
     {
@@ -21,6 +42,9 @@ export default function RulesOverviewScreen({ navigation, route }: Props) {
       description: 'Set daily limits, per-app limits, and schedules',
       icon: 'time-outline' as const,
       color: colors.warning,
+      summary: dailyLimit
+        ? `${Math.floor(dailyLimit / 60)}h${dailyLimit % 60 > 0 ? ` ${dailyLimit % 60}m` : ''} daily · ${perAppCount} app limit${perAppCount !== 1 ? 's' : ''} · ${scheduleCount} schedule${scheduleCount !== 1 ? 's' : ''}`
+        : 'Not configured',
       onPress: () => navigation.navigate('ScreenTimeRules', { childId, childName }),
     },
     {
@@ -28,6 +52,9 @@ export default function RulesOverviewScreen({ navigation, route }: Props) {
       description: 'Block or allow specific apps',
       icon: 'apps-outline' as const,
       color: colors.primary,
+      summary: blockedAppsCount > 0
+        ? `${blockedAppsCount} app${blockedAppsCount !== 1 ? 's' : ''} blocked`
+        : 'No apps blocked',
       onPress: () => navigation.navigate('AppRules', { childId, childName }),
     },
     {
@@ -35,6 +62,9 @@ export default function RulesOverviewScreen({ navigation, route }: Props) {
       description: 'Set content categories and custom domain rules',
       icon: 'globe-outline' as const,
       color: colors.secondary,
+      summary: webCategories > 0 || customBlocked > 0
+        ? `${webCategories} categor${webCategories !== 1 ? 'ies' : 'y'} · ${customBlocked} custom domain${customBlocked !== 1 ? 's' : ''}`
+        : 'No filters active',
       onPress: () => navigation.navigate('WebFilter', { childId, childName }),
     },
   ];
@@ -48,33 +78,42 @@ export default function RulesOverviewScreen({ navigation, route }: Props) {
         Configure parental controls and restrictions.
       </Text>
 
-      {ruleCategories.map((category, index) => (
-        <Surface
-          key={index}
-          className="mx-4 mb-3 rounded-2xl overflow-hidden"
-          elevation={1}
-        >
-          <TouchableRipple onPress={category.onPress} className="p-4">
-            <View className="flex-row items-center">
-              <View
-                className="w-13 h-13 rounded-2xl justify-center items-center"
-                style={{ backgroundColor: category.color + '20' }}
-              >
-                <Ionicons name={category.icon} size={28} color={category.color} />
+      {loading ? (
+        <View className="items-center py-8">
+          <ActivityIndicator size="small" color={colors.primary} />
+        </View>
+      ) : (
+        ruleCategories.map((category, index) => (
+          <Surface
+            key={index}
+            className="mx-4 mb-3 rounded-2xl overflow-hidden"
+            elevation={1}
+          >
+            <TouchableRipple onPress={category.onPress} className="p-4">
+              <View className="flex-row items-center">
+                <View
+                  className="w-13 h-13 rounded-2xl justify-center items-center"
+                  style={{ backgroundColor: category.color + '20' }}
+                >
+                  <Ionicons name={category.icon} size={28} color={category.color} />
+                </View>
+                <View className="flex-1 ml-3.5">
+                  <Text variant="titleMedium" className="font-semibold text-slate-800">
+                    {category.title}
+                  </Text>
+                  <Text variant="bodySmall" className="text-slate-500 mt-0.5">
+                    {category.description}
+                  </Text>
+                  <Text variant="labelSmall" className="text-primary-600 font-medium mt-1.5">
+                    {category.summary}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.textLight} />
               </View>
-              <View className="flex-1 ml-3.5">
-                <Text variant="titleMedium" className="font-semibold text-slate-800">
-                  {category.title}
-                </Text>
-                <Text variant="bodySmall" className="text-slate-500 mt-0.5">
-                  {category.description}
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.textLight} />
-            </View>
-          </TouchableRipple>
-        </Surface>
-      ))}
+            </TouchableRipple>
+          </Surface>
+        ))
+      )}
     </ScrollView>
   );
 }

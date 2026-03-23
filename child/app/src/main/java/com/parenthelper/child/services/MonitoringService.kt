@@ -112,17 +112,17 @@ class MonitoringService : Service() {
     }
 
     private fun executeLock() {
-        // Bring our lock-screen activity to front
-        val intent = Intent(this@MonitoringService, MainActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            putExtra("locked", true)
-        }
-        startActivity(intent)
         isDeviceLocked = true
+        com.parenthelper.child.enforcement.LockScreenOverlay.show(
+            this@MonitoringService,
+            com.parenthelper.child.enforcement.LockScreenOverlay.Reason.REMOTE_LOCK,
+            "Ask your parent to unlock",
+        )
     }
 
     private fun executeUnlock() {
         isDeviceLocked = false
+        com.parenthelper.child.enforcement.LockScreenOverlay.dismiss()
     }
 
     private suspend fun executeLocate() {
