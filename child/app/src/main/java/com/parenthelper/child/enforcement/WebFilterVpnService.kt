@@ -1,10 +1,15 @@
 package com.parenthelper.child.enforcement
 
+import android.app.Notification
+import android.app.PendingIntent
 import android.content.Intent
 import android.net.VpnService
 import android.os.ParcelFileDescriptor
 import android.util.Log
+import androidx.core.app.NotificationCompat
 import com.parenthelper.child.ParentHelperApp
+import com.parenthelper.child.R
+import com.parenthelper.child.ui.main.MainActivity
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
@@ -59,6 +64,7 @@ class WebFilterVpnService : VpnService() {
                 return
             }
             Log.i(TAG, "VPN tunnel established")
+            startForeground(NOTIFICATION_ID, createVpnNotification())
         } catch (e: Exception) {
             Log.e(TAG, "Failed to establish VPN", e)
             isRunning = false
@@ -91,6 +97,7 @@ class WebFilterVpnService : VpnService() {
                     val domain = extractDomainFromDns(packet.array(), length)
                     if (domain != null && shouldBlockDomain(domain)) {
                         Log.d(TAG, "Blocking domain: $domain")
+                        BlockedAttemptLogger.logBlocked(domain)
                         val response = buildNxDomainResponse(packet.array(), length)
                         if (response != null) {
                             outputMutex.withLock {
@@ -154,32 +161,8 @@ class WebFilterVpnService : VpnService() {
     }
 
     private fun shouldBlockDomain(domain: String): Boolean {
-        val rules = RuleManager.currentRules.value?.webFilter ?: return false
-
-        // Check custom allow list first (overrides blocking)
-        for (allowed in rules.customAllow) {
-            if (domain == allowed || domain.endsWith(".$allowed")) {
-                return false
-            }
-        }
-
-        // Check custom block list
-        for (blocked in rules.customBlock) {
-            if (domain == blocked || domain.endsWith(".$blocked")) {
-                return true
-            }
-        }
-
-        // Category-based blocking would require a domain categorization database
-        // For now, we rely on the backend's ContentFilter model synced at rule fetch time
-        val blockedDomains = DomainBlockList.getBlockedDomains()
-        for (blocked in blockedDomains) {
-            if (domain == blocked || domain.endsWith(".$blocked")) {
-                return true
-            }
-        }
-
-        return false
+        if (RuleManager.currentRules.value?.webFilter == null) return false
+        return DomainBlockList.isBlocked(domain)
     }
 
     private fun buildNxDomainResponse(request: ByteArray, length: Int): ByteArray? {
@@ -316,6 +299,23 @@ class WebFilterVpnService : VpnService() {
         }
     }
 
+    private fun createVpnNotification(): Notification {
+        val intent = Intent(this, MainActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(
+            this, 0, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+
+        return NotificationCompat.Builder(this, ParentHelperApp.CHANNEL_MONITORING)
+            .setContentTitle("Web Filter Active")
+            .setContentText("Protecting from harmful content")
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentIntent(pendingIntent)
+            .setOngoing(true)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .build()
+    }
+
     override fun onDestroy() {
         isRunning = false
         serviceScope.cancel()
@@ -331,6 +331,7 @@ class WebFilterVpnService : VpnService() {
     companion object {
         private const val TAG = "WebFilterVpn"
         const val ACTION_STOP = "com.parenthelper.child.STOP_VPN"
+        private const val NOTIFICATION_ID = 1002
         private const val VPN_ADDRESS = "10.0.0.2"
         private const val REAL_DNS = "8.8.8.8"
         private const val MTU_SIZE = 1500

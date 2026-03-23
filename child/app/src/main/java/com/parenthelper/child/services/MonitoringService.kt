@@ -53,10 +53,18 @@ class MonitoringService : Service() {
 
             // Sync domain block list and start VPN web filter
             val webFilter = RuleManager.currentRules.value?.webFilter
-            if (webFilter != null && webFilter.categories.isNotEmpty()) {
-                DomainBlockList.syncFromServer(webFilter.categories)
-                DomainBlockList.addDomains(webFilter.customBlock)
+            if (webFilter != null) {
+                DomainBlockList.syncFromRules(webFilter)
                 startVpnFilter()
+            }
+
+            // Re-sync block list when rules change
+            serviceScope.launch {
+                RuleManager.currentRules.collect { rules ->
+                    rules?.webFilter?.let { wf ->
+                        DomainBlockList.syncFromRules(wf)
+                    }
+                }
             }
 
             // Start location collection

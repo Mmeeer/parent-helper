@@ -8,6 +8,8 @@ import com.parenthelper.child.collectors.LocationCollector
 import com.parenthelper.child.collectors.ScreenTimeCollector
 import com.parenthelper.child.data.api.ApiClient
 import com.parenthelper.child.data.models.ActivitySyncRequest
+import com.parenthelper.child.data.models.BlockedAttempt
+import com.parenthelper.child.enforcement.BlockedAttemptLogger
 import kotlinx.coroutines.flow.first
 import java.text.SimpleDateFormat
 import java.util.*
@@ -34,6 +36,18 @@ class ActivitySyncWorker(
             // Collect location data
             val locations = LocationCollector.getRecentLocations()
 
+            // Collect blocked domain attempts
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
+            dateFormat.timeZone = TimeZone.getTimeZone("UTC")
+            val rawAttempts = BlockedAttemptLogger.drainAttempts()
+            val blockedAttempts = rawAttempts.map { attempt ->
+                BlockedAttempt(
+                    type = "web_filter",
+                    target = attempt.domain,
+                    timestamp = dateFormat.format(Date(attempt.timestamp)),
+                )
+            }.ifEmpty { null }
+
             val request = ActivitySyncRequest(
                 childId = childId,
                 deviceId = deviceId,
@@ -41,7 +55,7 @@ class ActivitySyncWorker(
                 apps = appUsage,
                 web = null,
                 location = locations,
-                blockedAttempts = null,
+                blockedAttempts = blockedAttempts,
             )
 
             ApiClient.service.syncActivity(request)
