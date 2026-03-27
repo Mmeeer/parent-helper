@@ -1,76 +1,62 @@
 <template>
-  <div class="p-8">
-    <div class="flex justify-between items-center mb-6">
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900">Content Filters</h1>
-        <p class="text-sm text-gray-500 mt-1">Manage the domain categorization database</p>
-      </div>
-    </div>
+  <div>
+    <PageHeader title="Content Filters" subtitle="Manage the domain categorization database" :breadcrumbs="[{ label: 'Filters' }]" />
 
     <!-- Add Domain -->
-    <div class="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-      <h2 class="text-lg font-semibold text-gray-900 mb-4">Add Domain</h2>
-      <form @submit.prevent="handleAddDomain" class="flex gap-3">
-        <input
-          v-model="newDomain"
-          type="text"
-          placeholder="example.com"
-          class="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
-        />
-        <select
-          v-model="newCategory"
-          class="px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none bg-white"
-        >
-          <option value="" disabled>Select category</option>
-          <option v-for="cat in categories" :key="cat" :value="cat" class="capitalize">
-            {{ formatCategory(cat) }}
-          </option>
-        </select>
-        <button
-          type="submit"
-          :disabled="!newDomain || !newCategory || adding"
-          class="px-6 py-2.5 bg-primary-600 text-white rounded-lg text-sm font-semibold hover:bg-primary-700 disabled:opacity-50 transition-colors"
-        >
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
+      <h2 class="text-sm font-semibold text-gray-800 mb-3">Add Domain</h2>
+      <form @submit.prevent="handleAddDomain" class="flex flex-wrap gap-3 items-end">
+        <div class="flex-1 min-w-[200px]">
+          <label class="block text-[11px] font-medium text-gray-400 mb-1">Domain</label>
+          <input v-model="newDomain" type="text" placeholder="example.com"
+            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs focus:ring-1 focus:ring-primary-500 outline-none" />
+        </div>
+        <div>
+          <label class="block text-[11px] font-medium text-gray-400 mb-1">Category</label>
+          <select v-model="newCategory"
+            class="px-3 py-2 border border-gray-200 rounded-lg text-xs bg-white focus:ring-1 focus:ring-primary-500 outline-none">
+            <option value="" disabled>Select category</option>
+            <option v-for="cat in categories" :key="cat" :value="cat">{{ formatCategory(cat) }}</option>
+          </select>
+        </div>
+        <button type="submit" :disabled="!newDomain || !newCategory || adding"
+          class="px-4 py-2 bg-primary-600 text-white rounded-lg text-xs font-semibold hover:bg-primary-700 disabled:opacity-50 transition">
           {{ adding ? 'Adding...' : 'Add' }}
         </button>
       </form>
     </div>
 
-    <!-- Filters by Category -->
-    <div v-for="cat in categories" :key="cat" class="mb-6">
-      <div class="flex items-center gap-2 mb-3">
-        <h3 class="text-lg font-semibold text-gray-900 capitalize">{{ formatCategory(cat) }}</h3>
-        <span class="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
-          {{ domainsByCategory(cat).length }}
-        </span>
-      </div>
+    <LoadingSkeleton v-if="loading" type="block" :count="3" wrapper-class="space-y-4" />
 
-      <div v-if="domainsByCategory(cat).length === 0" class="text-sm text-gray-400 py-3">
-        No domains in this category.
-      </div>
-
-      <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div
-          v-for="(entry, index) in domainsByCategory(cat)"
-          :key="entry.domain"
-          class="flex items-center justify-between px-6 py-3"
-          :class="{ 'border-b border-gray-100': index < domainsByCategory(cat).length - 1 }"
-        >
-          <span class="text-sm text-gray-700 font-mono">{{ entry.domain }}</span>
-          <button
-            class="text-xs text-red-500 hover:text-red-700 font-medium"
-            @click="handleRemove(entry.domain)"
-          >
-            Remove
-          </button>
+    <template v-else>
+      <!-- Filters by Category -->
+      <div v-for="cat in categories" :key="cat" class="mb-5">
+        <div class="flex items-center gap-2 mb-2">
+          <h3 class="text-xs font-semibold text-gray-800">{{ formatCategory(cat) }}</h3>
+          <Badge :label="String(domainsByCategory(cat).length)" variant="gray" />
         </div>
+
+        <div v-if="domainsByCategory(cat).length" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div v-for="(entry, index) in domainsByCategory(cat)" :key="entry.domain"
+            class="flex items-center justify-between px-4 py-2.5 text-xs"
+            :class="{ 'border-b border-gray-50': index < domainsByCategory(cat).length - 1 }">
+            <span class="text-gray-700 font-mono">{{ entry.domain }}</span>
+            <button @click="confirmRemove(entry.domain)"
+              class="text-red-500 hover:text-red-700 font-medium transition">Remove</button>
+          </div>
+        </div>
+        <p v-else class="text-xs text-gray-400 italic py-2">No domains in this category.</p>
       </div>
-    </div>
+    </template>
+
+    <ConfirmModal :show="showRemoveModal" title="Remove Domain" :message="`Remove ${removeDomain} from content filters?`"
+      confirm-text="Remove" variant="danger" @confirm="handleRemove" @cancel="showRemoveModal = false" />
   </div>
 </template>
 
 <script setup lang="ts">
 const { getFilters, updateFilter, deleteFilter } = useApi();
+const toast = useToast();
 
 const domains = ref<{ domain: string; category: string }[]>([]);
 const categories = ref<string[]>([
@@ -81,6 +67,8 @@ const newDomain = ref('');
 const newCategory = ref('');
 const adding = ref(false);
 const loading = ref(true);
+const showRemoveModal = ref(false);
+const removeDomain = ref('');
 
 function domainsByCategory(cat: string) {
   return domains.value.filter((d) => d.category === cat);
@@ -98,21 +86,23 @@ async function handleAddDomain() {
     domains.value.push({ domain: newDomain.value.trim().toLowerCase(), category: newCategory.value });
     newDomain.value = '';
     newCategory.value = '';
-  } catch (e: any) {
-    alert(e.message || 'Failed to add domain.');
-  } finally {
-    adding.value = false;
-  }
+    toast.success('Domain added');
+  } catch (e: any) { toast.error(e.message || 'Failed to add domain'); }
+  finally { adding.value = false; }
 }
 
-async function handleRemove(domain: string) {
-  if (!confirm(`Remove ${domain} from content filters?`)) return;
+function confirmRemove(domain: string) {
+  removeDomain.value = domain;
+  showRemoveModal.value = true;
+}
+
+async function handleRemove() {
+  showRemoveModal.value = false;
   try {
-    await deleteFilter(domain);
-    domains.value = domains.value.filter((d) => d.domain !== domain);
-  } catch (e: any) {
-    alert(e.message || 'Failed to remove domain.');
-  }
+    await deleteFilter(removeDomain.value);
+    domains.value = domains.value.filter((d) => d.domain !== removeDomain.value);
+    toast.success('Domain removed');
+  } catch (e: any) { toast.error(e.message || 'Failed to remove domain'); }
 }
 
 onMounted(async () => {
@@ -120,10 +110,7 @@ onMounted(async () => {
     const data = await getFilters();
     if (data.domains) domains.value = data.domains;
     if (data.categories) categories.value = data.categories;
-  } catch {
-    // Use defaults
-  } finally {
-    loading.value = false;
-  }
+  } catch { }
+  finally { loading.value = false; }
 });
 </script>

@@ -20,7 +20,6 @@ export function useApi() {
       });
       return res;
     } catch (err: any) {
-      // Auto-redirect to login on auth failures
       if (err?.status === 401 || err?.status === 403) {
         token.value = null;
         navigateTo('/login');
@@ -49,87 +48,93 @@ export function useApi() {
       return !!token.value;
     },
 
-    // Admin endpoints
-    async getUsers(page = 1, limit = 20, search = '') {
-      const params = new URLSearchParams({ page: String(page), limit: String(limit) });
-      if (search) params.append('search', search);
-      return request<{ users: any[]; total: number; page: number; totalPages: number }>(
-        `/admin/users?${params}`,
-      );
-    },
-
-    async getAnalytics() {
+    // Dashboard
+    async getDashboard() {
       return request<{
-        totalUsers: number;
-        activeUsers: number;
-        totalChildren: number;
-        totalDevices: number;
-        planDistribution: Record<string, number>;
-        recentRegistrations: number;
-      }>('/admin/analytics');
+        stats: { totalUsers: number; activeUsers: number; totalChildren: number; totalDevices: number; onlineDevices: number; alertsToday: number; recentRegistrations: number };
+        planDistribution: { free: number; subscribed: number; totalKeys: number; activeKeys: number };
+        alertsByType: Record<string, number>;
+        recentAlerts: any[];
+        serverTime: string;
+        uptime: number;
+      }>('/admin/dashboard');
     },
 
-    async getFilters() {
-      return request<{ categories: string[]; domains: { domain: string; category: string }[] }>(
-        '/admin/filters',
-      );
-    },
-
-    async updateFilter(domain: string, category: string) {
-      return request('/admin/filters', {
-        method: 'PUT',
-        body: JSON.stringify({ domain, category }),
-      });
-    },
-
-    async deleteFilter(domain: string) {
-      return request(`/admin/filters/${encodeURIComponent(domain)}`, {
-        method: 'DELETE',
-      });
+    // Users
+    async getUsers(page = 1, limit = 20, params: { search?: string; plan?: string; sortBy?: string; sortOrder?: string } = {}) {
+      const qs = new URLSearchParams({ page: String(page), limit: String(limit) });
+      if (params.search) qs.append('search', params.search);
+      if (params.plan) qs.append('plan', params.plan);
+      if (params.sortBy) qs.append('sortBy', params.sortBy);
+      if (params.sortOrder) qs.append('sortOrder', params.sortOrder);
+      return request<{ users: any[]; total: number; page: number; totalPages: number }>(`/admin/users?${qs}`);
     },
 
     async getUserDetail(userId: string) {
       return request<any>(`/admin/users/${userId}`);
     },
 
+    async getUserRules(userId: string) {
+      return request<{ rules: any[] }>(`/admin/users/${userId}/rules`);
+    },
+
+    async getUserActivity(userId: string, days = 7) {
+      return request<{ logs: any[]; children: any[] }>(`/admin/users/${userId}/activity?days=${days}`);
+    },
+
+    async getUserAlerts(userId: string, page = 1, limit = 20) {
+      return request<{ alerts: any[]; total: number; page: number; totalPages: number }>(
+        `/admin/users/${userId}/alerts?page=${page}&limit=${limit}`,
+      );
+    },
+
     async suspendUser(userId: string) {
       return request(`/admin/users/${userId}/suspend`, { method: 'PUT' });
     },
 
-    // Subscription keys
-    async getKeys(page = 1, limit = 20, status = '') {
-      const params = new URLSearchParams({ page: String(page), limit: String(limit) });
-      if (status) params.append('status', status);
-      return request<{ keys: any[]; total: number; page: number; totalPages: number }>(
-        `/admin/keys?${params}`,
-      );
+    async unsuspendUser(userId: string) {
+      return request(`/admin/users/${userId}/unsuspend`, { method: 'PUT' });
     },
 
-    async createKey(maxKids: number, durationMonths: number, note = '') {
-      return request<any>('/admin/keys', {
-        method: 'POST',
-        body: JSON.stringify({ maxKids, durationMonths, note }),
-      });
+    // Analytics
+    async getAnalytics() {
+      return request<{
+        totalUsers: number; activeUsers: number; totalChildren: number; totalDevices: number;
+        subscriptions: { subscribed: number; totalKeys: number; activeKeys: number };
+        recentRegistrations: number;
+      }>('/admin/analytics');
     },
 
-    async updateKey(keyId: string, data: { maxKids?: number; note?: string }) {
-      return request<any>(`/admin/keys/${keyId}`, {
-        method: 'PUT',
-        body: JSON.stringify(data),
-      });
+    // Activity monitoring
+    async getActivitySummary(period = '7d') {
+      return request<{
+        stats: { totalLogs: number; totalAppHours: number; totalWebVisits: number; totalBlocked: number };
+        topApps: any[];
+        topDomains: any[];
+        topBlocked: any[];
+      }>(`/admin/activity/summary?period=${period}`);
     },
 
-    async extendKey(keyId: string, months: number) {
-      return request<any>(`/admin/keys/${keyId}/extend`, {
-        method: 'PUT',
-        body: JSON.stringify({ months }),
-      });
+    // Alerts
+    async getAlerts(params: { page?: number; limit?: number; type?: string; read?: string; period?: string } = {}) {
+      const qs = new URLSearchParams();
+      if (params.page) qs.append('page', String(params.page));
+      if (params.limit) qs.append('limit', String(params.limit));
+      if (params.type) qs.append('type', params.type);
+      if (params.read) qs.append('read', params.read);
+      if (params.period) qs.append('period', params.period);
+      return request<{ alerts: any[]; total: number; page: number; totalPages: number }>(`/admin/alerts?${qs}`);
     },
 
-    async deleteKey(keyId: string) {
-      return request(`/admin/keys/${keyId}`, { method: 'DELETE' });
+    async getAlertsSummary(period = '14d') {
+      return request<{
+        totalToday: number; totalUnread: number;
+        byType: Record<string, number>; trend: { date: string; count: number }[];
+        topUsers: any[];
+      }>(`/admin/alerts/summary?period=${period}`);
     },
 
+    // System health
     async getSystemHealth() {
       return request<{
         devices: { total: number; online: number; offline: number };
@@ -139,6 +144,42 @@ export function useApi() {
         serverTime: string;
         uptime: number;
       }>('/admin/health');
+    },
+
+    // Content filters
+    async getFilters() {
+      return request<{ categories: string[]; domains: { domain: string; category: string }[] }>('/admin/filters');
+    },
+
+    async updateFilter(domain: string, category: string) {
+      return request('/admin/filters', { method: 'PUT', body: JSON.stringify({ domain, category }) });
+    },
+
+    async deleteFilter(domain: string) {
+      return request(`/admin/filters/${encodeURIComponent(domain)}`, { method: 'DELETE' });
+    },
+
+    // Subscription keys
+    async getKeys(page = 1, limit = 20, status = '') {
+      const qs = new URLSearchParams({ page: String(page), limit: String(limit) });
+      if (status) qs.append('status', status);
+      return request<{ keys: any[]; total: number; page: number; totalPages: number }>(`/admin/keys?${qs}`);
+    },
+
+    async createKey(maxKids: number, durationMonths: number, note = '') {
+      return request<any>('/admin/keys', { method: 'POST', body: JSON.stringify({ maxKids, durationMonths, note }) });
+    },
+
+    async updateKey(keyId: string, data: { maxKids?: number; note?: string }) {
+      return request<any>(`/admin/keys/${keyId}`, { method: 'PUT', body: JSON.stringify(data) });
+    },
+
+    async extendKey(keyId: string, months: number) {
+      return request<any>(`/admin/keys/${keyId}/extend`, { method: 'PUT', body: JSON.stringify({ months }) });
+    },
+
+    async deleteKey(keyId: string) {
+      return request(`/admin/keys/${keyId}`, { method: 'DELETE' });
     },
   };
 }

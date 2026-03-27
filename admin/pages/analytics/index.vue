@@ -1,68 +1,74 @@
 <template>
-  <div class="p-8">
-    <h1 class="text-2xl font-bold text-gray-900 mb-8">Analytics</h1>
+  <div>
+    <PageHeader title="Analytics" subtitle="Platform metrics and subscription overview" :breadcrumbs="[{ label: 'Analytics' }]" />
 
-    <div v-if="loading" class="text-center py-20 text-gray-400">Loading analytics...</div>
+    <LoadingSkeleton v-if="loading" type="cards" :count="4" wrapper-class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6" />
 
     <template v-else>
-      <!-- Key Metrics -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div v-for="metric in metrics" :key="metric.label" class="bg-white rounded-xl border border-gray-200 p-6">
-          <div class="flex items-center justify-between mb-3">
-            <span class="text-2xl">{{ metric.icon }}</span>
-          </div>
-          <p class="text-3xl font-bold text-gray-900">{{ metric.value }}</p>
-          <p class="text-sm text-gray-500 mt-1">{{ metric.label }}</p>
-        </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <StatCard label="Total Users" :value="analytics?.totalUsers ?? 0" color="blue"
+          icon='<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>' />
+        <StatCard label="Active Users (30d)" :value="analytics?.activeUsers ?? 0" color="green"
+          icon='<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>' />
+        <StatCard label="Children Profiles" :value="analytics?.totalChildren ?? 0" color="purple"
+          icon='<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>' />
+        <StatCard label="Paired Devices" :value="analytics?.totalDevices ?? 0" color="gray"
+          icon='<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>' />
       </div>
 
-      <!-- Plan Breakdown -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div class="bg-white rounded-xl border border-gray-200 p-6">
-          <h2 class="text-lg font-semibold text-gray-900 mb-6">Plan Distribution</h2>
-          <div class="space-y-4">
-            <div v-for="(count, plan) in analytics?.planDistribution" :key="plan">
-              <div class="flex justify-between text-sm mb-2">
-                <span class="font-medium text-gray-700 capitalize">{{ plan }}</span>
-                <span class="text-gray-500">
-                  {{ count }} ({{ totalUsers > 0 ? Math.round(count / totalUsers * 100) : 0 }}%)
-                </span>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Subscription Stats -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+          <h2 class="text-sm font-semibold text-gray-800 mb-4">Subscription Overview</h2>
+          <div class="space-y-3">
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span class="text-gray-700 font-medium">Free Users</span>
+                <span class="text-gray-400">{{ freeUsers }}</span>
               </div>
-              <div class="w-full bg-gray-100 rounded-full h-3">
-                <div
-                  class="h-3 rounded-full transition-all duration-500"
-                  :class="planBarColor(plan as string)"
-                  :style="{ width: `${totalUsers > 0 ? (count / totalUsers * 100) : 0}%` }"
-                />
+              <div class="w-full bg-gray-100 rounded-full h-2">
+                <div class="h-2 rounded-full bg-gray-400" :style="{ width: pct(freeUsers) + '%' }"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span class="text-gray-700 font-medium">Subscribed Users</span>
+                <span class="text-gray-400">{{ analytics?.subscriptions?.subscribed ?? 0 }}</span>
+              </div>
+              <div class="w-full bg-gray-100 rounded-full h-2">
+                <div class="h-2 rounded-full bg-primary-500" :style="{ width: pct(analytics?.subscriptions?.subscribed ?? 0) + '%' }"></div>
               </div>
             </div>
           </div>
+          <div class="mt-4 pt-3 border-t border-gray-100 grid grid-cols-2 gap-3 text-xs">
+            <div><span class="text-gray-400">Total Keys Created</span><div class="font-semibold">{{ analytics?.subscriptions?.totalKeys ?? 0 }}</div></div>
+            <div><span class="text-gray-400">Active Keys</span><div class="font-semibold text-green-600">{{ analytics?.subscriptions?.activeKeys ?? 0 }}</div></div>
+          </div>
         </div>
 
-        <div class="bg-white rounded-xl border border-gray-200 p-6">
-          <h2 class="text-lg font-semibold text-gray-900 mb-6">Platform Summary</h2>
-          <div class="space-y-4 text-sm">
-            <div class="flex justify-between py-3 border-b border-gray-100">
-              <span class="text-gray-600">Total Parent Accounts</span>
-              <span class="font-bold text-gray-900">{{ analytics?.totalUsers ?? 0 }}</span>
+        <!-- Platform Summary -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+          <h2 class="text-sm font-semibold text-gray-800 mb-4">Platform Summary</h2>
+          <div class="space-y-2.5 text-xs">
+            <div class="flex justify-between py-2 border-b border-gray-50">
+              <span class="text-gray-500">Total Parent Accounts</span>
+              <span class="font-semibold text-gray-800">{{ analytics?.totalUsers ?? 0 }}</span>
             </div>
-            <div class="flex justify-between py-3 border-b border-gray-100">
-              <span class="text-gray-600">Child Profiles Created</span>
-              <span class="font-bold text-gray-900">{{ analytics?.totalChildren ?? 0 }}</span>
+            <div class="flex justify-between py-2 border-b border-gray-50">
+              <span class="text-gray-500">Child Profiles Created</span>
+              <span class="font-semibold text-gray-800">{{ analytics?.totalChildren ?? 0 }}</span>
             </div>
-            <div class="flex justify-between py-3 border-b border-gray-100">
-              <span class="text-gray-600">Devices Paired</span>
-              <span class="font-bold text-gray-900">{{ analytics?.totalDevices ?? 0 }}</span>
+            <div class="flex justify-between py-2 border-b border-gray-50">
+              <span class="text-gray-500">Devices Paired</span>
+              <span class="font-semibold text-gray-800">{{ analytics?.totalDevices ?? 0 }}</span>
             </div>
-            <div class="flex justify-between py-3 border-b border-gray-100">
-              <span class="text-gray-600">New Registrations (7d)</span>
-              <span class="font-bold text-gray-900">{{ analytics?.recentRegistrations ?? 0 }}</span>
+            <div class="flex justify-between py-2 border-b border-gray-50">
+              <span class="text-gray-500">New Registrations (7d)</span>
+              <span class="font-semibold text-gray-800">{{ analytics?.recentRegistrations ?? 0 }}</span>
             </div>
-            <div class="flex justify-between py-3">
-              <span class="text-gray-600">Avg Children/User</span>
-              <span class="font-bold text-gray-900">
-                {{ analytics?.totalUsers ? (analytics.totalChildren / analytics.totalUsers).toFixed(1) : '-' }}
-              </span>
+            <div class="flex justify-between py-2">
+              <span class="text-gray-500">Avg Children/User</span>
+              <span class="font-semibold text-gray-800">{{ avgChildren }}</span>
             </div>
           </div>
         </div>
@@ -78,29 +84,17 @@ const analytics = ref<any>(null);
 const loading = ref(true);
 
 const totalUsers = computed(() => analytics.value?.totalUsers ?? 0);
+const freeUsers = computed(() => totalUsers.value - (analytics.value?.subscriptions?.subscribed ?? 0));
+const avgChildren = computed(() => totalUsers.value ? (analytics.value.totalChildren / totalUsers.value).toFixed(1) : '-');
 
-const metrics = computed(() => [
-  { label: 'Total Users', value: analytics.value?.totalUsers ?? '-', icon: '👥' },
-  { label: 'Active Users (30d)', value: analytics.value?.activeUsers ?? '-', icon: '📱' },
-  { label: 'Children Profiles', value: analytics.value?.totalChildren ?? '-', icon: '👶' },
-  { label: 'Paired Devices', value: analytics.value?.totalDevices ?? '-', icon: '📟' },
-]);
-
-function planBarColor(plan: string) {
-  switch (plan) {
-    case 'premium': return 'bg-primary-500';
-    case 'family': return 'bg-green-500';
-    default: return 'bg-gray-400';
-  }
+function pct(count: number): number {
+  if (!totalUsers.value) return 0;
+  return Math.round((count / totalUsers.value) * 100);
 }
 
 onMounted(async () => {
-  try {
-    analytics.value = await getAnalytics();
-  } catch {
-    // Handle error
-  } finally {
-    loading.value = false;
-  }
+  try { analytics.value = await getAnalytics(); }
+  catch { }
+  finally { loading.value = false; }
 });
 </script>

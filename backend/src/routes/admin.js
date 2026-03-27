@@ -9,11 +9,30 @@ router.post('/seed', adminController.seed);
 // All remaining admin routes require admin authentication
 router.use(adminAuth);
 
+// Dashboard
+router.get('/dashboard', adminController.getDashboard);
+
+// User management
 router.get('/users', adminController.getUsers);
 router.get('/users/:id', adminController.getUserDetail);
+router.get('/users/:id/rules', adminController.getUserRules);
+router.get('/users/:id/activity', adminController.getUserActivity);
+router.get('/users/:id/alerts', adminController.getUserAlerts);
 router.put('/users/:id/suspend', adminController.suspendUser);
+router.put('/users/:id/unsuspend', adminController.unsuspendUser);
+
+// Analytics & health
 router.get('/analytics', adminController.getAnalytics);
 router.get('/health', adminController.getSystemHealth);
+
+// Activity monitoring
+router.get('/activity/summary', adminController.getActivitySummary);
+
+// Alerts
+router.get('/alerts/summary', adminController.getAlertsSummary);
+router.get('/alerts', adminController.getAlerts);
+
+// Content filters
 router.get('/filters', adminController.getFilters);
 router.put('/filters', adminController.updateFilter);
 router.delete('/filters/:domain', adminController.deleteFilter);
