@@ -3,13 +3,18 @@ const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
 const User = require('../models/User');
 
-const generateTokens = (userId) => {
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCK_TIME_MS = 15 * 60 * 1000; // 15 minutes
+
+const generateTokens = (userId, tokenFamily) => {
   const accessToken = jwt.sign({ id: userId }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || '1h',
   });
-  const refreshToken = jwt.sign({ id: userId }, process.env.JWT_REFRESH_SECRET, {
-    expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
-  });
+  const refreshToken = jwt.sign(
+    { id: userId, family: tokenFamily },
+    process.env.JWT_REFRESH_SECRET,
+    { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' },
+  );
   return { accessToken, refreshToken };
 };
 
@@ -27,8 +32,9 @@ exports.register = async (req, res, next) => {
       return res.status(409).json({ error: 'Email already registered' });
     }
 
-    const user = new User({ email, passwordHash: password, name });
-    const tokens = generateTokens(user._id);
+    const tokenFamily = crypto.randomUUID();
+    const user = new User({ email, passwordHash: password, name, tokenFamily });
+    const tokens = generateTokens(user._id, tokenFamily);
     user.refreshToken = tokens.refreshToken;
     await user.save();
 
@@ -55,13 +61,33 @@ exports.login = async (req, res, next) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    // Check account lockout
+    if (user.lockUntil && user.lockUntil > new Date()) {
+      const waitMinutes = Math.ceil((user.lockUntil - Date.now()) / 60000);
+      return res.status(429).json({
+        error: `Account temporarily locked. Try again in ${waitMinutes} minutes.`,
+      });
+    }
+
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
+      // Increment failed attempts
+      user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
+      if (user.failedLoginAttempts >= MAX_LOGIN_ATTEMPTS) {
+        user.lockUntil = new Date(Date.now() + LOCK_TIME_MS);
+        user.failedLoginAttempts = 0;
+      }
+      await user.save();
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const tokens = generateTokens(user._id);
+    // Reset failed attempts on successful login
+    const tokenFamily = crypto.randomUUID();
+    const tokens = generateTokens(user._id, tokenFamily);
     user.refreshToken = tokens.refreshToken;
+    user.tokenFamily = tokenFamily;
+    user.failedLoginAttempts = 0;
+    user.lockUntil = null;
     await user.save();
 
     res.json({
@@ -120,12 +146,25 @@ exports.refresh = async (req, res, next) => {
     }
 
     const user = await User.findById(decoded.id);
-    if (!user || user.refreshToken !== refreshToken) {
+    if (!user) {
       return res.status(401).json({ error: 'Invalid refresh token' });
     }
 
-    const tokens = generateTokens(user._id);
+    // Token family check: detect reuse of old refresh tokens
+    if (user.refreshToken !== refreshToken) {
+      // Possible token theft — invalidate all sessions for this user
+      user.refreshToken = null;
+      user.tokenFamily = null;
+      await user.save();
+      console.warn(`[SECURITY] Refresh token reuse detected for user ${user._id}. All sessions invalidated.`);
+      return res.status(401).json({ error: 'Token reuse detected. Please log in again.' });
+    }
+
+    // Rotate: issue new tokens in the same family
+    const tokenFamily = user.tokenFamily || crypto.randomUUID();
+    const tokens = generateTokens(user._id, tokenFamily);
     user.refreshToken = tokens.refreshToken;
+    user.tokenFamily = tokenFamily;
     await user.save();
 
     res.json(tokens);
@@ -193,6 +232,7 @@ exports.resetPassword = async (req, res, next) => {
     user.resetCode = null;
     user.resetCodeExpiresAt = null;
     user.refreshToken = null; // Invalidate existing sessions
+    user.tokenFamily = null;
     await user.save();
 
     res.json({ message: 'Password has been reset successfully. Please log in.' });

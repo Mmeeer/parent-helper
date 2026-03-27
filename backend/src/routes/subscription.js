@@ -3,6 +3,7 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const SubscriptionKey = require('../models/SubscriptionKey');
 const User = require('../models/User');
+const { subscriptionActivate } = require('../middleware/validate');
 const Child = require('../models/Child');
 
 // GET /subscription — Get current subscription status
@@ -42,7 +43,7 @@ router.get('/', auth, async (req, res, next) => {
 });
 
 // POST /subscription/activate — Activate a subscription key
-router.post('/activate', auth, async (req, res, next) => {
+router.post('/activate', auth, subscriptionActivate, async (req, res, next) => {
   try {
     const { key } = req.body;
     if (!key || typeof key !== 'string') {

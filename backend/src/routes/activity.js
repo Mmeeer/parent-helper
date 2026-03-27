@@ -2,9 +2,10 @@ const router = require('express').Router();
 const auth = require('../middleware/auth');
 const deviceAuth = require('../middleware/deviceAuth');
 const activityController = require('../controllers/activityController');
+const { syncLimiter } = require('../middleware/rateLimiter');
 
-// Child device uploads activity
-router.post('/sync', deviceAuth, activityController.sync);
+// Child device uploads activity — rate limited
+router.post('/sync', deviceAuth, syncLimiter, activityController.sync);
 
 // Parent endpoints
 router.get('/:childId/summary', auth, activityController.summary);

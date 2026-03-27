@@ -48,9 +48,10 @@ exports.getUsers = async (req, res, next) => {
 
     const query = {};
     if (search) {
+      const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       query.$or = [
-        { email: { $regex: search, $options: 'i' } },
-        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: escaped, $options: 'i' } },
+        { name: { $regex: escaped, $options: 'i' } },
       ];
     }
     if (plan === 'subscribed') query.subscriptionKey = { $ne: null };
@@ -632,6 +633,7 @@ exports.getAlertsSummary = async (req, res, next) => {
 };
 
 // GET /admin/health — System health overview
+exports.getSystemHealth = async (req, res, next) => {
   try {
     const now = new Date();
     const oneHourAgo = new Date(now - 60 * 60 * 1000);

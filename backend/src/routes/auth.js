@@ -1,21 +1,24 @@
 const router = require('express').Router();
 const { body } = require('express-validator');
 const authController = require('../controllers/authController');
+const { authLimiter, resetLimiter } = require('../middleware/rateLimiter');
 
-router.post('/register', [
+router.post('/register', authLimiter, [
   body('email').isEmail().normalizeEmail(),
-  body('password').isLength({ min: 8 }),
-  body('name').trim().notEmpty(),
+  body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
+    .matches(/[a-zA-Z]/).withMessage('Password must contain at least one letter')
+    .matches(/\d/).withMessage('Password must contain at least one number'),
+  body('name').trim().notEmpty().isLength({ max: 100 }),
 ], authController.register);
 
-router.post('/login', [
+router.post('/login', authLimiter, [
   body('email').isEmail().normalizeEmail(),
   body('password').notEmpty(),
 ], authController.login);
 
-router.post('/refresh', authController.refresh);
-router.post('/forgot-password', authController.forgotPassword);
-router.post('/reset-password', authController.resetPassword);
+router.post('/refresh', authLimiter, authController.refresh);
+router.post('/forgot-password', resetLimiter, authController.forgotPassword);
+router.post('/reset-password', resetLimiter, authController.resetPassword);
 
 const auth = require('../middleware/auth');
 router.get('/me', auth, authController.me);

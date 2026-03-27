@@ -2,9 +2,11 @@ require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const cors = require('cors');
+const helmet = require('helmet');
 const { Server } = require('socket.io');
 const connectDB = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
+const { apiLimiter } = require('./middleware/rateLimiter');
 
 const authRoutes = require('./routes/auth');
 const childrenRoutes = require('./routes/children');
@@ -19,14 +21,41 @@ const subscriptionRoutes = require('./routes/subscription');
 
 const { startOfflineDetector } = require('./jobs/offlineDetector');
 
+// Validate critical secrets on startup
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'your-secret-key-change-in-production') {
+  console.error('[SECURITY] JWT_SECRET is not set or is using the default value. Set a strong secret in .env');
+  if (process.env.NODE_ENV === 'production') process.exit(1);
+}
+if (!process.env.JWT_REFRESH_SECRET || process.env.JWT_REFRESH_SECRET === process.env.JWT_SECRET) {
+  console.error('[SECURITY] JWT_REFRESH_SECRET should be set and different from JWT_SECRET');
+  if (process.env.NODE_ENV === 'production') process.exit(1);
+}
+
 const app = express();
 const server = http.createServer(app);
+
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  : ['http://localhost:3000', 'http://localhost:3001'];
+
 const io = new Server(server, {
-  cors: { origin: '*' },
+  cors: { origin: allowedOrigins, credentials: true },
 });
 
-app.use(cors());
+// Security headers
+app.use(helmet());
+
+// CORS — restrict to allowed origins
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+}));
+
 app.use(express.json({ limit: '10mb' }));
+
+// Global rate limit
+app.use(apiLimiter);
 
 // Request logger for debugging
 app.use((req, res, next) => {

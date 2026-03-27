@@ -31,6 +31,18 @@ const userSchema = new mongoose.Schema({
   refreshToken: {
     type: String,
   },
+  tokenFamily: {
+    type: String,
+    default: null,
+  },
+  failedLoginAttempts: {
+    type: Number,
+    default: 0,
+  },
+  lockUntil: {
+    type: Date,
+    default: null,
+  },
   alertSettings: {
     type: mongoose.Schema.Types.Mixed,
     default: null,

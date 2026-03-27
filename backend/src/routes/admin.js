@@ -2,9 +2,10 @@ const express = require('express');
 const router = express.Router();
 const adminAuth = require('../middleware/adminAuth');
 const adminController = require('../controllers/adminController');
+const { seedLimiter } = require('../middleware/rateLimiter');
 
-// Seed route — no auth required, creates the first admin account
-router.post('/seed', adminController.seed);
+// Seed route — rate limited, creates the first admin account only if none exists
+router.post('/seed', seedLimiter, adminController.seed);
 
 // All remaining admin routes require admin authentication
 router.use(adminAuth);
