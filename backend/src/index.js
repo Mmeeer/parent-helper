@@ -20,6 +20,7 @@ const adminRoutes = require('./routes/admin');
 const subscriptionRoutes = require('./routes/subscription');
 
 const { startOfflineDetector } = require('./jobs/offlineDetector');
+const { initFirebase } = require('./services/pushNotification');
 
 // Validate critical secrets on startup
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'your-secret-key-change-in-production') {
@@ -147,6 +148,7 @@ const PORT = process.env.PORT || 3000;
 
 const start = async () => {
   await connectDB();
+  initFirebase();
   startOfflineDetector(io);
   server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

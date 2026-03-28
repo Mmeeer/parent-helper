@@ -240,3 +240,53 @@ exports.resetPassword = async (req, res, next) => {
     next(err);
   }
 };
+
+// POST /auth/fcm-token — Register or update FCM push token
+exports.registerFcmToken = async (req, res, next) => {
+  try {
+    const { validationResult } = require('express-validator');
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { token, deviceId, platform } = req.body;
+    const user = await User.findById(req.user._id);
+
+    // Remove existing entry for this token (in case of re-registration)
+    user.fcmTokens = (user.fcmTokens || []).filter((t) => t.token !== token);
+
+    // Add the new token
+    user.fcmTokens.push({
+      token,
+      deviceId: deviceId || null,
+      platform: platform || 'android',
+      updatedAt: new Date(),
+    });
+
+    // Limit to 5 tokens per user (max 5 devices)
+    if (user.fcmTokens.length > 5) {
+      user.fcmTokens = user.fcmTokens.slice(-5);
+    }
+
+    await user.save();
+    res.json({ status: 'registered' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// DELETE /auth/fcm-token — Remove FCM token on logout
+exports.removeFcmToken = async (req, res, next) => {
+  try {
+    const { token } = req.body;
+    if (!token) return res.json({ status: 'ok' });
+
+    await User.findByIdAndUpdate(req.user._id, {
+      $pull: { fcmTokens: { token } },
+    });
+    res.json({ status: 'removed' });
+  } catch (err) {
+    next(err);
+  }
+};

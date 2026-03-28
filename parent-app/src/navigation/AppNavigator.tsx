@@ -95,7 +95,7 @@ function MainTabs() {
   );
 }
 
-export default function AppNavigator() {
+const AppNavigator = React.forwardRef<any>((_, ref) => {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
@@ -107,7 +107,7 @@ export default function AppNavigator() {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={ref}>
       <Stack.Navigator
         screenOptions={{
           headerStyle: { backgroundColor: '#FFFFFF' },
@@ -206,4 +206,6 @@ export default function AppNavigator() {
       </Stack.Navigator>
     </NavigationContainer>
   );
-}
+});
+
+export default AppNavigator;

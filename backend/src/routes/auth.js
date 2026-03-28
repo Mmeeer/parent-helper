@@ -23,4 +23,13 @@ router.post('/reset-password', resetLimiter, authController.resetPassword);
 const auth = require('../middleware/auth');
 router.get('/me', auth, authController.me);
 
+// FCM push token registration
+router.post('/fcm-token', auth, [
+  body('token').trim().notEmpty().withMessage('FCM token is required'),
+  body('deviceId').optional().trim(),
+  body('platform').optional().isIn(['ios', 'android']),
+], authController.registerFcmToken);
+
+router.delete('/fcm-token', auth, authController.removeFcmToken);
+
 module.exports = router;

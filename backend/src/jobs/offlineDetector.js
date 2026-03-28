@@ -1,5 +1,6 @@
 const Device = require('../models/Device');
 const Alert = require('../models/Alert');
+const { sendAlertNotification } = require('../services/pushNotification');
 
 const OFFLINE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes without heartbeat
 const CHECK_INTERVAL_MS = 60 * 1000; // Check every minute
@@ -34,6 +35,7 @@ function startOfflineDetector(io) {
 
         // Push real-time notification to parent
         io.to(`parent:${device.parentId}`).emit('alert', alert);
+        sendAlertNotification(device.parentId, alert);
       }
 
       if (staleDevices.length > 0) {

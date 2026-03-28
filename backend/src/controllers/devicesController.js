@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const Device = require('../models/Device');
 const Child = require('../models/Child');
+const { sendAlertNotification } = require('../services/pushNotification');
 
 exports.pair = async (req, res, next) => {
   try {
@@ -300,6 +301,9 @@ exports.sos = async (req, res, next) => {
       data: alert.data,
       createdAt: alert.createdAt,
     });
+
+    // Send push notification (SOS is high priority)
+    sendAlertNotification(device.parentId, alert);
 
     console.log(`[SOS] Alert sent from device ${device._id} for child ${childName}`);
     res.json({ status: 'sent', alertId: alert._id });

@@ -25,7 +25,16 @@
       }
     },
     "plugins": [
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#4A90D9",
+          "sounds": [],
+          "defaultChannel": "general_alerts"
+        }
+      ]
     ]
   }
 }

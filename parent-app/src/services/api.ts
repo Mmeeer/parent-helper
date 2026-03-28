@@ -380,3 +380,21 @@ export async function updateGeofence(
 export async function deleteGeofence(id: string): Promise<void> {
   await request(`/geofences/${id}`, { method: 'DELETE' });
 }
+
+// ─── Push Notifications ──────────────────────────────────
+export async function registerFcmToken(
+  token: string,
+  platform: 'ios' | 'android',
+): Promise<void> {
+  await request('/auth/fcm-token', {
+    method: 'POST',
+    body: JSON.stringify({ token, platform }),
+  });
+}
+
+export async function removeFcmToken(token: string): Promise<void> {
+  await request('/auth/fcm-token', {
+    method: 'DELETE',
+    body: JSON.stringify({ token }),
+  });
+}

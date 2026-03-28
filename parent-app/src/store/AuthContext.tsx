@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import type { User } from '../types';
 import * as api from '../services/api';
 import { connectSocket, disconnectSocket } from '../services/socket';
+import { registerForPushNotifications, unregisterPushNotifications } from '../services/notifications';
 
 interface AuthState {
   user: User | null;
@@ -35,6 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const user = await api.getMe();
           setState({ user, isLoading: false, isAuthenticated: true });
           connectSocket();
+          registerForPushNotifications();
         } else {
           setState({ user: null, isLoading: false, isAuthenticated: false });
         }
@@ -49,15 +51,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const data = await api.login(email, password);
     setState({ user: data.user, isLoading: false, isAuthenticated: true });
     connectSocket();
+    registerForPushNotifications();
   }, []);
 
   const register = useCallback(async (email: string, password: string, name: string) => {
     const data = await api.register(email, password, name);
     setState({ user: data.user, isLoading: false, isAuthenticated: true });
     connectSocket();
+    registerForPushNotifications();
   }, []);
 
   const logout = useCallback(async () => {
+    await unregisterPushNotifications();
     disconnectSocket();
     await api.logout();
     setState({ user: null, isLoading: false, isAuthenticated: false });

@@ -43,6 +43,12 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
+  fcmTokens: [{
+    token: { type: String, required: true },
+    deviceId: { type: String },
+    platform: { type: String, enum: ['ios', 'android'], default: 'android' },
+    updatedAt: { type: Date, default: Date.now },
+  }],
   alertSettings: {
     type: mongoose.Schema.Types.Mixed,
     default: null,

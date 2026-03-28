@@ -1,5 +1,6 @@
 const Geofence = require('../models/Geofence');
 const Child = require('../models/Child');
+const { sendAlertNotification } = require('../services/pushNotification');
 
 const verifyChild = async (childId, parentId) => {
   return Child.findOne({ _id: childId, parentId });
@@ -131,6 +132,7 @@ exports.checkLocation = async (childId, lat, lng, io) => {
           if (io) {
             io.to(`parent:${fence.parentId}`).emit('alert:new', alert);
           }
+          sendAlertNotification(fence.parentId, alert);
         }
       }
     }

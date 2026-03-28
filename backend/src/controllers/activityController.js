@@ -2,6 +2,7 @@ const ActivityLog = require('../models/ActivityLog');
 const Child = require('../models/Child');
 const Device = require('../models/Device');
 const Alert = require('../models/Alert');
+const { sendBatchAlertNotifications } = require('../services/pushNotification');
 
 exports.sync = async (req, res, next) => {
   try {
@@ -94,6 +95,9 @@ exports.sync = async (req, res, next) => {
         for (const alert of alerts) {
           io.to(`parent:${device.parentId}`).emit('alert:new', alert);
         }
+
+        // Send push notification
+        sendBatchAlertNotifications(device.parentId, alerts);
       }
     }
 
