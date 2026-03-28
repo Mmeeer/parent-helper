@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { View, ScrollView, Text, Pressable, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import { showError } from '../../utils/showError';
 import * as api from '../../services/api';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
@@ -22,7 +23,7 @@ export default function RulesOverviewScreen({ navigation, route }: Props) {
       setLoading(true);
       api.getRules(childId)
         .then(setRules)
-        .catch(() => {})
+        .catch((err: unknown) => showError(err, 'Failed to load rules.'))
         .finally(() => setLoading(false));
     }, [childId]),
   );

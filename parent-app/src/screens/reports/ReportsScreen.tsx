@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { showError } from '../../utils/showError';
 import { useFocusEffect } from '@react-navigation/native';
 import { colors } from '../../theme';
 import { formatDuration } from '../../utils/formatters';
@@ -42,7 +43,7 @@ export default function ReportsScreen({ route }: Props) {
       setBreakdown(breakdownData.breakdown);
       setTopApps(summaryData.topApps || []);
     } catch {
-      // May not have data yet
+      // 404 expected if no activity data yet
     } finally {
       setLoading(false);
       setRefreshing(false);

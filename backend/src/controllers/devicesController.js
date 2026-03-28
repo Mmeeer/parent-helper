@@ -222,8 +222,12 @@ exports.unpair = async (req, res, next) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    await Device.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Device unpaired successfully' });
+    const ActivityLog = require('../models/ActivityLog');
+    await Promise.all([
+      Device.findByIdAndDelete(req.params.id),
+      ActivityLog.deleteMany({ deviceId: device._id }),
+    ]);
+    res.json({ message: 'Device unpaired and associated data removed' });
   } catch (err) {
     next(err);
   }

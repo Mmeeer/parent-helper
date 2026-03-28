@@ -3,6 +3,7 @@ import { View, ScrollView, RefreshControl, Pressable, Text, TouchableOpacity, Ac
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { formatDuration } from '../../utils/formatters';
+import { showError } from '../../utils/showError';
 import * as api from '../../services/api';
 import { onSocketEvent } from '../../services/socket';
 import type { DailyBreakdownEntry } from '../../services/api';
@@ -44,14 +45,14 @@ export default function DashboardScreen({ navigation }: Props) {
             summaryMap[child._id] = sum;
             breakdownMap[child._id] = bd.breakdown;
           } catch {
-            // Child may not have activity yet
+            // 404 is expected if child has no activity yet
           }
         }),
       );
       setSummaries(summaryMap);
       setBreakdowns(breakdownMap);
-    } catch {
-      // Handle error silently on refresh
+    } catch (err) {
+      showError(err, 'Failed to load dashboard data.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -93,7 +94,7 @@ export default function DashboardScreen({ navigation }: Props) {
       {alerts.length > 0 && (
         <Pressable
           className="mx-4 mt-4 flex-row items-center gap-2 rounded-xl bg-warning-50 px-4 py-3"
-          onPress={() => {}}
+          onPress={() => navigation.getParent()?.navigate('Alerts')}
         >
           <Ionicons name="notifications" size={20} color="#D97706" />
           <Text className="flex-1 text-sm font-medium text-slate-800">

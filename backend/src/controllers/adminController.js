@@ -348,6 +348,10 @@ exports.deleteKey = async (req, res, next) => {
       return res.status(400).json({ error: 'Cannot delete an active key. It must expire first.' });
     }
 
+    // Unlink from any user that references this key
+    if (key.activatedBy) {
+      await User.findByIdAndUpdate(key.activatedBy, { subscriptionKey: null });
+    }
     await SubscriptionKey.findByIdAndDelete(req.params.id);
     res.json({ message: 'Key deleted' });
   } catch (err) {

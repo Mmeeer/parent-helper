@@ -13,7 +13,7 @@ export default function SettingsScreen() {
   const [subInfo, setSubInfo] = useState<api.SubscriptionInfo | null>(null);
 
   useEffect(() => {
-    api.getSubscription().then(setSubInfo).catch(() => {});
+    api.getSubscription().then(setSubInfo).catch(() => null);
   }, []);
 
   const handleLogout = () => {

@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { ALERT_TYPE_LABELS, ALERT_TYPE_COLORS } from '../../utils/constants';
 import { formatTimeAgo } from '../../utils/formatters';
+import { showError } from '../../utils/showError';
 import * as api from '../../services/api';
 import { onSocketEvent } from '../../services/socket';
 import type { Alert as AlertType } from '../../types';
@@ -36,8 +37,8 @@ export default function AlertsScreen() {
       }
       setPage(data.page);
       setTotalPages(data.totalPages);
-    } catch {
-      // Handle silently
+    } catch (err) {
+      if (!append) showError(err, 'Failed to load alerts.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -76,8 +77,8 @@ export default function AlertsScreen() {
       setAlerts((prev) =>
         prev.map((a) => (a._id === alertId ? { ...a, read: true } : a)),
       );
-    } catch {
-      // Handle silently
+    } catch (err) {
+      showError(err, 'Failed to mark alert as read.');
     }
   };
 
@@ -85,8 +86,8 @@ export default function AlertsScreen() {
     try {
       await api.markAllAlertsRead();
       setAlerts((prev) => prev.map((a) => ({ ...a, read: true })));
-    } catch {
-      // Handle silently
+    } catch (err) {
+      showError(err, 'Failed to mark alerts as read.');
     }
   };
 

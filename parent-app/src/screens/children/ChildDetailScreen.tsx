@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { formatDuration, formatTimeAgo, formatTime } from '../../utils/formatters';
+import { showError } from '../../utils/showError';
 import * as api from '../../services/api';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
@@ -53,7 +54,7 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
       setApps(appsData);
       setWebHistory(webData);
     } catch {
-      // May not have data yet
+      // 404 expected when child has no activity yet
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -66,11 +67,11 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
       // Send sync command to all child devices to get fresh data
       const devices = await api.getChildDevices(childId);
       await Promise.all(
-        devices.map((d) => api.sendDeviceCommand(d.id, 'sync').catch(() => {})),
+        devices.map((d) => api.sendDeviceCommand(d.id, 'sync').catch(() => null)),
       );
-      // Wait briefly for sync to complete, then reload
       setTimeout(() => loadData(), 2000);
-    } catch {
+    } catch (err) {
+      showError(err, 'Failed to sync devices.');
       loadData();
     }
   }, [childId, loadData]);

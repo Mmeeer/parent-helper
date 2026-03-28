@@ -1,6 +1,10 @@
 const { validationResult } = require('express-validator');
 const Child = require('../models/Child');
 const Rule = require('../models/Rule');
+const Device = require('../models/Device');
+const Alert = require('../models/Alert');
+const ActivityLog = require('../models/ActivityLog');
+const Geofence = require('../models/Geofence');
 const User = require('../models/User');
 const SubscriptionKey = require('../models/SubscriptionKey');
 
@@ -87,10 +91,17 @@ exports.remove = async (req, res, next) => {
       return res.status(404).json({ error: 'Child not found' });
     }
 
-    // Clean up associated rules
-    await Rule.deleteOne({ childId: child._id });
+    // Cascade delete all associated data
+    const childId = child._id;
+    await Promise.all([
+      Rule.deleteOne({ childId }),
+      Device.deleteMany({ childId }),
+      Alert.deleteMany({ childId }),
+      ActivityLog.deleteMany({ childId }),
+      Geofence.deleteMany({ childId }),
+    ]);
 
-    res.json({ message: 'Child profile removed' });
+    res.json({ message: 'Child profile and all associated data removed' });
   } catch (err) {
     next(err);
   }
