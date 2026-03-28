@@ -12,7 +12,7 @@ import type { RouteProp } from '@react-navigation/native';
 import type { RootStackParamList, PairDeviceResponse } from '../../types';
 
 type Props = {
-  route: RouteProp<RootStackParamList, 'PairDevice'>;
+  readonly route: RouteProp<RootStackParamList, 'PairDevice'>;
 };
 
 export default function PairDeviceScreen({ route }: Props) {
@@ -50,7 +50,7 @@ export default function PairDeviceScreen({ route }: Props) {
       setPairingData(data);
       if (data.expiresAt) startCountdown(data.expiresAt);
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to generate pairing code.');
+      Alert.alert('Алдаа', error.message || 'Холболтын код үүсгэхэд алдаа гарлаа.');
     } finally {
       setLoading(false);
     }
@@ -61,16 +61,16 @@ export default function PairDeviceScreen({ route }: Props) {
       <View className="flex-1 items-center px-8 pt-16">
         <Ionicons name="phone-portrait-outline" size={72} color="#4F46E5" />
         <Text className="text-xl font-bold text-slate-800 mt-5">
-          Pair a Device
+          Төхөөрөмж холбох
         </Text>
         <Text className="text-sm text-slate-500 mt-2 mb-8 text-center">
-          Connect a new device for {childName}.
+          {childName}-д шинэ төхөөрөмж холбох.
         </Text>
 
         {pairingData ? (
           <View className="self-stretch rounded-3xl p-8 items-center bg-white shadow-sm shadow-black/5">
             <Text className="text-sm font-semibold text-slate-500 mb-2">
-              Pairing Code
+              Холболтын код
             </Text>
             <Text
               className="text-4xl font-bold text-primary-600"
@@ -81,10 +81,10 @@ export default function PairDeviceScreen({ route }: Props) {
             <Text
               className={`text-base font-semibold mt-3 ${countdown <= 60 ? 'text-red-500' : 'text-primary-600'}`}
             >
-              {countdown > 0 ? formatTime(countdown) : 'Expired'}
+              {countdown > 0 ? formatTime(countdown) : 'Хугацаа дууссан'}
             </Text>
             <Text className="text-xs text-slate-500 text-center mt-2 leading-5">
-              Enter this code in the Prime Kids app on the child's device.
+              Энэ кодыг хүүхдийн төхөөрөмж дээрх Prime Kids апп-д оруулна уу.
             </Text>
 
             <TouchableOpacity
@@ -92,16 +92,16 @@ export default function PairDeviceScreen({ route }: Props) {
               className="mt-4 py-2 flex-row items-center gap-x-1"
             >
               <Ionicons name="refresh" size={18} color="#4F46E5" />
-              <Text className="text-primary-600 font-medium text-sm">Generate New Code</Text>
+              <Text className="text-primary-600 font-medium text-sm">Шинэ код үүсгэх</Text>
             </TouchableOpacity>
           </View>
         ) : (
           <>
             <View className="self-stretch gap-y-4 mb-8">
               {[
-                { num: '1', text: 'Install "Prime Kids" app on the child\'s device' },
-                { num: '2', text: 'Generate a pairing code below' },
-                { num: '3', text: 'Enter the code on the child\'s device' },
+                { num: '1', text: 'Хүүхдийн төхөөрөмжид "Prime Kids" апп суулгах' },
+                { num: '2', text: 'Доорх холболтын код үүсгэх' },
+                { num: '3', text: 'Хүүхдийн төхөөрөмжид код оруулах' },
               ].map((step) => (
                 <View key={step.num} className="flex-row items-center gap-x-3.5">
                   <View className="w-8 h-8 rounded-full bg-primary-50 justify-center items-center">
@@ -124,7 +124,7 @@ export default function PairDeviceScreen({ route }: Props) {
               {loading ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Text className="text-white font-bold text-base">Generate Pairing Code</Text>
+                <Text className="text-white font-bold text-base">Холболтын код үүсгэх</Text>
               )}
             </TouchableOpacity>
           </>

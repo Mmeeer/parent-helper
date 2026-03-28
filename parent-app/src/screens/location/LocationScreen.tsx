@@ -31,7 +31,7 @@ try {
 }
 
 type Props = {
-  route: RouteProp<RootStackParamList, 'LocationMap'>;
+  readonly route: RouteProp<RootStackParamList, 'LocationMap'>;
 };
 
 export default function LocationScreen({ route }: Props) {
@@ -47,7 +47,7 @@ export default function LocationScreen({ route }: Props) {
       const data = await api.getLocationHistory(childId);
       setLocations(data);
     } catch (err: any) {
-      const msg = err?.message || 'Failed to load location data';
+      const msg = err?.message || 'Байршлын мэдээлэл ачаалахад алдаа гарлаа';
       console.error('LocationScreen: Failed to load locations:', msg);
       setError(msg);
     } finally {
@@ -96,7 +96,7 @@ export default function LocationScreen({ route }: Props) {
       <View className="flex-1 justify-center items-center bg-surface-secondary px-10">
         <Ionicons name="alert-circle-outline" size={64} color="#E11D48" />
         <Text className="text-base font-semibold text-slate-800 mt-4">
-          Error Loading Location
+          Байршил ачаалахад алдаа гарлаа
         </Text>
         <Text className="text-sm text-slate-500 text-center mt-2">
           {error}
@@ -105,7 +105,7 @@ export default function LocationScreen({ route }: Props) {
           onPress={loadLocations}
           className="mt-5 bg-primary-600 rounded-xl py-3 px-6 items-center"
         >
-          <Text className="text-white font-bold">Retry</Text>
+          <Text className="text-white font-bold">Дахин оролдох</Text>
         </TouchableOpacity>
       </View>
     );
@@ -116,17 +116,17 @@ export default function LocationScreen({ route }: Props) {
       <View className="flex-1 justify-center items-center bg-surface-secondary px-10">
         <Ionicons name="location-outline" size={64} color="#94A3B8" />
         <Text className="text-base font-semibold text-slate-800 mt-4">
-          No Location Data
+          Байршлын мэдээлэл байхгүй
         </Text>
         <Text className="text-sm text-slate-500 text-center mt-2">
-          Location updates from {childName}'s device will appear here.
-          Try sending a Locate command from the Devices screen.
+          {childName}-ийн төхөөрөмжөөс байршлын шинэчлэлтүүд энд харагдана.
+          Төхөөрөмжийн хэсгээс Байршлыг олох командыг илгээнэ үү.
         </Text>
         <TouchableOpacity
           onPress={loadLocations}
           className="mt-5 bg-primary-600 rounded-xl py-3 px-6 items-center"
         >
-          <Text className="text-white font-bold">Refresh</Text>
+          <Text className="text-white font-bold">Шинэчлэх</Text>
         </TouchableOpacity>
       </View>
     );
@@ -167,7 +167,7 @@ export default function LocationScreen({ route }: Props) {
               longitude: latestLocation.lng,
             }}
             title={childName}
-            description={`Last updated: ${formatTime(latestLocation.timestamp)}`}
+            description={`Сүүлд шинэчлэгдсэн: ${formatTime(latestLocation.timestamp)}`}
           />
 
           {/* History markers */}
@@ -191,14 +191,14 @@ export default function LocationScreen({ route }: Props) {
           <View className="items-center py-10 gap-y-3">
             <Ionicons name="map-outline" size={48} color="#94A3B8" />
             <Text className="text-sm text-slate-500">
-              Map view unavailable
+              Газрын зураг ашиглах боломжгүй
             </Text>
             <TouchableOpacity
               onPress={() => openInExternalMap(latestLocation.lat, latestLocation.lng)}
               className="mt-2 bg-primary-600 rounded-xl py-3 px-6 flex-row items-center gap-2"
             >
               <Ionicons name="open-outline" size={18} color="#FFFFFF" />
-              <Text className="text-white font-bold">Open in Maps</Text>
+              <Text className="text-white font-bold">Газрын зурагт нээх</Text>
             </TouchableOpacity>
           </View>
 
@@ -234,7 +234,7 @@ export default function LocationScreen({ route }: Props) {
         <View className="flex-row items-center gap-x-2 mb-2">
           <Ionicons name="location" size={20} color="#4F46E5" />
           <Text className="text-sm font-semibold text-slate-800">
-            Last Known Location
+            Сүүлд мэдэгдсэн байршил
           </Text>
         </View>
         <TouchableOpacity onPress={() => openInExternalMap(latestLocation.lat, latestLocation.lng)}>
@@ -246,10 +246,10 @@ export default function LocationScreen({ route }: Props) {
           </Text>
         </TouchableOpacity>
         <Text className="text-xs text-slate-500 mt-1">
-          Updated: {formatTime(latestLocation.timestamp)}
+          Шинэчлэгдсэн: {formatTime(latestLocation.timestamp)}
         </Text>
         <Text className="text-[11px] text-slate-400 mt-1">
-          {locations.length} location point{locations.length !== 1 ? 's' : ''} today
+          Өнөөдөр {locations.length} байршлын цэг
         </Text>
       </View>
 

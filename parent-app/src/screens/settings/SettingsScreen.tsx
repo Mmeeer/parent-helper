@@ -5,153 +5,139 @@ import { useAuth } from '../../store/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as api from '../../services/api';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { C, CARD, LABEL } from '../../theme';
 import type { RootStackParamList } from '../../types';
 
-// Type scale (matches HomeScreen):
-// title:  15px/600 — card titles, item titles
-// body:   14px/400 — subtitles, descriptions
-// label:  12px/500 — meta, badges
-// btn:    14px/600 — button text
-
-const SHADOW = {
-  elevation: 4,
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.08,
-  shadowRadius: 12,
-} as const;
-
 export default function SettingsScreen() {
+  const { top } = useSafeAreaInsets();
   const { user, logout } = useAuth();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [subInfo, setSubInfo] = useState<api.SubscriptionInfo | null>(null);
 
   useEffect(() => {
-    api.getSubscription().then(setSubInfo).catch(() => null);
+    api.getSubscription().then((data) => { setSubInfo(data); }).catch(() => {});
   }, []);
 
   const handleLogout = () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign Out',
-        style: 'destructive',
-        onPress: () => logout(),
-      },
+    Alert.alert('Гарах', 'Гарахдаа итгэлтэй байна уу?', [
+      { text: 'Цуцлах', style: 'cancel' },
+      { text: 'Гарах', style: 'destructive', onPress: () => { void logout(); } },
     ]);
   };
 
   const items = [
     {
-      title: 'Account',
+      title: 'Бүртгэл',
       icon: 'person-outline' as const,
-      subtitle: user?.email || 'Manage your account',
+      subtitle: user?.email || 'Бүртгэлийг удирдах',
       onPress: () => {},
     },
     {
-      title: 'Subscription',
+      title: 'Захиалга',
       icon: 'key-outline' as const,
       subtitle: subInfo?.active
-        ? `Active — ${subInfo.subscription?.maxKids} kids`
-        : 'No active subscription',
+        ? `Идэвхтэй — ${subInfo.subscription?.maxKids} хүүхэд`
+        : 'Идэвхтэй захиалга байхгүй',
       onPress: () => navigation.navigate('ActivateSubscription'),
     },
     {
-      title: 'Notification Settings',
+      title: 'Мэдэгдэл',
       icon: 'notifications-outline' as const,
-      subtitle: 'Configure alert preferences',
+      subtitle: 'Мэдэгдлийн тохиргоо',
       onPress: () => {},
     },
     {
-      title: 'Help & Support',
+      title: 'Тусламж',
       icon: 'help-circle-outline' as const,
-      subtitle: 'FAQ and contact support',
+      subtitle: 'Тусламж болон холбоо барих',
       onPress: () => {},
     },
     {
-      title: 'Privacy Policy',
+      title: 'Нууцлалын бодлого',
       icon: 'document-text-outline' as const,
-      subtitle: 'View privacy policy',
+      subtitle: 'Нууцлалын бодлого харах',
       onPress: () => {},
     },
   ];
 
   return (
-    <ScrollView className="flex-1 bg-slate-50">
-      {/* User Info Card */}
-      <View className="flex-row items-center mx-4 mt-5 rounded-2xl p-5 bg-white" style={SHADOW}>
-        <View className="w-14 h-14 rounded-full bg-primary-600 items-center justify-center">
-          <Ionicons name="person" size={28} color="#FFFFFF" />
+    <ScrollView className="flex-1 bg-surface-secondary" showsVerticalScrollIndicator={false}>
+      <View className="px-7 pb-10" style={{ paddingTop: top * 2 }}>
+
+        {/* Header */}
+        <View className="mt-6 mb-7">
+          <Text className="font-serif text-[32px] text-ink-900" style={{ lineHeight: 36 }}>Тохиргоо</Text>
         </View>
-        <View className="flex-1 ml-4">
-          <Text style={{ fontSize: 15, fontWeight: '600', color: '#1E293B' }}>
-            {user?.name || 'Parent'}
-          </Text>
-          <Text style={{ fontSize: 14, color: '#64748B', marginTop: 2 }}>
-            {user?.email || ''}
-          </Text>
-          <View
-            className={`self-start mt-2 px-2.5 py-1 rounded-full ${subInfo?.active ? 'bg-emerald-50' : 'bg-red-50'}`}
-          >
-            <Text
-              style={{
-                fontSize: 12,
-                fontWeight: '600',
-                color: subInfo?.active ? '#059669' : '#E11D48',
-              }}
-            >
-              {subInfo?.active ? 'Active' : 'No Subscription'}
-            </Text>
+
+        {/* User profile card */}
+        <View style={{ ...CARD, padding: 20, marginBottom: 24 }}>
+          <View className="flex-row items-center gap-4">
+            <View className="w-14 h-14 rounded-full bg-ink-900 items-center justify-center shrink-0">
+              <Text className="font-serif text-white" style={{ fontSize: 24, lineHeight: 28 }}>
+                {user?.name?.charAt(0).toUpperCase() ?? 'P'}
+              </Text>
+            </View>
+            <View className="flex-1">
+              <Text className="text-sm font-semibold text-ink-800">
+                {user?.name || 'Parent'}
+              </Text>
+              <Text className="text-[13px] text-ink-400 mt-1">
+                {user?.email || ''}
+              </Text>
+              <View style={{
+                alignSelf: 'flex-start', marginTop: 6,
+                paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20,
+                backgroundColor: subInfo?.active ? '#f0fdfa' : '#fff1f2',
+              }}>
+                <Text className="text-[10px] font-semibold" style={{ color: subInfo?.active ? C.teal : C.red }}>
+                  {subInfo?.active ? 'Премиум' : 'Захиалга байхгүй'}
+                </Text>
+              </View>
+            </View>
           </View>
         </View>
-      </View>
 
-      {/* Settings Items */}
-      <View className="mx-4 mt-5 rounded-2xl overflow-hidden bg-white" style={SHADOW}>
-        {items.map((item, index) => (
-          <React.Fragment key={index}>
-            <Pressable onPress={item.onPress}>
-              {({ pressed }) => (
-                <View
-                  className="flex-row items-center px-5 py-4"
-                  style={pressed ? { opacity: 0.7 } : {}}
-                >
-                  <View className="w-9 h-9 rounded-xl bg-slate-100 items-center justify-center mr-4">
-                    <Ionicons name={item.icon} size={20} color="#4F46E5" />
+        {/* Settings items */}
+        <Text style={[LABEL, { marginBottom: 12 }]}>Бүртгэл</Text>
+        <View style={{ ...CARD, overflow: 'hidden', marginBottom: 24 }}>
+          {items.map((item, index) => (
+            <React.Fragment key={item.title}>
+              <Pressable onPress={item.onPress}>
+                {({ pressed }) => (
+                  <View className="flex-row items-center px-5 py-4" style={{ opacity: pressed ? 0.7 : 1 }}>
+                    <View className="w-9 h-9 rounded-[10px] bg-ink-100 items-center justify-center" style={{ marginRight: 16 }}>
+                      <Ionicons name={item.icon} size={18} color={C.ink700} />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-sm font-semibold text-ink-800">{item.title}</Text>
+                      <Text className="text-xs text-ink-400 mt-0.5">{item.subtitle}</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={15} color={C.ink300} />
                   </View>
-                  <View className="flex-1">
-                    <Text style={{ fontSize: 15, fontWeight: '600', color: '#1E293B' }}>
-                      {item.title}
-                    </Text>
-                    <Text style={{ fontSize: 14, color: '#64748B', marginTop: 2 }}>
-                      {item.subtitle}
-                    </Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={16} color="#CBD5E1" />
-                </View>
+                )}
+              </Pressable>
+              {index < items.length - 1 && (
+                <View className="h-px" style={{ backgroundColor: C.border, marginLeft: 72 }} />
               )}
-            </Pressable>
-            {index < items.length - 1 && <View className="h-px bg-slate-100 ml-[72px]" />}
-          </React.Fragment>
-        ))}
-      </View>
+            </React.Fragment>
+          ))}
+        </View>
 
-      {/* Sign Out Button */}
-      <View className="mx-4 mt-5">
+        {/* Sign out */}
         <TouchableOpacity
           onPress={handleLogout}
-          className="border border-red-200 bg-white rounded-2xl py-4 flex-row items-center justify-center gap-2"
-          style={SHADOW}
+          style={{ ...CARD, paddingVertical: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}
         >
-          <Ionicons name="log-out-outline" size={20} color="#E11D48" />
-          <Text style={{ fontSize: 14, fontWeight: '600', color: '#E11D48' }}>Sign Out</Text>
+          <Ionicons name="log-out-outline" size={18} color={C.red} />
+          <Text className="text-sm font-semibold" style={{ color: C.red }}>Гарах</Text>
         </TouchableOpacity>
-      </View>
 
-      {/* Version */}
-      <Text style={{ fontSize: 12, color: '#94A3B8', textAlign: 'center', marginTop: 24, marginBottom: 32 }}>
-        Prime Kids: Parent Helper v1.0.0
-      </Text>
+        {/* Version */}
+        <Text style={[LABEL, { textAlign: 'center', marginTop: 32 }]}>
+          Prime Kids: Parent Helper v1.0.0
+        </Text>
+      </View>
     </ScrollView>
   );
 }

@@ -1,90 +1,47 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
-  View,
-  ScrollView,
-  RefreshControl,
-  Pressable,
-  Text,
-  TouchableOpacity,
-  ActivityIndicator,
-  TextInput,
-  Alert,
+  View, ScrollView, RefreshControl, Pressable,
+  Text, TouchableOpacity, ActivityIndicator, TextInput, Alert, Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { formatDuration } from '../../utils/formatters';
 import { showError } from '../../utils/showError';
 import * as api from '../../services/api';
 import { onSocketEvent } from '../../services/socket';
 import { useAuth } from '../../store/AuthContext';
-import type { DailyBreakdownEntry } from '../../services/api';
-import type { Child, ActivitySummary, Alert as AlertType } from '../../types';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { C, CARD, SERIF, LABEL } from '../../theme';
+import type { Child, Alert as AlertType, RootStackParamList } from '../../types';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '../../types';
-
-// ── Type scale ────────────────────────────────────────────
-// heading:  22px bold    — screen/section titles
-// title:    15px semibold — card titles, child names
-// body:     14px regular  — descriptions, subtitles
-// label:    12px medium   — stat labels, badges, meta
-// stat:     18px bold     — stat values in cards
-// btn:      14px semibold — all button text
 
 type Props = {
-  navigation: NativeStackNavigationProp<RootStackParamList>;
+  readonly navigation: NativeStackNavigationProp<RootStackParamList>;
 };
 
-const SHADOW = {
-  elevation: 4,
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.08,
-  shadowRadius: 12,
-} as const;
-
-const AVATAR_COLORS = ['#4F46E5', '#0D9488', '#D97706', '#7C3AED', '#0369A1'];
-
 export default function HomeScreen({ navigation }: Props) {
+  const { top } = useSafeAreaInsets();
   const { user } = useAuth();
   const [children, setChildren] = useState<Child[]>([]);
-  const [summaries, setSummaries] = useState<Record<string, ActivitySummary>>({});
-  const [breakdowns, setBreakdowns] = useState<Record<string, DailyBreakdownEntry[]>>({});
   const [alerts, setAlerts] = useState<AlertType[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [subscription, setSubscription] = useState<api.SubscriptionInfo | null>(null);
   const [subKey, setSubKey] = useState('');
   const [subLoading, setSubLoading] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
 
   const loadData = useCallback(async () => {
     try {
-      const [childrenData, alertsData, subData] = await Promise.all([
+      const [childrenData, alertsData, subData, approvalsData] = await Promise.all([
         api.getChildren(),
         api.getAlerts(1, 5, true),
         api.getSubscription().catch(() => null),
+        api.getPendingApprovals().catch(() => []),
       ]);
       setChildren(childrenData);
       setAlerts(alertsData.alerts);
       setSubscription(subData);
-
-      if (subData?.active) {
-        const summaryMap: Record<string, ActivitySummary> = {};
-        const breakdownMap: Record<string, DailyBreakdownEntry[]> = {};
-        await Promise.all(
-          childrenData.map(async (child) => {
-            try {
-              const [sum, bd] = await Promise.all([
-                api.getActivitySummary(child._id, 'day'),
-                api.getDailyBreakdown(child._id, 7),
-              ]);
-              summaryMap[child._id] = sum;
-              breakdownMap[child._id] = bd.breakdown;
-            } catch { /* no activity yet */ }
-          }),
-        );
-        setSummaries(summaryMap);
-        setBreakdowns(breakdownMap);
-      }
+      setPendingCount(approvalsData.length);
     } catch (err) {
       showError(err, 'Failed to load data.');
     } finally {
@@ -96,13 +53,13 @@ export default function HomeScreen({ navigation }: Props) {
   useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
 
   useEffect(() => {
-    const unsub = onSocketEvent('alert:new', () => { loadData(); });
+    const unsub = onSocketEvent('alert:new', () => loadData());
     return unsub;
   }, [loadData]);
 
   const handleActivate = async () => {
     if (!subKey.trim()) {
-      Alert.alert('Error', 'Please enter a subscription key.');
+      Alert.alert('Алдаа', 'Захиалгын түлхүүрийг оруулна уу.');
       return;
     }
     setSubLoading(true);
@@ -111,310 +68,290 @@ export default function HomeScreen({ navigation }: Props) {
       setSubKey('');
       await loadData();
     } catch (error: any) {
-      Alert.alert('Activation Failed', error.message || 'Invalid or expired key.');
+      Alert.alert('Идэвхжүүлэлт амжилтгүй', error.message || 'Буруу эсвэл хугацаа дууссан түлхүүр.');
     } finally {
       setSubLoading(false);
     }
   };
 
-  const onRefresh = () => { setRefreshing(true); loadData(); };
+  const openTutorialVideo = () => {
+    Linking.openURL('https://www.youtube.com').catch(() => {});
+  };
+
+  const openMessenger = () => {
+    Linking.openURL('https://m.me/').catch(() => {
+      Linking.openURL('https://www.messenger.com').catch(() => {});
+    });
+  };
 
   const isActive = subscription?.active ?? false;
   const sub = subscription?.subscription;
   const canAddChild = isActive && (sub ? sub.currentKids < sub.maxKids : true);
 
-  const formatExpiry = (expiresAt: string) => {
-    const diff = new Date(expiresAt).getTime() - Date.now();
-    if (diff <= 0) return 'Expired';
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    if (days > 0) return `${days}d left`;
-    return `${hours}h left`;
+  const getDaysLeft = () => {
+    if (!sub) return 0;
+    return Math.max(0, Math.floor((new Date(sub.expiresAt).getTime() - Date.now()) / 86400000));
   };
+
+  const getUsedPct = () => {
+    if (!sub) return 0;
+    const total = (sub.durationMonths || 1) * 30;
+    return Math.min(Math.max((total - getDaysLeft()) / total, 0), 1);
+  };
+
+  const formatExpiry = (d: string) =>
+    new Date(d).toLocaleDateString('mn-MN', { month: 'short', day: 'numeric', year: 'numeric' });
 
   if (loading) {
     return (
-      <View className="flex-1 items-center justify-center bg-slate-50">
-        <ActivityIndicator size="large" color="#4F46E5" />
+      <View className="flex-1 items-center justify-center bg-surface-secondary">
+        <ActivityIndicator size="large" color={C.ink900} />
       </View>
     );
   }
 
   return (
     <ScrollView
-      className="flex-1 bg-slate-50"
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4F46E5" />}
+      className="flex-1 bg-surface-secondary"
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadData(); }} tintColor={C.ink900} />}
       showsVerticalScrollIndicator={false}
     >
-      {/* ── Header ───────────────────────────────────────── */}
-      <View className="px-5 pb-10 pt-7" style={{ backgroundColor: '#4F46E5' }}>
-        <View className="flex-row items-start justify-between">
-          <View className="flex-1">
-            {/* label */}
-            <Text style={{ fontSize: 12, fontWeight: '500', color: 'rgba(255,255,255,0.6)', marginBottom: 4, letterSpacing: 0.4 }}>
-              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).toUpperCase()}
-            </Text>
-            {/* heading */}
-            <Text style={{ fontSize: 22, fontWeight: '700', color: '#fff' }}>
-              Welcome, {user?.name?.split(' ')[0] ?? 'there'}
-            </Text>
-            {/* body */}
-            <Text style={{ fontSize: 14, color: 'rgba(255,255,255,0.65)', marginTop: 4 }}>
-              {isActive
-                ? children.length > 0
-                  ? `Monitoring ${children.length} child${children.length > 1 ? 'ren' : ''}`
-                  : 'Ready to add your first child'
-                : 'Activate a subscription to get started'}
-            </Text>
-          </View>
+      <View className="px-7 pb-10" style={{ paddingTop: top * 2 }}>
 
-          {alerts.length > 0 && (
-            <TouchableOpacity
-              className="mt-1 w-10 h-10 rounded-full items-center justify-center"
-              style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}
-              onPress={() => navigation.getParent()?.navigate('Alerts')}
-            >
-              <Ionicons name="notifications-outline" size={20} color="#fff" />
-              <View className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-red-400 items-center justify-center">
-                <Text style={{ fontSize: 9, fontWeight: '700', color: '#fff' }}>{alerts.length}</Text>
-              </View>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Quick stats — only when subscription active */}
-        {isActive && sub && (
-          <View className="mt-6 flex-row gap-x-3">
-            {[
-              { value: String(children.length), label: 'Children' },
-              { value: String(alerts.length), label: 'Alerts' },
-              { value: formatExpiry(sub.expiresAt), label: 'Plan' },
-            ].map((item) => (
-              <View
-                key={item.label}
-                className="flex-1 rounded-2xl px-4 py-4"
-                style={{ backgroundColor: 'rgba(255,255,255,0.12)' }}
-              >
-                <Text style={{ fontSize: 20, fontWeight: '700', color: '#fff' }}>{item.value}</Text>
-                <Text style={{ fontSize: 12, fontWeight: '500', color: 'rgba(255,255,255,0.6)', marginTop: 4 }}>{item.label}</Text>
-              </View>
-            ))}
-          </View>
-        )}
-      </View>
-
-      <View className="px-4" style={{ marginTop: -20 }}>
-
-        {/* ── Subscription Card ─────────────────────────── */}
-        {isActive && sub ? (
-          <View className="rounded-2xl bg-white mb-5" style={SHADOW}>
-            <View className="flex-row items-center px-5 py-5 gap-x-4">
-              <View className="w-10 h-10 rounded-full bg-emerald-100 items-center justify-center">
-                <Ionicons name="checkmark-circle" size={20} color="#10b981" />
-              </View>
-              <View className="flex-1">
-                {/* title */}
-                <Text style={{ fontSize: 15, fontWeight: '600', color: '#1E293B' }}>Subscription Active</Text>
-                {/* body */}
-                <Text style={{ fontSize: 14, color: '#64748B', marginTop: 2 }}>
-                  {sub.currentKids}/{sub.maxKids} children · {formatExpiry(sub.expiresAt)}
-                </Text>
-              </View>
-              <View className="bg-emerald-50 px-2.5 py-1 rounded-full">
-                {/* label */}
-                <Text style={{ fontSize: 12, fontWeight: '600', color: '#059669' }}>Active</Text>
-              </View>
+        {/* ── Header ─────────────────────────────────────── */}
+        {isActive ? (
+          <View className="mt-6 mb-8 flex-row items-start justify-between">
+            <View className="flex-1">
+              <Text style={[LABEL, { marginBottom: 6 }]}>Хяналт</Text>
+              <Text className="font-serif text-[32px] text-ink-900" style={{ lineHeight: 36 }}>Өнөөдөр</Text>
+            </View>
+            <View className="w-10 h-10 rounded-full bg-ink-900 items-center justify-center">
+              <Text className="font-serif text-lg text-white" style={{ lineHeight: 22 }}>
+                {user?.name?.charAt(0).toUpperCase() ?? 'P'}
+              </Text>
             </View>
           </View>
         ) : (
-          <View className="rounded-2xl bg-white mb-5" style={SHADOW}>
-            <View className="p-5">
-              <View className="flex-row items-center gap-x-4 mb-5">
-                <View className="w-10 h-10 rounded-full bg-primary-50 items-center justify-center">
-                  <Ionicons name="key-outline" size={18} color="#4F46E5" />
+          <View className="mt-6 mb-8">
+            <Text style={[LABEL, { marginBottom: 8 }]}>Тавтай морил</Text>
+            <Text className="font-serif text-[34px] text-ink-900" style={{ lineHeight: 38 }}>
+              Prime Kids: Parent Helper
+            </Text>
+            <Text className="text-sm text-ink-400 mt-2" style={{ lineHeight: 20 }}>
+              Бүлийн аюулгүй хамгаалалт.
+            </Text>
+          </View>
+        )}
+
+        {/* ── Plan Card (active) / Activate Card (inactive) ── */}
+        {isActive && sub ? (
+          <View className="bg-ink-900 rounded-[20px] p-6 mb-6">
+            <Text style={[LABEL, { color: C.ink400, marginBottom: 12 }]}>Төлөвлөгөө</Text>
+            <View className="flex-row items-end gap-2 mb-4">
+              <Text className="font-serif text-white" style={{ fontSize: 52, lineHeight: 56 }}>
+                {getDaysLeft()}
+              </Text>
+              <Text className="text-sm text-ink-400 mb-1.5">өдөр үлдлээ</Text>
+            </View>
+            <View className="rounded bg-ink-700 h-1.5 overflow-hidden mb-2">
+              <View style={{ backgroundColor: C.teal, height: '100%', width: `${getUsedPct() * 100}%`, borderRadius: 4 }} />
+            </View>
+            <Text className="text-[10px] text-ink-500 mt-0.5">
+              Премиум · {formatExpiry(sub.expiresAt)}
+            </Text>
+          </View>
+        ) : (
+          <View style={{ ...CARD, padding: 24, marginBottom: 24 }}>
+            <Text style={[LABEL, { marginBottom: 16 }]}>Идэвхжүүлэлт</Text>
+            <View className="flex-row gap-3">
+              <TextInput
+                style={{
+                  flex: 1, paddingHorizontal: 16, paddingVertical: 14,
+                  backgroundColor: C.bg, borderWidth: 1, borderColor: C.ink200,
+                  borderRadius: 12, fontSize: 14, color: C.ink900, letterSpacing: 1,
+                }}
+                placeholder="Код оруулах"
+                placeholderTextColor={C.ink300}
+                value={subKey}
+                onChangeText={setSubKey}
+                autoCapitalize="characters"
+                autoCorrect={false}
+              />
+              <TouchableOpacity
+                style={{
+                  paddingHorizontal: 20, paddingVertical: 14,
+                  backgroundColor: C.ink900, borderRadius: 12,
+                  alignItems: 'center', justifyContent: 'center',
+                  opacity: subLoading ? 0.6 : 1,
+                }}
+                onPress={handleActivate}
+                disabled={subLoading}
+              >
+                {subLoading
+                  ? <ActivityIndicator color="#fff" size="small" />
+                  : <Text className="text-sm font-semibold text-white">Эхлэх</Text>
+                }
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {/* ── Tutorial video + steps + messenger (inactive) ─ */}
+        {!isActive && (
+          <>
+            <Text style={[LABEL, { marginBottom: 16 }]}>Заавартилга</Text>
+
+            {/* Video thumbnail */}
+            <TouchableOpacity onPress={openTutorialVideo} activeOpacity={0.8} className="mb-5">
+              <View style={{
+                ...CARD, overflow: 'hidden',
+                aspectRatio: 16 / 9,
+                backgroundColor: C.ink100,
+                alignItems: 'center', justifyContent: 'center',
+              }}>
+                <View className="w-12 h-12 rounded-full border border-ink-300 items-center justify-center">
+                  <Ionicons name="play" size={22} color={C.ink400} style={{ marginLeft: 3 }} />
+                </View>
+              </View>
+            </TouchableOpacity>
+
+            {/* Steps */}
+            <View style={{ ...CARD, padding: 20, marginBottom: 16 }}>
+              {[
+                { n: '01', title: 'Хүүхдийн төхөөрөмжид суулгах', sub: 'Android-д боломжтой' },
+                { n: '02', title: 'Хялбар идэвхжүүлэлт', sub: 'Холболтын код оруулах' },
+                { n: '03', title: 'Хяналт эхлэх', sub: 'Цаг бодит тайлан' },
+              ].map((item, i) => (
+                <React.Fragment key={item.n}>
+                  {i > 0 && <View className="h-px bg-ink-100 mb-3.5" style={{ marginLeft: 32, marginTop: 14 }} />}
+                  <View className="flex-row items-start gap-4">
+                    <Text className="text-[11px] text-ink-400 font-semibold mt-1" style={{ width: 20 }}>{item.n}</Text>
+                    <View className="flex-1">
+                      <Text className="text-sm font-semibold text-ink-800">{item.title}</Text>
+                      <Text className="text-xs text-ink-400 mt-1">{item.sub}</Text>
+                    </View>
+                  </View>
+                </React.Fragment>
+              ))}
+            </View>
+
+            {/* Messenger / Support card */}
+            <TouchableOpacity onPress={openMessenger} activeOpacity={0.85}>
+              <View style={{
+                ...CARD, padding: 20,
+                flexDirection: 'row', alignItems: 'center', gap: 16,
+                backgroundColor: '#f0fdfa',
+              }}>
+                <View className="w-10 h-10 rounded-full items-center justify-center shrink-0" style={{ backgroundColor: 'rgba(13,148,136,0.1)' }}>
+                  <Ionicons name="chatbubble-ellipses-outline" size={20} color={C.teal} />
                 </View>
                 <View className="flex-1">
-                  {/* title */}
-                  <Text style={{ fontSize: 15, fontWeight: '600', color: '#1E293B' }}>
-                    {sub ? 'Subscription Expired' : 'Activate Subscription'}
-                  </Text>
-                  {/* body */}
-                  <Text style={{ fontSize: 14, color: '#64748B', marginTop: 2 }}>
-                    Enter your key to unlock all features
-                  </Text>
+                  <Text className="text-sm font-semibold text-ink-800">Тусламж</Text>
+                  <Text className="text-xs text-ink-400 mt-0.5">Messenger-ээр холбогдоо</Text>
                 </View>
+                <Ionicons name="chevron-forward" size={16} color={C.ink300} />
               </View>
-              <View className="flex-row gap-x-2.5">
-                <TextInput
-                  className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 h-12"
-                  style={{ fontSize: 14, color: '#1E293B' }}
-                  placeholder="PH-XXXX-XXXX-XXXX"
-                  placeholderTextColor="#94A3B8"
-                  value={subKey}
-                  onChangeText={setSubKey}
-                  autoCapitalize="characters"
-                  autoCorrect={false}
-                />
-                <TouchableOpacity
-                  className="h-11 px-5 bg-primary-600 rounded-xl items-center justify-center"
-                  style={subLoading ? { opacity: 0.6 } : {}}
-                  onPress={handleActivate}
-                  disabled={subLoading}
-                >
-                  {subLoading
-                    ? <ActivityIndicator color="#fff" size="small" />
-                    : <Text style={{ fontSize: 14, fontWeight: '600', color: '#fff' }}>Activate</Text>
-                  }
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
+            </TouchableOpacity>
+          </>
         )}
 
-        {/* ── Children Section ─────────────────────────── */}
-        {!isActive ? (
-          <View className="rounded-2xl bg-white p-8 items-center mb-6" style={SHADOW}>
-            <View className="w-14 h-14 rounded-full bg-slate-100 items-center justify-center mb-3">
-              <Ionicons name="lock-closed-outline" size={24} color="#94A3B8" />
-            </View>
-            <Text style={{ fontSize: 15, fontWeight: '600', color: '#475569', textAlign: 'center' }}>
-              Children locked
-            </Text>
-            <Text style={{ fontSize: 14, color: '#94A3B8', textAlign: 'center', marginTop: 4, lineHeight: 20 }}>
-              Activate a subscription above to add and monitor children
-            </Text>
-          </View>
-
-        ) : children.length === 0 ? (
-          <View className="rounded-2xl bg-white p-8 items-center mb-6" style={SHADOW}>
-            <View className="w-14 h-14 rounded-full bg-primary-50 items-center justify-center mb-3">
-              <Ionicons name="people-outline" size={24} color="#4F46E5" />
-            </View>
-            <Text style={{ fontSize: 15, fontWeight: '600', color: '#1E293B', textAlign: 'center' }}>
-              No children yet
-            </Text>
-            <Text style={{ fontSize: 14, color: '#64748B', textAlign: 'center', marginTop: 4, marginBottom: 20, lineHeight: 20 }}>
-              Add a child profile to start monitoring their device
-            </Text>
-            <TouchableOpacity
-              className="bg-primary-600 rounded-xl px-6 py-2.5 flex-row items-center gap-x-2"
-              onPress={() => navigation.navigate('AddChild')}
-            >
-              <Ionicons name="add" size={16} color="#fff" />
-              <Text style={{ fontSize: 14, fontWeight: '600', color: '#fff' }}>Add Child</Text>
-            </TouchableOpacity>
-          </View>
-
-        ) : (
+        {/* ── Empty children (active, no kids) ────────── */}
+        {isActive && children.length === 0 && (
           <>
-            {/* Section header */}
-            <View className="flex-row items-center justify-between mb-3">
-              <Text style={{ fontSize: 15, fontWeight: '600', color: '#1E293B' }}>Today's Overview</Text>
-              {canAddChild && (
-                <TouchableOpacity
-                  className="flex-row items-center gap-x-1.5 bg-primary-50 px-3 py-1.5 rounded-full"
-                  onPress={() => navigation.navigate('AddChild')}
-                >
-                  <Ionicons name="add" size={14} color="#4F46E5" />
-                  <Text style={{ fontSize: 12, fontWeight: '600', color: '#4F46E5' }}>Add Child</Text>
-                </TouchableOpacity>
-              )}
+            <Text style={[LABEL, { marginBottom: 16 }]}>Хүүхэд</Text>
+            <View style={{ ...CARD, padding: 32, alignItems: 'center' }}>
+              <View className="w-14 h-14 rounded-full bg-ink-100 items-center justify-center mb-4">
+                <Ionicons name="people-outline" size={28} color={C.ink400} />
+              </View>
+              <Text className="text-sm font-semibold text-ink-500 mb-1.5">
+                Хүүхэд нэмэгдээгүй байна
+              </Text>
+              <Text className="text-[13px] text-ink-400 text-center mb-5" style={{ lineHeight: 20 }}>
+                Хяналт эхлэхийн тулд хүүхдийн профайл нэмнэ үү.
+              </Text>
+              <TouchableOpacity
+                className="bg-ink-900 rounded-xl px-6 flex-row items-center gap-2"
+                style={{ paddingVertical: 12 }}
+                onPress={() => navigation.navigate('AddChild')}
+              >
+                <Ionicons name="add" size={16} color="#fff" />
+                <Text className="text-sm font-semibold text-white">Хүүхэд нэмэх</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
+
+        {/* ── Children list (active, has kids) ────────── */}
+        {isActive && children.length > 0 && (
+          <>
+            <Text style={[LABEL, { marginBottom: 16 }]}>Хүүхдүүд</Text>
+
+            {children.map((child, idx) => (
+              <Pressable
+                key={child._id}
+                onPress={() => navigation.navigate('ChildDetail', { childId: child._id, childName: child.name })}
+                className="mb-3"
+              >
+                {({ pressed }) => (
+                  <View style={{ ...CARD, padding: 20, opacity: pressed ? 0.85 : 1 }}>
+                    <View className="flex-row items-center gap-4">
+                      <View style={{
+                        width: 44, height: 44, borderRadius: 22,
+                        backgroundColor: idx === 0 ? C.ink900 : C.ink200,
+                        alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <Text style={{ fontFamily: SERIF, fontSize: 18, color: idx === 0 ? '#fff' : C.ink600, lineHeight: 20 }}>
+                          {child.name.charAt(0).toUpperCase()}
+                        </Text>
+                      </View>
+                      <View className="flex-1">
+                        <Text className="text-sm font-semibold text-ink-800">{child.name}</Text>
+                        <Text className="text-xs text-ink-400 mt-1">{child.age} нас</Text>
+                      </View>
+                      <View className="flex-row items-center gap-3">
+                        <View className="w-2 h-2 rounded-full bg-ink-300" />
+                        <Ionicons name="chevron-forward" size={16} color={C.ink300} />
+                      </View>
+                    </View>
+                  </View>
+                )}
+              </Pressable>
+            ))}
+
+            <View className="flex-row gap-4 mt-1">
+              <Pressable
+                className="flex-1"
+                onPress={() => navigation.getParent()?.navigate('Alerts')}
+              >
+                {({ pressed }) => (
+                  <View style={{ ...CARD, padding: 20, alignItems: 'center', opacity: pressed ? 0.8 : 1 }}>
+                    <Text className="font-serif text-[32px] text-ink-900" style={{ lineHeight: 36 }}>{alerts.length}</Text>
+                    <Text style={[LABEL, { marginTop: 6 }]}>Мэдэгдэл</Text>
+                  </View>
+                )}
+              </Pressable>
+              <Pressable
+                className="flex-1"
+                onPress={() => navigation.getParent()?.navigate('Approvals')}
+              >
+                {({ pressed }) => (
+                  <View style={{ ...CARD, padding: 20, alignItems: 'center', opacity: pressed ? 0.8 : 1 }}>
+                    <Text className="font-serif text-[32px] text-ink-900" style={{ lineHeight: 36 }}>{pendingCount}</Text>
+                    <Text style={[LABEL, { marginTop: 6 }]}>Хүлээгдэж буй</Text>
+                  </View>
+                )}
+              </Pressable>
             </View>
 
-            {children.map((child) => {
-              const summary = summaries[child._id];
-              const childBreakdown = breakdowns[child._id] || [];
-              const avatarBg = AVATAR_COLORS[child.name.codePointAt(0)! % AVATAR_COLORS.length];
-
-              return (
-                <Pressable
-                  key={child._id}
-                  onPress={() => navigation.navigate('ChildDetail', { childId: child._id, childName: child.name })}
-                  className="mb-3"
-                >
-                  {({ pressed }) => (
-                    <View
-                      className="rounded-2xl bg-white overflow-hidden"
-                      style={[SHADOW, pressed ? { opacity: 0.96 } : {}]}
-                    >
-                      {/* Child header row */}
-                      <View className="flex-row items-center px-4 pt-4 pb-3">
-                        <View
-                          className="w-11 h-11 rounded-2xl items-center justify-center mr-3"
-                          style={{ backgroundColor: avatarBg }}
-                        >
-                          <Text style={{ fontSize: 17, fontWeight: '700', color: '#fff' }}>
-                            {child.name.charAt(0).toUpperCase()}
-                          </Text>
-                        </View>
-                        <View className="flex-1">
-                          {/* title */}
-                          <Text style={{ fontSize: 15, fontWeight: '600', color: '#1E293B' }}>{child.name}</Text>
-                          {/* label */}
-                          <Text style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>Age {child.age}</Text>
-                        </View>
-                        <Ionicons name="chevron-forward" size={16} color="#CBD5E1" />
-                      </View>
-
-                      {/* Stats row */}
-                      {summary ? (
-                        <View className="flex-row border-t border-slate-100">
-                          {[
-                            { value: formatDuration(summary.totalScreenTimeMin), label: 'Screen Time', color: '#1E293B' },
-                            { value: String(summary.topApps.length), label: 'Apps Used', color: '#1E293B' },
-                            { value: String(summary.totalBlocked), label: 'Blocked', color: '#E11D48' },
-                          ].map((stat, i) => (
-                            <React.Fragment key={stat.label}>
-                              {i > 0 && <View className="w-px bg-slate-100" />}
-                              <View className="flex-1 items-center py-3">
-                                <Text style={{ fontSize: 18, fontWeight: '700', color: stat.color }}>{stat.value}</Text>
-                                <Text style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>{stat.label}</Text>
-                              </View>
-                            </React.Fragment>
-                          ))}
-                        </View>
-                      ) : (
-                        <View className="border-t border-slate-100 px-4 py-3">
-                          <Text style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center' }}>No activity data yet</Text>
-                        </View>
-                      )}
-
-                      {/* Mini bar chart */}
-                      {childBreakdown.length > 0 && (
-                        <View className="px-4 pt-3 pb-4 border-t border-slate-100">
-                          <Text style={{ fontSize: 11, fontWeight: '600', color: '#94A3B8', letterSpacing: 0.6, marginBottom: 8 }}>
-                            THIS WEEK
-                          </Text>
-                          <View className="flex-row items-end gap-x-1.5">
-                            {childBreakdown.map((day, i) => {
-                              const maxMin = Math.max(...childBreakdown.map((d) => d.screenTimeMin), 1);
-                              const pct = Math.max((day.screenTimeMin / maxMin) * 100, 4);
-                              const dayLabel = ['S', 'M', 'T', 'W', 'T', 'F', 'S'][new Date(day.date + 'T00:00:00').getDay()];
-                              return (
-                                <View key={i} className="flex-1 items-center">
-                                  <View className="w-full h-10 items-center justify-end">
-                                    <View
-                                      className="w-full rounded-sm"
-                                      style={{
-                                        height: `${pct}%`,
-                                        backgroundColor: day.screenTimeMin > 180 ? '#FCD34D' : '#C7D2FE',
-                                        minHeight: 3,
-                                      }}
-                                    />
-                                  </View>
-                                  <Text style={{ fontSize: 11, color: '#94A3B8', marginTop: 4 }}>{dayLabel}</Text>
-                                </View>
-                              );
-                            })}
-                          </View>
-                        </View>
-                      )}
-                    </View>
-                  )}
-                </Pressable>
-              );
-            })}
-            <View className="h-6" />
+            {canAddChild && (
+              <TouchableOpacity
+                style={{ ...CARD, marginTop: 12, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                onPress={() => navigation.navigate('AddChild')}
+              >
+                <Ionicons name="add" size={16} color={C.ink400} />
+                <Text className="text-[13px] font-medium text-ink-400">Хүүхэд нэмэх</Text>
+              </TouchableOpacity>
+            )}
           </>
         )}
       </View>

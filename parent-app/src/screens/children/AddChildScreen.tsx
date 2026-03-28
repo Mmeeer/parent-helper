@@ -14,7 +14,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../types';
 
 type Props = {
-  navigation: NativeStackNavigationProp<RootStackParamList, 'AddChild'>;
+  readonly navigation: NativeStackNavigationProp<RootStackParamList, 'AddChild'>;
 };
 
 export default function AddChildScreen({ navigation }: Props) {
@@ -23,13 +23,13 @@ export default function AddChildScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(false);
 
   const handleCreate = async () => {
-    const ageNum = parseInt(age, 10);
+    const ageNum = Number.parseInt(age, 10);
     if (!name.trim()) {
-      Alert.alert('Error', "Please enter the child's name.");
+      Alert.alert('Алдаа', 'Хүүхдийн нэрийг оруулна уу.');
       return;
     }
-    if (!age || isNaN(ageNum) || ageNum < 1 || ageNum > 18) {
-      Alert.alert('Error', 'Please enter a valid age (1-18).');
+    if (!age || Number.isNaN(ageNum) || ageNum < 1 || ageNum > 18) {
+      Alert.alert('Алдаа', 'Зөв нас оруулна уу (1-18).');
       return;
     }
 
@@ -38,7 +38,7 @@ export default function AddChildScreen({ navigation }: Props) {
       await api.createChild(name.trim(), ageNum);
       navigation.goBack();
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to create child profile.');
+      Alert.alert('Алдаа', error.message || 'Хүүхдийн профайл үүсгэхэд алдаа гарлаа.');
     } finally {
       setLoading(false);
     }
@@ -51,13 +51,13 @@ export default function AddChildScreen({ navigation }: Props) {
     >
       <View className="p-6">
         <Text className="text-xl font-bold mb-6 text-slate-800">
-          Add Child Profile
+          Хүүхдийн профайл нэмэх
         </Text>
 
         <View className="mb-4">
-          <Text className="text-sm font-semibold text-slate-700 mb-1.5">Child's Name</Text>
+          <Text className="text-sm font-semibold text-slate-700 mb-1.5">Хүүхдийн нэр</Text>
           <TextInput
-            placeholder="Enter name"
+            placeholder="Нэр оруулах"
             value={name}
             onChangeText={setName}
             autoFocus
@@ -67,9 +67,9 @@ export default function AddChildScreen({ navigation }: Props) {
         </View>
 
         <View className="mb-8">
-          <Text className="text-sm font-semibold text-slate-700 mb-1.5">Age</Text>
+          <Text className="text-sm font-semibold text-slate-700 mb-1.5">Нас</Text>
           <TextInput
-            placeholder="Enter age (1-18)"
+            placeholder="Нас оруулах (1-18)"
             value={age}
             onChangeText={setAge}
             keyboardType="number-pad"
@@ -87,7 +87,7 @@ export default function AddChildScreen({ navigation }: Props) {
           {loading ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
-            <Text className="text-white font-bold text-lg">Add Child</Text>
+            <Text className="text-white font-bold text-lg">Хүүхэд нэмэх</Text>
           )}
         </TouchableOpacity>
       </View>

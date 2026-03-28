@@ -54,11 +54,11 @@ subscriptionKeySchema.index({ status: 1 });
 // One key per parent — only one active key can reference a given user
 subscriptionKeySchema.index({ activatedBy: 1 }, { unique: true, sparse: true });
 
-// Generate a readable key like "PH-XXXX-XXXX-XXXX"
+// Generate a readable key like "PK-XXXX-XXXX"
 subscriptionKeySchema.statics.generateKey = function () {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no I/O/0/1 for clarity
   const seg = () => Array.from({ length: 4 }, () => chars[crypto.randomInt(chars.length)]).join('');
-  return `PH-${seg()}-${seg()}-${seg()}`;
+  return `PK-${seg()}-${seg()}`;
 };
 
 // Add N months to a date

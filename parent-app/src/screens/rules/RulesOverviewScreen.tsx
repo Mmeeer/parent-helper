@@ -9,8 +9,8 @@ import type { RouteProp } from '@react-navigation/native';
 import type { RootStackParamList, Rules } from '../../types';
 
 type Props = {
-  navigation: NativeStackNavigationProp<RootStackParamList, 'RulesOverview'>;
-  route: RouteProp<RootStackParamList, 'RulesOverview'>;
+  readonly navigation: NativeStackNavigationProp<RootStackParamList, 'RulesOverview'>;
+  readonly route: RouteProp<RootStackParamList, 'RulesOverview'>;
 };
 
 export default function RulesOverviewScreen({ navigation, route }: Props) {
@@ -23,7 +23,7 @@ export default function RulesOverviewScreen({ navigation, route }: Props) {
       setLoading(true);
       api.getRules(childId)
         .then(setRules)
-        .catch((err: unknown) => showError(err, 'Failed to load rules.'))
+        .catch((err: unknown) => showError(err, 'Дүрмийг ачаалахад алдаа гарлаа.'))
         .finally(() => setLoading(false));
     }, [childId]),
   );
@@ -37,36 +37,36 @@ export default function RulesOverviewScreen({ navigation, route }: Props) {
 
   const ruleCategories = [
     {
-      title: 'Screen Time Limits',
-      description: 'Set daily limits, per-app limits, and schedules',
+      title: 'Дэлгэцийн цагийн хязгаар',
+      description: 'Өдрийн хязгаар, аппын хязгаар болон хуваарь тохируулах',
       icon: 'time-outline' as const,
       color: '#D97706',
       bgColor: '#D9770620',
       summary: dailyLimit
-        ? `${Math.floor(dailyLimit / 60)}h${dailyLimit % 60 > 0 ? ` ${dailyLimit % 60}m` : ''} daily · ${perAppCount} app limit${perAppCount !== 1 ? 's' : ''} · ${scheduleCount} schedule${scheduleCount !== 1 ? 's' : ''}`
-        : 'Not configured',
+        ? `${Math.floor(dailyLimit / 60)}ц${dailyLimit % 60 > 0 ? ` ${dailyLimit % 60}м` : ''} өдөрт · ${perAppCount} аппын хязгаар · ${scheduleCount} хуваарь`
+        : 'Тохируулаагүй',
       onPress: () => navigation.navigate('ScreenTimeRules', { childId, childName }),
     },
     {
-      title: 'App Management',
-      description: 'Block or allow specific apps',
+      title: 'Аппын удирдлага',
+      description: 'Тодорхой аппыг хаах эсвэл зөвшөөрөх',
       icon: 'apps-outline' as const,
       color: '#4F46E5',
       bgColor: '#4F46E520',
       summary: blockedAppsCount > 0
-        ? `${blockedAppsCount} app${blockedAppsCount !== 1 ? 's' : ''} blocked`
-        : 'No apps blocked',
+        ? `${blockedAppsCount} апп хаагдсан`
+        : 'Хаагдсан апп байхгүй',
       onPress: () => navigation.navigate('AppRules', { childId, childName }),
     },
     {
-      title: 'Web Filtering',
-      description: 'Set content categories and custom domain rules',
+      title: 'Вэб шүүлт',
+      description: 'Агуулгын ангилал болон домайны дүрмийг тохируулах',
       icon: 'globe-outline' as const,
       color: '#0D9488',
       bgColor: '#0D948820',
       summary: webCategories > 0 || customBlocked > 0
-        ? `${webCategories} categor${webCategories !== 1 ? 'ies' : 'y'} · ${customBlocked} custom domain${customBlocked !== 1 ? 's' : ''}`
-        : 'No filters active',
+        ? `${webCategories} ангилал · ${customBlocked} домайн`
+        : 'Идэвхтэй шүүлт байхгүй',
       onPress: () => navigation.navigate('WebFilter', { childId, childName }),
     },
   ];
@@ -74,10 +74,10 @@ export default function RulesOverviewScreen({ navigation, route }: Props) {
   return (
     <ScrollView className="flex-1 bg-surface-secondary">
       <Text className="text-xl font-bold text-slate-800 mx-4 mt-5">
-        Rules for {childName}
+        {childName}-ийн дүрмүүд
       </Text>
       <Text className="text-sm text-slate-500 mx-4 mt-1 mb-5">
-        Configure parental controls and restrictions.
+        Эцэг эхийн хяналт болон хязгаарлалтуудыг тохируулах.
       </Text>
 
       {loading ? (

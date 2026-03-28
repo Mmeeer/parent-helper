@@ -129,7 +129,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun startSosHoldCountdown() {
         sosHoldJob?.cancel()
-        tvSosHint.text = "Keep holding..."
+        tvSosHint.text = getString(R.string.sos_hold_countdown)
         startPulseAnimation()
 
         sosHoldJob = lifecycleScope.launch {
@@ -245,7 +245,7 @@ class MainActivity : AppCompatActivity() {
             startMonitoringService()
         } else {
             btnRequestPermissions.visibility = View.VISIBLE
-            tvMonitoringStatus.text = "Permissions needed"
+            tvMonitoringStatus.text = getString(R.string.status_permissions_needed)
             tvMonitoringStatus.setTextColor(ContextCompat.getColor(this, R.color.status_warning))
             tvMonitoringStatus.setBackgroundResource(0) // remove chip background
         }
@@ -333,16 +333,17 @@ class MainActivity : AppCompatActivity() {
             val screenTimeMin = ScreenTimeCollector(this@MainActivity).getTodayScreenTimeMin()
             val hours = screenTimeMin / 60
             val mins = screenTimeMin % 60
-            tvScreenTime.text = if (hours > 0) "${hours}h ${mins}m" else "${mins} min"
+            tvScreenTime.text = if (hours > 0) "${hours}ц ${mins}мин" else "${mins} мин"
 
             val rules = (application as ParentHelperApp).prefsManager.cachedRules.first()
             val limitMin = rules?.screenTime?.dailyLimitMin
             if (limitMin != null) {
                 val lh = limitMin / 60
                 val lm = limitMin % 60
-                tvDailyLimit.text = "Daily limit: ${if (lh > 0) "${lh}h ${lm}m" else "${lm} min"}"
+                val limitStr = if (lh > 0) "${lh}ц ${lm}мин" else "${lm} мин"
+                tvDailyLimit.text = "Өдрийн хязгаар: $limitStr"
             } else {
-                tvDailyLimit.text = "Daily limit: No limit set"
+                tvDailyLimit.text = getString(R.string.daily_limit_no_limit)
             }
         }
     }

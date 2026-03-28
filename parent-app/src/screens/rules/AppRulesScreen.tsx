@@ -19,7 +19,7 @@ import type { RootStackParamList } from '../../types';
 import type { InstalledApp } from '../../services/api';
 
 type Props = {
-  route: RouteProp<RootStackParamList, 'AppRules'>;
+  readonly route: RouteProp<RootStackParamList, 'AppRules'>;
 };
 
 export default function AppRulesScreen({ route }: Props) {
@@ -99,9 +99,9 @@ export default function AppRulesScreen({ route }: Props) {
     setSaving(true);
     try {
       await api.updateBlockedApps(childId, blockedApps.map(a => a.packageName));
-      Alert.alert('Saved', 'App blocking rules updated.');
+      Alert.alert('Хадгалагдлаа', 'Аппын хаалтын дүрэм шинэчлэгдлээ.');
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to update rules.');
+      Alert.alert('Алдаа', error.message || 'Дүрмийг шинэчлэхэд алдаа гарлаа.');
     } finally {
       setSaving(false);
     }
@@ -120,10 +120,10 @@ export default function AppRulesScreen({ route }: Props) {
       <ScrollView>
         <View className="mx-4 mt-4 rounded-2xl p-4 bg-white shadow-sm shadow-black/5">
           <Text className="text-base font-bold text-slate-800">
-            Blocked Apps
+            Хаагдсан аппууд
           </Text>
           <Text className="text-xs text-slate-500 mt-1 mb-4">
-            Tap + to choose apps to block from the child's device.
+            Хүүхдийн төхөөрөмжийн аппуудаас хаах аппаа + дарж сонгоно уу.
           </Text>
 
           <TouchableOpacity
@@ -131,12 +131,12 @@ export default function AppRulesScreen({ route }: Props) {
             className="bg-primary-600 rounded-xl py-3 items-center justify-center flex-row gap-2 mb-3"
           >
             <Ionicons name="add-circle" size={20} color="#FFFFFF" />
-            <Text className="text-white font-bold text-base">Block an App</Text>
+            <Text className="text-white font-bold text-base">Апп хаах</Text>
           </TouchableOpacity>
 
           {blockedApps.length === 0 ? (
             <Text className="text-xs text-slate-400 text-center py-5">
-              No apps blocked yet.
+              Хаагдсан апп байхгүй.
             </Text>
           ) : (
             blockedApps.map((app, index) => (
@@ -171,7 +171,7 @@ export default function AppRulesScreen({ route }: Props) {
           {saving ? (
             <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
-            <Text className="text-white font-bold text-base">Save Changes</Text>
+            <Text className="text-white font-bold text-base">Өөрчлөлт хадгалах</Text>
           )}
         </TouchableOpacity>
 
@@ -183,7 +183,7 @@ export default function AppRulesScreen({ route }: Props) {
         <View className="flex-1 bg-surface-secondary">
           <View className="flex-row justify-between items-center px-4 pt-4 pb-3">
             <Text className="text-xl font-bold text-slate-800">
-              Choose App to Block
+              Хаах апп сонгох
             </Text>
             <TouchableOpacity onPress={() => { setPickerVisible(false); setSearchQuery(''); }} className="p-1">
               <Ionicons name="close" size={24} color="#1E293B" />
@@ -196,7 +196,7 @@ export default function AppRulesScreen({ route }: Props) {
               className="flex-1 bg-transparent h-12 text-sm text-slate-800"
               value={searchQuery}
               onChangeText={setSearchQuery}
-              placeholder="Search apps..."
+              placeholder="Апп хайх..."
               placeholderTextColor="#94A3B8"
               autoFocus
             />
@@ -206,10 +206,10 @@ export default function AppRulesScreen({ route }: Props) {
             <View className="items-center pt-16 px-10">
               <Ionicons name="phone-portrait-outline" size={48} color="#94A3B8" />
               <Text className="text-base font-semibold text-slate-800 mt-4">
-                No apps synced yet
+                Апп синхрончлогдоогүй байна
               </Text>
               <Text className="text-sm text-slate-500 text-center mt-2">
-                The child's device hasn't synced its app list. Make sure the child app is running.
+                Хүүхдийн төхөөрөмж аппын жагсаалтыг синхрончлоогүй байна. Prime Kids апп ажиллаж байгаа эсэхийг шалгана уу.
               </Text>
             </View>
           ) : (
@@ -240,7 +240,7 @@ export default function AppRulesScreen({ route }: Props) {
               )}
               ListEmptyComponent={
                 <Text className="text-xs text-slate-400 text-center py-5">
-                  {searchQuery ? 'No matching apps found.' : 'All apps are already blocked.'}
+                  {searchQuery ? 'Тохирох апп олдсонгүй.' : 'Бүх аппууд хаагдсан байна.'}
                 </Text>
               }
             />

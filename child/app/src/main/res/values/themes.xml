@@ -8,8 +8,10 @@
         <item name="colorOnSecondary">@color/on_secondary</item>
         <item name="android:colorBackground">@color/background</item>
         <item name="colorSurface">@color/surface</item>
-        <item name="android:statusBarColor">@color/primary_dark</item>
+        <item name="android:statusBarColor">@color/background</item>
+        <item name="android:windowLightStatusBar">true</item>
         <item name="android:navigationBarColor">@color/background</item>
+        <item name="android:windowLightNavigationBar">true</item>
         <item name="shapeAppearanceSmallComponent">@style/RoundedSmall</item>
         <item name="shapeAppearanceMediumComponent">@style/RoundedMedium</item>
     </style>

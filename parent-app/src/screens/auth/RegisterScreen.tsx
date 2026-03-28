@@ -1,22 +1,27 @@
 import React, { useState, useRef } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-  ScrollView,
-  ActivityIndicator,
+  View, Text, TextInput, TouchableOpacity,
+  KeyboardAvoidingView, Platform, Alert, ScrollView, ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../store/AuthContext';
+import { C, CARD, LABEL } from '../../theme';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../types';
 
 type Props = {
-  navigation: NativeStackNavigationProp<RootStackParamList, 'Register'>;
+  readonly navigation: NativeStackNavigationProp<RootStackParamList, 'Register'>;
+};
+
+const INPUT = {
+  flexDirection: 'row' as const,
+  alignItems: 'center' as const,
+  backgroundColor: C.bg,
+  borderWidth: 1,
+  borderColor: C.ink200,
+  borderRadius: 12,
+  paddingHorizontal: 16,
+  height: 52,
 };
 
 export default function RegisterScreen({ navigation }: Props) {
@@ -35,23 +40,22 @@ export default function RegisterScreen({ navigation }: Props) {
 
   const handleRegister = async () => {
     if (!name.trim() || !email.trim() || !password.trim()) {
-      Alert.alert('Error', 'Please fill in all fields.');
+      Alert.alert('Алдаа', 'Бүх талбарыг бөглөнө үү.');
       return;
     }
     if (password.length < 8) {
-      Alert.alert('Error', 'Password must be at least 8 characters.');
+      Alert.alert('Алдаа', 'Нууц үг хамгийн багадаа 8 тэмдэгт байх ёстой.');
       return;
     }
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match.');
+      Alert.alert('Алдаа', 'Нууц үг таарахгүй байна.');
       return;
     }
-
     setLoading(true);
     try {
       await register(email.trim(), password, name.trim());
     } catch (error: any) {
-      Alert.alert('Registration Failed', error.message || 'Could not create account.');
+      Alert.alert('Бүртгэл амжилтгүй', error.message || 'Бүртгэл үүсгэж чадсангүй.');
     } finally {
       setLoading(false);
     }
@@ -59,41 +63,37 @@ export default function RegisterScreen({ navigation }: Props) {
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-slate-50"
+      className="flex-1 bg-surface-secondary"
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
+        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 28, paddingVertical: 40 }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-        className="px-6"
       >
-        {/* Header */}
-        <View className="items-center mb-7">
-          <View className="w-[60px] h-[60px] rounded-2xl bg-primary-600 items-center justify-center mb-3.5 shadow-lg shadow-primary-600/30">
-            <Ionicons name="person-add" size={28} color="#fff" />
-          </View>
-          <Text className="text-[26px] font-bold text-slate-800 tracking-tight">
-            Create Account
+        {/* Branding */}
+        <View className="mb-8">
+          <Text style={[LABEL, { marginBottom: 8 }]}>Эхлэх</Text>
+          <Text className="font-serif text-[36px] text-ink-900" style={{ lineHeight: 40 }}>
+            Бүртгэл үүсгэх
           </Text>
-          <Text className="text-[15px] text-slate-500 mt-1">
-            Set up your parent account
+          <Text className="text-sm text-ink-400 mt-1.5">
+            Эцэг эхийн бүртгэл үүсгэх.
           </Text>
         </View>
 
         {/* Form card */}
-        <View className="bg-white rounded-3xl p-6 shadow-sm shadow-black/5">
+        <View style={{ ...CARD, padding: 24 }}>
           {/* Name */}
           <View className="mb-5">
-            <Text className="text-xs font-semibold text-slate-500 mb-2 tracking-wide uppercase">
-              Full Name
-            </Text>
-            <View className="flex-row items-center bg-slate-50 rounded-xl border border-slate-200 px-4 h-[52px]">
-              <Ionicons name="person-outline" size={18} color="#94A3B8" />
+            <Text style={[LABEL, { marginBottom: 8 }]}>Бүтэн нэр</Text>
+            <View style={INPUT}>
+              <Ionicons name="person-outline" size={17} color={C.ink400} />
               <TextInput
-                className="flex-1 ml-3 text-[15px] text-slate-800"
+                className="flex-1 text-base text-ink-900"
+                style={{ marginLeft: 12 }}
                 placeholder="John Doe"
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={C.ink300}
                 value={name}
                 onChangeText={setName}
                 autoComplete="name"
@@ -105,16 +105,15 @@ export default function RegisterScreen({ navigation }: Props) {
 
           {/* Email */}
           <View className="mb-5">
-            <Text className="text-xs font-semibold text-slate-500 mb-2 tracking-wide uppercase">
-              Email
-            </Text>
-            <View className="flex-row items-center bg-slate-50 rounded-xl border border-slate-200 px-4 h-[52px]">
-              <Ionicons name="mail-outline" size={18} color="#94A3B8" />
+            <Text style={[LABEL, { marginBottom: 8 }]}>Имэйл</Text>
+            <View style={INPUT}>
+              <Ionicons name="mail-outline" size={17} color={C.ink400} />
               <TextInput
                 ref={emailRef}
-                className="flex-1 ml-3 text-[15px] text-slate-800"
+                className="flex-1 text-base text-ink-900"
+                style={{ marginLeft: 12 }}
                 placeholder="you@example.com"
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={C.ink300}
                 value={email}
                 onChangeText={setEmail}
                 autoCapitalize="none"
@@ -128,16 +127,15 @@ export default function RegisterScreen({ navigation }: Props) {
 
           {/* Password */}
           <View className="mb-5">
-            <Text className="text-xs font-semibold text-slate-500 mb-2 tracking-wide uppercase">
-              Password
-            </Text>
-            <View className="flex-row items-center bg-slate-50 rounded-xl border border-slate-200 px-4 h-[52px]">
-              <Ionicons name="lock-closed-outline" size={18} color="#94A3B8" />
+            <Text style={[LABEL, { marginBottom: 8 }]}>Нууц үг</Text>
+            <View style={INPUT}>
+              <Ionicons name="lock-closed-outline" size={17} color={C.ink400} />
               <TextInput
                 ref={passwordRef}
-                className="flex-1 ml-3 text-[15px] text-slate-800"
-                placeholder="Min. 8 characters"
-                placeholderTextColor="#94A3B8"
+                className="flex-1 text-base text-ink-900"
+                style={{ marginLeft: 12 }}
+                placeholder="Хамгийн багадаа 8 тэмдэгт"
+                placeholderTextColor={C.ink300}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={secureText}
@@ -146,27 +144,22 @@ export default function RegisterScreen({ navigation }: Props) {
                 onSubmitEditing={() => confirmRef.current?.focus()}
               />
               <TouchableOpacity onPress={() => setSecureText(!secureText)} className="p-1">
-                <Ionicons
-                  name={secureText ? 'eye-off-outline' : 'eye-outline'}
-                  size={20}
-                  color="#94A3B8"
-                />
+                <Ionicons name={secureText ? 'eye-off-outline' : 'eye-outline'} size={18} color={C.ink400} />
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* Confirm Password */}
-          <View className="mb-6">
-            <Text className="text-xs font-semibold text-slate-500 mb-2 tracking-wide uppercase">
-              Confirm Password
-            </Text>
-            <View className="flex-row items-center bg-slate-50 rounded-xl border border-slate-200 px-4 h-[52px]">
-              <Ionicons name="lock-closed-outline" size={18} color="#94A3B8" />
+          {/* Confirm password */}
+          <View className="mb-7">
+            <Text style={[LABEL, { marginBottom: 8 }]}>Нууц үг баталгаажуулах</Text>
+            <View style={INPUT}>
+              <Ionicons name="lock-closed-outline" size={17} color={C.ink400} />
               <TextInput
                 ref={confirmRef}
-                className="flex-1 ml-3 text-[15px] text-slate-800"
-                placeholder="Re-enter password"
-                placeholderTextColor="#94A3B8"
+                className="flex-1 text-base text-ink-900"
+                style={{ marginLeft: 12 }}
+                placeholder="Нууц үгийг дахин оруулах"
+                placeholderTextColor={C.ink300}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 secureTextEntry={secureConfirm}
@@ -174,37 +167,29 @@ export default function RegisterScreen({ navigation }: Props) {
                 onSubmitEditing={handleRegister}
               />
               <TouchableOpacity onPress={() => setSecureConfirm(!secureConfirm)} className="p-1">
-                <Ionicons
-                  name={secureConfirm ? 'eye-off-outline' : 'eye-outline'}
-                  size={20}
-                  color="#94A3B8"
-                />
+                <Ionicons name={secureConfirm ? 'eye-off-outline' : 'eye-outline'} size={18} color={C.ink400} />
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* Button */}
           <TouchableOpacity
-            className={`bg-primary-600 rounded-2xl h-[52px] items-center justify-center ${loading ? 'opacity-70' : ''}`}
+            className="bg-ink-900 rounded-xl items-center justify-center"
+            style={{ height: 52, opacity: loading ? 0.6 : 1 }}
             onPress={handleRegister}
             disabled={loading}
             activeOpacity={0.85}
           >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text className="text-white text-base font-bold tracking-wide">
-                Create Account
-              </Text>
-            )}
+            {loading
+              ? <ActivityIndicator color="#fff" />
+              : <Text className="text-sm font-bold text-white" style={{ letterSpacing: 0.4 }}>Бүртгэл үүсгэх</Text>
+            }
           </TouchableOpacity>
         </View>
 
-        {/* Sign in link */}
-        <View className="flex-row justify-center mt-7">
-          <Text className="text-sm text-slate-500">Already have an account? </Text>
+        <View className="flex-row justify-center mt-6">
+          <Text className="text-[13px] text-ink-400">Бүртгэл байна уу? </Text>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text className="text-sm font-bold text-primary-600">Sign In</Text>
+            <Text className="text-[13px] font-bold text-ink-900">Нэвтрэх</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

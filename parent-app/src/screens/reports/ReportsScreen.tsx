@@ -19,8 +19,8 @@ import type { RouteProp } from '@react-navigation/native';
 import type { RootStackParamList, ActivitySummary, AppUsageEntry } from '../../types';
 
 type Props = {
-  navigation: NativeStackNavigationProp<RootStackParamList, 'Reports'>;
-  route: RouteProp<RootStackParamList, 'Reports'>;
+  readonly navigation: NativeStackNavigationProp<RootStackParamList, 'Reports'>;
+  readonly route: RouteProp<RootStackParamList, 'Reports'>;
 };
 
 export default function ReportsScreen({ route }: Props) {
@@ -60,13 +60,13 @@ export default function ReportsScreen({ route }: Props) {
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr + 'T00:00:00');
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const days = ['Ня', 'Да', 'Мя', 'Лх', 'Пү', 'Ба', 'Бя'];
     return days[d.getDay()];
   };
 
   const formatShortDate = (dateStr: string) => {
     const parts = dateStr.split('-');
-    return `${parseInt(parts[1])}/${parseInt(parts[2])}`;
+    return `${Number.parseInt(parts[1])}/${Number.parseInt(parts[2])}`;
   };
 
   if (loading) {
@@ -83,7 +83,7 @@ export default function ReportsScreen({ route }: Props) {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadData(); }} />}
     >
       <Text className="text-xl font-bold text-slate-800 mx-4 mt-5 mb-4">
-        Reports for {childName}
+        {childName}-ийн тайлан
       </Text>
 
       {/* Period Toggle */}
@@ -95,7 +95,7 @@ export default function ReportsScreen({ route }: Props) {
             className={`flex-1 rounded-lg py-2 items-center ${period === p ? 'bg-primary-600' : ''}`}
           >
             <Text className={`${period === p ? 'text-white' : 'text-slate-500'} text-sm font-medium`}>
-              {p === 'week' ? 'This Week' : 'This Month'}
+              {p === 'week' ? 'Энэ долоо хоног' : 'Энэ сар'}
             </Text>
           </TouchableOpacity>
         ))}
@@ -110,7 +110,7 @@ export default function ReportsScreen({ route }: Props) {
               {formatDuration(summary.totalScreenTimeMin)}
             </Text>
             <Text className="text-[11px] text-slate-500 text-center mt-1">
-              Total Screen Time
+              Нийт дэлгэцийн цаг
             </Text>
           </View>
           <View className="flex-1 rounded-2xl p-3.5 items-center bg-danger-50 mx-1">
@@ -119,7 +119,7 @@ export default function ReportsScreen({ route }: Props) {
               {summary.totalBlocked}
             </Text>
             <Text className="text-[11px] text-slate-500 text-center mt-1">
-              Blocked
+              Хаагдсан
             </Text>
           </View>
           <View className="flex-1 rounded-2xl p-3.5 items-center bg-accent-50 mx-1">
@@ -128,7 +128,7 @@ export default function ReportsScreen({ route }: Props) {
               {summary.totalWebVisits}
             </Text>
             <Text className="text-[11px] text-slate-500 text-center mt-1">
-              Web Visits
+              Вэб зочилсон
             </Text>
           </View>
         </View>
@@ -137,7 +137,7 @@ export default function ReportsScreen({ route }: Props) {
       {/* Daily Screen Time Chart */}
       <View className="mx-4 mb-4 rounded-2xl p-4 bg-white shadow-sm shadow-black/5">
         <Text className="text-sm font-semibold text-slate-800 mb-4">
-          Daily Screen Time
+          Өдрийн дэлгэцийн цаг
         </Text>
         <View className="flex-row items-end gap-x-1">
           {breakdown.map((day, i) => (
@@ -166,11 +166,11 @@ export default function ReportsScreen({ route }: Props) {
       {/* Blocked Attempts */}
       <View className="mx-4 mb-4 rounded-2xl p-4 bg-white shadow-sm shadow-black/5">
         <Text className="text-sm font-semibold text-slate-800 mb-4">
-          Blocked Attempts
+          Хаалтын оролдлого
         </Text>
         {breakdown.filter((d) => d.blocked > 0).length === 0 ? (
           <Text className="text-sm text-slate-400 text-center py-5">
-            No blocked attempts in this period
+            Энэ хугацаанд хаалтын оролдлого байхгүй
           </Text>
         ) : (
           <View className="gap-y-2">
@@ -193,11 +193,11 @@ export default function ReportsScreen({ route }: Props) {
       {/* Top Apps */}
       <View className="mx-4 mb-4 rounded-2xl p-4 bg-white shadow-sm shadow-black/5">
         <Text className="text-sm font-semibold text-slate-800 mb-4">
-          Top Apps
+          Хамгийн их хэрэглэсэн аппууд
         </Text>
         {topApps.length === 0 ? (
           <Text className="text-sm text-slate-400 text-center py-5">
-            No app usage data
+            Аппын хэрэглээний мэдээлэл байхгүй
           </Text>
         ) : (
           topApps.map((app, i) => {

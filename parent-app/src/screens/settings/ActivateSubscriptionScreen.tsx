@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Alert, TextInput, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Alert, TextInput, Text, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as api from '../../services/api';
+import { C, CARD, LABEL } from '../../theme';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../types';
 
 type Props = {
-  navigation: NativeStackNavigationProp<RootStackParamList, 'ActivateSubscription'>;
+  readonly navigation: NativeStackNavigationProp<RootStackParamList, 'ActivateSubscription'>;
 };
 
 export default function ActivateSubscriptionScreen({ navigation }: Props) {
@@ -15,9 +16,7 @@ export default function ActivateSubscriptionScreen({ navigation }: Props) {
   const [subLoading, setSubLoading] = useState(true);
   const [subscription, setSubscription] = useState<api.SubscriptionInfo | null>(null);
 
-  useEffect(() => {
-    loadSubscription();
-  }, []);
+  useEffect(() => { loadSubscription(); }, []);
 
   const loadSubscription = async () => {
     setSubLoading(true);
@@ -25,7 +24,7 @@ export default function ActivateSubscriptionScreen({ navigation }: Props) {
       const data = await api.getSubscription();
       setSubscription(data);
     } catch {
-      // No subscription
+      // no subscription
     } finally {
       setSubLoading(false);
     }
@@ -33,17 +32,17 @@ export default function ActivateSubscriptionScreen({ navigation }: Props) {
 
   const handleActivate = async () => {
     if (!key.trim()) {
-      Alert.alert('Error', 'Please enter a subscription key.');
+      Alert.alert('Алдаа', 'Захиалгын түлхүүрийг оруулна уу.');
       return;
     }
     setLoading(true);
     try {
       await api.activateSubscription(key.trim());
-      Alert.alert('Success', 'Subscription activated!', [
-        { text: 'OK', onPress: () => { loadSubscription(); setKey(''); } },
+      Alert.alert('Амжилттай', 'Захиалга идэвхжлээ!', [
+        { text: 'За', onPress: () => { loadSubscription(); setKey(''); } },
       ]);
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to activate key.');
+      Alert.alert('Алдаа', error.message || 'Түлхүүрийг идэвхжүүлэхэд алдаа гарлаа.');
     } finally {
       setLoading(false);
     }
@@ -51,17 +50,16 @@ export default function ActivateSubscriptionScreen({ navigation }: Props) {
 
   const formatCountdown = (expiresAt: string) => {
     const diff = new Date(expiresAt).getTime() - Date.now();
-    if (diff <= 0) return 'Expired';
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    if (days > 0) return `${days}d ${hours}h remaining`;
-    return `${hours}h remaining`;
+    if (diff <= 0) return 'Хугацаа дууссан';
+    const days = Math.floor(diff / 86400000);
+    const hours = Math.floor((diff % 86400000) / 3600000);
+    return days > 0 ? `${days}өдөр ${hours}цаг үлдлээ` : `${hours}цаг үлдлээ`;
   };
 
   if (subLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-surface-secondary">
-        <ActivityIndicator size="large" color="#4F46E5" />
+        <ActivityIndicator size="large" color={C.ink900} />
       </View>
     );
   }
@@ -70,92 +68,97 @@ export default function ActivateSubscriptionScreen({ navigation }: Props) {
   const isActive = subscription?.active;
 
   return (
-    <View className="flex-1 bg-surface-secondary p-4">
-      {/* Current Subscription Status */}
-      {sub && (
-        <View
-          className={`rounded-2xl p-5 mb-5 bg-white shadow-sm shadow-black/5 ${isActive ? 'bg-green-50' : 'bg-red-50'}`}
-          style={{ borderWidth: 1, borderColor: isActive ? '#bbf7d0' : '#fecaca' }}
-        >
-          <View className="flex-row items-center gap-x-2 mb-4">
-            <Ionicons
-              name={isActive ? 'checkmark-circle' : 'alert-circle'}
-              size={24}
-              color={isActive ? '#22c55e' : '#ef4444'}
+    <ScrollView className="flex-1 bg-surface-secondary" showsVerticalScrollIndicator={false}>
+      <View className="px-7 pb-10 pt-2">
+
+        {/* Current status card */}
+        {sub && (
+          <View style={{
+            ...CARD,
+            padding: 24, marginBottom: 20,
+            ...(isActive
+              ? { backgroundColor: '#f0fdfa', borderColor: '#99f6e4' }
+              : { backgroundColor: '#fff1f2', borderColor: '#fecdd3' }),
+          }}>
+            <View className="flex-row items-center gap-3 mb-5">
+              <View className="w-10 h-10 rounded-full items-center justify-center"
+                style={{ backgroundColor: isActive ? '#ccfbf1' : '#fee2e2' }}>
+                <Ionicons
+                  name={isActive ? 'checkmark-circle' : 'alert-circle'}
+                  size={22}
+                  color={isActive ? C.teal : C.red}
+                />
+              </View>
+              <Text className="text-[15px] font-semibold text-ink-900">
+                {isActive ? 'Идэвхтэй захиалга' : 'Захиалга дууссан'}
+              </Text>
+            </View>
+
+            {[
+              { label: 'Түлхүүр', value: sub.key },
+              { label: 'Хүүхэд', value: `${sub.currentKids} / ${sub.maxKids}` },
+              ...(sub.expiresAt ? [{ label: 'Дуусах огноо', value: formatCountdown(sub.expiresAt) }] : []),
+            ].map((row) => (
+              <View key={row.label} className="flex-row justify-between mb-2.5">
+                <Text className="text-xs text-ink-400">{row.label}</Text>
+                <Text className="text-xs font-semibold" style={{ color: isActive ? C.ink800 : C.red }}>{row.value}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Activate key section */}
+        {!isActive && (
+          <View style={{ ...CARD, padding: 24 }}>
+            <Text style={[LABEL, { marginBottom: 6 }]}>
+              {sub ? 'Шинэ түлхүүр идэвхжүүлэх' : 'Идэвхжүүлэх'}
+            </Text>
+            <Text className="font-serif text-[28px] text-ink-900 mb-5" style={{ lineHeight: 32 }}>
+              Түлхүүр оруулах
+            </Text>
+            <Text className="text-sm text-ink-400 mb-5" style={{ lineHeight: 20 }}>
+              Администраторын өгсөн захиалгын түлхүүрийг оруулна уу.
+            </Text>
+
+            <TextInput
+              style={{
+                backgroundColor: C.bg, borderWidth: 1, borderColor: C.ink200,
+                borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14,
+                fontSize: 16, color: C.ink900, letterSpacing: 2,
+                textAlign: 'center', marginBottom: 16,
+              }}
+              placeholder="PK-XXXX-XXXX"
+              placeholderTextColor={C.ink300}
+              value={key}
+              onChangeText={setKey}
+              autoCapitalize="characters"
+              autoCorrect={false}
             />
-            <Text className={`text-base font-bold ${isActive ? 'text-green-800' : 'text-red-700'}`}>
-              {isActive ? 'Active Subscription' : 'Subscription Expired'}
+
+            <TouchableOpacity
+              className="bg-ink-900 rounded-xl items-center justify-center"
+              style={{ height: 52, opacity: loading ? 0.6 : 1 }}
+              onPress={handleActivate}
+              disabled={loading}
+              activeOpacity={0.85}
+            >
+              {loading
+                ? <ActivityIndicator color="#fff" />
+                : <Text className="text-sm font-bold text-white" style={{ letterSpacing: 0.4 }}>Түлхүүр идэвхжүүлэх</Text>
+              }
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {Boolean(!sub && !isActive) && (
+          <View className="items-center py-10 gap-3">
+            <Ionicons name="key-outline" size={36} color={C.ink300} />
+            <Text className="text-[13px] text-ink-400 text-center" style={{ lineHeight: 20 }}>
+              Идэвхтэй захиалга байхгүй. Эхлэхийн тулд түлхүүр оруулна уу.
             </Text>
           </View>
-
-          <View className="gap-y-2.5">
-            <View className="flex-row justify-between">
-              <Text className="text-xs text-slate-500">Key</Text>
-              <Text className="text-xs font-semibold text-slate-800">{sub.key}</Text>
-            </View>
-            <View className="flex-row justify-between">
-              <Text className="text-xs text-slate-500">Max Kids</Text>
-              <Text className="text-xs font-semibold text-slate-800">{sub.maxKids}</Text>
-            </View>
-            <View className="flex-row justify-between">
-              <Text className="text-xs text-slate-500">Kids Used</Text>
-              <Text className="text-xs font-semibold text-slate-800">{sub.currentKids} / {sub.maxKids}</Text>
-            </View>
-            {sub.expiresAt && (
-              <View className="flex-row justify-between">
-                <Text className="text-xs text-slate-500">Expires</Text>
-                <Text className={`text-xs font-semibold ${isActive ? 'text-slate-800' : 'text-red-600'}`}>
-                  {formatCountdown(sub.expiresAt)}
-                </Text>
-              </View>
-            )}
-          </View>
-        </View>
-      )}
-
-      {/* Activate Key Section */}
-      {!isActive && (
-        <View className="rounded-2xl p-5 mb-5 bg-white shadow-sm shadow-black/5">
-          <Text className="text-base font-bold text-slate-800 mb-1">
-            {sub ? 'Activate New Key' : 'Enter Subscription Key'}
-          </Text>
-          <Text className="text-xs text-slate-500 mb-4">
-            Enter the subscription key provided by your administrator.
-          </Text>
-
-          <TextInput
-            className="bg-surface-secondary border border-slate-200 rounded-xl px-4 py-3.5 text-center text-lg tracking-widest mb-4"
-            style={{ fontFamily: 'monospace', color: '#1E293B' }}
-            placeholder="PH-XXXX-XXXX-XXXX"
-            placeholderTextColor="#94A3B8"
-            value={key}
-            onChangeText={setKey}
-            autoCapitalize="characters"
-            autoCorrect={false}
-          />
-
-          <TouchableOpacity
-            className="bg-primary-600 rounded-xl py-3 items-center justify-center"
-            onPress={handleActivate}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text className="text-white font-bold text-base">Activate Key</Text>
-            )}
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {!sub && !isActive && (
-        <View className="items-center p-8 gap-y-3">
-          <Ionicons name="key-outline" size={40} color="#94A3B8" />
-          <Text className="text-sm text-slate-500 text-center">
-            No active subscription. Enter a key to get started.
-          </Text>
-        </View>
-      )}
-    </View>
+        )}
+      </View>
+    </ScrollView>
   );
 }

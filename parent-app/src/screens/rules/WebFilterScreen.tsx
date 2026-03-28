@@ -7,7 +7,7 @@ import type { RouteProp } from '@react-navigation/native';
 import type { RootStackParamList } from '../../types';
 
 type Props = {
-  route: RouteProp<RootStackParamList, 'WebFilter'>;
+  readonly route: RouteProp<RootStackParamList, 'WebFilter'>;
 };
 
 export default function WebFilterScreen({ route }: Props) {
@@ -53,9 +53,9 @@ export default function WebFilterScreen({ route }: Props) {
     setSaving(true);
     try {
       await api.updateWebFilter(childId, { categories, customBlock, customAllow });
-      Alert.alert('Saved', 'Web filter rules updated.');
+      Alert.alert('Хадгалагдлаа', 'Вэб шүүлтийн дүрэм шинэчлэгдлээ.');
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to update rules.');
+      Alert.alert('Алдаа', error.message || 'Дүрмийг шинэчлэхэд алдаа гарлаа.');
     } finally {
       setSaving(false);
     }
@@ -69,10 +69,10 @@ export default function WebFilterScreen({ route }: Props) {
       {/* Category Filters */}
       <View className="mx-4 mt-4 rounded-2xl p-4 bg-white shadow-sm shadow-black/5">
         <Text className="text-base font-bold text-slate-800">
-          Content Categories
+          Агуулгын ангилал
         </Text>
         <Text className="text-xs text-slate-500 mt-1 mb-3">
-          Block websites in these categories.
+          Эдгээр ангиллын вэбсайтыг хаах.
         </Text>
 
         {WEB_FILTER_CATEGORIES.map((cat, index) => (
@@ -96,7 +96,7 @@ export default function WebFilterScreen({ route }: Props) {
       {/* Custom Block List */}
       <View className="mx-4 mt-4 rounded-2xl p-4 bg-white shadow-sm shadow-black/5">
         <Text className="text-base font-bold text-slate-800">
-          Custom Blocked Domains
+          Хаагдсан домайнууд
         </Text>
         <View className="flex-row gap-2 mt-2 mb-2">
           <TextInput
@@ -131,10 +131,10 @@ export default function WebFilterScreen({ route }: Props) {
       {/* Custom Allow List */}
       <View className="mx-4 mt-4 rounded-2xl p-4 bg-white shadow-sm shadow-black/5">
         <Text className="text-base font-bold text-slate-800">
-          Custom Allowed Domains
+          Зөвшөөрөгдсөн домайнууд
         </Text>
         <Text className="text-xs text-slate-500 mt-1 mb-2">
-          These domains will always be accessible, even if their category is blocked.
+          Эдгээр домайнууд тухайн ангилал хаагдсан байсан ч нээлттэй байна.
         </Text>
         <View className="flex-row gap-2 mt-1 mb-2">
           <TextInput
@@ -176,7 +176,7 @@ export default function WebFilterScreen({ route }: Props) {
           {saving ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
-            <Text className="text-white font-bold text-base">Save Changes</Text>
+            <Text className="text-white font-bold text-base">Өөрчлөлт хадгалах</Text>
           )}
         </TouchableOpacity>
       </View>

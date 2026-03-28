@@ -1,38 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Primary brand -->
-    <color name="primary">#FF4A90D9</color>
-    <color name="primary_dark">#FF3A7BC8</color>
-    <color name="primary_light">#FFE8F0FE</color>
+    <!-- Primary brand — warm stone ink-900 -->
+    <color name="primary">#FF1c1917</color>
+    <color name="primary_dark">#FF292524</color>
+    <color name="primary_light">#FFF5F5F4</color>
     <color name="on_primary">#FFFFFFFF</color>
 
-    <!-- Secondary -->
-    <color name="secondary">#FF34C759</color>
-    <color name="secondary_dark">#FF28A745</color>
+    <!-- Accent — teal -->
+    <color name="secondary">#FF0d9488</color>
+    <color name="secondary_dark">#FF0f766e</color>
     <color name="on_secondary">#FFFFFFFF</color>
 
-    <!-- SOS -->
-    <color name="sos_red">#FFDC3545</color>
-    <color name="sos_red_dark">#FFC82333</color>
-    <color name="sos_red_light">#33DC3545</color>
-    <color name="sos_red_ripple">#44DC3545</color>
+    <!-- SOS — warm red -->
+    <color name="sos_red">#FFE11D48</color>
+    <color name="sos_red_dark">#FFC41A3E</color>
+    <color name="sos_red_light">#33E11D48</color>
+    <color name="sos_red_ripple">#44E11D48</color>
 
-    <!-- Surface & background -->
-    <color name="background">#FFF5F7FA</color>
+    <!-- Surface and background — warm stone -->
+    <color name="background">#FFFafaf9</color>
     <color name="surface">#FFFFFFFF</color>
-    <color name="surface_variant">#FFF0F2F5</color>
+    <color name="surface_variant">#FFF5F5F4</color>
+    <color name="card_border">#FFF0EEEC</color>
+    <color name="ink_200">#FFe7e5e4</color>
 
-    <!-- Text -->
-    <color name="text_primary">#FF1A1D21</color>
-    <color name="text_secondary">#FF6B7280</color>
-    <color name="text_hint">#FF9CA3AF</color>
+    <!-- Text — warm stone -->
+    <color name="text_primary">#FF1c1917</color>
+    <color name="text_secondary">#FF78716c</color>
+    <color name="text_hint">#FFa8a29e</color>
 
     <!-- Status -->
-    <color name="status_active">#FF34C759</color>
-    <color name="status_warning">#FFFFC107</color>
-    <color name="status_error">#FFDC3545</color>
+    <color name="status_active">#FF0d9488</color>
+    <color name="status_active_bg">#1A0d9488</color>
+    <color name="status_warning">#FFD97706</color>
+    <color name="status_error">#FFE11D48</color>
 
-    <!-- Legacy (keep for theme compat) -->
+    <!-- Legacy -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 </resources>

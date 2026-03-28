@@ -8,8 +8,26 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Warm stone palette (design system)
+        ink: {
+          50:  '#fafaf9',
+          100: '#f5f5f4',
+          200: '#e7e5e4',
+          300: '#d6d3d1',
+          400: '#a8a29e',
+          500: '#78716c',
+          600: '#57534e',
+          700: '#44403c',
+          800: '#292524',
+          900: '#1c1917',
+        },
+        ac: {
+          500: '#0d9488',
+          600: '#0f766e',
+        },
+        // Legacy aliases kept for unrewritten screens
         primary: {
-          50: '#EEF2FF',
+          50:  '#EEF2FF',
           100: '#E0E7FF',
           200: '#C7D2FE',
           300: '#A5B4FC',
@@ -21,38 +39,29 @@ module.exports = {
           900: '#312E81',
         },
         accent: {
-          50: '#F0FDFA',
+          50:  '#F0FDFA',
           100: '#CCFBF1',
-          200: '#99F6E4',
-          300: '#5EEAD4',
-          400: '#2DD4BF',
           500: '#14B8A6',
           600: '#0D9488',
           700: '#0F766E',
         },
         danger: {
-          50: '#FFF1F2',
+          50:  '#FFF1F2',
           100: '#FFE4E6',
-          200: '#FECDD3',
           400: '#FB7185',
           500: '#F43F5E',
           600: '#E11D48',
         },
-        warning: {
-          50: '#FFFBEB',
-          100: '#FEF3C7',
-          400: '#FBBF24',
-          500: '#F59E0B',
-          600: '#D97706',
-        },
         surface: {
           DEFAULT: '#FFFFFF',
-          secondary: '#F8FAFC',
-          tertiary: '#F1F5F9',
+          secondary: '#fafaf9',
+          tertiary: '#f5f5f4',
         },
+        card: '#f0eeec',
       },
       fontFamily: {
-        sans: ['System'],
+        serif: ['CormorantGaramond_700Bold_Italic', 'serif'],
+        sans:  ['System'],
       },
     },
   },

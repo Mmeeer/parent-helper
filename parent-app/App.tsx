@@ -10,7 +10,16 @@ import {
   addNotificationReceivedListener,
   setBadgeCount,
 } from './src/services/notifications';
+import {
+  useFonts,
+  CormorantGaramond_700Bold_Italic,
+  CormorantGaramond_500Medium_Italic,
+  CormorantGaramond_400Regular_Italic,
+} from '@expo-google-fonts/cormorant-garamond';
+import * as SplashScreen from 'expo-splash-screen';
 import type { NavigationContainerRef } from '@react-navigation/native';
+
+SplashScreen.preventAutoHideAsync();
 
 // Navigation ref so we can navigate from notification taps
 export const navigationRef = React.createRef<NavigationContainerRef<any>>();
@@ -19,11 +28,19 @@ export default function App() {
   const notificationListener = useRef<any>();
   const responseListener = useRef<any>();
 
+  const [fontsLoaded] = useFonts({
+    CormorantGaramond_700Bold_Italic,
+    CormorantGaramond_500Medium_Italic,
+    CormorantGaramond_400Regular_Italic,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded) SplashScreen.hideAsync();
+  }, [fontsLoaded]);
+
   useEffect(() => {
     // Foreground notification — just update badge
-    notificationListener.current = addNotificationReceivedListener(() => {
-      // Badge will auto-update from the notification payload
-    });
+    notificationListener.current = addNotificationReceivedListener(() => {});
 
     // User tapped a notification — navigate to alerts
     responseListener.current = addNotificationResponseListener((response) => {
@@ -31,15 +48,12 @@ export default function App() {
 
       if (navigationRef.current?.isReady()) {
         if (data?.type === 'sos' && data?.childId) {
-          // SOS: navigate to child detail
           navigationRef.current.navigate('ChildDetail', { childId: data.childId });
         } else {
-          // All other alerts: navigate to alerts tab
           navigationRef.current.navigate('MainTabs', { screen: 'Alerts' });
         }
       }
 
-      // Clear badge after tap
       setBadgeCount(0);
     });
 
@@ -48,6 +62,8 @@ export default function App() {
       responseListener.current?.remove();
     };
   }, []);
+
+  if (!fontsLoaded) return null;
 
   return (
     <ErrorBoundary>

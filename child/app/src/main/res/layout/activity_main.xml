@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background"
@@ -11,50 +10,66 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center_horizontal"
-        android:paddingHorizontal="24dp"
-        android:paddingTop="48dp"
-        android:paddingBottom="32dp">
+        android:paddingHorizontal="28dp"
+        android:paddingTop="56dp"
+        android:paddingBottom="40dp">
 
-        <!-- Status header -->
+        <!-- Overline label -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="6dp"
+            android:text="PRIME KIDS"
+            android:textColor="@color/text_hint"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.15"
+            android:textAllCaps="true" />
+
+        <!-- Shield icon -->
         <ImageView
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            android:layout_marginBottom="12dp"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:layout_marginBottom="16dp"
             android:contentDescription="Protected"
             android:src="@drawable/ic_shield_check" />
 
+        <!-- Title -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/status_protected"
             android:textColor="@color/text_primary"
-            android:textSize="24sp"
+            android:textSize="28sp"
             android:textStyle="bold"
-            android:letterSpacing="0.01" />
+            android:letterSpacing="0.01"
+            android:layout_marginBottom="10dp" />
 
+        <!-- Status chip -->
         <TextView
             android:id="@+id/tvMonitoringStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginBottom="44dp"
             android:background="@drawable/bg_status_chip"
             android:text="@string/status_monitoring"
             android:textColor="@color/status_active"
-            android:textSize="13sp"
-            android:textStyle="bold" />
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.08"
+            android:textAllCaps="true" />
 
         <!-- SOS Button -->
         <FrameLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="40dp"
             android:layout_marginBottom="12dp">
 
             <!-- Outer ring -->
             <View
                 android:id="@+id/sosPulseRing"
-                android:layout_width="190dp"
-                android:layout_height="190dp"
+                android:layout_width="192dp"
+                android:layout_height="192dp"
                 android:layout_gravity="center"
                 android:background="@drawable/bg_sos_ring" />
 
@@ -81,7 +96,7 @@
                         android:layout_height="wrap_content"
                         android:text="SOS"
                         android:textColor="@color/white"
-                        android:textSize="36sp"
+                        android:textSize="38sp"
                         android:textStyle="bold"
                         android:letterSpacing="0.15" />
 
@@ -89,22 +104,26 @@
                         android:id="@+id/tvSosHint"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Hold to alert"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/sos_hold_hint"
                         android:textColor="#CCFFFFFF"
-                        android:textSize="12sp" />
+                        android:textSize="11sp"
+                        android:letterSpacing="0.05" />
                 </LinearLayout>
             </FrameLayout>
         </FrameLayout>
 
+        <!-- SOS description -->
         <TextView
             android:id="@+id/tvSosStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="32dp"
-            android:textColor="@color/text_secondary"
-            android:textSize="13sp"
-            android:text="Sends emergency alert to your parent"
-            android:gravity="center" />
+            android:layout_marginBottom="40dp"
+            android:text="@string/sos_description"
+            android:textColor="@color/text_hint"
+            android:textSize="12sp"
+            android:gravity="center"
+            android:letterSpacing="0.02" />
 
         <!-- Screen time card -->
         <LinearLayout
@@ -116,16 +135,17 @@
             android:padding="20dp"
             android:layout_marginBottom="12dp">
 
+            <!-- Card overline -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:layout_marginBottom="12dp">
+                android:layout_marginBottom="14dp">
 
                 <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
                     android:layout_marginEnd="8dp"
                     android:src="@drawable/ic_screen_time"
                     android:contentDescription="Screen time" />
@@ -133,24 +153,26 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Screen Time"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="13sp"
+                    android:text="@string/screen_time_label"
+                    android:textColor="@color/text_hint"
+                    android:textSize="10sp"
                     android:textStyle="bold"
                     android:textAllCaps="true"
-                    android:letterSpacing="0.08" />
+                    android:letterSpacing="0.12" />
             </LinearLayout>
 
+            <!-- Time value -->
             <TextView
                 android:id="@+id/tvScreenTime"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="0 min"
+                android:text="0 мин"
                 android:textColor="@color/text_primary"
-                android:textSize="32sp"
+                android:textSize="34sp"
                 android:textStyle="bold"
-                android:layout_marginBottom="4dp" />
+                android:layout_marginBottom="6dp" />
 
+            <!-- Daily limit row -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -158,9 +180,9 @@
                 android:gravity="center_vertical">
 
                 <ImageView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:layout_marginEnd="4dp"
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:layout_marginEnd="5dp"
                     android:src="@drawable/ic_limit"
                     android:contentDescription="Limit" />
 
@@ -168,9 +190,9 @@
                     android:id="@+id/tvDailyLimit"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Daily limit: --"
+                    android:text="Өдрийн хязгаар: --"
                     android:textColor="@color/text_secondary"
-                    android:textSize="14sp" />
+                    android:textSize="13sp" />
             </LinearLayout>
         </LinearLayout>
 
@@ -179,11 +201,16 @@
             android:id="@+id/btnRequestPermissions"
             android:layout_width="match_parent"
             android:layout_height="52dp"
-            android:text="Grant Permissions"
-            android:textSize="15sp"
+            android:layout_marginTop="8dp"
+            android:text="@string/grant_permissions"
+            android:textSize="14sp"
+            android:textStyle="bold"
             android:visibility="gone"
             android:backgroundTint="@color/primary"
-            android:textColor="@color/white" />
+            android:textColor="@color/white"
+            android:letterSpacing="0.05"
+            app:cornerRadius="14dp"
+            xmlns:app="http://schemas.android.com/apk/res-auto" />
 
     </LinearLayout>
 </ScrollView>

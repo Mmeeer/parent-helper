@@ -17,8 +17,8 @@ import type { RouteProp } from '@react-navigation/native';
 import type { RootStackParamList, DeviceStatus } from '../../types';
 
 type Props = {
-  navigation: NativeStackNavigationProp<RootStackParamList, 'DevicesList'>;
-  route: RouteProp<RootStackParamList, 'DevicesList'>;
+  readonly navigation: NativeStackNavigationProp<RootStackParamList, 'DevicesList'>;
+  readonly route: RouteProp<RootStackParamList, 'DevicesList'>;
 };
 
 export default function DevicesListScreen({ navigation, route }: Props) {
@@ -50,37 +50,35 @@ export default function DevicesListScreen({ navigation, route }: Props) {
     setCommandingId(deviceId);
     try {
       const result = await api.sendDeviceCommand(deviceId, command);
-      Alert.alert('Command Sent', result.message);
+      Alert.alert('Команд илгээгдлээ', result.message);
       if (command === 'locate') {
         // Refresh device list after locate
         setTimeout(loadDevices, 3000);
       }
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to send command.');
+      Alert.alert('Алдаа', error.message || 'Команд илгээхэд алдаа гарлаа.');
     } finally {
       setCommandingId(null);
     }
   };
 
-  const handleUnpair = async (deviceId: string) => {
+  const doUnpair = async (deviceId: string) => {
+    try {
+      await api.unpairDevice(deviceId);
+      setDevices((prev) => prev.filter((d) => d.id !== deviceId));
+      Alert.alert('Дууссан', 'Төхөөрөмжийн холболт тасдагдлаа.');
+    } catch (error: any) {
+      Alert.alert('Алдаа', error.message || 'Төхөөрөмжийн холболтыг тасдаж чадсангүй.');
+    }
+  };
+
+  const handleUnpair = (deviceId: string) => {
     Alert.alert(
-      'Unpair Device',
-      'Are you sure you want to remove this device? The child app will need to be re-paired.',
+      'Холболт тасдах',
+      'Энэ төхөөрөмжийг устгахдаа итгэлтэй байна уу? Хүүхдийн апп дахин холбогдох шаардлагатай болно.',
       [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Unpair',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await api.unpairDevice(deviceId);
-              setDevices((prev) => prev.filter((d) => d.id !== deviceId));
-              Alert.alert('Done', 'Device has been unpaired.');
-            } catch (error: any) {
-              Alert.alert('Error', error.message || 'Failed to unpair device.');
-            }
-          },
-        },
+        { text: 'Цуцлах', style: 'cancel' },
+        { text: 'Тасдах', style: 'destructive', onPress: () => { void doUnpair(deviceId); } },
       ],
     );
   };
@@ -99,17 +97,17 @@ export default function DevicesListScreen({ navigation, route }: Props) {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadDevices(); }} />}
     >
       <Text className="text-xl font-bold text-slate-800 mx-4 mt-5 mb-4">
-        Devices for {childName}
+        {childName}-ийн төхөөрөмжүүд
       </Text>
 
       {devices.length === 0 ? (
         <View className="items-center pt-16 px-10">
           <Ionicons name="phone-portrait-outline" size={64} color="#94A3B8" />
           <Text className="text-base font-semibold text-slate-800 mt-4">
-            No Devices Paired
+            Холбогдсон төхөөрөмж байхгүй
           </Text>
           <Text className="text-sm text-slate-500 text-center mt-2">
-            Pair a device to start monitoring.
+            Хяналт эхлэхийн тулд төхөөрөмж холбоно уу.
           </Text>
         </View>
       ) : (
@@ -153,9 +151,9 @@ export default function DevicesListScreen({ navigation, route }: Props) {
               {device.batteryLevel != null && (
                 <View className="px-2.5 py-1 rounded-xl flex-row items-center gap-1 bg-surface-tertiary">
                   <Ionicons
-                    name={device.batteryLevel! > 20 ? 'battery-half' : 'battery-dead'}
+                    name={device.batteryLevel > 20 ? 'battery-half' : 'battery-dead'}
                     size={16}
-                    color={device.batteryLevel! > 20 ? '#0D9488' : '#E11D48'}
+                    color={device.batteryLevel > 20 ? '#0D9488' : '#E11D48'}
                   />
                   <Text className="text-xs text-slate-500">
                     {device.batteryLevel}%
@@ -172,7 +170,7 @@ export default function DevicesListScreen({ navigation, route }: Props) {
 
             {/* Remote Commands */}
             <Text className="text-xs font-semibold text-slate-500 mt-4 mb-2">
-              Remote Commands
+              Алсын удирдлага
             </Text>
             <View className="flex-row gap-x-2">
               <View className="flex-1 items-center py-3 rounded-xl bg-surface-tertiary">
@@ -183,7 +181,7 @@ export default function DevicesListScreen({ navigation, route }: Props) {
                 >
                   <Ionicons name="lock-closed-outline" size={20} color="#E11D48" />
                 </TouchableOpacity>
-                <Text className="text-[11px] text-slate-700 -mt-1">Lock</Text>
+                <Text className="text-[11px] text-slate-700 -mt-1">Түгжих</Text>
               </View>
               <View className="flex-1 items-center py-3 rounded-xl bg-surface-tertiary">
                 <TouchableOpacity
@@ -193,7 +191,7 @@ export default function DevicesListScreen({ navigation, route }: Props) {
                 >
                   <Ionicons name="lock-open-outline" size={20} color="#0D9488" />
                 </TouchableOpacity>
-                <Text className="text-[11px] text-slate-700 -mt-1">Unlock</Text>
+                <Text className="text-[11px] text-slate-700 -mt-1">Нээх</Text>
               </View>
               <View className="flex-1 items-center py-3 rounded-xl bg-surface-tertiary">
                 <TouchableOpacity
@@ -203,7 +201,7 @@ export default function DevicesListScreen({ navigation, route }: Props) {
                 >
                   <Ionicons name="locate-outline" size={20} color="#4F46E5" />
                 </TouchableOpacity>
-                <Text className="text-[11px] text-slate-700 -mt-1">Locate</Text>
+                <Text className="text-[11px] text-slate-700 -mt-1">Байршлыг олох</Text>
               </View>
               <View className="flex-1 items-center py-3 rounded-xl bg-surface-tertiary">
                 <TouchableOpacity
@@ -213,7 +211,7 @@ export default function DevicesListScreen({ navigation, route }: Props) {
                 >
                   <Ionicons name="sync-outline" size={20} color="#D97706" />
                 </TouchableOpacity>
-                <Text className="text-[11px] text-slate-700 -mt-1">Sync</Text>
+                <Text className="text-[11px] text-slate-700 -mt-1">Синхрончлох</Text>
               </View>
             </View>
 
@@ -227,7 +225,7 @@ export default function DevicesListScreen({ navigation, route }: Props) {
               className="mt-3 py-2 flex-row items-center justify-center gap-x-1"
             >
               <Ionicons name="unlink-outline" size={16} color="#E11D48" />
-              <Text className="text-danger-600 font-medium text-sm">Unpair Device</Text>
+              <Text className="text-danger-600 font-medium text-sm">Холболт тасдах</Text>
             </TouchableOpacity>
           </View>
         ))
@@ -239,7 +237,7 @@ export default function DevicesListScreen({ navigation, route }: Props) {
         className="mx-4 mt-2 border border-primary-600 rounded-2xl py-3 flex-row items-center justify-center gap-x-2"
       >
         <Ionicons name="add-circle-outline" size={20} color="#4F46E5" />
-        <Text className="text-primary-600 font-semibold">Pair New Device</Text>
+        <Text className="text-primary-600 font-semibold">Шинэ төхөөрөмж холбох</Text>
       </TouchableOpacity>
 
       <View className="h-8" />

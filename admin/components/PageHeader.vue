@@ -21,9 +21,11 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
+withDefaults(defineProps<{
   title: string;
   subtitle?: string;
   breadcrumbs?: Array<{ label: string; to?: string }>;
-}>();
+}>(), {
+  breadcrumbs: () => [],
+});
 </script>

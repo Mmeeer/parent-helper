@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Pressable } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -39,33 +39,37 @@ function MainTabs() {
   return (
     <Tab.Navigator
       screenOptions={{
-        tabBarActiveTintColor: '#4F46E5',
-        tabBarInactiveTintColor: '#94A3B8',
+        headerShown: false,
+        tabBarActiveTintColor: '#1c1917',
+        tabBarInactiveTintColor: '#d6d3d1',
+        tabBarButton: ({ ref: _ref, ...props }) => (
+          <Pressable {...props} android_ripple={null} />
+        ),
         tabBarStyle: {
-          backgroundColor: '#FFFFFF',
-          borderTopColor: '#E2E8F0',
+          backgroundColor: '#fafaf9',
+          borderTopColor: '#e7e5e4',
           borderTopWidth: 1,
-          paddingBottom: 10,
-          paddingTop: 10,
-          height: 72,
+          paddingBottom: 24,
+          paddingTop: 8,
+          height: 80,
         },
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 9,
           fontWeight: '600',
           marginTop: 2,
+          letterSpacing: 1.2,
+          textTransform: 'uppercase',
         },
         tabBarIconStyle: {
           marginBottom: 0,
         },
-        headerStyle: { backgroundColor: '#FFFFFF' },
-        headerTitleStyle: { fontSize: 17, fontWeight: '600', color: '#1E293B' },
       }}
     >
       <Tab.Screen
         name="Dashboard"
         component={HomeScreen}
         options={{
-          title: 'Home',
+          title: 'Нүүр',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home-outline" size={size} color={color} />
           ),
@@ -75,7 +79,7 @@ function MainTabs() {
         name="Alerts"
         component={AlertsScreen}
         options={{
-          title: 'Alerts',
+          title: 'Мэдэгдэл',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="notifications-outline" size={size} color={color} />
           ),
@@ -85,7 +89,7 @@ function MainTabs() {
         name="Approvals"
         component={ApprovalsScreen}
         options={{
-          title: 'Approvals',
+          title: 'Зөвшөөрөл',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="checkmark-circle-outline" size={size} color={color} />
           ),
@@ -95,7 +99,7 @@ function MainTabs() {
         name="Settings"
         component={SettingsScreen}
         options={{
-          title: 'Settings',
+          title: 'Тохиргоо',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="settings-outline" size={size} color={color} />
           ),
@@ -111,7 +115,7 @@ const AppNavigator = React.forwardRef<any>((_, ref) => {
   if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-surface-secondary">
-        <ActivityIndicator size="large" color="#4F46E5" />
+        <ActivityIndicator size="large" color="#1c1917" />
       </View>
     );
   }
@@ -120,9 +124,9 @@ const AppNavigator = React.forwardRef<any>((_, ref) => {
     <NavigationContainer ref={ref}>
       <Stack.Navigator
         screenOptions={{
-          headerStyle: { backgroundColor: '#FFFFFF' },
-          headerTitleStyle: { fontWeight: '600', color: '#1E293B' },
-          headerTintColor: '#4F46E5',
+          headerStyle: { backgroundColor: '#fafaf9' },
+          headerTitleStyle: { fontFamily: 'CormorantGaramond_700Bold_Italic', fontSize: 20, color: '#1c1917' },
+          headerTintColor: '#1c1917',
           headerBackButtonDisplayMode: 'minimal',
         }}
       >
@@ -136,62 +140,62 @@ const AppNavigator = React.forwardRef<any>((_, ref) => {
             <Stack.Screen
               name="ChildDetail"
               component={ChildDetailScreen}
-              options={{ title: 'Child' }}
+              options={{ title: 'Хүүхэд' }}
             />
             <Stack.Screen
               name="AddChild"
               component={AddChildScreen}
-              options={{ title: 'Add Child' }}
+              options={{ title: 'Хүүхэд нэмэх' }}
             />
             <Stack.Screen
               name="RulesOverview"
               component={RulesOverviewScreen}
-              options={{ title: 'Rules' }}
+              options={{ title: 'Дүрэм' }}
             />
             <Stack.Screen
               name="ScreenTimeRules"
               component={ScreenTimeRulesScreen}
-              options={{ title: 'Screen Time' }}
+              options={{ title: 'Дэлгэцийн цаг' }}
             />
             <Stack.Screen
               name="AppRules"
               component={AppRulesScreen}
-              options={{ title: 'App Management' }}
+              options={{ title: 'Аппын удирдлага' }}
             />
             <Stack.Screen
               name="WebFilter"
               component={WebFilterScreen}
-              options={{ title: 'Web Filter' }}
+              options={{ title: 'Вэб шүүлт' }}
             />
             <Stack.Screen
               name="LocationMap"
               component={LocationScreen}
-              options={{ title: 'Location' }}
+              options={{ title: 'Байршил' }}
             />
             <Stack.Screen
               name="DevicesList"
               component={DevicesListScreen}
-              options={{ title: 'Devices' }}
+              options={{ title: 'Төхөөрөмж' }}
             />
             <Stack.Screen
               name="PairDevice"
               component={PairDeviceScreen}
-              options={{ title: 'Pair Device' }}
+              options={{ title: 'Төхөөрөмж холбох' }}
             />
             <Stack.Screen
               name="Reports"
               component={ReportsScreen}
-              options={{ title: 'Reports' }}
+              options={{ title: 'Тайлан' }}
             />
             <Stack.Screen
               name="Geofences"
               component={GeofenceScreen}
-              options={{ title: 'Geofences' }}
+              options={{ title: 'Геофенс' }}
             />
             <Stack.Screen
               name="ActivateSubscription"
               component={ActivateSubscriptionScreen}
-              options={{ title: 'Subscription' }}
+              options={{ title: 'Захиалга' }}
             />
           </>
         ) : (

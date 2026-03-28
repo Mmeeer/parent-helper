@@ -1,22 +1,27 @@
 import React, { useState, useRef } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-  ScrollView,
-  ActivityIndicator,
+  View, Text, TextInput, TouchableOpacity,
+  KeyboardAvoidingView, Platform, Alert, ScrollView, ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../store/AuthContext';
+import { C, CARD, LABEL } from '../../theme';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../types';
 
 type Props = {
-  navigation: NativeStackNavigationProp<RootStackParamList, 'Login'>;
+  readonly navigation: NativeStackNavigationProp<RootStackParamList, 'Login'>;
+};
+
+const INPUT = {
+  flexDirection: 'row' as const,
+  alignItems: 'center' as const,
+  backgroundColor: C.bg,
+  borderWidth: 1,
+  borderColor: C.ink200,
+  borderRadius: 12,
+  paddingHorizontal: 16,
+  height: 52,
 };
 
 export default function LoginScreen({ navigation }: Props) {
@@ -29,14 +34,14 @@ export default function LoginScreen({ navigation }: Props) {
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Error', 'Please enter both email and password.');
+      Alert.alert('Алдаа', 'Имэйл болон нууц үгийг оруулна уу.');
       return;
     }
     setLoading(true);
     try {
       await login(email.trim(), password);
     } catch (error: any) {
-      Alert.alert('Login Failed', error.message || 'Invalid credentials.');
+      Alert.alert('Нэвтрэх амжилтгүй', error.message || 'Буруу нэвтрэх мэдээлэл.');
     } finally {
       setLoading(false);
     }
@@ -44,41 +49,37 @@ export default function LoginScreen({ navigation }: Props) {
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-slate-50"
+      className="flex-1 bg-surface-secondary"
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
+        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 28 }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-        className="px-6"
       >
-        {/* Header */}
-        <View className="items-center mb-8">
-          <View className="w-16 h-16 rounded-2xl bg-primary-600 items-center justify-center mb-4 shadow-lg shadow-primary-600/30">
-            <Ionicons name="shield-checkmark" size={32} color="#fff" />
-          </View>
-          <Text className="text-3xl font-bold text-slate-800 tracking-tight">
+        {/* Branding */}
+        <View className="mb-9">
+          <Text style={[LABEL, { marginBottom: 8 }]}>Тавтай морил</Text>
+          <Text className="font-serif text-[36px] text-ink-900" style={{ lineHeight: 42 }}>
             Prime Kids: Parent Helper
           </Text>
-          <Text className="text-base text-slate-500 mt-1">
-            Sign in to protect your family
+          <Text className="text-sm text-ink-400 mt-1.5" style={{ lineHeight: 20 }}>
+            Таны гэр бүлийг хамгаалж байна.
           </Text>
         </View>
 
         {/* Form card */}
-        <View className="bg-white rounded-3xl p-6 shadow-sm shadow-black/5">
+        <View style={{ ...CARD, padding: 24 }}>
           {/* Email */}
           <View className="mb-5">
-            <Text className="text-xs font-semibold text-slate-500 mb-2 tracking-wide uppercase">
-              Email
-            </Text>
-            <View className="flex-row items-center bg-slate-50 rounded-xl border border-slate-200 px-4 h-[52px]">
-              <Ionicons name="mail-outline" size={18} color="#94A3B8" />
+            <Text style={[LABEL, { marginBottom: 8 }]}>Имэйл</Text>
+            <View style={INPUT}>
+              <Ionicons name="mail-outline" size={17} color={C.ink400} />
               <TextInput
-                className="flex-1 ml-3 text-[15px] text-slate-800"
+                className="flex-1 text-base text-ink-900"
+                style={{ marginLeft: 12 }}
                 placeholder="you@example.com"
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={C.ink300}
                 value={email}
                 onChangeText={setEmail}
                 autoCapitalize="none"
@@ -92,16 +93,15 @@ export default function LoginScreen({ navigation }: Props) {
 
           {/* Password */}
           <View className="mb-3">
-            <Text className="text-xs font-semibold text-slate-500 mb-2 tracking-wide uppercase">
-              Password
-            </Text>
-            <View className="flex-row items-center bg-slate-50 rounded-xl border border-slate-200 px-4 h-[52px]">
-              <Ionicons name="lock-closed-outline" size={18} color="#94A3B8" />
+            <Text style={[LABEL, { marginBottom: 8 }]}>Нууц үг</Text>
+            <View style={INPUT}>
+              <Ionicons name="lock-closed-outline" size={17} color={C.ink400} />
               <TextInput
                 ref={passwordRef}
-                className="flex-1 ml-3 text-[15px] text-slate-800"
-                placeholder="Enter your password"
-                placeholderTextColor="#94A3B8"
+                className="flex-1 text-base text-ink-900"
+                style={{ marginLeft: 12 }}
+                placeholder="Нууц үгээ оруулна уу"
+                placeholderTextColor={C.ink300}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={secureText}
@@ -110,11 +110,7 @@ export default function LoginScreen({ navigation }: Props) {
                 onSubmitEditing={handleLogin}
               />
               <TouchableOpacity onPress={() => setSecureText(!secureText)} className="p-1">
-                <Ionicons
-                  name={secureText ? 'eye-off-outline' : 'eye-outline'}
-                  size={20}
-                  color="#94A3B8"
-                />
+                <Ionicons name={secureText ? 'eye-off-outline' : 'eye-outline'} size={18} color={C.ink400} />
               </TouchableOpacity>
             </View>
           </View>
@@ -124,33 +120,29 @@ export default function LoginScreen({ navigation }: Props) {
             className="self-end mb-6"
             onPress={() => navigation.navigate('ForgotPassword')}
           >
-            <Text className="text-sm font-semibold text-primary-600">
-              Forgot Password?
-            </Text>
+            <Text className="text-[13px] font-semibold text-ink-500">Нууц үг мартсан уу?</Text>
           </TouchableOpacity>
 
-          {/* Button */}
+          {/* Sign in button */}
           <TouchableOpacity
-            className={`bg-primary-600 rounded-2xl h-[52px] items-center justify-center ${loading ? 'opacity-70' : ''}`}
+            className="bg-ink-900 rounded-xl items-center justify-center"
+            style={{ height: 52, opacity: loading ? 0.6 : 1 }}
             onPress={handleLogin}
             disabled={loading}
             activeOpacity={0.85}
           >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text className="text-white text-base font-bold tracking-wide">
-                Sign In
-              </Text>
-            )}
+            {loading
+              ? <ActivityIndicator color="#fff" />
+              : <Text className="text-sm font-bold text-white" style={{ letterSpacing: 0.4 }}>Нэвтрэх</Text>
+            }
           </TouchableOpacity>
         </View>
 
-        {/* Sign up link */}
-        <View className="flex-row justify-center mt-7">
-          <Text className="text-sm text-slate-500">Don't have an account? </Text>
+        {/* Sign up */}
+        <View className="flex-row justify-center mt-6">
+          <Text className="text-[13px] text-ink-400">Бүртгэл байхгүй юу? </Text>
           <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-            <Text className="text-sm font-bold text-primary-600">Sign Up</Text>
+            <Text className="text-[13px] font-bold text-ink-900">Бүртгүүлэх</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
