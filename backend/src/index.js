@@ -93,8 +93,20 @@ app.get('/filters', deviceAuth, async (req, res, next) => {
   }
 });
 
-app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+const mongoose = require('mongoose');
+
+// Health check — liveness + readiness (checks DB)
+app.get('/health', async (_req, res) => {
+  const dbReady = mongoose.connection.readyState === 1;
+  const status = dbReady ? 'ok' : 'unhealthy';
+  const code = dbReady ? 200 : 503;
+
+  res.status(code).json({
+    status,
+    timestamp: new Date().toISOString(),
+    uptime: Math.round(process.uptime()),
+    db: dbReady ? 'connected' : 'disconnected',
+  });
 });
 
 app.use(errorHandler);
@@ -141,18 +153,62 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', (reason) => {
     console.log(`[SOCKET] Client disconnected: ${socket.id} (reason: ${reason})`);
+    // Clean up room memberships to prevent stale references
+    const rooms = [...socket.rooms].filter((r) => r !== socket.id);
+    for (const room of rooms) {
+      socket.leave(room);
+    }
   });
 });
 
 const PORT = process.env.PORT || 3000;
 
+let offlineDetectorId = null;
+
 const start = async () => {
   await connectDB();
   initFirebase();
-  startOfflineDetector(io);
+  offlineDetectorId = startOfflineDetector(io);
   server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
 };
+
+// Graceful shutdown
+const shutdown = async (signal) => {
+  console.log(`\n[Shutdown] ${signal} received. Shutting down gracefully...`);
+
+  // Stop accepting new connections
+  server.close(() => {
+    console.log('[Shutdown] HTTP server closed');
+  });
+
+  // Stop background jobs
+  if (offlineDetectorId) clearInterval(offlineDetectorId);
+
+  // Close Socket.io connections
+  io.close(() => {
+    console.log('[Shutdown] Socket.io closed');
+  });
+
+  // Close MongoDB connection
+  try {
+    await mongoose.connection.close();
+    console.log('[Shutdown] MongoDB connection closed');
+  } catch (err) {
+    console.error('[Shutdown] MongoDB close error:', err.message);
+  }
+
+  // Allow 5 seconds for in-flight requests, then force exit
+  setTimeout(() => {
+    console.log('[Shutdown] Forcing exit after timeout');
+    process.exit(1);
+  }, 5000).unref();
+
+  process.exit(0);
+};
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
 
 start();

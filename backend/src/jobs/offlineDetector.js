@@ -6,11 +6,10 @@ const OFFLINE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes without heartbeat
 const CHECK_INTERVAL_MS = 60 * 1000; // Check every minute
 
 function startOfflineDetector(io) {
-  setInterval(async () => {
+  const intervalId = setInterval(async () => {
     try {
       const cutoff = new Date(Date.now() - OFFLINE_THRESHOLD_MS);
 
-      // Find devices that are marked online but haven't sent a heartbeat recently
       const staleDevices = await Device.find({
         paired: true,
         status: 'online',
@@ -21,7 +20,6 @@ function startOfflineDetector(io) {
         device.status = 'offline';
         await device.save();
 
-        // Create alert for the parent
         const alert = await Alert.create({
           parentId: device.parentId,
           childId: device.childId?._id || device.childId,
@@ -33,7 +31,6 @@ function startOfflineDetector(io) {
           },
         });
 
-        // Push real-time notification to parent
         io.to(`parent:${device.parentId}`).emit('alert', alert);
         sendAlertNotification(device.parentId, alert);
       }
@@ -45,6 +42,8 @@ function startOfflineDetector(io) {
       console.error('[OfflineDetector] Error:', err.message);
     }
   }, CHECK_INTERVAL_MS);
+
+  return intervalId;
 }
 
 module.exports = { startOfflineDetector };

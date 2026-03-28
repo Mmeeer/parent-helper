@@ -41,6 +41,11 @@ const geofenceSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  // Track per-child inside/outside state for entry/exit detection
+  childrenInside: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Child',
+  }],
 }, { timestamps: true });
 
 geofenceSchema.index({ childId: 1, parentId: 1 });

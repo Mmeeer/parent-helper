@@ -92,7 +92,7 @@ exports.remove = async (req, res, next) => {
   }
 };
 
-// POST /geofences/check — Called by activity sync to check geofence triggers
+// Called by activity sync to check geofence entry/exit triggers
 exports.checkLocation = async (childId, lat, lng, io) => {
   try {
     const geofences = await Geofence.find({ childId, active: true });
@@ -101,39 +101,70 @@ exports.checkLocation = async (childId, lat, lng, io) => {
     for (const fence of geofences) {
       const distance = getDistanceMeters(lat, lng, fence.lat, fence.lng);
       const isInside = distance <= fence.radiusMeters;
+      const wasInside = (fence.childrenInside || []).some(
+        (id) => id.toString() === childId.toString(),
+      );
 
-      // Simple trigger: if inside a fence zone, check if we should alert
-      // For more sophisticated entry/exit, we'd need to track previous state
-      if (isInside && fence.alertOnEntry) {
-        // Check if we already alerted recently (within 30 min)
-        const recentAlert = await Alert.findOne({
-          childId,
-          type: 'geofence_trigger',
-          'data.geofenceId': fence._id.toString(),
-          createdAt: { $gte: new Date(Date.now() - 30 * 60 * 1000) },
+      // --- ENTRY: was outside, now inside ---
+      if (isInside && !wasInside && fence.alertOnEntry) {
+        // Mark child as inside this fence
+        await Geofence.findByIdAndUpdate(fence._id, {
+          $addToSet: { childrenInside: childId },
         });
 
-        if (!recentAlert) {
-          const alert = await Alert.create({
-            parentId: fence.parentId,
-            childId,
-            type: 'geofence_trigger',
-            message: `Entered zone: ${fence.name}`,
-            data: {
-              geofenceId: fence._id,
-              geofenceName: fence.name,
-              event: 'entry',
-              lat,
-              lng,
-              distance: Math.round(distance),
-            },
-          });
+        const alert = await Alert.create({
+          parentId: fence.parentId,
+          childId,
+          type: 'geofence_trigger',
+          message: `Entered zone: ${fence.name}`,
+          data: {
+            geofenceId: fence._id,
+            geofenceName: fence.name,
+            event: 'entry',
+            lat, lng,
+            distance: Math.round(distance),
+          },
+        });
 
-          if (io) {
-            io.to(`parent:${fence.parentId}`).emit('alert:new', alert);
-          }
-          sendAlertNotification(fence.parentId, alert);
-        }
+        if (io) io.to(`parent:${fence.parentId}`).emit('alert:new', alert);
+        sendAlertNotification(fence.parentId, alert);
+      }
+
+      // --- EXIT: was inside, now outside ---
+      if (!isInside && wasInside && fence.alertOnExit) {
+        // Mark child as outside this fence
+        await Geofence.findByIdAndUpdate(fence._id, {
+          $pull: { childrenInside: childId },
+        });
+
+        const alert = await Alert.create({
+          parentId: fence.parentId,
+          childId,
+          type: 'geofence_trigger',
+          message: `Left zone: ${fence.name}`,
+          data: {
+            geofenceId: fence._id,
+            geofenceName: fence.name,
+            event: 'exit',
+            lat, lng,
+            distance: Math.round(distance),
+          },
+        });
+
+        if (io) io.to(`parent:${fence.parentId}`).emit('alert:new', alert);
+        sendAlertNotification(fence.parentId, alert);
+      }
+
+      // Update state even if no alert is configured (keep tracking accurate)
+      if (isInside && !wasInside && !fence.alertOnEntry) {
+        await Geofence.findByIdAndUpdate(fence._id, {
+          $addToSet: { childrenInside: childId },
+        });
+      }
+      if (!isInside && wasInside && !fence.alertOnExit) {
+        await Geofence.findByIdAndUpdate(fence._id, {
+          $pull: { childrenInside: childId },
+        });
       }
     }
   } catch (err) {
