@@ -1,33 +1,31 @@
 <template>
-  <div class="w-full max-w-sm">
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-      <h1 class="text-xl font-bold text-gray-900 text-center mb-1">Admin Panel</h1>
-      <p class="text-xs text-gray-400 text-center mb-6">Sign in with your admin account</p>
+  <div class="bg-white border border-ink-200 rounded-2xl p-8 shadow-sm">
+    <h2 class="text-sm font-semibold text-ink-800 mb-1">Sign in</h2>
+    <p class="text-xs text-ink-400 mb-6">Enter your admin credentials to continue</p>
 
-      <form @submit.prevent="handleLogin" class="space-y-4">
-        <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">Email</label>
-          <input v-model="email" type="email" required placeholder="admin@parenthelper.com"
-            class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-xs focus:ring-1 focus:ring-primary-500 outline-none" />
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">Password</label>
-          <input v-model="password" type="password" required placeholder="Enter password"
-            class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-xs focus:ring-1 focus:ring-primary-500 outline-none" />
-        </div>
-        <button type="submit" :disabled="loading"
-          class="w-full bg-primary-600 text-white py-2.5 rounded-xl font-semibold text-xs hover:bg-primary-700 disabled:opacity-50 transition">
-          {{ loading ? 'Signing in...' : 'Sign In' }}
-        </button>
-      </form>
-
-      <div class="mt-5 pt-4 border-t border-gray-100">
-        <p class="text-[11px] text-gray-400 text-center mb-2">First time setup?</p>
-        <button :disabled="seeding" @click="handleSeed"
-          class="w-full text-xs text-gray-500 border border-gray-200 py-2 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition">
-          {{ seeding ? 'Creating...' : 'Create Admin Account' }}
-        </button>
+    <form @submit.prevent="handleLogin" class="space-y-4">
+      <div>
+        <label for="email" class="block text-[10px] font-medium text-ink-400 uppercase tracking-widest mb-1.5">Email</label>
+        <input id="email" v-model="email" type="email" required placeholder="admin@example.com"
+          class="w-full px-3.5 py-2.5 bg-ink-50 border border-ink-200 rounded-xl text-sm text-ink-800 placeholder:text-ink-300 focus:outline-none focus:border-ink-400 focus:ring-1 focus:ring-ink-300 transition" />
       </div>
+      <div>
+        <label for="password" class="block text-[10px] font-medium text-ink-400 uppercase tracking-widest mb-1.5">Password</label>
+        <input id="password" v-model="password" type="password" required placeholder="••••••••"
+          class="w-full px-3.5 py-2.5 bg-ink-50 border border-ink-200 rounded-xl text-sm text-ink-800 placeholder:text-ink-300 focus:outline-none focus:border-ink-400 focus:ring-1 focus:ring-ink-300 transition" />
+      </div>
+      <button type="submit" :disabled="loading"
+        class="w-full bg-ink-900 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-ink-800 disabled:opacity-50 transition mt-1">
+        {{ loading ? 'Signing in...' : 'Sign In' }}
+      </button>
+    </form>
+
+    <div class="mt-5 pt-4 border-t border-ink-100">
+      <p class="text-[11px] text-ink-400 text-center mb-2">First time setup?</p>
+      <button :disabled="seeding" @click="handleSeed"
+        class="w-full text-xs text-ink-500 border border-ink-200 py-2 rounded-xl hover:bg-ink-50 disabled:opacity-50 transition">
+        {{ seeding ? 'Creating...' : 'Create Admin Account' }}
+      </button>
     </div>
   </div>
 </template>

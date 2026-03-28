@@ -1,13 +1,13 @@
 <template>
-  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+  <div class="bg-white rounded-xl border border-ink-100 p-5">
     <div class="flex items-center justify-between mb-2">
-      <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">{{ label }}</span>
+      <span class="text-[10px] font-medium text-ink-400 uppercase tracking-widest">{{ label }}</span>
       <span v-if="icon" class="w-8 h-8 flex items-center justify-center rounded-lg" :class="iconBg">
         <span v-html="icon" class="w-4 h-4 text-current"></span>
       </span>
     </div>
-    <div class="text-2xl font-bold" :class="valueColor">{{ value }}</div>
-    <div v-if="subtitle" class="text-xs text-gray-400 mt-1">{{ subtitle }}</div>
+    <div class="font-serif italic text-2xl font-semibold" :class="valueColor">{{ value }}</div>
+    <div v-if="subtitle" class="text-xs text-ink-400 mt-1">{{ subtitle }}</div>
   </div>
 </template>
 
@@ -21,12 +21,12 @@ const props = defineProps<{
 }>();
 
 const colorMap: Record<string, { value: string; bg: string }> = {
-  blue: { value: 'text-blue-600', bg: 'bg-blue-50 text-blue-500' },
+  blue: { value: 'text-ac-500', bg: 'bg-ac-500/10 text-ac-500' },
   green: { value: 'text-green-600', bg: 'bg-green-50 text-green-500' },
   red: { value: 'text-red-600', bg: 'bg-red-50 text-red-500' },
   yellow: { value: 'text-yellow-600', bg: 'bg-yellow-50 text-yellow-500' },
   purple: { value: 'text-purple-600', bg: 'bg-purple-50 text-purple-500' },
-  gray: { value: 'text-gray-700', bg: 'bg-gray-50 text-gray-500' },
+  gray: { value: 'text-ink-700', bg: 'bg-ink-100 text-ink-500' },
 };
 
 const c = colorMap[props.color || 'blue'];

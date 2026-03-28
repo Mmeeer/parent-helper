@@ -3,25 +3,25 @@
     <PageHeader title="Content Filters" subtitle="Manage the domain categorization database" :breadcrumbs="[{ label: 'Filters' }]" />
 
     <!-- Add Domain -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
-      <h2 class="text-sm font-semibold text-gray-800 mb-3">Add Domain</h2>
+    <div class="bg-white rounded-xl border border-ink-100 p-5 mb-6">
+      <h2 class="text-sm font-semibold text-ink-800 mb-3">Add Domain</h2>
       <form @submit.prevent="handleAddDomain" class="flex flex-wrap gap-3 items-end">
         <div class="flex-1 min-w-[200px]">
-          <label class="block text-[11px] font-medium text-gray-400 mb-1">Domain</label>
-          <input v-model="newDomain" type="text" placeholder="example.com"
-            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs focus:ring-1 focus:ring-primary-500 outline-none" />
+          <label for="new-domain" class="block text-[10px] font-medium text-ink-400 uppercase tracking-widest mb-1.5">Domain</label>
+          <input id="new-domain" v-model="newDomain" type="text" placeholder="example.com"
+            class="w-full px-3 py-2 border border-ink-200 rounded-lg text-xs focus:ring-1 focus:ring-ac-500 outline-none text-ink-700 placeholder:text-ink-300" />
         </div>
         <div>
-          <label class="block text-[11px] font-medium text-gray-400 mb-1">Category</label>
-          <select v-model="newCategory"
-            class="px-3 py-2 border border-gray-200 rounded-lg text-xs bg-white focus:ring-1 focus:ring-primary-500 outline-none">
+          <label for="new-category" class="block text-[10px] font-medium text-ink-400 uppercase tracking-widest mb-1.5">Category</label>
+          <select id="new-category" v-model="newCategory"
+            class="px-3 py-2 border border-ink-200 rounded-lg text-xs bg-white focus:ring-1 focus:ring-ac-500 outline-none text-ink-700">
             <option value="" disabled>Select category</option>
             <option v-for="cat in categories" :key="cat" :value="cat">{{ formatCategory(cat) }}</option>
           </select>
         </div>
         <button type="submit" :disabled="!newDomain || !newCategory || adding"
-          class="px-4 py-2 bg-primary-600 text-white rounded-lg text-xs font-semibold hover:bg-primary-700 disabled:opacity-50 transition">
-          {{ adding ? 'Adding...' : 'Add' }}
+          class="px-4 py-2 bg-ink-900 text-white rounded-lg text-xs font-semibold hover:bg-ink-800 disabled:opacity-50 transition">
+          {{ adding ? 'Adding...' : 'Add Domain' }}
         </button>
       </form>
     </div>
@@ -29,23 +29,22 @@
     <LoadingSkeleton v-if="loading" type="block" :count="3" wrapper-class="space-y-4" />
 
     <template v-else>
-      <!-- Filters by Category -->
       <div v-for="cat in categories" :key="cat" class="mb-5">
         <div class="flex items-center gap-2 mb-2">
-          <h3 class="text-xs font-semibold text-gray-800">{{ formatCategory(cat) }}</h3>
+          <h3 class="text-xs font-semibold text-ink-700 uppercase tracking-widest">{{ formatCategory(cat) }}</h3>
           <Badge :label="String(domainsByCategory(cat).length)" variant="gray" />
         </div>
 
-        <div v-if="domainsByCategory(cat).length" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div v-if="domainsByCategory(cat).length" class="bg-white rounded-xl border border-ink-100 overflow-hidden">
           <div v-for="(entry, index) in domainsByCategory(cat)" :key="entry.domain"
             class="flex items-center justify-between px-4 py-2.5 text-xs"
-            :class="{ 'border-b border-gray-50': index < domainsByCategory(cat).length - 1 }">
-            <span class="text-gray-700 font-mono">{{ entry.domain }}</span>
+            :class="{ 'border-b border-ink-50': index < domainsByCategory(cat).length - 1 }">
+            <span class="text-ink-700 font-mono">{{ entry.domain }}</span>
             <button @click="confirmRemove(entry.domain)"
-              class="text-red-500 hover:text-red-700 font-medium transition">Remove</button>
+              class="text-red-500 hover:text-red-700 font-medium transition text-[11px]">Remove</button>
           </div>
         </div>
-        <p v-else class="text-xs text-gray-400 italic py-2">No domains in this category.</p>
+        <p v-else class="text-xs text-ink-400 italic py-1">No domains in this category.</p>
       </div>
     </template>
 
@@ -75,7 +74,7 @@ function domainsByCategory(cat: string) {
 }
 
 function formatCategory(cat: string) {
-  return cat.charAt(0).toUpperCase() + cat.slice(1).replace(/_/g, ' ');
+  return cat.charAt(0).toUpperCase() + cat.slice(1).replaceAll('_', ' ');
 }
 
 async function handleAddDomain() {

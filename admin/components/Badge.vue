@@ -1,5 +1,5 @@
 <template>
-  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium" :class="classes">
+  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide" :class="classes">
     {{ label }}
   </span>
 </template>
@@ -11,12 +11,12 @@ const props = defineProps<{
 }>();
 
 const variantMap: Record<string, string> = {
-  green: 'bg-green-100 text-green-700',
-  red: 'bg-red-100 text-red-700',
-  yellow: 'bg-yellow-100 text-yellow-700',
-  blue: 'bg-blue-100 text-blue-700',
-  gray: 'bg-gray-100 text-gray-600',
-  purple: 'bg-purple-100 text-purple-700',
+  green: 'bg-green-50 text-green-700',
+  red: 'bg-red-50 text-red-700',
+  yellow: 'bg-yellow-50 text-yellow-700',
+  blue: 'bg-ac-500/10 text-ac-600',
+  gray: 'bg-ink-100 text-ink-500',
+  purple: 'bg-purple-50 text-purple-700',
 };
 
 const classes = variantMap[props.variant || 'gray'];
