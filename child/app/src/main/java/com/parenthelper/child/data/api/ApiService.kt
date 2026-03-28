@@ -22,4 +22,7 @@ interface ApiService {
 
     @POST("devices/sync-apps")
     suspend fun syncInstalledApps(@Body request: InstalledAppsSyncRequest): InstalledAppsSyncResponse
+
+    @POST("devices/sos")
+    suspend fun sendSos(@Body request: SosRequest): SosResponse
 }

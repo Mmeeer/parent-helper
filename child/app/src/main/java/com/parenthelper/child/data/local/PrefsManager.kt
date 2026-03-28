@@ -10,7 +10,7 @@ import com.google.gson.Gson
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "parent_helper_prefs")
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "prime_kids_prefs")
 
 class PrefsManager(private val context: Context) {
 

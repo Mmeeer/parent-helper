@@ -1,9 +1,17 @@
-import React, { useState } from 'react';
-import { View, KeyboardAvoidingView, Platform, Alert, Pressable, ScrollView } from 'react-native';
-import { Text, TextInput, Button } from 'react-native-paper';
+import React, { useState, useRef } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+  ScrollView,
+  ActivityIndicator,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../store/AuthContext';
-import { colors } from '../../theme';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../types';
 
@@ -20,6 +28,10 @@ export default function RegisterScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(false);
   const [secureText, setSecureText] = useState(true);
   const [secureConfirm, setSecureConfirm] = useState(true);
+
+  const emailRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInput>(null);
+  const confirmRef = useRef<TextInput>(null);
 
   const handleRegister = async () => {
     if (!name.trim() || !email.trim() || !password.trim()) {
@@ -47,131 +59,154 @@ export default function RegisterScreen({ navigation }: Props) {
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-surface-secondary"
+      className="flex-1 bg-slate-50"
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView
         contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
         keyboardShouldPersistTaps="handled"
-        className="px-8"
+        showsVerticalScrollIndicator={false}
+        className="px-6"
       >
         {/* Header */}
-        <View className="items-center mb-8 pt-12">
-          <View className="w-14 h-14 rounded-2xl bg-primary-600 items-center justify-center mb-4">
-            <Text className="text-white text-xl font-bold">PH</Text>
+        <View className="items-center mb-7">
+          <View className="w-[60px] h-[60px] rounded-2xl bg-primary-600 items-center justify-center mb-3.5 shadow-lg shadow-primary-600/30">
+            <Ionicons name="person-add" size={28} color="#fff" />
           </View>
-          <Text
-            variant="headlineMedium"
-            className="text-primary-600 font-bold text-center"
-          >
+          <Text className="text-[26px] font-bold text-slate-800 tracking-tight">
             Create Account
           </Text>
-          <Text
-            variant="bodyLarge"
-            className="text-slate-500 text-center mt-1"
-          >
+          <Text className="text-[15px] text-slate-500 mt-1">
             Set up your parent account
           </Text>
         </View>
 
-        {/* Form */}
-        <View className="gap-4">
-          <TextInput
-            mode="outlined"
-            label="Full Name"
-            placeholder="John Doe"
-            value={name}
-            onChangeText={setName}
-            autoComplete="name"
-            left={<TextInput.Icon icon={() => <Ionicons name="person-outline" size={20} color={colors.textSecondary} />} />}
-            outlineColor={colors.border}
-            activeOutlineColor={colors.primary}
-            outlineStyle={{ borderRadius: 12 }}
-            theme={{ colors: { background: colors.white } }}
-          />
-
-          <TextInput
-            mode="outlined"
-            label="Email"
-            placeholder="you@example.com"
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            keyboardType="email-address"
-            autoComplete="email"
-            left={<TextInput.Icon icon={() => <Ionicons name="mail-outline" size={20} color={colors.textSecondary} />} />}
-            outlineColor={colors.border}
-            activeOutlineColor={colors.primary}
-            outlineStyle={{ borderRadius: 12 }}
-            theme={{ colors: { background: colors.white } }}
-          />
-
-          <TextInput
-            mode="outlined"
-            label="Password"
-            placeholder="Min. 8 characters"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={secureText}
-            autoComplete="new-password"
-            left={<TextInput.Icon icon={() => <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} />} />}
-            right={
-              <TextInput.Icon
-                icon={() => <Ionicons name={secureText ? 'eye-off-outline' : 'eye-outline'} size={20} color={colors.textSecondary} />}
-                onPress={() => setSecureText(!secureText)}
+        {/* Form card */}
+        <View className="bg-white rounded-3xl p-6 shadow-sm shadow-black/5">
+          {/* Name */}
+          <View className="mb-5">
+            <Text className="text-xs font-semibold text-slate-500 mb-2 tracking-wide uppercase">
+              Full Name
+            </Text>
+            <View className="flex-row items-center bg-slate-50 rounded-xl border border-slate-200 px-4 h-[52px]">
+              <Ionicons name="person-outline" size={18} color="#94A3B8" />
+              <TextInput
+                className="flex-1 ml-3 text-[15px] text-slate-800"
+                placeholder="John Doe"
+                placeholderTextColor="#94A3B8"
+                value={name}
+                onChangeText={setName}
+                autoComplete="name"
+                returnKeyType="next"
+                onSubmitEditing={() => emailRef.current?.focus()}
               />
-            }
-            outlineColor={colors.border}
-            activeOutlineColor={colors.primary}
-            outlineStyle={{ borderRadius: 12 }}
-            theme={{ colors: { background: colors.white } }}
-          />
+            </View>
+          </View>
 
-          <TextInput
-            mode="outlined"
-            label="Confirm Password"
-            placeholder="Re-enter password"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            secureTextEntry={secureConfirm}
-            left={<TextInput.Icon icon={() => <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} />} />}
-            right={
-              <TextInput.Icon
-                icon={() => <Ionicons name={secureConfirm ? 'eye-off-outline' : 'eye-outline'} size={20} color={colors.textSecondary} />}
-                onPress={() => setSecureConfirm(!secureConfirm)}
+          {/* Email */}
+          <View className="mb-5">
+            <Text className="text-xs font-semibold text-slate-500 mb-2 tracking-wide uppercase">
+              Email
+            </Text>
+            <View className="flex-row items-center bg-slate-50 rounded-xl border border-slate-200 px-4 h-[52px]">
+              <Ionicons name="mail-outline" size={18} color="#94A3B8" />
+              <TextInput
+                ref={emailRef}
+                className="flex-1 ml-3 text-[15px] text-slate-800"
+                placeholder="you@example.com"
+                placeholderTextColor="#94A3B8"
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                autoComplete="email"
+                returnKeyType="next"
+                onSubmitEditing={() => passwordRef.current?.focus()}
               />
-            }
-            outlineColor={colors.border}
-            activeOutlineColor={colors.primary}
-            outlineStyle={{ borderRadius: 12 }}
-            theme={{ colors: { background: colors.white } }}
-          />
+            </View>
+          </View>
 
-          <Button
-            mode="contained"
+          {/* Password */}
+          <View className="mb-5">
+            <Text className="text-xs font-semibold text-slate-500 mb-2 tracking-wide uppercase">
+              Password
+            </Text>
+            <View className="flex-row items-center bg-slate-50 rounded-xl border border-slate-200 px-4 h-[52px]">
+              <Ionicons name="lock-closed-outline" size={18} color="#94A3B8" />
+              <TextInput
+                ref={passwordRef}
+                className="flex-1 ml-3 text-[15px] text-slate-800"
+                placeholder="Min. 8 characters"
+                placeholderTextColor="#94A3B8"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={secureText}
+                autoComplete="new-password"
+                returnKeyType="next"
+                onSubmitEditing={() => confirmRef.current?.focus()}
+              />
+              <TouchableOpacity onPress={() => setSecureText(!secureText)} className="p-1">
+                <Ionicons
+                  name={secureText ? 'eye-off-outline' : 'eye-outline'}
+                  size={20}
+                  color="#94A3B8"
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Confirm Password */}
+          <View className="mb-6">
+            <Text className="text-xs font-semibold text-slate-500 mb-2 tracking-wide uppercase">
+              Confirm Password
+            </Text>
+            <View className="flex-row items-center bg-slate-50 rounded-xl border border-slate-200 px-4 h-[52px]">
+              <Ionicons name="lock-closed-outline" size={18} color="#94A3B8" />
+              <TextInput
+                ref={confirmRef}
+                className="flex-1 ml-3 text-[15px] text-slate-800"
+                placeholder="Re-enter password"
+                placeholderTextColor="#94A3B8"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry={secureConfirm}
+                returnKeyType="go"
+                onSubmitEditing={handleRegister}
+              />
+              <TouchableOpacity onPress={() => setSecureConfirm(!secureConfirm)} className="p-1">
+                <Ionicons
+                  name={secureConfirm ? 'eye-off-outline' : 'eye-outline'}
+                  size={20}
+                  color="#94A3B8"
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Button */}
+          <TouchableOpacity
+            className={`bg-primary-600 rounded-2xl h-[52px] items-center justify-center ${loading ? 'opacity-70' : ''}`}
             onPress={handleRegister}
-            loading={loading}
             disabled={loading}
-            buttonColor={colors.primary}
-            textColor={colors.white}
-            contentStyle={{ paddingVertical: 6 }}
-            labelStyle={{ fontSize: 16, fontWeight: '600' }}
-            className="mt-2 rounded-xl"
+            activeOpacity={0.85}
           >
-            Create Account
-          </Button>
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text className="text-white text-base font-bold tracking-wide">
+                Create Account
+              </Text>
+            )}
+          </TouchableOpacity>
         </View>
 
-        {/* Link */}
-        <Pressable
-          className="items-center mt-6 pb-8"
-          onPress={() => navigation.goBack()}
-        >
-          <Text variant="bodyMedium" className="text-slate-500">
-            Already have an account?{' '}
-            <Text className="text-primary-600 font-semibold">Sign In</Text>
-          </Text>
-        </Pressable>
+        {/* Sign in link */}
+        <View className="flex-row justify-center mt-7">
+          <Text className="text-sm text-slate-500">Already have an account? </Text>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Text className="text-sm font-bold text-primary-600">Sign In</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );

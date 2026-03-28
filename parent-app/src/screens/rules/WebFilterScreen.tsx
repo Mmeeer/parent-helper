@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import { View, ScrollView, Alert } from 'react-native';
-import { Surface, Text, TextInput, Button, IconButton, Switch, Divider } from 'react-native-paper';
+import { View, ScrollView, Alert, TextInput, Switch, TouchableOpacity, Text, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../../theme';
 import { WEB_FILTER_CATEGORIES } from '../../utils/constants';
 import * as api from '../../services/api';
 import type { RouteProp } from '@react-navigation/native';
@@ -69,138 +67,118 @@ export default function WebFilterScreen({ route }: Props) {
   return (
     <ScrollView className="flex-1 bg-surface-secondary">
       {/* Category Filters */}
-      <Surface className="mx-4 mt-4 rounded-2xl p-4" elevation={1}>
-        <Text variant="titleMedium" className="font-bold text-slate-800">
+      <View className="mx-4 mt-4 rounded-2xl p-4 bg-white shadow-sm shadow-black/5">
+        <Text className="text-base font-bold text-slate-800">
           Content Categories
         </Text>
-        <Text variant="bodySmall" className="text-slate-500 mt-1 mb-3">
+        <Text className="text-xs text-slate-500 mt-1 mb-3">
           Block websites in these categories.
         </Text>
 
         {WEB_FILTER_CATEGORIES.map((cat, index) => (
           <View key={cat}>
             <View className="flex-row justify-between items-center py-2.5">
-              <Text variant="bodyMedium" className="text-slate-800">
+              <Text className="text-sm text-slate-800">
                 {formatCategory(cat)}
               </Text>
               <Switch
                 value={categories.includes(cat)}
                 onValueChange={() => toggleCategory(cat)}
-                color={colors.primary}
+                trackColor={{ true: '#4F46E5', false: '#E2E8F0' }}
+                thumbColor="#FFFFFF"
               />
             </View>
-            {index < WEB_FILTER_CATEGORIES.length - 1 && <Divider />}
+            {index < WEB_FILTER_CATEGORIES.length - 1 && <View className="h-px bg-slate-200" />}
           </View>
         ))}
-      </Surface>
+      </View>
 
       {/* Custom Block List */}
-      <Surface className="mx-4 mt-4 rounded-2xl p-4" elevation={1}>
-        <Text variant="titleMedium" className="font-bold text-slate-800">
+      <View className="mx-4 mt-4 rounded-2xl p-4 bg-white shadow-sm shadow-black/5">
+        <Text className="text-base font-bold text-slate-800">
           Custom Blocked Domains
         </Text>
         <View className="flex-row gap-2 mt-2 mb-2">
           <TextInput
-            mode="outlined"
             value={newBlockDomain}
             onChangeText={setNewBlockDomain}
             placeholder="example.com"
             autoCapitalize="none"
             autoCorrect={false}
             onSubmitEditing={() => addDomain('block')}
-            className="flex-1 bg-white"
-            outlineColor={colors.border}
-            activeOutlineColor={colors.primary}
-            dense
+            className="flex-1 bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm text-slate-800"
           />
-          <IconButton
-            icon={() => <Ionicons name="add" size={22} color={colors.white} />}
-            mode="contained"
-            containerColor={colors.primary}
-            iconColor={colors.white}
-            size={22}
+          <TouchableOpacity
+            className="w-10 h-10 rounded-xl bg-primary-600 items-center justify-center self-center"
             onPress={() => addDomain('block')}
-          />
+          >
+            <Ionicons name="add" size={22} color="#FFFFFF" />
+          </TouchableOpacity>
         </View>
         {customBlock.map((domain, index) => (
           <View key={index} className="flex-row items-center py-2 gap-2">
-            <Ionicons name="ban" size={16} color={colors.danger} />
-            <Text variant="bodyMedium" className="flex-1 text-slate-800">
+            <Ionicons name="ban" size={16} color="#E11D48" />
+            <Text className="flex-1 text-sm text-slate-800">
               {domain}
             </Text>
-            <IconButton
-              icon={() => <Ionicons name="close-circle-outline" size={18} color={colors.textLight} />}
-              size={18}
-              iconColor={colors.textLight}
-              onPress={() => removeDomain('block', index)}
-              className="m-0"
-            />
+            <TouchableOpacity onPress={() => removeDomain('block', index)} className="p-1">
+              <Ionicons name="close-circle-outline" size={18} color="#64748B" />
+            </TouchableOpacity>
           </View>
         ))}
-      </Surface>
+      </View>
 
       {/* Custom Allow List */}
-      <Surface className="mx-4 mt-4 rounded-2xl p-4" elevation={1}>
-        <Text variant="titleMedium" className="font-bold text-slate-800">
+      <View className="mx-4 mt-4 rounded-2xl p-4 bg-white shadow-sm shadow-black/5">
+        <Text className="text-base font-bold text-slate-800">
           Custom Allowed Domains
         </Text>
-        <Text variant="bodySmall" className="text-slate-500 mt-1 mb-2">
+        <Text className="text-xs text-slate-500 mt-1 mb-2">
           These domains will always be accessible, even if their category is blocked.
         </Text>
         <View className="flex-row gap-2 mt-1 mb-2">
           <TextInput
-            mode="outlined"
             value={newAllowDomain}
             onChangeText={setNewAllowDomain}
             placeholder="example.com"
             autoCapitalize="none"
             autoCorrect={false}
             onSubmitEditing={() => addDomain('allow')}
-            className="flex-1 bg-white"
-            outlineColor={colors.border}
-            activeOutlineColor={colors.secondary}
-            dense
+            className="flex-1 bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm text-slate-800"
           />
-          <IconButton
-            icon={() => <Ionicons name="add" size={22} color={colors.white} />}
-            mode="contained"
-            containerColor={colors.secondary}
-            iconColor={colors.white}
-            size={22}
+          <TouchableOpacity
+            className="w-10 h-10 rounded-xl bg-accent-600 items-center justify-center self-center"
             onPress={() => addDomain('allow')}
-          />
+          >
+            <Ionicons name="add" size={22} color="#FFFFFF" />
+          </TouchableOpacity>
         </View>
         {customAllow.map((domain, index) => (
           <View key={index} className="flex-row items-center py-2 gap-2">
-            <Ionicons name="checkmark-circle" size={16} color={colors.secondary} />
-            <Text variant="bodyMedium" className="flex-1 text-slate-800">
+            <Ionicons name="checkmark-circle" size={16} color="#0D9488" />
+            <Text className="flex-1 text-sm text-slate-800">
               {domain}
             </Text>
-            <IconButton
-              icon={() => <Ionicons name="close-circle-outline" size={18} color={colors.textLight} />}
-              size={18}
-              iconColor={colors.textLight}
-              onPress={() => removeDomain('allow', index)}
-              className="m-0"
-            />
+            <TouchableOpacity onPress={() => removeDomain('allow', index)} className="p-1">
+              <Ionicons name="close-circle-outline" size={18} color="#64748B" />
+            </TouchableOpacity>
           </View>
         ))}
-      </Surface>
+      </View>
 
       {/* Save Button */}
       <View className="mx-4 mt-6">
-        <Button
-          mode="contained"
+        <TouchableOpacity
+          className="bg-primary-600 rounded-xl py-3 items-center justify-center"
           onPress={handleSave}
-          loading={saving}
           disabled={saving}
-          buttonColor={colors.primary}
-          textColor={colors.white}
-          contentStyle={{ paddingVertical: 8 }}
-          className="rounded-xl"
         >
-          Save Changes
-        </Button>
+          {saving ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text className="text-white font-bold text-base">Save Changes</Text>
+          )}
+        </TouchableOpacity>
       </View>
 
       <View className="h-10" />

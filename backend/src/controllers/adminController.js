@@ -15,7 +15,7 @@ exports.seed = async (req, res, next) => {
       return res.status(409).json({ error: 'Admin account already exists' });
     }
 
-    const adminEmail = process.env.ADMIN_EMAIL || 'admin@parenthelper.com';
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@primekids.com';
     const adminPassword = process.env.ADMIN_PASSWORD || 'admin123456';
 
     const admin = new User({

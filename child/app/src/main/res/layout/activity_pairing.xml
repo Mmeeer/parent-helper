@@ -1,85 +1,117 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center"
-    android:orientation="vertical"
-    android:padding="32dp">
+    android:background="@color/background"
+    android:fillViewport="true">
 
-    <ImageView
-        android:layout_width="96dp"
-        android:layout_height="96dp"
-        android:layout_marginBottom="32dp"
-        android:contentDescription="@string/app_name"
-        android:src="@mipmap/ic_launcher" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:text="@string/pairing_title"
-        android:textSize="24sp"
-        android:textStyle="bold" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="32dp"
-        android:gravity="center"
-        android:text="@string/pairing_instruction"
-        android:textSize="14sp" />
-
-    <com.google.android.material.textfield.TextInputLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp">
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingHorizontal="32dp"
+        android:paddingTop="80dp"
+        android:paddingBottom="32dp">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etPairingCode"
+        <!-- Shield icon -->
+        <ImageView
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:layout_marginBottom="24dp"
+            android:contentDescription="@string/app_name"
+            android:src="@drawable/ic_shield_check" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="@string/pairing_title"
+            android:textColor="@color/text_primary"
+            android:textSize="26sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="40dp"
+            android:gravity="center"
+            android:text="@string/pairing_instruction"
+            android:textColor="@color/text_secondary"
+            android:textSize="15sp"
+            android:lineSpacingExtra="3dp" />
+
+        <!-- Pairing code input -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/pairing_hint"
-            android:inputType="textCapCharacters"
-            android:maxLength="6"
-            android:textAlignment="center"
-            android:textSize="24sp"
-            android:letterSpacing="0.3" />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:background="@drawable/bg_card"
+            android:elevation="2dp"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingHorizontal="24dp"
+            android:paddingTop="28dp"
+            android:paddingBottom="24dp"
+            android:layout_marginBottom="20dp">
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="24dp"
-        android:hint="Server URL (optional)">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PAIRING CODE"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.15"
+                android:layout_marginBottom="12dp" />
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etServerUrl"
+            <EditText
+                android:id="@+id/etPairingCode"
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:background="@drawable/bg_code_input"
+                android:gravity="center"
+                android:hint="– – – – – –"
+                android:textColorHint="@color/text_hint"
+                android:inputType="textCapCharacters|textNoSuggestions"
+                android:maxLength="6"
+                android:textAlignment="center"
+                android:textColor="@color/text_primary"
+                android:textSize="32sp"
+                android:letterSpacing="0.5"
+                android:textStyle="bold"
+                android:importantForAutofill="no"
+                android:maxLines="1" />
+
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnPair"
             android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="@string/pairing_button"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:backgroundTint="@color/primary"
+            android:textColor="@color/white"
+            android:letterSpacing="0.05" />
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:inputType="textUri"
-            android:textSize="14sp" />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:layout_marginTop="16dp"
+            android:visibility="gone"
+            android:indeterminateTint="@color/primary" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnPair"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:text="@string/pairing_button"
-        android:textSize="16sp" />
+        <TextView
+            android:id="@+id/tvError"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:textColor="@color/status_error"
+            android:textSize="14sp"
+            android:gravity="center"
+            android:visibility="gone" />
 
-    <ProgressBar
-        android:id="@+id/progressBar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:visibility="gone" />
-
-    <TextView
-        android:id="@+id/tvError"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:textColor="@android:color/holo_red_dark"
-        android:visibility="gone" />
-
-</LinearLayout>
+    </LinearLayout>
+</ScrollView>

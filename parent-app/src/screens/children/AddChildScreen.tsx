@@ -4,9 +4,11 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
-import { TextInput, Button, Text } from 'react-native-paper';
-import { colors } from '../../theme';
 import * as api from '../../services/api';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../types';
@@ -48,48 +50,46 @@ export default function AddChildScreen({ navigation }: Props) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View className="p-6">
-        <Text variant="headlineSmall" className="mb-6 font-bold text-slate-800">
+        <Text className="text-xl font-bold mb-6 text-slate-800">
           Add Child Profile
         </Text>
 
-        <TextInput
-          mode="outlined"
-          label="Child's Name"
-          placeholder="Enter name"
-          value={name}
-          onChangeText={setName}
-          autoFocus
-          outlineColor={colors.border}
-          activeOutlineColor={colors.primary}
-          className="mb-4 bg-white"
-        />
+        <View className="mb-4">
+          <Text className="text-sm font-semibold text-slate-700 mb-1.5">Child's Name</Text>
+          <TextInput
+            placeholder="Enter name"
+            value={name}
+            onChangeText={setName}
+            autoFocus
+            className="bg-white border border-slate-300 rounded-xl px-4 py-3 text-base text-slate-800"
+            placeholderTextColor="#94A3B8"
+          />
+        </View>
 
-        <TextInput
-          mode="outlined"
-          label="Age"
-          placeholder="Enter age (1-18)"
-          value={age}
-          onChangeText={setAge}
-          keyboardType="number-pad"
-          maxLength={2}
-          outlineColor={colors.border}
-          activeOutlineColor={colors.primary}
-          className="mb-8 bg-white"
-        />
+        <View className="mb-8">
+          <Text className="text-sm font-semibold text-slate-700 mb-1.5">Age</Text>
+          <TextInput
+            placeholder="Enter age (1-18)"
+            value={age}
+            onChangeText={setAge}
+            keyboardType="number-pad"
+            maxLength={2}
+            className="bg-white border border-slate-300 rounded-xl px-4 py-3 text-base text-slate-800"
+            placeholderTextColor="#94A3B8"
+          />
+        </View>
 
-        <Button
-          mode="contained"
+        <TouchableOpacity
           onPress={handleCreate}
           disabled={loading}
-          loading={loading}
-          buttonColor={colors.primary}
-          textColor="#FFFFFF"
-          contentStyle={{ paddingVertical: 6 }}
-          className="rounded-xl"
-          labelStyle={{ fontSize: 18, fontWeight: '600' }}
+          className={`bg-primary-600 rounded-xl py-3.5 items-center ${loading ? 'opacity-60' : ''}`}
         >
-          Add Child
-        </Button>
+          {loading ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text className="text-white font-bold text-lg">Add Child</Text>
+          )}
+        </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
   );

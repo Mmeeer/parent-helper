@@ -1,7 +1,7 @@
 {
-  "name": "parent-helper-backend",
+  "name": "prime-kids-backend",
   "version": "1.0.0",
-  "description": "Backend API for Parent Helper parental control app",
+  "description": "Backend API for Prime Kids parental control app",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",

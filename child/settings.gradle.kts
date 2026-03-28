@@ -20,5 +20,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "ParentHelper Child"
+rootProject.name = "Prime Kids"
 include(":app")

@@ -1,6 +1,3 @@
-import { MD3LightTheme } from 'react-native-paper';
-import type { MD3Theme } from 'react-native-paper';
-
 export const colors = {
   primary: '#4F46E5',
   primaryLight: '#E0E7FF',
@@ -27,37 +24,4 @@ export const colors = {
   black: '#000000',
   online: '#16A34A',
   offline: '#94A3B8',
-};
-
-export const theme: MD3Theme = {
-  ...MD3LightTheme,
-  colors: {
-    ...MD3LightTheme.colors,
-    primary: colors.primary,
-    primaryContainer: '#E0E7FF',
-    onPrimaryContainer: '#312E81',
-    secondary: colors.secondary,
-    secondaryContainer: '#CCFBF1',
-    onSecondaryContainer: '#0F766E',
-    tertiary: '#7C3AED',
-    tertiaryContainer: '#EDE9FE',
-    error: colors.danger,
-    errorContainer: '#FFE4E6',
-    background: colors.background,
-    surface: colors.surface,
-    surfaceVariant: '#F1F5F9',
-    onSurface: colors.text,
-    onSurfaceVariant: '#64748B',
-    outline: '#CBD5E1',
-    outlineVariant: '#E2E8F0',
-    elevation: {
-      level0: 'transparent',
-      level1: '#FFFFFF',
-      level2: '#F8FAFC',
-      level3: '#F1F5F9',
-      level4: '#E2E8F0',
-      level5: '#CBD5E1',
-    },
-  },
-  roundness: 12,
 };

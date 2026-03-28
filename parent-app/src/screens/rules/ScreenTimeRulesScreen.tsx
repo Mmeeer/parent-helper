@@ -1,18 +1,18 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { View, ScrollView, Alert, Modal, FlatList } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from '@react-navigation/native';
 import {
-  Surface,
+  View,
+  ScrollView,
+  Alert,
+  Modal,
+  FlatList,
   Text,
   TextInput,
-  Button,
-  Chip,
-  IconButton,
+  TouchableOpacity,
+  Pressable,
   ActivityIndicator,
-  TouchableRipple,
-} from 'react-native-paper';
-import { colors } from '../../theme';
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { DAYS_OF_WEEK } from '../../utils/constants';
 import { formatDuration } from '../../utils/formatters';
 import * as api from '../../services/api';
@@ -169,7 +169,7 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
   if (loading) {
     return (
       <View className="flex-1 justify-center items-center bg-surface-secondary">
-        <ActivityIndicator size="large" color={colors.primary} />
+        <ActivityIndicator size="large" color="#4F46E5" />
       </View>
     );
   }
@@ -178,24 +178,20 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
     <>
     <ScrollView className="flex-1 bg-surface-secondary">
       {/* Daily Limit */}
-      <Surface className="mx-4 mt-4 rounded-2xl p-4" elevation={1}>
-        <Text variant="titleMedium" className="font-bold text-slate-800">
+      <View className="mx-4 mt-4 rounded-2xl p-4 bg-white shadow-sm shadow-black/5">
+        <Text className="text-base font-bold text-slate-800">
           Daily Screen Time Limit
         </Text>
         <View className="flex-row items-center mt-3 gap-2">
           <TextInput
-            mode="outlined"
+            className="w-24 text-center bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm text-slate-800"
             value={dailyLimit}
             onChangeText={setDailyLimit}
             keyboardType="number-pad"
             maxLength={4}
-            className="w-24 text-center bg-white"
-            outlineColor={colors.border}
-            activeOutlineColor={colors.primary}
-            dense
           />
-          <Text variant="bodyMedium" className="text-slate-500">minutes</Text>
-          <Text variant="bodySmall" className="text-primary-600 font-medium">
+          <Text className="text-sm text-slate-500">minutes</Text>
+          <Text className="text-xs text-primary-600 font-medium">
             ({formatDuration(parseInt(dailyLimit, 10) || 0)})
           </Text>
         </View>
@@ -203,84 +199,64 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
         {/* Quick presets */}
         <View className="flex-row mt-3 gap-2 flex-wrap">
           {[30, 60, 120, 180, 240].map((mins) => (
-            <Chip
+            <TouchableOpacity
               key={mins}
-              selected={parseInt(dailyLimit, 10) === mins}
               onPress={() => setDailyLimit(String(mins))}
-              selectedColor={colors.white}
-              showSelectedOverlay
-              style={
-                parseInt(dailyLimit, 10) === mins
-                  ? { backgroundColor: colors.primary }
-                  : { backgroundColor: colors.surfaceTertiary }
-              }
-              textStyle={
-                parseInt(dailyLimit, 10) === mins
-                  ? { color: colors.white }
-                  : { color: colors.textSecondary }
-              }
-              compact
+              className={`px-3 py-1.5 rounded-xl ${parseInt(dailyLimit, 10) === mins ? 'bg-primary-600' : 'bg-slate-100'}`}
             >
-              {formatDuration(mins)}
-            </Chip>
+              <Text className={`${parseInt(dailyLimit, 10) === mins ? 'text-white' : 'text-slate-500'} text-xs font-medium`}>
+                {formatDuration(mins)}
+              </Text>
+            </TouchableOpacity>
           ))}
         </View>
-      </Surface>
+      </View>
 
       {/* Per-App Limits */}
-      <Surface className="mx-4 mt-4 rounded-2xl p-4" elevation={1}>
-        <Text variant="titleMedium" className="font-bold text-slate-800">
+      <View className="mx-4 mt-4 rounded-2xl p-4 bg-white shadow-sm shadow-black/5">
+        <Text className="text-base font-bold text-slate-800">
           Per-App Limits
         </Text>
-        <Text variant="bodySmall" className="text-slate-500 mt-1 mb-3">
+        <Text className="text-xs text-slate-500 mt-1 mb-3">
           Set individual time limits for specific apps.
         </Text>
 
         {/* Add per-app form */}
         <View className="gap-2 mb-3">
-          <TouchableRipple
+          <Pressable
             className="flex-row items-center bg-surface-secondary rounded-xl px-3.5 py-3 gap-2"
             onPress={() => setPickerVisible(true)}
-            borderless
           >
-            <>
-              <Ionicons name="cube-outline" size={20} color={selectedApp ? colors.text : colors.textLight} />
-              <Text
-                variant="bodyMedium"
-                className={`flex-1 ${selectedApp ? 'text-slate-800' : 'text-slate-400'}`}
-              >
-                {selectedApp ? selectedApp.appName : 'Choose an app...'}
-              </Text>
-              <Ionicons name="chevron-down" size={18} color={colors.textLight} />
-            </>
-          </TouchableRipple>
+            <Ionicons name="cube-outline" size={20} color={selectedApp ? '#1E293B' : '#64748B'} />
+            <Text
+              className={`flex-1 text-sm ${selectedApp ? 'text-slate-800' : 'text-slate-400'}`}
+            >
+              {selectedApp ? selectedApp.appName : 'Choose an app...'}
+            </Text>
+            <Ionicons name="chevron-down" size={18} color="#64748B" />
+          </Pressable>
           <View className="flex-row items-center gap-2">
             <TextInput
-              mode="outlined"
+              className="flex-1 bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm text-slate-800"
               value={newAppLimit}
               onChangeText={setNewAppLimit}
               placeholder="30"
               keyboardType="number-pad"
               maxLength={4}
-              className="flex-1 bg-white"
-              outlineColor={colors.border}
-              activeOutlineColor={colors.primary}
-              dense
             />
-            <Text variant="bodyMedium" className="text-slate-500">min/day</Text>
-            <IconButton
-              icon={() => <Ionicons name="add" size={22} color={colors.white} />}
-              mode="contained"
-              containerColor={colors.primary}
-              size={22}
+            <Text className="text-sm text-slate-500">min/day</Text>
+            <TouchableOpacity
+              className="w-10 h-10 rounded-xl bg-primary-600 items-center justify-center"
               onPress={addPerAppLimit}
-            />
+            >
+              <Ionicons name="add" size={22} color="#FFFFFF" />
+            </TouchableOpacity>
           </View>
         </View>
 
         {/* Per-app list */}
         {perAppLimits.length === 0 ? (
-          <Text variant="bodySmall" className="text-slate-400 text-center py-4">
+          <Text className="text-xs text-slate-400 text-center py-4">
             No per-app limits set.
           </Text>
         ) : (
@@ -290,140 +266,112 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
               className="flex-row items-center py-2.5 border-b border-slate-200 gap-2.5"
             >
               <View className="flex-1">
-                <Text variant="bodyMedium" className="font-medium text-slate-800" numberOfLines={1}>
+                <Text className="text-sm font-medium text-slate-800" numberOfLines={1}>
                   {app.appName || app.appId}
                 </Text>
-                <Text variant="labelSmall" className="text-slate-400 mt-0.5 font-mono" numberOfLines={1}>
+                <Text className="text-[11px] text-slate-400 mt-0.5 font-mono" numberOfLines={1}>
                   {app.appId}
                 </Text>
               </View>
-              <Text variant="bodyMedium" className="font-semibold text-primary-600">
+              <Text className="text-sm font-semibold text-primary-600">
                 {formatDuration(app.limitMin)}
               </Text>
-              <IconButton
-                icon={() => <Ionicons name="close-circle-outline" size={20} color={colors.textLight} />}
-                size={20}
-                onPress={() => removePerAppLimit(index)}
-                className="m-0"
-              />
+              <TouchableOpacity onPress={() => removePerAppLimit(index)} className="p-1">
+                <Ionicons name="close-circle-outline" size={20} color="#64748B" />
+              </TouchableOpacity>
             </View>
           ))
         )}
-      </Surface>
+      </View>
 
       {/* Schedules */}
-      <Surface className="mx-4 mt-4 rounded-2xl p-4" elevation={1}>
+      <View className="mx-4 mt-4 rounded-2xl p-4 bg-white shadow-sm shadow-black/5">
         <View className="flex-row justify-between items-center">
-          <Text variant="titleMedium" className="font-bold text-slate-800">
+          <Text className="text-base font-bold text-slate-800">
             Blocked Schedules
           </Text>
-          <IconButton
-            icon={() => <Ionicons name="add-circle" size={26} color={colors.primary} />}
-            size={26}
-            onPress={addSchedule}
-            className="m-0"
-          />
+          <TouchableOpacity onPress={addSchedule} className="p-1">
+            <Ionicons name="add-circle" size={26} color="#4F46E5" />
+          </TouchableOpacity>
         </View>
-        <Text variant="bodySmall" className="text-slate-500 mt-1 mb-3">
+        <Text className="text-xs text-slate-500 mt-1 mb-3">
           Block device usage during specific times.
         </Text>
 
         {schedules.map((schedule, index) => (
-          <Surface
+          <View
             key={index}
             className="rounded-xl p-3.5 mt-2.5 bg-surface-secondary"
-            elevation={0}
           >
             <View className="flex-row justify-between items-center mb-2.5">
-              <Text variant="bodyMedium" className="font-semibold text-slate-800">
+              <Text className="text-sm font-semibold text-slate-800">
                 Schedule {index + 1}
               </Text>
-              <IconButton
-                icon={() => <Ionicons name="trash-outline" size={20} color={colors.danger} />}
-                size={20}
-                onPress={() => removeSchedule(index)}
-                className="m-0"
-              />
+              <TouchableOpacity onPress={() => removeSchedule(index)} className="p-1">
+                <Ionicons name="trash-outline" size={20} color="#E11D48" />
+              </TouchableOpacity>
             </View>
 
             {/* Days */}
             <View className="flex-row flex-wrap gap-1.5">
               {DAYS_OF_WEEK.map((day) => (
-                <Chip
+                <TouchableOpacity
                   key={day}
-                  selected={schedule.days.includes(day)}
                   onPress={() => toggleDay(index, day)}
-                  compact
-                  style={
-                    schedule.days.includes(day)
-                      ? { backgroundColor: colors.primary }
-                      : { backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border }
-                  }
-                  textStyle={
-                    schedule.days.includes(day)
-                      ? { color: colors.white, fontSize: 12 }
-                      : { color: colors.textSecondary, fontSize: 12 }
-                  }
+                  className={`px-3 py-1.5 rounded-xl ${schedule.days.includes(day) ? 'bg-primary-600' : 'bg-white border border-slate-200'}`}
                 >
-                  {day.slice(0, 3)}
-                </Chip>
+                  <Text className={`${schedule.days.includes(day) ? 'text-white' : 'text-slate-500'} text-xs font-medium`}>
+                    {day.slice(0, 3)}
+                  </Text>
+                </TouchableOpacity>
               ))}
             </View>
 
             {/* Time Range */}
             <View className="flex-row items-end mt-3 gap-2">
               <View className="flex-1">
-                <Text variant="labelSmall" className="text-slate-500 mb-1">Start</Text>
+                <Text className="text-[11px] text-slate-500 mb-1">Start</Text>
                 <TextInput
-                  mode="outlined"
+                  className="bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm text-slate-800 text-center"
                   value={schedule.startTime}
                   onChangeText={(v) => updateScheduleTime(index, 'startTime', v)}
                   placeholder="08:00"
-                  className="bg-white text-center"
-                  outlineColor={colors.border}
-                  activeOutlineColor={colors.primary}
-                  dense
                 />
               </View>
-              <Text variant="bodyMedium" className="text-slate-500 pb-2">to</Text>
+              <Text className="text-sm text-slate-500 pb-2">to</Text>
               <View className="flex-1">
-                <Text variant="labelSmall" className="text-slate-500 mb-1">End</Text>
+                <Text className="text-[11px] text-slate-500 mb-1">End</Text>
                 <TextInput
-                  mode="outlined"
+                  className="bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm text-slate-800 text-center"
                   value={schedule.endTime}
                   onChangeText={(v) => updateScheduleTime(index, 'endTime', v)}
                   placeholder="15:00"
-                  className="bg-white text-center"
-                  outlineColor={colors.border}
-                  activeOutlineColor={colors.primary}
-                  dense
                 />
               </View>
             </View>
-          </Surface>
+          </View>
         ))}
 
         {schedules.length === 0 && (
-          <Text variant="bodySmall" className="text-slate-400 text-center py-4">
+          <Text className="text-xs text-slate-400 text-center py-4">
             No blocked schedules. Tap + to add one.
           </Text>
         )}
-      </Surface>
+      </View>
 
       {/* Save Button */}
       <View className="mx-4 mt-6">
-        <Button
-          mode="contained"
+        <TouchableOpacity
           onPress={handleSave}
-          loading={saving}
           disabled={saving}
-          buttonColor={colors.primary}
-          textColor={colors.white}
-          contentStyle={{ paddingVertical: 8 }}
-          className="rounded-xl"
+          className={`rounded-xl py-3.5 items-center justify-center ${saving ? 'bg-primary-400' : 'bg-primary-600'}`}
         >
-          Save Changes
-        </Button>
+          {saving ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : (
+            <Text className="text-white font-bold text-base">Save Changes</Text>
+          )}
+        </TouchableOpacity>
       </View>
 
       <View className="h-10" />
@@ -433,28 +381,24 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
     <Modal visible={pickerVisible} animationType="slide" presentationStyle="pageSheet">
       <View className="flex-1 bg-surface-secondary">
         <View className="flex-row justify-between items-center px-4 pt-4 pb-3">
-          <Text variant="titleLarge" className="font-bold text-slate-800">
+          <Text className="text-lg font-bold text-slate-800">
             Choose App
           </Text>
-          <IconButton
-            icon={() => <Ionicons name="close" size={24} color={colors.text} />}
-            size={24}
+          <TouchableOpacity
             onPress={() => { setPickerVisible(false); setSearchQuery(''); }}
-            className="m-0"
-          />
+            className="p-1"
+          >
+            <Ionicons name="close" size={24} color="#1E293B" />
+          </TouchableOpacity>
         </View>
         <View className="flex-row items-center bg-white mx-4 rounded-xl px-3 mb-2 gap-2">
-          <Ionicons name="search" size={20} color={colors.textLight} />
+          <Ionicons name="search" size={20} color="#64748B" />
           <TextInput
-            mode="flat"
+            className="flex-1 bg-transparent h-12 text-sm text-slate-800"
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholder="Search apps..."
-            placeholderTextColor={colors.textLight}
-            className="flex-1 bg-white"
-            underlineColor="transparent"
-            activeUnderlineColor="transparent"
-            dense
+            placeholderTextColor="#64748B"
             autoFocus
           />
         </View>
@@ -462,28 +406,25 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
           data={availableApps}
           keyExtractor={item => item.packageName}
           renderItem={({ item }) => (
-            <TouchableRipple
+            <Pressable
               className="flex-row items-center bg-white mx-4 mt-px py-3 px-4 gap-3"
               onPress={() => pickAppForLimit(item)}
-              borderless
             >
-              <>
-                <View className="w-10 h-10 rounded-xl bg-primary-100 justify-center items-center">
-                  <Ionicons name="cube-outline" size={24} color={colors.primary} />
-                </View>
-                <View className="flex-1">
-                  <Text variant="bodyMedium" className="font-medium text-slate-800">
-                    {item.appName}
-                  </Text>
-                  <Text variant="labelSmall" className="text-slate-400 mt-0.5">
-                    {item.packageName}
-                  </Text>
-                </View>
-              </>
-            </TouchableRipple>
+              <View className="w-10 h-10 rounded-xl bg-primary-100 justify-center items-center">
+                <Ionicons name="cube-outline" size={24} color="#4F46E5" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm font-medium text-slate-800">
+                  {item.appName}
+                </Text>
+                <Text className="text-[11px] text-slate-400 mt-0.5">
+                  {item.packageName}
+                </Text>
+              </View>
+            </Pressable>
           )}
           ListEmptyComponent={
-            <Text variant="bodySmall" className="text-slate-400 text-center py-4">
+            <Text className="text-xs text-slate-400 text-center py-4">
               {installedApps.length === 0 ? "Child's app list not synced yet." : 'No matching apps.'}
             </Text>
           }

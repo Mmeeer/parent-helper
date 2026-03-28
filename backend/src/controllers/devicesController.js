@@ -266,6 +266,49 @@ exports.getInstalledApps = async (req, res, next) => {
   }
 };
 
+// POST /devices/sos — child sends emergency SOS alert to parent
+exports.sos = async (req, res, next) => {
+  try {
+    const Alert = require('../models/Alert');
+    const device = req.device;
+    const { message, lat, lng } = req.body;
+
+    const child = await Child.findById(device.childId);
+    const childName = child ? child.name : 'Your child';
+
+    const alert = await Alert.create({
+      parentId: device.parentId,
+      childId: device.childId,
+      type: 'sos',
+      message: message || `SOS alert from ${childName}!`,
+      data: {
+        deviceId: device._id,
+        model: device.model,
+        lat: lat || null,
+        lng: lng || null,
+        timestamp: new Date().toISOString(),
+      },
+    });
+
+    // Notify parent in real-time via socket
+    const io = req.app.get('io');
+    io.to(`parent:${device.parentId}`).emit('alert:sos', {
+      id: alert._id,
+      childId: device.childId,
+      childName,
+      message: alert.message,
+      data: alert.data,
+      createdAt: alert.createdAt,
+    });
+
+    console.log(`[SOS] Alert sent from device ${device._id} for child ${childName}`);
+    res.json({ status: 'sent', alertId: alert._id });
+  } catch (err) {
+    console.error('[SOS] ERROR:', err.message);
+    next(err);
+  }
+};
+
 exports.heartbeat = async (req, res, next) => {
   try {
     const { batteryLevel } = req.body;

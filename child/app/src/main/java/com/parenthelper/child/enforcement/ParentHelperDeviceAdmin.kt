@@ -24,7 +24,7 @@ class ParentHelperDeviceAdmin : DeviceAdminReceiver() {
 
     override fun onEnabled(context: Context, intent: Intent) {
         super.onEnabled(context, intent)
-        Toast.makeText(context, "Parent Helper protection enabled", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "Prime Kids protection enabled", Toast.LENGTH_SHORT).show()
     }
 
     override fun onDisableRequested(context: Context, intent: Intent): CharSequence {

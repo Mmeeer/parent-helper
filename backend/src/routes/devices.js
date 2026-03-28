@@ -9,6 +9,7 @@ const { devicePairing } = require('../middleware/validate');
 router.post('/complete-pairing', devicePairing, devicesController.completePairing);
 router.post('/heartbeat', deviceAuth, syncLimiter, devicesController.heartbeat);
 router.post('/sync-apps', deviceAuth, syncLimiter, devicesController.syncInstalledApps);
+router.post('/sos', deviceAuth, devicesController.sos);
 
 // Parent endpoints
 router.post('/pair', auth, devicesController.pair);

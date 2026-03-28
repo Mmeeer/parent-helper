@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
-  Alert,
+  Text,
+  TextInput,
+  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  Alert,
   ScrollView,
-  Pressable,
+  ActivityIndicator,
 } from 'react-native';
-import { Text, TextInput, Button, IconButton } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../../theme';
 import * as api from '../../services/api';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../types';
@@ -30,12 +31,14 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
   const [secureText, setSecureText] = useState(true);
   const [secureConfirm, setSecureConfirm] = useState(true);
 
+  const newPasswordRef = useRef<TextInput>(null);
+  const confirmRef = useRef<TextInput>(null);
+
   const handleRequestCode = async () => {
     if (!email.trim()) {
       Alert.alert('Error', 'Please enter your email address.');
       return;
     }
-
     setLoading(true);
     try {
       await api.forgotPassword(email.trim());
@@ -61,7 +64,6 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
       Alert.alert('Error', 'Passwords do not match.');
       return;
     }
-
     setLoading(true);
     try {
       await api.resetPassword(email.trim(), code.trim(), newPassword);
@@ -73,191 +75,204 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
     }
   };
 
+  // ── Success state ──
   if (step === 'done') {
     return (
-      <View className="flex-1 bg-surface-secondary justify-center items-center px-10">
-        <View className="w-20 h-20 rounded-full bg-accent-50 items-center justify-center mb-6">
-          <Ionicons name="checkmark-circle" size={56} color={colors.secondary} />
+      <View className="flex-1 bg-slate-50 justify-center items-center px-10">
+        <View className="w-[88px] h-[88px] rounded-full bg-emerald-100 items-center justify-center mb-6">
+          <Ionicons name="checkmark-circle" size={56} color="#34D399" />
         </View>
-        <Text
-          variant="headlineSmall"
-          className="text-slate-700 font-bold text-center mb-3"
-        >
+        <Text className="text-2xl font-bold text-slate-800 mb-3">
           Password Reset!
         </Text>
-        <Text
-          variant="bodyLarge"
-          className="text-slate-500 text-center leading-6 mb-8"
-        >
+        <Text className="text-[15px] text-slate-500 text-center leading-[22px] mb-8">
           Your password has been updated. Please log in with your new password.
         </Text>
-        <Button
-          mode="contained"
+        <TouchableOpacity
+          className="bg-primary-600 rounded-2xl h-[52px] items-center justify-center w-full"
           onPress={() => navigation.navigate('Login')}
-          buttonColor={colors.primary}
-          textColor={colors.white}
-          contentStyle={{ paddingVertical: 6 }}
-          labelStyle={{ fontSize: 16, fontWeight: '600' }}
-          className="w-full rounded-xl"
+          activeOpacity={0.85}
         >
-          Go to Login
-        </Button>
+          <Text className="text-white text-base font-bold tracking-wide">
+            Go to Login
+          </Text>
+        </TouchableOpacity>
       </View>
     );
   }
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-surface-secondary"
+      className="flex-1 bg-slate-50"
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 40 }}
+        contentContainerStyle={{ flexGrow: 1, paddingTop: 56, paddingBottom: 40 }}
         keyboardShouldPersistTaps="handled"
-        className="px-6 pt-14"
+        showsVerticalScrollIndicator={false}
+        className="px-6"
       >
         {/* Back button */}
-        <IconButton
-          icon={() => <Ionicons name="arrow-back" size={22} color={colors.text} />}
-          size={22}
+        <TouchableOpacity
+          className="w-[42px] h-[42px] rounded-xl bg-white items-center justify-center mb-6 shadow-sm shadow-black/5"
           onPress={() => navigation.goBack()}
-          mode="contained"
-          containerColor={colors.white}
-          className="mb-4 self-start rounded-xl"
-        />
+        >
+          <Ionicons name="arrow-back" size={22} color="#1E293B" />
+        </TouchableOpacity>
 
         {/* Header */}
-        <Text
-          variant="headlineMedium"
-          className="text-slate-700 font-bold mb-2"
-        >
+        <Text className="text-[26px] font-bold text-slate-800 mb-2">
           Reset Password
         </Text>
-        <Text
-          variant="bodyLarge"
-          className="text-slate-500 leading-6 mb-8"
-        >
+        <Text className="text-[15px] text-slate-500 leading-[22px] mb-7">
           {step === 'email'
-            ? "Enter your email address and we'll send you a reset code."
-            : 'Enter the code sent to your email and set a new password.'}
+            ? "Enter your email and we'll send you a reset code."
+            : 'Enter the code from your email and set a new password.'}
         </Text>
 
-        {step === 'email' ? (
-          <View className="gap-4">
-            <TextInput
-              mode="outlined"
-              label="Email"
-              placeholder="you@example.com"
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              autoComplete="email"
-              left={<TextInput.Icon icon={() => <Ionicons name="mail-outline" size={20} color={colors.textSecondary} />} />}
-              outlineColor={colors.border}
-              activeOutlineColor={colors.primary}
-              outlineStyle={{ borderRadius: 12 }}
-              theme={{ colors: { background: colors.white } }}
-            />
+        {/* Form card */}
+        <View className="bg-white rounded-3xl p-6 shadow-sm shadow-black/5">
+          {step === 'email' ? (
+            <>
+              <View className="mb-5">
+                <Text className="text-xs font-semibold text-slate-500 mb-2 tracking-wide uppercase">
+                  Email
+                </Text>
+                <View className="flex-row items-center bg-slate-50 rounded-xl border border-slate-200 px-4 h-[52px]">
+                  <Ionicons name="mail-outline" size={18} color="#94A3B8" />
+                  <TextInput
+                    className="flex-1 ml-3 text-[15px] text-slate-800"
+                    placeholder="you@example.com"
+                    placeholderTextColor="#94A3B8"
+                    value={email}
+                    onChangeText={setEmail}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    autoComplete="email"
+                    returnKeyType="go"
+                    onSubmitEditing={handleRequestCode}
+                  />
+                </View>
+              </View>
 
-            <Button
-              mode="contained"
-              onPress={handleRequestCode}
-              loading={loading}
-              disabled={loading}
-              buttonColor={colors.primary}
-              textColor={colors.white}
-              contentStyle={{ paddingVertical: 6 }}
-              labelStyle={{ fontSize: 16, fontWeight: '600' }}
-              className="mt-4 rounded-xl"
-            >
-              Send Reset Code
-            </Button>
-          </View>
-        ) : (
-          <View className="gap-4">
-            <TextInput
-              mode="outlined"
-              label="Reset Code"
-              placeholder="6-digit code"
-              value={code}
-              onChangeText={setCode}
-              keyboardType="number-pad"
-              maxLength={6}
-              left={<TextInput.Icon icon={() => <Ionicons name="key-outline" size={20} color={colors.textSecondary} />} />}
-              outlineColor={colors.border}
-              activeOutlineColor={colors.primary}
-              outlineStyle={{ borderRadius: 12 }}
-              theme={{ colors: { background: colors.white } }}
-            />
-
-            <TextInput
-              mode="outlined"
-              label="New Password"
-              placeholder="Min. 8 characters"
-              value={newPassword}
-              onChangeText={setNewPassword}
-              secureTextEntry={secureText}
-              left={<TextInput.Icon icon={() => <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} />} />}
-              right={
-                <TextInput.Icon
-                  icon={() => <Ionicons name={secureText ? 'eye-off-outline' : 'eye-outline'} size={20} color={colors.textSecondary} />}
-                  onPress={() => setSecureText(!secureText)}
-                />
-              }
-              outlineColor={colors.border}
-              activeOutlineColor={colors.primary}
-              outlineStyle={{ borderRadius: 12 }}
-              theme={{ colors: { background: colors.white } }}
-            />
-
-            <TextInput
-              mode="outlined"
-              label="Confirm Password"
-              placeholder="Re-enter password"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry={secureConfirm}
-              left={<TextInput.Icon icon={() => <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} />} />}
-              right={
-                <TextInput.Icon
-                  icon={() => <Ionicons name={secureConfirm ? 'eye-off-outline' : 'eye-outline'} size={20} color={colors.textSecondary} />}
-                  onPress={() => setSecureConfirm(!secureConfirm)}
-                />
-              }
-              outlineColor={colors.border}
-              activeOutlineColor={colors.primary}
-              outlineStyle={{ borderRadius: 12 }}
-              theme={{ colors: { background: colors.white } }}
-            />
-
-            <Button
-              mode="contained"
-              onPress={handleResetPassword}
-              loading={loading}
-              disabled={loading}
-              buttonColor={colors.primary}
-              textColor={colors.white}
-              contentStyle={{ paddingVertical: 6 }}
-              labelStyle={{ fontSize: 16, fontWeight: '600' }}
-              className="mt-4 rounded-xl"
-            >
-              Reset Password
-            </Button>
-
-            <Pressable
-              className="items-center mt-2 py-2"
-              onPress={() => setStep('email')}
-            >
-              <Text
-                variant="bodyMedium"
-                className="text-primary-600 font-medium"
+              <TouchableOpacity
+                className={`bg-primary-600 rounded-2xl h-[52px] items-center justify-center ${loading ? 'opacity-70' : ''}`}
+                onPress={handleRequestCode}
+                disabled={loading}
+                activeOpacity={0.85}
               >
-                Didn't receive a code? Try again
-              </Text>
-            </Pressable>
-          </View>
-        )}
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text className="text-white text-base font-bold tracking-wide">
+                    Send Reset Code
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              {/* Reset code */}
+              <View className="mb-5">
+                <Text className="text-xs font-semibold text-slate-500 mb-2 tracking-wide uppercase">
+                  Reset Code
+                </Text>
+                <View className="flex-row items-center bg-slate-50 rounded-xl border border-slate-200 px-4 h-[52px]">
+                  <Ionicons name="key-outline" size={18} color="#94A3B8" />
+                  <TextInput
+                    className="flex-1 ml-3 text-[20px] font-bold text-slate-800 tracking-[4px]"
+                    placeholder="– – – – – –"
+                    placeholderTextColor="#94A3B8"
+                    value={code}
+                    onChangeText={setCode}
+                    keyboardType="number-pad"
+                    maxLength={6}
+                    textAlign="center"
+                    returnKeyType="next"
+                    onSubmitEditing={() => newPasswordRef.current?.focus()}
+                  />
+                </View>
+              </View>
+
+              {/* New password */}
+              <View className="mb-5">
+                <Text className="text-xs font-semibold text-slate-500 mb-2 tracking-wide uppercase">
+                  New Password
+                </Text>
+                <View className="flex-row items-center bg-slate-50 rounded-xl border border-slate-200 px-4 h-[52px]">
+                  <Ionicons name="lock-closed-outline" size={18} color="#94A3B8" />
+                  <TextInput
+                    ref={newPasswordRef}
+                    className="flex-1 ml-3 text-[15px] text-slate-800"
+                    placeholder="Min. 8 characters"
+                    placeholderTextColor="#94A3B8"
+                    value={newPassword}
+                    onChangeText={setNewPassword}
+                    secureTextEntry={secureText}
+                    returnKeyType="next"
+                    onSubmitEditing={() => confirmRef.current?.focus()}
+                  />
+                  <TouchableOpacity onPress={() => setSecureText(!secureText)} className="p-1">
+                    <Ionicons
+                      name={secureText ? 'eye-off-outline' : 'eye-outline'}
+                      size={20}
+                      color="#94A3B8"
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Confirm password */}
+              <View className="mb-6">
+                <Text className="text-xs font-semibold text-slate-500 mb-2 tracking-wide uppercase">
+                  Confirm Password
+                </Text>
+                <View className="flex-row items-center bg-slate-50 rounded-xl border border-slate-200 px-4 h-[52px]">
+                  <Ionicons name="lock-closed-outline" size={18} color="#94A3B8" />
+                  <TextInput
+                    ref={confirmRef}
+                    className="flex-1 ml-3 text-[15px] text-slate-800"
+                    placeholder="Re-enter password"
+                    placeholderTextColor="#94A3B8"
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    secureTextEntry={secureConfirm}
+                    returnKeyType="go"
+                    onSubmitEditing={handleResetPassword}
+                  />
+                  <TouchableOpacity onPress={() => setSecureConfirm(!secureConfirm)} className="p-1">
+                    <Ionicons
+                      name={secureConfirm ? 'eye-off-outline' : 'eye-outline'}
+                      size={20}
+                      color="#94A3B8"
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                className={`bg-primary-600 rounded-2xl h-[52px] items-center justify-center ${loading ? 'opacity-70' : ''}`}
+                onPress={handleResetPassword}
+                disabled={loading}
+                activeOpacity={0.85}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text className="text-white text-base font-bold tracking-wide">
+                    Reset Password
+                  </Text>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity className="items-center mt-4 py-2" onPress={() => setStep('email')}>
+                <Text className="text-sm font-semibold text-primary-600">
+                  Didn't receive a code? Try again
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );

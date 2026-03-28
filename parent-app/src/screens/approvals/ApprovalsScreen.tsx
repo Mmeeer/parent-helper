@@ -1,10 +1,8 @@
 import React, { useCallback, useState } from 'react';
-import { View, FlatList, RefreshControl, Alert } from 'react-native';
-import { Surface, Text, Button, ActivityIndicator } from 'react-native-paper';
+import { View, FlatList, RefreshControl, Alert, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { formatTimeAgo } from '../../utils/formatters';
-import { colors } from '../../theme';
 import * as api from '../../services/api';
 import type { Alert as AlertType } from '../../types';
 
@@ -54,69 +52,65 @@ export default function ApprovalsScreen() {
     const packageName = item.data?.packageName as string | undefined;
 
     return (
-      <Surface elevation={1} className="rounded-2xl p-4">
+      <View className="rounded-2xl p-4 bg-white shadow-sm shadow-black/5">
         <View className="flex-row items-center mb-3">
           <View className="w-12 h-12 rounded-xl bg-primary-50 items-center justify-center mr-3">
-            <Ionicons name="download-outline" size={24} color={colors.primary} />
+            <Ionicons name="download-outline" size={24} color="#4F46E5" />
           </View>
           <View className="flex-1">
-            <Text variant="titleSmall" className="text-slate-800" numberOfLines={1}>
+            <Text className="text-sm font-semibold text-slate-800" numberOfLines={1}>
               {appName}
             </Text>
             {packageName && packageName !== appName && (
-              <Text variant="labelSmall" className="text-slate-500 mt-0.5" numberOfLines={1}>{packageName}</Text>
+              <Text className="text-[11px] text-slate-500 mt-0.5" numberOfLines={1}>{packageName}</Text>
             )}
-            <Text variant="labelSmall" className="text-slate-400 mt-0.5">{formatTimeAgo(item.createdAt)}</Text>
+            <Text className="text-[11px] text-slate-400 mt-0.5">{formatTimeAgo(item.createdAt)}</Text>
           </View>
         </View>
 
-        <Text variant="bodyMedium" className="text-slate-500 leading-5 mb-3.5">
+        <Text className="text-sm text-slate-500 leading-5 mb-3.5">
           A new app was installed on your child's device. Would you like to allow or block it?
         </Text>
 
         <View className="flex-row gap-2.5">
-          <Button
-            mode="contained"
+          <TouchableOpacity
             onPress={() => handleDecision(item._id, 'block')}
             disabled={isProcessing}
-            loading={isProcessing}
-            icon={({ size }) => (
-              <Ionicons name="ban" size={size - 2} color={colors.white} />
-            )}
-            buttonColor={colors.danger}
-            textColor={colors.white}
-            className="flex-1"
-            contentStyle={{ paddingVertical: 2 }}
-            labelStyle={{ fontSize: 15, fontWeight: '600' }}
+            className="flex-1 bg-danger-600 rounded-xl py-3 items-center justify-center flex-row gap-2"
           >
-            Block
-          </Button>
+            {isProcessing ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <>
+                <Ionicons name="ban" size={16} color="#FFFFFF" />
+                <Text className="text-white font-bold">Block</Text>
+              </>
+            )}
+          </TouchableOpacity>
 
-          <Button
-            mode="contained"
+          <TouchableOpacity
             onPress={() => handleDecision(item._id, 'approve')}
             disabled={isProcessing}
-            loading={isProcessing}
-            icon={({ size }) => (
-              <Ionicons name="checkmark" size={size - 2} color={colors.white} />
-            )}
-            buttonColor={colors.secondary}
-            textColor={colors.white}
-            className="flex-1"
-            contentStyle={{ paddingVertical: 2 }}
-            labelStyle={{ fontSize: 15, fontWeight: '600' }}
+            className="flex-1 bg-accent-600 rounded-xl py-3 items-center justify-center flex-row gap-2"
           >
-            Approve
-          </Button>
+            {isProcessing ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <>
+                <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                <Text className="text-white font-bold">Approve</Text>
+              </>
+            )}
+          </TouchableOpacity>
         </View>
-      </Surface>
+      </View>
     );
   };
 
   if (loading) {
     return (
       <View className="flex-1 justify-center items-center bg-surface-secondary">
-        <ActivityIndicator size="large" color={colors.primary} />
+        <ActivityIndicator size="large" color="#4F46E5" />
       </View>
     );
   }
@@ -139,11 +133,11 @@ export default function ApprovalsScreen() {
         }
         ListEmptyComponent={
           <View className="items-center pt-20 px-10">
-            <Ionicons name="checkmark-done-circle-outline" size={64} color={colors.textMuted} />
-            <Text variant="titleLarge" className="font-semibold text-slate-800 mt-4">
+            <Ionicons name="checkmark-done-circle-outline" size={64} color="#94A3B8" />
+            <Text className="text-lg font-bold text-slate-800 mt-4">
               All Clear
             </Text>
-            <Text variant="bodyMedium" className="text-slate-500 text-center mt-2">
+            <Text className="text-sm text-slate-500 text-center mt-2">
               No pending app approvals.
             </Text>
           </View>

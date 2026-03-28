@@ -5,11 +5,12 @@ import {
   RefreshControl,
   Pressable,
   Alert,
+  Text,
+  TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
-import { Text, Surface, ActivityIndicator, IconButton, Chip } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { colors } from '../../theme';
 import { formatDuration, formatTimeAgo, formatTime } from '../../utils/formatters';
 import * as api from '../../services/api';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -145,7 +146,7 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
   if (loading) {
     return (
       <View className="flex-1 items-center justify-center bg-surface-secondary">
-        <ActivityIndicator size="large" color={colors.primary} />
+        <ActivityIndicator size="large" color="#4F46E5" />
       </View>
     );
   }
@@ -166,8 +167,7 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
             onPress={() => { setPeriod(p); setLoading(true); }}
           >
             <Text
-              variant="bodyMedium"
-              className={`font-medium ${period === p ? 'text-white' : 'text-slate-500'}`}
+              className={`text-sm font-medium ${period === p ? 'text-white' : 'text-slate-500'}`}
             >
               {p.charAt(0).toUpperCase() + p.slice(1)}
             </Text>
@@ -177,40 +177,40 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
 
       {/* Summary Stats */}
       {summary && (
-        <Surface className="mx-4 mt-4 rounded-2xl bg-white p-5" elevation={1}>
+        <View className="mx-4 mt-4 rounded-2xl bg-white p-5 shadow-sm shadow-black/5">
           <View className="flex-row">
             <View className="flex-1 items-center gap-1">
-              <Text variant="titleMedium" className="font-bold text-slate-800">
+              <Text className="text-base font-bold text-slate-800">
                 {formatDuration(summary.totalScreenTimeMin)}
               </Text>
-              <Text variant="labelSmall" className="text-slate-500">
+              <Text className="text-[11px] text-slate-500">
                 Screen Time
               </Text>
             </View>
             <View className="w-px bg-slate-200" />
             <View className="flex-1 items-center gap-1">
-              <Text variant="titleMedium" className="font-bold text-slate-800">
+              <Text className="text-base font-bold text-slate-800">
                 {summary.totalBlocked}
               </Text>
-              <Text variant="labelSmall" className="text-slate-500">
+              <Text className="text-[11px] text-slate-500">
                 Blocked
               </Text>
             </View>
             <View className="w-px bg-slate-200" />
             <View className="flex-1 items-center gap-1">
-              <Text variant="titleMedium" className="font-bold text-slate-800">
+              <Text className="text-base font-bold text-slate-800">
                 {summary.totalWebVisits}
               </Text>
-              <Text variant="labelSmall" className="text-slate-500">
+              <Text className="text-[11px] text-slate-500">
                 Web Visits
               </Text>
             </View>
           </View>
-        </Surface>
+        </View>
       )}
 
       {/* Quick Actions */}
-      <Text variant="titleMedium" className="mx-4 mb-3 mt-6 font-bold text-slate-800">
+      <Text className="mx-4 mb-3 mt-6 text-base font-bold text-slate-800">
         Manage
       </Text>
       <View className="mx-4 flex-row flex-wrap justify-between gap-y-2.5">
@@ -220,28 +220,28 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
             className="w-[48%]"
             onPress={() => navigation.navigate(action.route as any, { childId, childName })}
           >
-            <Surface className="items-center gap-2 rounded-xl bg-white p-5" elevation={1}>
+            <View className="items-center gap-2 rounded-xl bg-white p-5 shadow-sm shadow-black/5">
               <Ionicons name={action.icon} size={28} color={action.color} />
-              <Text variant="bodyMedium" className="font-medium text-slate-700">
+              <Text className="text-sm font-medium text-slate-700">
                 {action.label}
               </Text>
-            </Surface>
+            </View>
           </Pressable>
         ))}
       </View>
 
       {/* App Usage List */}
-      <Text variant="titleMedium" className="mx-4 mb-3 mt-6 font-bold text-slate-800">
+      <Text className="mx-4 mb-3 mt-6 text-base font-bold text-slate-800">
         Today's App Usage
       </Text>
       {apps.length === 0 ? (
-        <Surface className="mx-4 items-center rounded-2xl bg-white p-6" elevation={1}>
-          <Text variant="bodyMedium" className="text-slate-400">
+        <View className="mx-4 items-center rounded-2xl bg-white p-6 shadow-sm shadow-black/5">
+          <Text className="text-sm text-slate-400">
             No app usage data for today
           </Text>
-        </Surface>
+        </View>
       ) : (
-        <Surface className="mx-4 rounded-2xl bg-white px-4" elevation={1}>
+        <View className="mx-4 rounded-2xl bg-white px-4 shadow-sm shadow-black/5">
           {apps.map((app, index) => (
             <View
               key={`app-${app.packageName}-${index}`}
@@ -250,37 +250,37 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
               }`}
             >
               <View className="h-9 w-9 items-center justify-center rounded-lg bg-surface-secondary">
-                <Ionicons name="apps" size={20} color={colors.primary} />
+                <Ionicons name="apps" size={20} color="#4F46E5" />
               </View>
-              <Text variant="bodyMedium" className="flex-1 text-slate-700" numberOfLines={1}>
+              <Text className="flex-1 text-sm text-slate-700" numberOfLines={1}>
                 {app.appName || app.packageName}
               </Text>
-              <Text variant="bodyMedium" className="font-semibold text-slate-500">
+              <Text className="text-sm font-semibold text-slate-500">
                 {formatDuration(app.durationMin)}
               </Text>
-              <IconButton
-                icon={() => <Ionicons name="ban-outline" size={16} color={colors.textMuted} />}
-                size={16}
+              <TouchableOpacity
                 onPress={() => handleBlockApp(app.packageName, app.appName || app.packageName)}
-                style={{ margin: 0 }}
-              />
+                className="p-1"
+              >
+                <Ionicons name="ban-outline" size={16} color="#94A3B8" />
+              </TouchableOpacity>
             </View>
           ))}
-        </Surface>
+        </View>
       )}
 
       {/* Web History */}
-      <Text variant="titleMedium" className="mx-4 mb-3 mt-6 font-bold text-slate-800">
+      <Text className="mx-4 mb-3 mt-6 text-base font-bold text-slate-800">
         Web History
       </Text>
       {webHistory.length === 0 ? (
-        <Surface className="mx-4 items-center rounded-2xl bg-white p-6" elevation={1}>
-          <Text variant="bodyMedium" className="text-slate-400">
+        <View className="mx-4 items-center rounded-2xl bg-white p-6 shadow-sm shadow-black/5">
+          <Text className="text-sm text-slate-400">
             No web activity recorded today
           </Text>
-        </Surface>
+        </View>
       ) : (
-        <Surface className="mx-4 rounded-2xl bg-white px-4" elevation={1}>
+        <View className="mx-4 rounded-2xl bg-white px-4 shadow-sm shadow-black/5">
           {webHistory.slice(0, 20).map((entry, index) => (
             <Pressable
               key={`web-${entry.url}-${index}`}
@@ -298,47 +298,42 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
                 <Ionicons
                   name={entry.blocked ? 'ban-outline' : 'globe-outline'}
                   size={20}
-                  color={entry.blocked ? colors.danger : colors.primary}
+                  color={entry.blocked ? '#E11D48' : '#4F46E5'}
                 />
               </View>
               <View className="flex-1">
                 <Text
-                  variant="bodyMedium"
-                  className={entry.blocked ? 'text-danger-600 line-through' : 'text-slate-700'}
+                  className={`text-sm ${entry.blocked ? 'text-danger-600 line-through' : 'text-slate-700'}`}
                   numberOfLines={1}
                 >
                   {entry.url}
                 </Text>
-                <Text variant="labelSmall" className="mt-0.5 text-slate-400">
+                <Text className="mt-0.5 text-[11px] text-slate-400">
                   {formatTime(entry.timestamp)}
                 </Text>
               </View>
               {entry.blocked ? (
-                <Chip
-                  compact
-                  textStyle={{ fontSize: 11, color: colors.danger }}
-                  style={{ backgroundColor: '#FFF1F2' }}
-                >
-                  Blocked
-                </Chip>
+                <View className="px-2 py-0.5 rounded-lg bg-red-50">
+                  <Text className="text-[11px] text-danger-600">Blocked</Text>
+                </View>
               ) : (
-                <IconButton
-                  icon={() => <Ionicons name="close-circle-outline" size={18} color={colors.textMuted} />}
-                  size={18}
+                <TouchableOpacity
                   onPress={() => handleBlockDomain(entry.url)}
-                  style={{ margin: 0 }}
-                />
+                  className="p-1"
+                >
+                  <Ionicons name="close-circle-outline" size={18} color="#94A3B8" />
+                </TouchableOpacity>
               )}
             </Pressable>
           ))}
           {webHistory.length > 20 && (
             <View className="items-center py-3">
-              <Text variant="bodySmall" className="text-slate-400">
+              <Text className="text-xs text-slate-400">
                 +{webHistory.length - 20} more entries
               </Text>
             </View>
           )}
-        </Surface>
+        </View>
       )}
 
       <View className="h-8" />

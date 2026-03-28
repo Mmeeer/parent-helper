@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, ScrollView, Alert } from 'react-native';
-import { Surface, Text, Avatar, Chip, Button, TouchableRipple, Divider } from 'react-native-paper';
+import { View, ScrollView, Alert, Text, Pressable, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../../theme';
 import { useAuth } from '../../store/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -67,78 +65,68 @@ export default function SettingsScreen() {
   return (
     <ScrollView className="flex-1 bg-surface-secondary">
       {/* User Info Card */}
-      <Surface elevation={1} className="flex-row items-center mx-4 mt-4 rounded-2xl p-5">
-        <Avatar.Icon
-          size={56}
-          icon={() => <Ionicons name="person" size={28} color={colors.white} />}
-          color={colors.white}
-          style={{ backgroundColor: colors.primary }}
-        />
+      <View className="flex-row items-center mx-4 mt-4 rounded-2xl p-5 bg-white shadow-sm shadow-black/5">
+        <View className="w-14 h-14 rounded-full bg-primary-600 items-center justify-center">
+          <Ionicons name="person" size={28} color="#FFFFFF" />
+        </View>
         <View className="flex-1 ml-3.5">
-          <Text variant="titleMedium" className="font-bold text-slate-800">
+          <Text className="text-base font-bold text-slate-800">
             {user?.name || 'Parent'}
           </Text>
-          <Text variant="bodySmall" className="text-slate-500 mt-0.5">
+          <Text className="text-xs text-slate-500 mt-0.5">
             {user?.email || ''}
           </Text>
-          <Chip
-            compact
-            textStyle={{ fontSize: 11, fontWeight: '700', color: subInfo?.active ? '#166534' : '#dc2626' }}
-            className={`self-start mt-1.5 ${subInfo?.active ? 'bg-green-50' : 'bg-red-50'}`}
+          <View
+            className={`self-start mt-1.5 px-2 py-0.5 rounded-lg ${subInfo?.active ? 'bg-green-50' : 'bg-red-50'}`}
           >
-            {subInfo?.active ? 'SUBSCRIBED' : 'NO SUBSCRIPTION'}
-          </Chip>
+            <Text
+              className={`text-[11px] font-bold ${subInfo?.active ? 'text-green-800' : 'text-red-600'}`}
+            >
+              {subInfo?.active ? 'SUBSCRIBED' : 'NO SUBSCRIPTION'}
+            </Text>
+          </View>
         </View>
-      </Surface>
+      </View>
 
       {/* Settings Items */}
-      <Surface elevation={1} className="mx-4 mt-5 rounded-2xl overflow-hidden">
+      <View className="mx-4 mt-5 rounded-2xl overflow-hidden bg-white shadow-sm shadow-black/5">
         {items.map((item, index) => (
           <React.Fragment key={index}>
-            <TouchableRipple
-              onPress={item.onPress}
-              rippleColor="rgba(79, 70, 229, 0.06)"
-            >
+            <Pressable onPress={item.onPress}>
               <View className="flex-row items-center p-4">
                 <View className="w-9 h-9 rounded-[10px] bg-surface-tertiary items-center justify-center mr-3">
-                  <Ionicons name={item.icon} size={22} color={colors.primary} />
+                  <Ionicons name={item.icon} size={22} color="#4F46E5" />
                 </View>
                 <View className="flex-1">
-                  <Text variant="bodyLarge" className="font-medium text-slate-800">
+                  <Text className="text-base font-medium text-slate-800">
                     {item.title}
                   </Text>
-                  <Text variant="labelSmall" className="text-slate-500 mt-0.5">
+                  <Text className="text-[11px] text-slate-500 mt-0.5">
                     {item.subtitle}
                   </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
               </View>
-            </TouchableRipple>
-            {index < items.length - 1 && <Divider className="ml-16" />}
+            </Pressable>
+            {index < items.length - 1 && <View className="h-px bg-slate-200 ml-16" />}
           </React.Fragment>
         ))}
-      </Surface>
+      </View>
 
       {/* Sign Out Button */}
       <View className="mx-4 mt-5">
-        <Button
-          mode="outlined"
+        <TouchableOpacity
           onPress={handleLogout}
-          icon={({ size }) => (
-            <Ionicons name="log-out-outline" size={size} color={colors.danger} />
-          )}
-          textColor={colors.danger}
-          contentStyle={{ paddingVertical: 4 }}
-          labelStyle={{ fontSize: 16, fontWeight: '600' }}
-          style={{ borderColor: colors.danger, borderRadius: 16 }}
+          className="border border-danger-600 rounded-2xl py-3 flex-row items-center justify-center gap-2"
         >
-          Sign Out
-        </Button>
+          <Ionicons name="log-out-outline" size={20} color="#E11D48" />
+          <Text className="text-danger-600 font-semibold text-base">Sign Out</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Version */}
-      <Text variant="labelSmall" className="text-center text-slate-400 mt-5 mb-8">
-        Parent Helper v1.0.0
+      <Text className="text-[11px] text-center text-slate-400 mt-5 mb-8">
+        Prime Kids: Parent Helper v1.0.0
       </Text>
     </ScrollView>
   );

@@ -7,11 +7,10 @@ import {
   TouchableOpacity,
   Linking,
   Platform,
+  Text,
 } from 'react-native';
-import { Surface, Text, Button, FAB } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { colors } from '../../theme';
 import { formatTime } from '../../utils/formatters';
 import * as api from '../../services/api';
 import { onSocketEvent } from '../../services/socket';
@@ -87,7 +86,7 @@ export default function LocationScreen({ route }: Props) {
   if (loading) {
     return (
       <View className="flex-1 justify-center items-center bg-surface-secondary">
-        <ActivityIndicator size="large" color={colors.primary} />
+        <ActivityIndicator size="large" color="#4F46E5" />
       </View>
     );
   }
@@ -95,22 +94,19 @@ export default function LocationScreen({ route }: Props) {
   if (error) {
     return (
       <View className="flex-1 justify-center items-center bg-surface-secondary px-10">
-        <Ionicons name="alert-circle-outline" size={64} color={colors.danger} />
-        <Text variant="titleMedium" className="font-semibold text-slate-800 mt-4">
+        <Ionicons name="alert-circle-outline" size={64} color="#E11D48" />
+        <Text className="text-base font-semibold text-slate-800 mt-4">
           Error Loading Location
         </Text>
-        <Text variant="bodyMedium" className="text-slate-500 text-center mt-2">
+        <Text className="text-sm text-slate-500 text-center mt-2">
           {error}
         </Text>
-        <Button
-          mode="contained"
+        <TouchableOpacity
           onPress={loadLocations}
-          buttonColor={colors.primary}
-          textColor={colors.white}
-          className="mt-5 rounded-lg"
+          className="mt-5 bg-primary-600 rounded-xl py-3 px-6 items-center"
         >
-          Retry
-        </Button>
+          <Text className="text-white font-bold">Retry</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -118,23 +114,20 @@ export default function LocationScreen({ route }: Props) {
   if (!latestLocation) {
     return (
       <View className="flex-1 justify-center items-center bg-surface-secondary px-10">
-        <Ionicons name="location-outline" size={64} color={colors.textMuted} />
-        <Text variant="titleMedium" className="font-semibold text-slate-800 mt-4">
+        <Ionicons name="location-outline" size={64} color="#94A3B8" />
+        <Text className="text-base font-semibold text-slate-800 mt-4">
           No Location Data
         </Text>
-        <Text variant="bodyMedium" className="text-slate-500 text-center mt-2">
+        <Text className="text-sm text-slate-500 text-center mt-2">
           Location updates from {childName}'s device will appear here.
           Try sending a Locate command from the Devices screen.
         </Text>
-        <Button
-          mode="contained"
+        <TouchableOpacity
           onPress={loadLocations}
-          buttonColor={colors.primary}
-          textColor={colors.white}
-          className="mt-5 rounded-lg"
+          className="mt-5 bg-primary-600 rounded-xl py-3 px-6 items-center"
         >
-          Refresh
-        </Button>
+          <Text className="text-white font-bold">Refresh</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -162,7 +155,7 @@ export default function LocationScreen({ route }: Props) {
                 latitude: l.lat,
                 longitude: l.lng,
               }))}
-              strokeColor={colors.primary}
+              strokeColor="#4F46E5"
               strokeWidth={3}
             />
           )}
@@ -183,7 +176,7 @@ export default function LocationScreen({ route }: Props) {
               key={index}
               coordinate={{ latitude: loc.lat, longitude: loc.lng }}
               title={formatTime(loc.timestamp)}
-              pinColor={colors.textMuted}
+              pinColor="#94A3B8"
               opacity={0.5}
             />
           ))}
@@ -196,20 +189,17 @@ export default function LocationScreen({ route }: Props) {
           }
         >
           <View className="items-center py-10 gap-y-3">
-            <Ionicons name="map-outline" size={48} color={colors.textMuted} />
-            <Text variant="bodyMedium" className="text-slate-500">
+            <Ionicons name="map-outline" size={48} color="#94A3B8" />
+            <Text className="text-sm text-slate-500">
               Map view unavailable
             </Text>
-            <Button
-              mode="contained"
-              icon={() => <Ionicons name="open-outline" size={18} color={colors.white} />}
+            <TouchableOpacity
               onPress={() => openInExternalMap(latestLocation.lat, latestLocation.lng)}
-              buttonColor={colors.primary}
-              textColor={colors.white}
-              className="mt-2 rounded-lg"
+              className="mt-2 bg-primary-600 rounded-xl py-3 px-6 flex-row items-center gap-2"
             >
-              Open in Maps
-            </Button>
+              <Ionicons name="open-outline" size={18} color="#FFFFFF" />
+              <Text className="text-white font-bold">Open in Maps</Text>
+            </TouchableOpacity>
           </View>
 
           {/* Location list */}
@@ -218,63 +208,58 @@ export default function LocationScreen({ route }: Props) {
               key={index}
               onPress={() => openInExternalMap(loc.lat, loc.lng)}
             >
-              <Surface className="mx-4 mb-2 rounded-xl p-3.5 flex-row items-center gap-x-3" elevation={1}>
+              <View className="mx-4 mb-2 rounded-xl p-3.5 flex-row items-center gap-x-3 bg-white shadow-sm shadow-black/5">
                 <Ionicons
                   name={index === locations.length - 1 ? 'location' : 'location-outline'}
                   size={20}
-                  color={index === locations.length - 1 ? colors.primary : colors.textSecondary}
+                  color={index === locations.length - 1 ? '#4F46E5' : '#64748B'}
                 />
                 <View className="flex-1">
-                  <Text variant="bodyMedium" className="font-medium text-slate-800" style={{ fontFamily: 'monospace' }}>
+                  <Text className="text-sm font-medium text-slate-800" style={{ fontFamily: 'monospace' }}>
                     {loc.lat.toFixed(6)}, {loc.lng.toFixed(6)}
                   </Text>
-                  <Text variant="labelSmall" className="text-slate-500 mt-0.5">
+                  <Text className="text-[11px] text-slate-500 mt-0.5">
                     {formatTime(loc.timestamp)}
                   </Text>
                 </View>
-                <Ionicons name="open-outline" size={16} color={colors.textMuted} />
-              </Surface>
+                <Ionicons name="open-outline" size={16} color="#94A3B8" />
+              </View>
             </TouchableOpacity>
           ))}
         </ScrollView>
       )}
 
       {/* Info Panel */}
-      <Surface
-        className="absolute bottom-5 left-4 right-4 rounded-2xl p-4"
-        elevation={3}
-      >
+      <View className="absolute bottom-5 left-4 right-4 rounded-2xl p-4 bg-white shadow-sm shadow-black/5">
         <View className="flex-row items-center gap-x-2 mb-2">
-          <Ionicons name="location" size={20} color={colors.primary} />
-          <Text variant="titleSmall" className="font-semibold text-slate-800">
+          <Ionicons name="location" size={20} color="#4F46E5" />
+          <Text className="text-sm font-semibold text-slate-800">
             Last Known Location
           </Text>
         </View>
         <TouchableOpacity onPress={() => openInExternalMap(latestLocation.lat, latestLocation.lng)}>
           <Text
-            variant="bodySmall"
-            className="text-primary-600 underline"
+            className="text-xs text-primary-600 underline"
             style={{ fontFamily: 'monospace' }}
           >
             {latestLocation.lat.toFixed(6)}, {latestLocation.lng.toFixed(6)}
           </Text>
         </TouchableOpacity>
-        <Text variant="bodySmall" className="text-slate-500 mt-1">
+        <Text className="text-xs text-slate-500 mt-1">
           Updated: {formatTime(latestLocation.timestamp)}
         </Text>
-        <Text variant="labelSmall" className="text-slate-400 mt-1">
+        <Text className="text-[11px] text-slate-400 mt-1">
           {locations.length} location point{locations.length !== 1 ? 's' : ''} today
         </Text>
-      </Surface>
+      </View>
 
       {/* Refresh FAB */}
-      <FAB
-        icon={() => <Ionicons name="refresh" size={22} color={colors.white} />}
+      <TouchableOpacity
         onPress={loadLocations}
-        className="absolute top-4 right-4 bg-primary-600"
-        color={colors.white}
-        size="small"
-      />
+        className="absolute top-4 right-4 w-10 h-10 rounded-full bg-primary-600 items-center justify-center shadow-md"
+      >
+        <Ionicons name="refresh" size={22} color="#FFFFFF" />
+      </TouchableOpacity>
     </View>
   );
 }

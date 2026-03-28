@@ -1,9 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, ScrollView, RefreshControl, Pressable } from 'react-native';
-import { Text, Surface, Avatar, Button, ActivityIndicator } from 'react-native-paper';
+import { View, ScrollView, RefreshControl, Pressable, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { colors } from '../../theme';
 import { formatDuration } from '../../utils/formatters';
 import * as api from '../../services/api';
 import { onSocketEvent } from '../../services/socket';
@@ -81,7 +79,7 @@ export default function DashboardScreen({ navigation }: Props) {
   if (loading) {
     return (
       <View className="flex-1 items-center justify-center bg-surface-secondary">
-        <ActivityIndicator size="large" color={colors.primary} />
+        <ActivityIndicator size="large" color="#4F46E5" />
       </View>
     );
   }
@@ -97,37 +95,35 @@ export default function DashboardScreen({ navigation }: Props) {
           className="mx-4 mt-4 flex-row items-center gap-2 rounded-xl bg-warning-50 px-4 py-3"
           onPress={() => {}}
         >
-          <Ionicons name="notifications" size={20} color={colors.warning} />
-          <Text variant="bodyMedium" className="flex-1 font-medium text-slate-800">
+          <Ionicons name="notifications" size={20} color="#D97706" />
+          <Text className="flex-1 text-sm font-medium text-slate-800">
             {alerts.length} unread alert{alerts.length > 1 ? 's' : ''}
           </Text>
-          <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+          <Ionicons name="chevron-forward" size={16} color="#64748B" />
         </Pressable>
       )}
 
       {/* Children Cards */}
       {children.length === 0 ? (
         <View className="flex-1 items-center justify-center px-10 pt-24">
-          <Ionicons name="people-outline" size={64} color={colors.textMuted} />
-          <Text variant="titleLarge" className="mt-4 font-semibold text-slate-800">
+          <Ionicons name="people-outline" size={64} color="#94A3B8" />
+          <Text className="mt-4 text-lg font-semibold text-slate-800">
             No Children Added
           </Text>
-          <Text variant="bodyMedium" className="mb-6 mt-2 text-center text-slate-500">
+          <Text className="mb-6 mt-2 text-center text-sm text-slate-500">
             Add a child profile to start monitoring.
           </Text>
-          <Button
-            mode="contained"
-            icon={() => <Ionicons name="add" size={18} color={colors.white} />}
+          <TouchableOpacity
+            className="bg-primary-600 rounded-xl px-5 py-3 flex-row items-center gap-2"
             onPress={() => navigation.navigate('AddChild')}
-            className="rounded-xl"
-            buttonColor={colors.primary}
           >
-            Add Child
-          </Button>
+            <Ionicons name="add" size={18} color="#FFFFFF" />
+            <Text className="text-white font-semibold text-sm">Add Child</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <>
-          <Text variant="titleLarge" className="mx-4 mb-3 mt-5 font-bold text-slate-800">
+          <Text className="mx-4 mb-3 mt-5 text-lg font-bold text-slate-800">
             Today's Overview
           </Text>
           {children.map((child) => {
@@ -143,64 +139,60 @@ export default function DashboardScreen({ navigation }: Props) {
                   })
                 }
               >
-                <Surface
-                  className="mx-4 mb-3 rounded-2xl bg-white p-4"
-                  elevation={1}
-                >
+                <View className="mx-4 mb-3 rounded-2xl bg-white p-4 shadow-sm shadow-black/5">
                   {/* Child Header */}
                   <View className="mb-4 flex-row items-center">
-                    <Avatar.Text
-                      size={44}
-                      label={child.name.charAt(0).toUpperCase()}
-                      color="#FFFFFF"
-                      style={{ backgroundColor: colors.primary }}
-                    />
+                    <View className="w-11 h-11 rounded-full bg-primary-600 items-center justify-center">
+                      <Text className="text-white font-bold text-lg">
+                        {child.name.charAt(0).toUpperCase()}
+                      </Text>
+                    </View>
                     <View className="ml-3 flex-1">
-                      <Text variant="titleMedium" className="font-semibold text-slate-800">
+                      <Text className="text-base font-semibold text-slate-800">
                         {child.name}
                       </Text>
-                      <Text variant="bodySmall" className="mt-0.5 text-slate-500">
+                      <Text className="mt-0.5 text-xs text-slate-500">
                         Age {child.age}
                       </Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                    <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
                   </View>
 
                   {/* Stats Row */}
                   {summary ? (
                     <View className="flex-row items-center rounded-xl bg-surface-secondary px-2 py-3">
                       <View className="flex-1 items-center gap-1">
-                        <Ionicons name="time-outline" size={18} color={colors.primary} />
-                        <Text variant="titleSmall" className="font-bold text-slate-800">
+                        <Ionicons name="time-outline" size={18} color="#4F46E5" />
+                        <Text className="text-sm font-bold text-slate-800">
                           {formatDuration(summary.totalScreenTimeMin)}
                         </Text>
-                        <Text variant="labelSmall" className="text-slate-500">
+                        <Text className="text-[11px] text-slate-500">
                           Screen Time
                         </Text>
                       </View>
                       <View className="h-8 w-px bg-slate-200" />
                       <View className="flex-1 items-center gap-1">
-                        <Ionicons name="apps-outline" size={18} color={colors.secondary} />
-                        <Text variant="titleSmall" className="font-bold text-slate-800">
+                        <Ionicons name="apps-outline" size={18} color="#0D9488" />
+                        <Text className="text-sm font-bold text-slate-800">
                           {summary.topApps.length}
                         </Text>
-                        <Text variant="labelSmall" className="text-slate-500">
+                        <Text className="text-[11px] text-slate-500">
                           Apps Used
                         </Text>
                       </View>
                       <View className="h-8 w-px bg-slate-200" />
                       <View className="flex-1 items-center gap-1">
-                        <Ionicons name="shield-outline" size={18} color={colors.danger} />
-                        <Text variant="titleSmall" className="font-bold text-slate-800">
+                        <Ionicons name="shield-outline" size={18} color="#E11D48" />
+                        <Text className="text-sm font-bold text-slate-800">
                           {summary.totalBlocked}
                         </Text>
-                        <Text variant="labelSmall" className="text-slate-500">
+                        <Text className="text-[11px] text-slate-500">
                           Blocked
                         </Text>
                       </View>
                     </View>
                   ) : (
-                    <Text variant="bodySmall" className="py-3 text-center text-slate-400">
+                    <Text className="py-3 text-center text-xs text-slate-400">
                       No activity data yet
                     </Text>
                   )}
@@ -208,7 +200,7 @@ export default function DashboardScreen({ navigation }: Props) {
                   {/* Weekly Screen Time Mini Chart */}
                   {childBreakdown.length > 0 && (
                     <View className="mt-3 border-t border-slate-100 pt-3">
-                      <Text variant="labelMedium" className="mb-2 font-semibold text-slate-500">
+                      <Text className="mb-2 text-xs font-semibold text-slate-500">
                         This Week
                       </Text>
                       <View className="flex-row items-end gap-1">
@@ -223,12 +215,12 @@ export default function DashboardScreen({ navigation }: Props) {
                                   className="w-full rounded-sm"
                                   style={{
                                     height: `${pct}%`,
-                                    backgroundColor: day.screenTimeMin > 180 ? colors.warning : colors.primary,
+                                    backgroundColor: day.screenTimeMin > 180 ? '#D97706' : '#4F46E5',
                                     minHeight: 2,
                                   }}
                                 />
                               </View>
-                              <Text variant="labelSmall" className="mt-1 text-slate-400" style={{ fontSize: 10 }}>
+                              <Text className="mt-1 text-slate-400" style={{ fontSize: 10 }}>
                                 {dayLabel}
                               </Text>
                             </View>
@@ -241,22 +233,22 @@ export default function DashboardScreen({ navigation }: Props) {
                   {/* Top Apps */}
                   {summary && summary.topApps.length > 0 && (
                     <View className="mt-3">
-                      <Text variant="labelMedium" className="mb-2 font-semibold text-slate-500">
+                      <Text className="mb-2 text-xs font-semibold text-slate-500">
                         Top Apps
                       </Text>
                       {summary.topApps.slice(0, 3).map((app, index) => (
                         <View key={index} className="flex-row justify-between py-1">
-                          <Text variant="bodyMedium" className="mr-3 flex-1 text-slate-700" numberOfLines={1}>
+                          <Text className="mr-3 flex-1 text-sm text-slate-700" numberOfLines={1}>
                             {app.appName || app.packageName}
                           </Text>
-                          <Text variant="bodyMedium" className="font-medium text-slate-500">
+                          <Text className="text-sm font-medium text-slate-500">
                             {formatDuration(app.durationMin)}
                           </Text>
                         </View>
                       ))}
                     </View>
                   )}
-                </Surface>
+                </View>
               </Pressable>
             );
           })}
@@ -265,8 +257,8 @@ export default function DashboardScreen({ navigation }: Props) {
             className="mb-6 flex-row items-center justify-center gap-2 py-4"
             onPress={() => navigation.navigate('AddChild')}
           >
-            <Ionicons name="add-circle-outline" size={20} color={colors.primary} />
-            <Text variant="bodyLarge" className="font-medium" style={{ color: colors.primary }}>
+            <Ionicons name="add-circle-outline" size={20} color="#4F46E5" />
+            <Text className="font-medium text-base" style={{ color: '#4F46E5' }}>
               Add Another Child
             </Text>
           </Pressable>

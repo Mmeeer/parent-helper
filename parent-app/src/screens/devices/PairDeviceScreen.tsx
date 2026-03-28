@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
+  Text,
   ActivityIndicator,
   Alert,
+  TouchableOpacity,
 } from 'react-native';
-import { Surface, Text, Button } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../../theme';
 import * as api from '../../services/api';
 import type { RouteProp } from '@react-navigation/native';
 import type { RootStackParamList, PairDeviceResponse } from '../../types';
@@ -59,82 +59,74 @@ export default function PairDeviceScreen({ route }: Props) {
   return (
     <View className="flex-1 bg-surface-secondary">
       <View className="flex-1 items-center px-8 pt-16">
-        <Ionicons name="phone-portrait-outline" size={72} color={colors.primary} />
-        <Text variant="headlineSmall" className="font-bold text-slate-800 mt-5">
+        <Ionicons name="phone-portrait-outline" size={72} color="#4F46E5" />
+        <Text className="text-xl font-bold text-slate-800 mt-5">
           Pair a Device
         </Text>
-        <Text variant="bodyMedium" className="text-slate-500 mt-2 mb-8 text-center">
+        <Text className="text-sm text-slate-500 mt-2 mb-8 text-center">
           Connect a new device for {childName}.
         </Text>
 
         {pairingData ? (
-          <Surface className="self-stretch rounded-3xl p-8 items-center" elevation={2}>
-            <Text variant="labelLarge" className="text-slate-500 mb-2">
+          <View className="self-stretch rounded-3xl p-8 items-center bg-white shadow-sm shadow-black/5">
+            <Text className="text-sm font-semibold text-slate-500 mb-2">
               Pairing Code
             </Text>
             <Text
-              variant="displayMedium"
-              className="font-bold text-primary-600"
+              className="text-4xl font-bold text-primary-600"
               style={{ letterSpacing: 8, fontFamily: 'monospace' }}
             >
               {pairingData.pairingCode}
             </Text>
             <Text
-              variant="titleMedium"
-              className={`font-bold mt-3 ${countdown <= 60 ? 'text-red-500' : 'text-primary-600'}`}
+              className={`text-base font-semibold mt-3 ${countdown <= 60 ? 'text-red-500' : 'text-primary-600'}`}
             >
               {countdown > 0 ? formatTime(countdown) : 'Expired'}
             </Text>
-            <Text variant="bodySmall" className="text-slate-500 text-center mt-2 leading-5">
-              Enter this code in the Parent Helper app on the child's device.
+            <Text className="text-xs text-slate-500 text-center mt-2 leading-5">
+              Enter this code in the Prime Kids app on the child's device.
             </Text>
 
-            <Button
-              mode="text"
-              icon={() => <Ionicons name="refresh" size={18} color={colors.primary} />}
+            <TouchableOpacity
               onPress={handleGenerateCode}
-              textColor={colors.primary}
-              className="mt-4"
+              className="mt-4 py-2 flex-row items-center gap-x-1"
             >
-              Generate New Code
-            </Button>
-          </Surface>
+              <Ionicons name="refresh" size={18} color="#4F46E5" />
+              <Text className="text-primary-600 font-medium text-sm">Generate New Code</Text>
+            </TouchableOpacity>
+          </View>
         ) : (
           <>
             <View className="self-stretch gap-y-4 mb-8">
               {[
-                { num: '1', text: 'Install "Parent Helper" app on the child\'s device' },
+                { num: '1', text: 'Install "Prime Kids" app on the child\'s device' },
                 { num: '2', text: 'Generate a pairing code below' },
                 { num: '3', text: 'Enter the code on the child\'s device' },
               ].map((step) => (
                 <View key={step.num} className="flex-row items-center gap-x-3.5">
                   <View className="w-8 h-8 rounded-full bg-primary-50 justify-center items-center">
-                    <Text variant="labelLarge" className="font-bold text-primary-600">
+                    <Text className="text-sm font-semibold text-primary-600">
                       {step.num}
                     </Text>
                   </View>
-                  <Text variant="bodyMedium" className="flex-1 text-slate-800 leading-5">
+                  <Text className="flex-1 text-sm text-slate-800 leading-5">
                     {step.text}
                   </Text>
                 </View>
               ))}
             </View>
 
-            <Button
-              mode="contained"
+            <TouchableOpacity
               onPress={handleGenerateCode}
               disabled={loading}
-              buttonColor={colors.primary}
-              textColor={colors.white}
-              className="self-stretch rounded-xl py-1"
-              contentStyle={{ paddingVertical: 6 }}
+              className="self-stretch bg-primary-600 rounded-xl py-3 items-center justify-center"
             >
               {loading ? (
-                <ActivityIndicator color={colors.white} />
+                <ActivityIndicator color="#FFFFFF" />
               ) : (
-                'Generate Pairing Code'
+                <Text className="text-white font-bold text-base">Generate Pairing Code</Text>
               )}
-            </Button>
+            </TouchableOpacity>
           </>
         )}
       </View>

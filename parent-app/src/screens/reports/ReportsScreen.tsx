@@ -4,8 +4,9 @@ import {
   ScrollView,
   RefreshControl,
   ActivityIndicator,
+  Text,
+  TouchableOpacity,
 } from 'react-native';
-import { Surface, Text, Chip } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { colors } from '../../theme';
@@ -70,7 +71,7 @@ export default function ReportsScreen({ route }: Props) {
   if (loading) {
     return (
       <View className="flex-1 justify-center items-center bg-surface-secondary">
-        <ActivityIndicator size="large" color={colors.primary} />
+        <ActivityIndicator size="large" color="#4F46E5" />
       </View>
     );
   }
@@ -80,73 +81,61 @@ export default function ReportsScreen({ route }: Props) {
       className="flex-1 bg-surface-secondary"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadData(); }} />}
     >
-      <Text variant="headlineSmall" className="font-bold text-slate-800 mx-4 mt-5 mb-4">
+      <Text className="text-xl font-bold text-slate-800 mx-4 mt-5 mb-4">
         Reports for {childName}
       </Text>
 
       {/* Period Toggle */}
       <View className="flex-row mx-4 bg-white rounded-xl p-1 mb-4">
         {(['week', 'month'] as const).map((p) => (
-          <View
+          <TouchableOpacity
             key={p}
-            className={`flex-1 rounded-lg ${period === p ? 'bg-primary-600' : ''}`}
+            onPress={() => { setPeriod(p); setLoading(true); }}
+            className={`flex-1 rounded-lg py-2 items-center ${period === p ? 'bg-primary-600' : ''}`}
           >
-            <Chip
-              selected={period === p}
-              onPress={() => { setPeriod(p); setLoading(true); }}
-              showSelectedCheck={false}
-              className={`rounded-lg ${period === p ? 'bg-primary-600' : 'bg-transparent'}`}
-              textStyle={{
-                color: period === p ? colors.white : colors.textSecondary,
-                fontWeight: '500',
-                fontSize: 14,
-                textAlign: 'center',
-                width: '100%',
-              }}
-              style={{ alignItems: 'center' }}
-            >
+            <Text className={`${period === p ? 'text-white' : 'text-slate-500'} text-sm font-medium`}>
               {p === 'week' ? 'This Week' : 'This Month'}
-            </Chip>
-          </View>
+            </Text>
+          </TouchableOpacity>
         ))}
       </View>
 
       {/* Summary Cards */}
       {summary && (
         <View className="flex-row mx-3 gap-x-2 mb-4">
-          <Surface className="flex-1 rounded-2xl p-3.5 items-center bg-primary-50 mx-1" elevation={0}>
-            <Ionicons name="time-outline" size={24} color={colors.primary} />
-            <Text variant="titleMedium" className="font-bold text-slate-800 mt-1.5">
+          <View className="flex-1 rounded-2xl p-3.5 items-center bg-primary-50 mx-1">
+            <Ionicons name="time-outline" size={24} color="#4F46E5" />
+            <Text className="text-base font-bold text-slate-800 mt-1.5">
               {formatDuration(summary.totalScreenTimeMin)}
             </Text>
-            <Text variant="labelSmall" className="text-slate-500 text-center mt-1">
+            <Text className="text-[11px] text-slate-500 text-center mt-1">
               Total Screen Time
             </Text>
-          </Surface>
-          <Surface className="flex-1 rounded-2xl p-3.5 items-center bg-danger-50 mx-1" elevation={0}>
-            <Ionicons name="shield-outline" size={24} color={colors.danger} />
-            <Text variant="titleMedium" className="font-bold text-slate-800 mt-1.5">
+          </View>
+          <View className="flex-1 rounded-2xl p-3.5 items-center bg-danger-50 mx-1">
+            <Ionicons name="shield-outline" size={24} color="#E11D48" />
+            <Text className="text-base font-bold text-slate-800 mt-1.5">
               {summary.totalBlocked}
             </Text>
-            <Text variant="labelSmall" className="text-slate-500 text-center mt-1">
+            <Text className="text-[11px] text-slate-500 text-center mt-1">
               Blocked
             </Text>
-          </Surface>
-          <Surface className="flex-1 rounded-2xl p-3.5 items-center bg-accent-50 mx-1" elevation={0}>
-            <Ionicons name="globe-outline" size={24} color={colors.secondary} />
-            <Text variant="titleMedium" className="font-bold text-slate-800 mt-1.5">
+          </View>
+          <View className="flex-1 rounded-2xl p-3.5 items-center bg-accent-50 mx-1">
+            <Ionicons name="globe-outline" size={24} color="#0D9488" />
+            <Text className="text-base font-bold text-slate-800 mt-1.5">
               {summary.totalWebVisits}
             </Text>
-            <Text variant="labelSmall" className="text-slate-500 text-center mt-1">
+            <Text className="text-[11px] text-slate-500 text-center mt-1">
               Web Visits
             </Text>
-          </Surface>
+          </View>
         </View>
       )}
 
       {/* Daily Screen Time Chart */}
-      <Surface className="mx-4 mb-4 rounded-2xl p-4" elevation={1}>
-        <Text variant="titleSmall" className="font-semibold text-slate-800 mb-4">
+      <View className="mx-4 mb-4 rounded-2xl p-4 bg-white shadow-sm shadow-black/5">
+        <Text className="text-sm font-semibold text-slate-800 mb-4">
           Daily Screen Time
         </Text>
         <View className="flex-row items-end gap-x-1">
@@ -162,35 +151,35 @@ export default function ReportsScreen({ route }: Props) {
                   }}
                 />
               </View>
-              <Text variant="labelSmall" className="text-slate-400 mt-1.5" style={{ fontSize: 10 }}>
+              <Text className="text-slate-400 mt-1.5" style={{ fontSize: 10 }}>
                 {period === 'week' ? formatDate(day.date) : formatShortDate(day.date)}
               </Text>
-              <Text variant="labelSmall" className="text-slate-300 mt-0.5" style={{ fontSize: 9 }}>
+              <Text className="text-slate-300 mt-0.5" style={{ fontSize: 9 }}>
                 {day.screenTimeMin > 0 ? formatDuration(day.screenTimeMin) : '-'}
               </Text>
             </View>
           ))}
         </View>
-      </Surface>
+      </View>
 
       {/* Blocked Attempts */}
-      <Surface className="mx-4 mb-4 rounded-2xl p-4" elevation={1}>
-        <Text variant="titleSmall" className="font-semibold text-slate-800 mb-4">
+      <View className="mx-4 mb-4 rounded-2xl p-4 bg-white shadow-sm shadow-black/5">
+        <Text className="text-sm font-semibold text-slate-800 mb-4">
           Blocked Attempts
         </Text>
         {breakdown.filter((d) => d.blocked > 0).length === 0 ? (
-          <Text variant="bodyMedium" className="text-slate-400 text-center py-5">
+          <Text className="text-sm text-slate-400 text-center py-5">
             No blocked attempts in this period
           </Text>
         ) : (
           <View className="gap-y-2">
             {breakdown.filter((d) => d.blocked > 0).map((day, i) => (
               <View key={i} className="flex-row justify-between items-center py-1.5">
-                <Text variant="bodyMedium" className="text-slate-800">
+                <Text className="text-sm text-slate-800">
                   {day.date}
                 </Text>
                 <View className="bg-danger-50 px-3 py-1 rounded-xl">
-                  <Text variant="labelMedium" className="font-semibold text-danger-600">
+                  <Text className="text-xs font-semibold text-danger-600">
                     {day.blocked}
                   </Text>
                 </View>
@@ -198,15 +187,15 @@ export default function ReportsScreen({ route }: Props) {
             ))}
           </View>
         )}
-      </Surface>
+      </View>
 
       {/* Top Apps */}
-      <Surface className="mx-4 mb-4 rounded-2xl p-4" elevation={1}>
-        <Text variant="titleSmall" className="font-semibold text-slate-800 mb-4">
+      <View className="mx-4 mb-4 rounded-2xl p-4 bg-white shadow-sm shadow-black/5">
+        <Text className="text-sm font-semibold text-slate-800 mb-4">
           Top Apps
         </Text>
         {topApps.length === 0 ? (
-          <Text variant="bodyMedium" className="text-slate-400 text-center py-5">
+          <Text className="text-sm text-slate-400 text-center py-5">
             No app usage data
           </Text>
         ) : (
@@ -216,12 +205,12 @@ export default function ReportsScreen({ route }: Props) {
             return (
               <View key={i} className="flex-row items-center gap-x-3 py-2">
                 <View className="w-7 h-7 rounded-full bg-surface-tertiary justify-center items-center">
-                  <Text variant="labelSmall" className="font-semibold text-slate-500">
+                  <Text className="text-[11px] font-semibold text-slate-500">
                     {i + 1}
                   </Text>
                 </View>
                 <View className="flex-1 gap-y-1">
-                  <Text variant="bodyMedium" className="font-medium text-slate-800" numberOfLines={1}>
+                  <Text className="text-sm font-medium text-slate-800" numberOfLines={1}>
                     {app.appName || app.packageName}
                   </Text>
                   <View className="h-1.5 bg-surface-tertiary rounded-full">
@@ -231,14 +220,14 @@ export default function ReportsScreen({ route }: Props) {
                     />
                   </View>
                 </View>
-                <Text variant="labelLarge" className="font-semibold text-slate-500 min-w-[50px] text-right">
+                <Text className="text-sm font-semibold text-slate-500 min-w-[50px] text-right">
                   {formatDuration(app.durationMin)}
                 </Text>
               </View>
             );
           })
         )}
-      </Surface>
+      </View>
 
       <View className="h-8" />
     </ScrollView>

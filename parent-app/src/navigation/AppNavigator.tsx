@@ -1,12 +1,10 @@
 import React from 'react';
-import { View } from 'react-native';
-import { ActivityIndicator } from 'react-native-paper';
+import { View, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../store/AuthContext';
-import { colors } from '../theme';
 import type { RootStackParamList } from '../types';
 
 // Auth Screens
@@ -41,16 +39,16 @@ function MainTabs() {
   return (
     <Tab.Navigator
       screenOptions={{
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textMuted,
+        tabBarActiveTintColor: '#4F46E5',
+        tabBarInactiveTintColor: '#94A3B8',
         tabBarStyle: {
-          backgroundColor: colors.white,
-          borderTopColor: colors.border,
+          backgroundColor: '#FFFFFF',
+          borderTopColor: '#E2E8F0',
           paddingBottom: 4,
           height: 56,
         },
-        headerStyle: { backgroundColor: colors.white },
-        headerTitleStyle: { fontWeight: '600', color: colors.text },
+        headerStyle: { backgroundColor: '#FFFFFF' },
+        headerTitleStyle: { fontWeight: '600', color: '#1E293B' },
       }}
     >
       <Tab.Screen
@@ -103,7 +101,7 @@ export default function AppNavigator() {
   if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-surface-secondary">
-        <ActivityIndicator size="large" color={colors.primary} />
+        <ActivityIndicator size="large" color="#4F46E5" />
       </View>
     );
   }
@@ -112,9 +110,9 @@ export default function AppNavigator() {
     <NavigationContainer>
       <Stack.Navigator
         screenOptions={{
-          headerStyle: { backgroundColor: colors.white },
-          headerTitleStyle: { fontWeight: '600', color: colors.text },
-          headerTintColor: colors.primary,
+          headerStyle: { backgroundColor: '#FFFFFF' },
+          headerTitleStyle: { fontWeight: '600', color: '#1E293B' },
+          headerTintColor: '#4F46E5',
           headerBackButtonDisplayMode: 'minimal',
         }}
       >

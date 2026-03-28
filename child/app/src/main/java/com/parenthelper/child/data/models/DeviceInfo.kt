@@ -43,3 +43,14 @@ data class InstalledAppsSyncResponse(
     val status: String,
     val count: Int,
 )
+
+data class SosRequest(
+    val message: String? = null,
+    val lat: Double? = null,
+    val lng: Double? = null,
+)
+
+data class SosResponse(
+    val status: String,
+    val alertId: String,
+)

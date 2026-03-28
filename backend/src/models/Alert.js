@@ -21,6 +21,7 @@ const alertSchema = new mongoose.Schema({
       'device_offline',
       'unusual_pattern',
       'uninstall_attempt',
+      'sos',
     ],
     required: true,
   },

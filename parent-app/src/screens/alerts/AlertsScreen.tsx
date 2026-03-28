@@ -1,11 +1,9 @@
 import React, { useCallback, useState, useEffect } from 'react';
-import { View, FlatList, RefreshControl, ActivityIndicator } from 'react-native';
-import { Surface, Text, Badge, Button, TouchableRipple } from 'react-native-paper';
+import { View, Text, FlatList, RefreshControl, ActivityIndicator, Pressable, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { ALERT_TYPE_LABELS, ALERT_TYPE_COLORS } from '../../utils/constants';
 import { formatTimeAgo } from '../../utils/formatters';
-import { colors } from '../../theme';
 import * as api from '../../services/api';
 import { onSocketEvent } from '../../services/socket';
 import type { Alert as AlertType } from '../../types';
@@ -94,18 +92,14 @@ export default function AlertsScreen() {
 
   const renderAlert = ({ item }: { item: AlertType }) => {
     const iconName = ALERT_ICONS[item.type] || 'alert-circle-outline';
-    const color = ALERT_TYPE_COLORS[item.type] || colors.textMuted;
+    const color = ALERT_TYPE_COLORS[item.type] || '#94A3B8';
 
     return (
-      <TouchableRipple
+      <Pressable
         onPress={() => handleMarkRead(item._id)}
-        borderless
-        className="rounded-2xl"
-        rippleColor="rgba(79, 70, 229, 0.08)"
       >
-        <Surface
-          elevation={1}
-          className={`flex-row rounded-2xl p-3.5 ${!item.read ? 'border-l-[3px] border-l-primary-600' : ''}`}
+        <View
+          className={`flex-row rounded-2xl p-3.5 bg-white shadow-sm shadow-black/5 ${!item.read ? 'border-l-[3px] border-l-primary-600' : ''}`}
         >
           <View
             className="w-11 h-11 rounded-xl items-center justify-center mr-3"
@@ -116,31 +110,31 @@ export default function AlertsScreen() {
 
           <View className="flex-1">
             <View className="flex-row justify-between items-center mb-1">
-              <Text variant="titleSmall" className="font-semibold text-slate-800">
+              <Text className="text-sm font-semibold text-slate-800">
                 {ALERT_TYPE_LABELS[item.type] || item.type}
               </Text>
-              <Text variant="labelSmall" className="text-slate-400">
+              <Text className="text-[11px] text-slate-400">
                 {formatTimeAgo(item.createdAt)}
               </Text>
             </View>
 
-            <Text variant="bodySmall" className="text-slate-500 leading-[18px]" numberOfLines={2}>
+            <Text className="text-xs text-slate-500 leading-[18px]" numberOfLines={2}>
               {item.message}
             </Text>
 
             {!item.read && (
-              <Badge size={8} className="absolute top-0 right-0 bg-primary-600" />
+              <View className="w-2 h-2 rounded-full bg-primary-600 absolute top-0 right-0" />
             )}
           </View>
-        </Surface>
-      </TouchableRipple>
+        </View>
+      </Pressable>
     );
   };
 
   if (loading) {
     return (
       <View className="flex-1 justify-center items-center bg-surface-secondary">
-        <ActivityIndicator size="large" color={colors.primary} />
+        <ActivityIndicator size="large" color="#4F46E5" />
       </View>
     );
   }
@@ -149,15 +143,12 @@ export default function AlertsScreen() {
     <View className="flex-1 bg-surface-secondary">
       {alerts.some((a) => !a.read) && (
         <View className="items-end px-4 pt-2">
-          <Button
-            mode="text"
-            compact
-            textColor={colors.primary}
+          <TouchableOpacity
             onPress={handleMarkAllRead}
-            labelStyle={{ fontSize: 14, fontWeight: '500' }}
+            className="py-2"
           >
-            Mark all as read
-          </Button>
+            <Text className="text-primary-600 font-medium text-sm">Mark all as read</Text>
+          </TouchableOpacity>
         </View>
       )}
 
@@ -171,16 +162,16 @@ export default function AlertsScreen() {
         onEndReachedThreshold={0.5}
         ListFooterComponent={
           loadingMore ? (
-            <ActivityIndicator style={{ paddingVertical: 16 }} color={colors.primary} />
+            <ActivityIndicator style={{ paddingVertical: 16 }} color="#4F46E5" />
           ) : null
         }
         ListEmptyComponent={
           <View className="items-center pt-20 px-10">
-            <Ionicons name="notifications-off-outline" size={64} color={colors.textMuted} />
-            <Text variant="titleLarge" className="font-semibold text-slate-800 mt-4">
+            <Ionicons name="notifications-off-outline" size={64} color="#94A3B8" />
+            <Text className="text-lg font-bold text-slate-800 mt-4">
               No Alerts
             </Text>
-            <Text variant="bodyMedium" className="text-slate-500 text-center mt-2">
+            <Text className="text-sm text-slate-500 text-center mt-2">
               You'll be notified about important events here.
             </Text>
           </View>

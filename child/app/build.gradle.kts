@@ -2,6 +2,7 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.serialization)
 }
 
@@ -25,12 +26,8 @@ android {
     namespace = "com.parenthelper.child"
     compileSdk = 35
 
-    // Configure built-in Kotlin support
-    kotlin {
-        version = libs.versions.kotlin.get()
-        compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-        }
+    kotlinOptions {
+        jvmTarget = "17"
     }
 
     defaultConfig {

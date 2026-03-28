@@ -1,15 +1,15 @@
 import React, { useCallback, useState } from 'react';
 import {
   View,
+  Text,
   ScrollView,
   RefreshControl,
   ActivityIndicator,
   Alert,
+  TouchableOpacity,
 } from 'react-native';
-import { Surface, Text, Button, Chip, IconButton } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { colors } from '../../theme';
 import { formatTimeAgo } from '../../utils/formatters';
 import * as api from '../../services/api';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -88,7 +88,7 @@ export default function DevicesListScreen({ navigation, route }: Props) {
   if (loading) {
     return (
       <View className="flex-1 justify-center items-center bg-surface-secondary">
-        <ActivityIndicator size="large" color={colors.primary} />
+        <ActivityIndicator size="large" color="#4F46E5" />
       </View>
     );
   }
@@ -98,33 +98,33 @@ export default function DevicesListScreen({ navigation, route }: Props) {
       className="flex-1 bg-surface-secondary"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadDevices(); }} />}
     >
-      <Text variant="headlineSmall" className="font-bold text-slate-800 mx-4 mt-5 mb-4">
+      <Text className="text-xl font-bold text-slate-800 mx-4 mt-5 mb-4">
         Devices for {childName}
       </Text>
 
       {devices.length === 0 ? (
         <View className="items-center pt-16 px-10">
-          <Ionicons name="phone-portrait-outline" size={64} color={colors.textMuted} />
-          <Text variant="titleMedium" className="font-semibold text-slate-800 mt-4">
+          <Ionicons name="phone-portrait-outline" size={64} color="#94A3B8" />
+          <Text className="text-base font-semibold text-slate-800 mt-4">
             No Devices Paired
           </Text>
-          <Text variant="bodyMedium" className="text-slate-500 text-center mt-2">
+          <Text className="text-sm text-slate-500 text-center mt-2">
             Pair a device to start monitoring.
           </Text>
         </View>
       ) : (
         devices.map((device) => (
-          <Surface key={device.id} className="mx-4 mb-3 rounded-2xl p-4" elevation={1}>
+          <View key={device.id} className="mx-4 mb-3 rounded-2xl p-4 bg-white shadow-sm shadow-black/5">
             {/* Device Header */}
             <View className="flex-row items-center">
               <View className="w-11 h-11 rounded-xl bg-primary-50 justify-center items-center">
-                <Ionicons name="phone-portrait" size={24} color={colors.primary} />
+                <Ionicons name="phone-portrait" size={24} color="#4F46E5" />
               </View>
               <View className="flex-1 ml-3">
-                <Text variant="titleSmall" className="font-semibold text-slate-800">
+                <Text className="text-sm font-semibold text-slate-800">
                   {device.model || 'Unknown Device'}
                 </Text>
-                <Text variant="labelSmall" className="text-slate-500 mt-0.5">
+                <Text className="text-[11px] text-slate-500 mt-0.5">
                   {device.platform} {device.osVersion} — v{device.appVersion}
                 </Text>
               </View>
@@ -139,8 +139,7 @@ export default function DevicesListScreen({ navigation, route }: Props) {
                   }`}
                 />
                 <Text
-                  variant="labelSmall"
-                  className={`font-semibold capitalize ${
+                  className={`text-[11px] font-semibold capitalize ${
                     device.status === 'online' ? 'text-accent-600' : 'text-slate-400'
                   }`}
                 >
@@ -152,111 +151,96 @@ export default function DevicesListScreen({ navigation, route }: Props) {
             {/* Device Stats */}
             <View className="flex-row gap-x-2.5 mt-3">
               {device.batteryLevel != null && (
-                <Chip
-                  icon={() => (
-                    <Ionicons
-                      name={device.batteryLevel! > 20 ? 'battery-half' : 'battery-dead'}
-                      size={16}
-                      color={device.batteryLevel! > 20 ? colors.secondary : colors.danger}
-                    />
-                  )}
-                  className="bg-surface-tertiary"
-                  textStyle={{ fontSize: 12, color: colors.textSecondary }}
-                  compact
-                >
-                  {device.batteryLevel}%
-                </Chip>
+                <View className="px-2.5 py-1 rounded-xl flex-row items-center gap-1 bg-surface-tertiary">
+                  <Ionicons
+                    name={device.batteryLevel! > 20 ? 'battery-half' : 'battery-dead'}
+                    size={16}
+                    color={device.batteryLevel! > 20 ? '#0D9488' : '#E11D48'}
+                  />
+                  <Text className="text-xs text-slate-500">
+                    {device.batteryLevel}%
+                  </Text>
+                </View>
               )}
-              <Chip
-                icon={() => (
-                  <Ionicons name="time-outline" size={16} color={colors.textSecondary} />
-                )}
-                className="bg-surface-tertiary"
-                textStyle={{ fontSize: 12, color: colors.textSecondary }}
-                compact
-              >
-                {device.lastSeen ? formatTimeAgo(device.lastSeen) : 'Never'}
-              </Chip>
+              <View className="px-2.5 py-1 rounded-xl flex-row items-center gap-1 bg-surface-tertiary">
+                <Ionicons name="time-outline" size={16} color="#64748B" />
+                <Text className="text-xs text-slate-500">
+                  {device.lastSeen ? formatTimeAgo(device.lastSeen) : 'Never'}
+                </Text>
+              </View>
             </View>
 
             {/* Remote Commands */}
-            <Text variant="labelMedium" className="font-semibold text-slate-500 mt-4 mb-2">
+            <Text className="text-xs font-semibold text-slate-500 mt-4 mb-2">
               Remote Commands
             </Text>
             <View className="flex-row gap-x-2">
               <View className="flex-1 items-center py-3 rounded-xl bg-surface-tertiary">
-                <IconButton
-                  icon={() => <Ionicons name="lock-closed-outline" size={20} color={colors.danger} />}
-                  size={20}
+                <TouchableOpacity
                   onPress={() => sendCommand(device.id, 'lock')}
                   disabled={commandingId === device.id}
-                  className="m-0 p-0"
-                />
-                <Text variant="labelSmall" className="text-slate-700 -mt-1">Lock</Text>
+                  className="p-1"
+                >
+                  <Ionicons name="lock-closed-outline" size={20} color="#E11D48" />
+                </TouchableOpacity>
+                <Text className="text-[11px] text-slate-700 -mt-1">Lock</Text>
               </View>
               <View className="flex-1 items-center py-3 rounded-xl bg-surface-tertiary">
-                <IconButton
-                  icon={() => <Ionicons name="lock-open-outline" size={20} color={colors.secondary} />}
-                  size={20}
+                <TouchableOpacity
                   onPress={() => sendCommand(device.id, 'unlock')}
                   disabled={commandingId === device.id}
-                  className="m-0 p-0"
-                />
-                <Text variant="labelSmall" className="text-slate-700 -mt-1">Unlock</Text>
+                  className="p-1"
+                >
+                  <Ionicons name="lock-open-outline" size={20} color="#0D9488" />
+                </TouchableOpacity>
+                <Text className="text-[11px] text-slate-700 -mt-1">Unlock</Text>
               </View>
               <View className="flex-1 items-center py-3 rounded-xl bg-surface-tertiary">
-                <IconButton
-                  icon={() => <Ionicons name="locate-outline" size={20} color={colors.primary} />}
-                  size={20}
+                <TouchableOpacity
                   onPress={() => sendCommand(device.id, 'locate')}
                   disabled={commandingId === device.id}
-                  className="m-0 p-0"
-                />
-                <Text variant="labelSmall" className="text-slate-700 -mt-1">Locate</Text>
+                  className="p-1"
+                >
+                  <Ionicons name="locate-outline" size={20} color="#4F46E5" />
+                </TouchableOpacity>
+                <Text className="text-[11px] text-slate-700 -mt-1">Locate</Text>
               </View>
               <View className="flex-1 items-center py-3 rounded-xl bg-surface-tertiary">
-                <IconButton
-                  icon={() => <Ionicons name="sync-outline" size={20} color={colors.warning} />}
-                  size={20}
+                <TouchableOpacity
                   onPress={() => sendCommand(device.id, 'sync')}
                   disabled={commandingId === device.id}
-                  className="m-0 p-0"
-                />
-                <Text variant="labelSmall" className="text-slate-700 -mt-1">Sync</Text>
+                  className="p-1"
+                >
+                  <Ionicons name="sync-outline" size={20} color="#D97706" />
+                </TouchableOpacity>
+                <Text className="text-[11px] text-slate-700 -mt-1">Sync</Text>
               </View>
             </View>
 
             {commandingId === device.id && (
-              <ActivityIndicator className="mt-2" color={colors.primary} />
+              <ActivityIndicator className="mt-2" color="#4F46E5" />
             )}
 
             {/* Unpair */}
-            <Button
-              mode="text"
-              icon={() => <Ionicons name="unlink-outline" size={16} color={colors.danger} />}
+            <TouchableOpacity
               onPress={() => handleUnpair(device.id)}
-              textColor={colors.danger}
-              className="mt-3"
-              compact
+              className="mt-3 py-2 flex-row items-center justify-center gap-x-1"
             >
-              Unpair Device
-            </Button>
-          </Surface>
+              <Ionicons name="unlink-outline" size={16} color="#E11D48" />
+              <Text className="text-danger-600 font-medium text-sm">Unpair Device</Text>
+            </TouchableOpacity>
+          </View>
         ))
       )}
 
       {/* Pair New Device */}
-      <Surface className="mx-4 mt-2 rounded-2xl" elevation={0}>
-        <Button
-          mode="outlined"
-          icon={() => <Ionicons name="add-circle-outline" size={20} color={colors.primary} />}
-          onPress={() => navigation.navigate('PairDevice', { childId, childName })}
-          textColor={colors.primary}
-          className="rounded-2xl py-1"
-        >
-          Pair New Device
-        </Button>
-      </Surface>
+      <TouchableOpacity
+        onPress={() => navigation.navigate('PairDevice', { childId, childName })}
+        className="mx-4 mt-2 border border-primary-600 rounded-2xl py-3 flex-row items-center justify-center gap-x-2"
+      >
+        <Ionicons name="add-circle-outline" size={20} color="#4F46E5" />
+        <Text className="text-primary-600 font-semibold">Pair New Device</Text>
+      </TouchableOpacity>
 
       <View className="h-8" />
     </ScrollView>

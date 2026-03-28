@@ -1,65 +1,189 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center"
-    android:orientation="vertical"
-    android:padding="32dp">
+    android:background="@color/background"
+    android:fillViewport="true">
 
-    <ImageView
-        android:layout_width="120dp"
-        android:layout_height="120dp"
-        android:layout_marginBottom="24dp"
-        android:contentDescription="@string/app_name"
-        android:src="@mipmap/ic_launcher" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:text="@string/status_protected"
-        android:textColor="@android:color/holo_green_dark"
-        android:textSize="28sp"
-        android:textStyle="bold" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="4dp"
-        android:text="@string/status_connected"
-        android:textSize="16sp" />
-
-    <TextView
-        android:id="@+id/tvMonitoringStatus"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="32dp"
-        android:text="@string/status_monitoring"
-        android:textSize="14sp"
-        android:textColor="@android:color/darker_gray" />
-
-    <TextView
-        android:id="@+id/tvScreenTime"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:text="Screen time today: 0 min"
-        android:textSize="16sp" />
-
-    <TextView
-        android:id="@+id/tvDailyLimit"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="32dp"
-        android:text="Daily limit: --"
-        android:textSize="14sp"
-        android:textColor="@android:color/darker_gray" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnRequestPermissions"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:text="Grant Permissions"
-        android:visibility="gone" />
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="48dp"
+        android:paddingBottom="32dp">
 
-</LinearLayout>
+        <!-- Status header -->
+        <ImageView
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_marginBottom="12dp"
+            android:contentDescription="Protected"
+            android:src="@drawable/ic_shield_check" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/status_protected"
+            android:textColor="@color/text_primary"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.01" />
+
+        <TextView
+            android:id="@+id/tvMonitoringStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_status_chip"
+            android:text="@string/status_monitoring"
+            android:textColor="@color/status_active"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <!-- SOS Button -->
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="40dp"
+            android:layout_marginBottom="12dp">
+
+            <!-- Outer ring -->
+            <View
+                android:id="@+id/sosPulseRing"
+                android:layout_width="190dp"
+                android:layout_height="190dp"
+                android:layout_gravity="center"
+                android:background="@drawable/bg_sos_ring" />
+
+            <!-- Main SOS button -->
+            <FrameLayout
+                android:id="@+id/btnSos"
+                android:layout_width="160dp"
+                android:layout_height="160dp"
+                android:layout_gravity="center"
+                android:background="@drawable/bg_sos_button"
+                android:clickable="true"
+                android:focusable="true"
+                android:elevation="8dp">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:orientation="vertical"
+                    android:gravity="center">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="SOS"
+                        android:textColor="@color/white"
+                        android:textSize="36sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.15" />
+
+                    <TextView
+                        android:id="@+id/tvSosHint"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Hold to alert"
+                        android:textColor="#CCFFFFFF"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </FrameLayout>
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/tvSosStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="32dp"
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp"
+            android:text="Sends emergency alert to your parent"
+            android:gravity="center" />
+
+        <!-- Screen time card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_card"
+            android:elevation="2dp"
+            android:orientation="vertical"
+            android:padding="20dp"
+            android:layout_marginBottom="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="12dp">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_marginEnd="8dp"
+                    android:src="@drawable/ic_screen_time"
+                    android:contentDescription="Screen time" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Screen Time"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:textAllCaps="true"
+                    android:letterSpacing="0.08" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvScreenTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0 min"
+                android:textColor="@color/text_primary"
+                android:textSize="32sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_marginEnd="4dp"
+                    android:src="@drawable/ic_limit"
+                    android:contentDescription="Limit" />
+
+                <TextView
+                    android:id="@+id/tvDailyLimit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Daily limit: --"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Permissions button (shown only when needed) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnRequestPermissions"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="Grant Permissions"
+            android:textSize="15sp"
+            android:visibility="gone"
+            android:backgroundTint="@color/primary"
+            android:textColor="@color/white" />
+
+    </LinearLayout>
+</ScrollView>

@@ -1,6 +1,6 @@
 export const API_BASE_URL = __DEV__
   ? 'http://10.0.2.2:3000'  // Android emulator → host machine
-  : 'https://api.parenthelper.com';
+  : 'https://api.primekids.com';
 
 export const ALERT_TYPE_LABELS: Record<string, string> = {
   screen_time_limit: 'Screen Time Limit',

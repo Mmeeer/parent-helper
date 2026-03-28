@@ -51,7 +51,7 @@ class WebFilterVpnService : VpnService() {
 
         try {
             val builder = Builder()
-                .setSession("ParentHelper WebFilter")
+                .setSession("Prime Kids WebFilter")
                 .addAddress(VPN_ADDRESS, 24)
                 .addRoute(REAL_DNS, 32)     // Route traffic to real DNS through VPN
                 .addDnsServer(REAL_DNS)      // Tell system to use real DNS (traffic will pass through TUN)
