@@ -7,6 +7,20 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as api from '../../services/api';
 import type { RootStackParamList } from '../../types';
 
+// Type scale (matches HomeScreen):
+// title:  15px/600 — card titles, item titles
+// body:   14px/400 — subtitles, descriptions
+// label:  12px/500 — meta, badges
+// btn:    14px/600 — button text
+
+const SHADOW = {
+  elevation: 4,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.08,
+  shadowRadius: 12,
+} as const;
+
 export default function SettingsScreen() {
   const { user, logout } = useAuth();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -63,52 +77,61 @@ export default function SettingsScreen() {
   ];
 
   return (
-    <ScrollView className="flex-1 bg-surface-secondary">
+    <ScrollView className="flex-1 bg-slate-50">
       {/* User Info Card */}
-      <View className="flex-row items-center mx-4 mt-4 rounded-2xl p-5 bg-white shadow-sm shadow-black/5">
+      <View className="flex-row items-center mx-4 mt-5 rounded-2xl p-5 bg-white" style={SHADOW}>
         <View className="w-14 h-14 rounded-full bg-primary-600 items-center justify-center">
           <Ionicons name="person" size={28} color="#FFFFFF" />
         </View>
-        <View className="flex-1 ml-3.5">
-          <Text className="text-base font-bold text-slate-800">
+        <View className="flex-1 ml-4">
+          <Text style={{ fontSize: 15, fontWeight: '600', color: '#1E293B' }}>
             {user?.name || 'Parent'}
           </Text>
-          <Text className="text-xs text-slate-500 mt-0.5">
+          <Text style={{ fontSize: 14, color: '#64748B', marginTop: 2 }}>
             {user?.email || ''}
           </Text>
           <View
-            className={`self-start mt-1.5 px-2 py-0.5 rounded-lg ${subInfo?.active ? 'bg-green-50' : 'bg-red-50'}`}
+            className={`self-start mt-2 px-2.5 py-1 rounded-full ${subInfo?.active ? 'bg-emerald-50' : 'bg-red-50'}`}
           >
             <Text
-              className={`text-[11px] font-bold ${subInfo?.active ? 'text-green-800' : 'text-red-600'}`}
+              style={{
+                fontSize: 12,
+                fontWeight: '600',
+                color: subInfo?.active ? '#059669' : '#E11D48',
+              }}
             >
-              {subInfo?.active ? 'SUBSCRIBED' : 'NO SUBSCRIPTION'}
+              {subInfo?.active ? 'Active' : 'No Subscription'}
             </Text>
           </View>
         </View>
       </View>
 
       {/* Settings Items */}
-      <View className="mx-4 mt-5 rounded-2xl overflow-hidden bg-white shadow-sm shadow-black/5">
+      <View className="mx-4 mt-5 rounded-2xl overflow-hidden bg-white" style={SHADOW}>
         {items.map((item, index) => (
           <React.Fragment key={index}>
             <Pressable onPress={item.onPress}>
-              <View className="flex-row items-center p-4">
-                <View className="w-9 h-9 rounded-[10px] bg-surface-tertiary items-center justify-center mr-3">
-                  <Ionicons name={item.icon} size={22} color="#4F46E5" />
+              {({ pressed }) => (
+                <View
+                  className="flex-row items-center px-5 py-4"
+                  style={pressed ? { opacity: 0.7 } : {}}
+                >
+                  <View className="w-9 h-9 rounded-xl bg-slate-100 items-center justify-center mr-4">
+                    <Ionicons name={item.icon} size={20} color="#4F46E5" />
+                  </View>
+                  <View className="flex-1">
+                    <Text style={{ fontSize: 15, fontWeight: '600', color: '#1E293B' }}>
+                      {item.title}
+                    </Text>
+                    <Text style={{ fontSize: 14, color: '#64748B', marginTop: 2 }}>
+                      {item.subtitle}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color="#CBD5E1" />
                 </View>
-                <View className="flex-1">
-                  <Text className="text-base font-medium text-slate-800">
-                    {item.title}
-                  </Text>
-                  <Text className="text-[11px] text-slate-500 mt-0.5">
-                    {item.subtitle}
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
-              </View>
+              )}
             </Pressable>
-            {index < items.length - 1 && <View className="h-px bg-slate-200 ml-16" />}
+            {index < items.length - 1 && <View className="h-px bg-slate-100 ml-[72px]" />}
           </React.Fragment>
         ))}
       </View>
@@ -117,15 +140,16 @@ export default function SettingsScreen() {
       <View className="mx-4 mt-5">
         <TouchableOpacity
           onPress={handleLogout}
-          className="border border-danger-600 rounded-2xl py-3 flex-row items-center justify-center gap-2"
+          className="border border-red-200 bg-white rounded-2xl py-4 flex-row items-center justify-center gap-2"
+          style={SHADOW}
         >
           <Ionicons name="log-out-outline" size={20} color="#E11D48" />
-          <Text className="text-danger-600 font-semibold text-base">Sign Out</Text>
+          <Text style={{ fontSize: 14, fontWeight: '600', color: '#E11D48' }}>Sign Out</Text>
         </TouchableOpacity>
       </View>
 
       {/* Version */}
-      <Text className="text-[11px] text-center text-slate-400 mt-5 mb-8">
+      <Text style={{ fontSize: 12, color: '#94A3B8', textAlign: 'center', marginTop: 24, marginBottom: 32 }}>
         Prime Kids: Parent Helper v1.0.0
       </Text>
     </ScrollView>

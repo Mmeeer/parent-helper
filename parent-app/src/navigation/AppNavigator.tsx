@@ -13,7 +13,7 @@ import RegisterScreen from '../screens/auth/RegisterScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 
 // Main Screens
-import DashboardScreen from '../screens/dashboard/DashboardScreen';
+import HomeScreen from '../screens/dashboard/DashboardScreen';
 import AlertsScreen from '../screens/alerts/AlertsScreen';
 import ApprovalsScreen from '../screens/approvals/ApprovalsScreen';
 import SettingsScreen from '../screens/settings/SettingsScreen';
@@ -44,18 +44,28 @@ function MainTabs() {
         tabBarStyle: {
           backgroundColor: '#FFFFFF',
           borderTopColor: '#E2E8F0',
-          paddingBottom: 4,
-          height: 56,
+          borderTopWidth: 1,
+          paddingBottom: 10,
+          paddingTop: 10,
+          height: 72,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '600',
+          marginTop: 2,
+        },
+        tabBarIconStyle: {
+          marginBottom: 0,
         },
         headerStyle: { backgroundColor: '#FFFFFF' },
-        headerTitleStyle: { fontWeight: '600', color: '#1E293B' },
+        headerTitleStyle: { fontSize: 17, fontWeight: '600', color: '#1E293B' },
       }}
     >
       <Tab.Screen
         name="Dashboard"
-        component={DashboardScreen}
+        component={HomeScreen}
         options={{
-          title: 'Dashboard',
+          title: 'Home',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home-outline" size={size} color={color} />
           ),

@@ -14,6 +14,24 @@
         <item name="shapeAppearanceMediumComponent">@style/RoundedMedium</item>
     </style>
 
+    <style name="CodeBox">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">58dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:background">@drawable/bg_code_box</item>
+        <item name="android:gravity">center</item>
+        <item name="android:inputType">textCapCharacters|textNoSuggestions</item>
+        <item name="android:maxLength">1</item>
+        <item name="android:textAlignment">center</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textSize">24sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:importantForAutofill">no</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:cursorVisible">false</item>
+        <item name="android:paddingHorizontal">0dp</item>
+    </style>
+
     <style name="RoundedSmall" parent="ShapeAppearance.MaterialComponents.SmallComponent">
         <item name="cornerSize">12dp</item>
     </style>

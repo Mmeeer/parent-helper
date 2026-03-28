@@ -10,15 +10,15 @@
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
         android:orientation="vertical"
-        android:paddingHorizontal="32dp"
-        android:paddingTop="80dp"
+        android:paddingHorizontal="28dp"
+        android:paddingTop="72dp"
         android:paddingBottom="32dp">
 
         <!-- Shield icon -->
         <ImageView
             android:layout_width="72dp"
             android:layout_height="72dp"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="20dp"
             android:contentDescription="@string/app_name"
             android:src="@drawable/ic_shield_check" />
 
@@ -26,6 +26,16 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
+            android:text="@string/app_name"
+            android:textColor="@color/primary"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.03" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="6dp"
             android:text="@string/pairing_title"
             android:textColor="@color/text_primary"
             android:textSize="26sp"
@@ -34,53 +44,54 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="40dp"
+            android:layout_marginBottom="44dp"
             android:gravity="center"
             android:text="@string/pairing_instruction"
             android:textColor="@color/text_secondary"
-            android:textSize="15sp"
+            android:textSize="14sp"
             android:lineSpacingExtra="3dp" />
 
-        <!-- Pairing code input -->
+        <!-- 6-box OTP input row -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_card"
-            android:elevation="2dp"
-            android:orientation="vertical"
+            android:orientation="horizontal"
             android:gravity="center"
-            android:paddingHorizontal="24dp"
-            android:paddingTop="28dp"
-            android:paddingBottom="24dp"
-            android:layout_marginBottom="20dp">
+            android:layout_marginBottom="32dp">
 
+            <EditText
+                android:id="@+id/box1"
+                style="@style/CodeBox" />
+            <View android:layout_width="8dp" android:layout_height="1dp" />
+            <EditText
+                android:id="@+id/box2"
+                style="@style/CodeBox" />
+            <View android:layout_width="8dp" android:layout_height="1dp" />
+            <EditText
+                android:id="@+id/box3"
+                style="@style/CodeBox" />
+
+            <!-- Dash separator -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="PAIRING CODE"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp"
-                android:textStyle="bold"
-                android:letterSpacing="0.15"
-                android:layout_marginBottom="12dp" />
+                android:paddingHorizontal="6dp"
+                android:text="–"
+                android:textColor="@color/text_hint"
+                android:textSize="22sp"
+                android:textStyle="bold" />
 
             <EditText
-                android:id="@+id/etPairingCode"
-                android:layout_width="match_parent"
-                android:layout_height="64dp"
-                android:background="@drawable/bg_code_input"
-                android:gravity="center"
-                android:hint="– – – – – –"
-                android:textColorHint="@color/text_hint"
-                android:inputType="textCapCharacters|textNoSuggestions"
-                android:maxLength="6"
-                android:textAlignment="center"
-                android:textColor="@color/text_primary"
-                android:textSize="32sp"
-                android:letterSpacing="0.5"
-                android:textStyle="bold"
-                android:importantForAutofill="no"
-                android:maxLines="1" />
+                android:id="@+id/box4"
+                style="@style/CodeBox" />
+            <View android:layout_width="8dp" android:layout_height="1dp" />
+            <EditText
+                android:id="@+id/box5"
+                style="@style/CodeBox" />
+            <View android:layout_width="8dp" android:layout_height="1dp" />
+            <EditText
+                android:id="@+id/box6"
+                style="@style/CodeBox" />
 
         </LinearLayout>
 
@@ -93,13 +104,14 @@
             android:textStyle="bold"
             android:backgroundTint="@color/primary"
             android:textColor="@color/white"
-            android:letterSpacing="0.05" />
+            android:letterSpacing="0.05"
+            android:layout_marginBottom="16dp" />
 
         <ProgressBar
             android:id="@+id/progressBar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="4dp"
             android:visibility="gone"
             android:indeterminateTint="@color/primary" />
 
@@ -107,7 +119,7 @@
             android:id="@+id/tvError"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="12dp"
             android:textColor="@color/status_error"
             android:textSize="14sp"
             android:gravity="center"
