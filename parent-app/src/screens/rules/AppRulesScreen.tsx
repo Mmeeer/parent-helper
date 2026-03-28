@@ -17,6 +17,7 @@ import * as api from '../../services/api';
 import type { RouteProp } from '@react-navigation/native';
 import type { RootStackParamList } from '../../types';
 import type { InstalledApp } from '../../services/api';
+import { C, CARD, LABEL } from '../../theme';
 
 type Props = {
   readonly route: RouteProp<RootStackParamList, 'AppRules'>;
@@ -39,11 +40,9 @@ export default function AppRulesScreen({ route }: Props) {
 
   const loadData = async () => {
     try {
-      // Load current rules
       const rules = await api.getRules(childId);
       const blocked = rules.blockedApps || [];
 
-      // Load installed apps from all devices for this child
       const devices = await api.getChildDevices(childId);
       let allApps: InstalledApp[] = [];
       for (const device of devices) {
@@ -55,13 +54,11 @@ export default function AppRulesScreen({ route }: Props) {
         }
       }
 
-      // Deduplicate by packageName
       const uniqueApps = Array.from(
         new Map(allApps.map(a => [a.packageName, a])).values()
       );
       setInstalledApps(uniqueApps);
 
-      // Map blocked package names to app names
       setBlockedApps(
         blocked.map(pkg => {
           const found = uniqueApps.find(a => a.packageName === pkg);
@@ -110,7 +107,7 @@ export default function AppRulesScreen({ route }: Props) {
   if (loading) {
     return (
       <View className="flex-1 justify-center items-center bg-surface-secondary">
-        <ActivityIndicator size="large" color="#4F46E5" />
+        <ActivityIndicator size="large" color={C.ink900} />
       </View>
     );
   }
@@ -118,45 +115,62 @@ export default function AppRulesScreen({ route }: Props) {
   return (
     <View className="flex-1 bg-surface-secondary">
       <ScrollView>
-        <View className="mx-4 mt-4 rounded-2xl p-4 bg-white shadow-sm shadow-black/5">
-          <Text className="text-base font-bold text-slate-800">
-            Хаагдсан аппууд
+        {/* Page header */}
+        <View className="mx-5 mt-6 mb-7">
+          <Text style={[LABEL, { marginBottom: 6 }]}>ХЯНАЛТ</Text>
+          <Text className="font-serif text-[32px] text-ink-900" style={{ lineHeight: 36 }}>
+            Аппын удирдлага
           </Text>
-          <Text className="text-xs text-slate-500 mt-1 mb-4">
+        </View>
+
+        <View style={{ ...CARD, marginHorizontal: 16, marginBottom: 12, padding: 20 }}>
+          <Text style={[LABEL, { marginBottom: 12 }]}>ХААГДСАН АППУУД</Text>
+          <Text className="text-sm font-semibold text-ink-900 mb-1">Хаагдсан аппууд</Text>
+          <Text className="text-xs text-ink-400 mb-4">
             Хүүхдийн төхөөрөмжийн аппуудаас хаах аппаа + дарж сонгоно уу.
           </Text>
 
           <TouchableOpacity
             onPress={() => setPickerVisible(true)}
-            className="bg-primary-600 rounded-xl py-3 items-center justify-center flex-row gap-2 mb-3"
+            className="bg-ink-900 rounded-xl items-center justify-center flex-row gap-2 mb-4"
+            style={{ height: 52 }}
           >
             <Ionicons name="add-circle" size={20} color="#FFFFFF" />
-            <Text className="text-white font-bold text-base">Апп хаах</Text>
+            <Text className="text-sm font-bold text-white" style={{ letterSpacing: 0.4 }}>
+              Апп хаах
+            </Text>
           </TouchableOpacity>
 
           {blockedApps.length === 0 ? (
-            <Text className="text-xs text-slate-400 text-center py-5">
-              Хаагдсан апп байхгүй.
-            </Text>
+            <View className="items-center py-6">
+              <View className="w-12 h-12 rounded-full bg-ink-100 items-center justify-center mb-3">
+                <Ionicons name="ban-outline" size={24} color={C.ink300} />
+              </View>
+              <Text className="text-xs text-ink-400 text-center">Хаагдсан апп байхгүй.</Text>
+            </View>
           ) : (
             blockedApps.map((app, index) => (
-              <View key={app.packageName} className="flex-row items-center py-3 border-b border-slate-200 gap-x-3">
+              <View
+                key={app.packageName}
+                className="flex-row items-center py-3 gap-x-3"
+                style={{ borderBottomWidth: 1, borderBottomColor: C.ink200 }}
+              >
                 <View
-                  className="w-9 h-9 rounded-full justify-center items-center bg-danger-50"
-                  style={{ backgroundColor: '#FFE4E6' }}
+                  className="w-9 h-9 rounded-full justify-center items-center"
+                  style={{ backgroundColor: '#FFF1F2' }}
                 >
-                  <Ionicons name="ban" size={18} color="#E11D48" />
+                  <Ionicons name="ban" size={18} color={C.red} />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-sm font-medium text-slate-800" numberOfLines={1}>
+                  <Text className="text-sm font-medium text-ink-900" numberOfLines={1}>
                     {app.appName}
                   </Text>
-                  <Text className="text-[11px] text-slate-400 mt-0.5" numberOfLines={1}>
+                  <Text className="text-[11px] text-ink-400 mt-0.5" numberOfLines={1}>
                     {app.packageName}
                   </Text>
                 </View>
                 <TouchableOpacity onPress={() => removeApp(index)} className="p-1">
-                  <Ionicons name="close-circle" size={24} color="#94A3B8" />
+                  <Ionicons name="close-circle" size={24} color={C.ink300} />
                 </TouchableOpacity>
               </View>
             ))
@@ -166,12 +180,15 @@ export default function AppRulesScreen({ route }: Props) {
         <TouchableOpacity
           onPress={handleSave}
           disabled={saving}
-          className={`mx-4 mt-6 rounded-xl py-3 items-center justify-center ${saving ? 'bg-primary-400' : 'bg-primary-600'}`}
+          className="bg-ink-900 rounded-xl items-center justify-center mx-4 mt-2"
+          style={{ height: 52, opacity: saving ? 0.6 : 1 }}
         >
           {saving ? (
             <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
-            <Text className="text-white font-bold text-base">Өөрчлөлт хадгалах</Text>
+            <Text className="text-sm font-bold text-white" style={{ letterSpacing: 0.4 }}>
+              Өөрчлөлт хадгалах
+            </Text>
           )}
         </TouchableOpacity>
 
@@ -181,34 +198,38 @@ export default function AppRulesScreen({ route }: Props) {
       {/* App Picker Modal */}
       <Modal visible={pickerVisible} animationType="slide" presentationStyle="pageSheet">
         <View className="flex-1 bg-surface-secondary">
-          <View className="flex-row justify-between items-center px-4 pt-4 pb-3">
-            <Text className="text-xl font-bold text-slate-800">
-              Хаах апп сонгох
-            </Text>
-            <TouchableOpacity onPress={() => { setPickerVisible(false); setSearchQuery(''); }} className="p-1">
-              <Ionicons name="close" size={24} color="#1E293B" />
+          <View className="flex-row justify-between items-center px-5 pt-5 pb-3">
+            <Text className="font-serif text-[24px] text-ink-900">Хаах апп сонгох</Text>
+            <TouchableOpacity
+              onPress={() => { setPickerVisible(false); setSearchQuery(''); }}
+              className="p-1"
+            >
+              <Ionicons name="close" size={24} color={C.ink900} />
             </TouchableOpacity>
           </View>
 
-          <View className="mx-4 rounded-xl mb-2 flex-row items-center px-3 gap-x-2 bg-white shadow-sm shadow-black/5">
-            <Ionicons name="search" size={20} color="#94A3B8" />
+          <View
+            className="mx-4 mb-2 flex-row items-center px-3 gap-x-2"
+            style={{ backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: C.ink200, borderRadius: 12 }}
+          >
+            <Ionicons name="search" size={20} color={C.ink400} />
             <TextInput
-              className="flex-1 bg-transparent h-12 text-sm text-slate-800"
+              style={{ flex: 1, height: 48, fontSize: 14, color: C.ink900 }}
               value={searchQuery}
               onChangeText={setSearchQuery}
               placeholder="Апп хайх..."
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor={C.ink300}
               autoFocus
             />
           </View>
 
           {installedApps.length === 0 ? (
-            <View className="items-center pt-16 px-10">
-              <Ionicons name="phone-portrait-outline" size={48} color="#94A3B8" />
-              <Text className="text-base font-semibold text-slate-800 mt-4">
-                Апп синхрончлогдоогүй байна
-              </Text>
-              <Text className="text-sm text-slate-500 text-center mt-2">
+            <View className="items-center pt-[60px] px-10">
+              <View className="w-16 h-16 rounded-full bg-ink-100 items-center justify-center mb-4">
+                <Ionicons name="phone-portrait-outline" size={32} color={C.ink300} />
+              </View>
+              <Text className="text-sm font-semibold text-ink-500">Апп синхрончлогдоогүй байна</Text>
+              <Text className="text-[13px] text-ink-400 text-center mt-1.5" style={{ lineHeight: 20 }}>
                 Хүүхдийн төхөөрөмж аппын жагсаалтыг синхрончлоогүй байна. Prime Kids апп ажиллаж байгаа эсэхийг шалгана уу.
               </Text>
             </View>
@@ -218,28 +239,26 @@ export default function AppRulesScreen({ route }: Props) {
               keyExtractor={item => item.packageName}
               renderItem={({ item }) => (
                 <Pressable
-                  className="flex-row items-center mx-4 mt-px py-3 px-4 gap-x-3 bg-white rounded-xl"
+                  style={{ ...CARD, marginHorizontal: 16, marginBottom: 4 }}
+                  className="flex-row items-center py-3 px-4 gap-x-3"
                   onPress={() => addApp(item)}
                 >
-                  <View
-                    className="w-10 h-10 rounded-xl justify-center items-center"
-                    style={{ backgroundColor: '#E0E7FF' }}
-                  >
-                    <Ionicons name="cube-outline" size={24} color="#4F46E5" />
+                  <View className="w-10 h-10 rounded-xl bg-ink-100 justify-center items-center">
+                    <Ionicons name="cube-outline" size={22} color={C.ink600} />
                   </View>
                   <View className="flex-1">
-                    <Text className="text-sm font-medium text-slate-800">
+                    <Text className="text-sm font-medium text-ink-900">
                       {item.appName}
                     </Text>
-                    <Text className="text-[11px] text-slate-400 mt-0.5">
+                    <Text className="text-[11px] text-ink-400 mt-0.5">
                       {item.packageName}
                     </Text>
                   </View>
-                  <Ionicons name="add-circle-outline" size={24} color="#4F46E5" />
+                  <Ionicons name="add-circle-outline" size={24} color={C.teal} />
                 </Pressable>
               )}
               ListEmptyComponent={
-                <Text className="text-xs text-slate-400 text-center py-5">
+                <Text className="text-xs text-ink-400 text-center py-5">
                   {searchQuery ? 'Тохирох апп олдсонгүй.' : 'Бүх аппууд хаагдсан байна.'}
                 </Text>
               }

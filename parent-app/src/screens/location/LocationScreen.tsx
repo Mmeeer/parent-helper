@@ -16,6 +16,7 @@ import * as api from '../../services/api';
 import { onSocketEvent } from '../../services/socket';
 import type { RouteProp } from '@react-navigation/native';
 import type { RootStackParamList, LocationEntry } from '../../types';
+import { C, CARD } from '../../theme';
 
 let MapView: any = null;
 let Marker: any = null;
@@ -39,7 +40,7 @@ export default function LocationScreen({ route }: Props) {
   const [locations, setLocations] = useState<LocationEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [mapError, setMapError] = useState(false);
+  const [mapError] = useState(false);
 
   const loadLocations = useCallback(async () => {
     try {
@@ -71,7 +72,7 @@ export default function LocationScreen({ route }: Props) {
     return unsub;
   }, [childId]);
 
-  const latestLocation = locations.length > 0 ? locations[locations.length - 1] : null;
+  const latestLocation = locations.length > 0 ? (locations.at(-1) ?? null) : null;
 
   const openInExternalMap = (lat: number, lng: number) => {
     const url = Platform.select({
@@ -86,7 +87,7 @@ export default function LocationScreen({ route }: Props) {
   if (loading) {
     return (
       <View className="flex-1 justify-center items-center bg-surface-secondary">
-        <ActivityIndicator size="large" color="#4F46E5" />
+        <ActivityIndicator size="large" color={C.ink900} />
       </View>
     );
   }
@@ -94,18 +95,23 @@ export default function LocationScreen({ route }: Props) {
   if (error) {
     return (
       <View className="flex-1 justify-center items-center bg-surface-secondary px-10">
-        <Ionicons name="alert-circle-outline" size={64} color="#E11D48" />
-        <Text className="text-base font-semibold text-slate-800 mt-4">
+        <View className="w-16 h-16 rounded-full bg-ink-100 items-center justify-center mb-4">
+          <Ionicons name="alert-circle-outline" size={32} color={C.red} />
+        </View>
+        <Text className="text-sm font-semibold text-ink-900 mt-2">
           Байршил ачаалахад алдаа гарлаа
         </Text>
-        <Text className="text-sm text-slate-500 text-center mt-2">
+        <Text className="text-[13px] text-ink-400 text-center mt-1.5" style={{ lineHeight: 20 }}>
           {error}
         </Text>
         <TouchableOpacity
           onPress={loadLocations}
-          className="mt-5 bg-primary-600 rounded-xl py-3 px-6 items-center"
+          className="bg-ink-900 rounded-xl items-center justify-center mt-5 px-8"
+          style={{ height: 52 }}
         >
-          <Text className="text-white font-bold">Дахин оролдох</Text>
+          <Text className="text-sm font-bold text-white" style={{ letterSpacing: 0.4 }}>
+            Дахин оролдох
+          </Text>
         </TouchableOpacity>
       </View>
     );
@@ -114,19 +120,22 @@ export default function LocationScreen({ route }: Props) {
   if (!latestLocation) {
     return (
       <View className="flex-1 justify-center items-center bg-surface-secondary px-10">
-        <Ionicons name="location-outline" size={64} color="#94A3B8" />
-        <Text className="text-base font-semibold text-slate-800 mt-4">
-          Байршлын мэдээлэл байхгүй
-        </Text>
-        <Text className="text-sm text-slate-500 text-center mt-2">
+        <View className="w-16 h-16 rounded-full bg-ink-100 items-center justify-center mb-4">
+          <Ionicons name="location-outline" size={32} color={C.ink300} />
+        </View>
+        <Text className="text-sm font-semibold text-ink-500">Байршлын мэдээлэл байхгүй</Text>
+        <Text className="text-[13px] text-ink-400 text-center mt-1.5" style={{ lineHeight: 20 }}>
           {childName}-ийн төхөөрөмжөөс байршлын шинэчлэлтүүд энд харагдана.
           Төхөөрөмжийн хэсгээс Байршлыг олох командыг илгээнэ үү.
         </Text>
         <TouchableOpacity
           onPress={loadLocations}
-          className="mt-5 bg-primary-600 rounded-xl py-3 px-6 items-center"
+          className="bg-ink-900 rounded-xl items-center justify-center mt-5 px-8"
+          style={{ height: 52 }}
         >
-          <Text className="text-white font-bold">Шинэчлэх</Text>
+          <Text className="text-sm font-bold text-white" style={{ letterSpacing: 0.4 }}>
+            Шинэчлэх
+          </Text>
         </TouchableOpacity>
       </View>
     );
@@ -155,7 +164,7 @@ export default function LocationScreen({ route }: Props) {
                 latitude: l.lat,
                 longitude: l.lng,
               }))}
-              strokeColor="#4F46E5"
+              strokeColor={C.ink900}
               strokeWidth={3}
             />
           )}
@@ -171,12 +180,12 @@ export default function LocationScreen({ route }: Props) {
           />
 
           {/* History markers */}
-          {locations.slice(0, -1).map((loc: LocationEntry, index: number) => (
+          {locations.slice(0, -1).map((loc: LocationEntry) => (
             <Marker
-              key={index}
+              key={loc.timestamp}
               coordinate={{ latitude: loc.lat, longitude: loc.lng }}
               title={formatTime(loc.timestamp)}
-              pinColor="#94A3B8"
+              pinColor={C.ink300}
               opacity={0.5}
             />
           ))}
@@ -189,66 +198,77 @@ export default function LocationScreen({ route }: Props) {
           }
         >
           <View className="items-center py-10 gap-y-3">
-            <Ionicons name="map-outline" size={48} color="#94A3B8" />
-            <Text className="text-sm text-slate-500">
+            <View className="w-14 h-14 rounded-full bg-ink-100 items-center justify-center">
+              <Ionicons name="map-outline" size={28} color={C.ink400} />
+            </View>
+            <Text className="text-sm text-ink-500">
               Газрын зураг ашиглах боломжгүй
             </Text>
             <TouchableOpacity
               onPress={() => openInExternalMap(latestLocation.lat, latestLocation.lng)}
-              className="mt-2 bg-primary-600 rounded-xl py-3 px-6 flex-row items-center gap-2"
+              className="bg-ink-900 rounded-xl items-center justify-center flex-row gap-2 px-6"
+              style={{ height: 52 }}
             >
               <Ionicons name="open-outline" size={18} color="#FFFFFF" />
-              <Text className="text-white font-bold">Газрын зурагт нээх</Text>
+              <Text className="text-sm font-bold text-white" style={{ letterSpacing: 0.4 }}>
+                Газрын зурагт нээх
+              </Text>
             </TouchableOpacity>
           </View>
 
           {/* Location list */}
-          {locations.map((loc, index) => (
+          {locations.map((loc) => {
+            const isLatest = loc.timestamp === latestLocation?.timestamp;
+            return (
             <TouchableOpacity
-              key={index}
+              key={loc.timestamp}
               onPress={() => openInExternalMap(loc.lat, loc.lng)}
             >
-              <View className="mx-4 mb-2 rounded-xl p-3.5 flex-row items-center gap-x-3 bg-white shadow-sm shadow-black/5">
+              <View style={{ ...CARD, marginHorizontal: 16, marginBottom: 8, padding: 14 }}
+                className="flex-row items-center gap-x-3"
+              >
                 <Ionicons
-                  name={index === locations.length - 1 ? 'location' : 'location-outline'}
+                  name={isLatest ? 'location' : 'location-outline'}
                   size={20}
-                  color={index === locations.length - 1 ? '#4F46E5' : '#64748B'}
+                  color={isLatest ? C.teal : C.ink400}
                 />
                 <View className="flex-1">
-                  <Text className="text-sm font-medium text-slate-800" style={{ fontFamily: 'monospace' }}>
+                  <Text className="text-sm font-medium text-ink-900" style={{ fontFamily: 'monospace' }}>
                     {loc.lat.toFixed(6)}, {loc.lng.toFixed(6)}
                   </Text>
-                  <Text className="text-[11px] text-slate-500 mt-0.5">
+                  <Text className="text-[11px] text-ink-400 mt-0.5">
                     {formatTime(loc.timestamp)}
                   </Text>
                 </View>
-                <Ionicons name="open-outline" size={16} color="#94A3B8" />
+                <Ionicons name="open-outline" size={16} color={C.ink300} />
               </View>
             </TouchableOpacity>
-          ))}
+            );
+          })}
         </ScrollView>
       )}
 
       {/* Info Panel */}
-      <View className="absolute bottom-5 left-4 right-4 rounded-2xl p-4 bg-white shadow-sm shadow-black/5">
+      <View
+        style={{ ...CARD, position: 'absolute', bottom: 20, left: 16, right: 16, padding: 16 }}
+      >
         <View className="flex-row items-center gap-x-2 mb-2">
-          <Ionicons name="location" size={20} color="#4F46E5" />
-          <Text className="text-sm font-semibold text-slate-800">
+          <Ionicons name="location" size={20} color={C.teal} />
+          <Text className="text-sm font-semibold text-ink-900">
             Сүүлд мэдэгдсэн байршил
           </Text>
         </View>
         <TouchableOpacity onPress={() => openInExternalMap(latestLocation.lat, latestLocation.lng)}>
           <Text
-            className="text-xs text-primary-600 underline"
-            style={{ fontFamily: 'monospace' }}
+            style={{ fontSize: 12, color: C.teal, textDecorationLine: 'underline', fontFamily: 'monospace' }}
           >
             {latestLocation.lat.toFixed(6)}, {latestLocation.lng.toFixed(6)}
           </Text>
         </TouchableOpacity>
-        <Text className="text-xs text-slate-500 mt-1">
+        <Text className="text-xs text-ink-400 mt-1">
           Шинэчлэгдсэн: {formatTime(latestLocation.timestamp)}
         </Text>
-        <Text className="text-[11px] text-slate-400 mt-1">
+        <Text className="text-[11px] text-ink-400 mt-1">
           Өнөөдөр {locations.length} байршлын цэг
         </Text>
       </View>
@@ -256,7 +276,8 @@ export default function LocationScreen({ route }: Props) {
       {/* Refresh FAB */}
       <TouchableOpacity
         onPress={loadLocations}
-        className="absolute top-4 right-4 w-10 h-10 rounded-full bg-primary-600 items-center justify-center shadow-md"
+        className="absolute top-4 right-4 w-10 h-10 rounded-full bg-ink-900 items-center justify-center"
+        style={{ shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 }, elevation: 4 }}
       >
         <Ionicons name="refresh" size={22} color="#FFFFFF" />
       </TouchableOpacity>

@@ -7,6 +7,7 @@ import * as api from '../../services/api';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import type { RootStackParamList, Rules } from '../../types';
+import { C, CARD, LABEL } from '../../theme';
 
 type Props = {
   readonly navigation: NativeStackNavigationProp<RootStackParamList, 'RulesOverview'>;
@@ -35,35 +36,44 @@ export default function RulesOverviewScreen({ navigation, route }: Props) {
   const webCategories = rules?.webFilter?.categories?.length || 0;
   const customBlocked = rules?.webFilter?.customBlock?.length || 0;
 
+  const screenTimeSummary = (() => {
+    if (!dailyLimit) return 'Тохируулаагүй';
+    const hours = Math.floor(dailyLimit / 60);
+    const mins = dailyLimit % 60;
+    const minsPart = mins > 0 ? ` ${mins}м` : '';
+    return `${hours}ц${minsPart} өдөрт · ${perAppCount} аппын хязгаар · ${scheduleCount} хуваарь`;
+  })();
+
   const ruleCategories = [
     {
+      key: 'screen-time',
       title: 'Дэлгэцийн цагийн хязгаар',
       description: 'Өдрийн хязгаар, аппын хязгаар болон хуваарь тохируулах',
       icon: 'time-outline' as const,
-      color: '#D97706',
-      bgColor: '#D9770620',
-      summary: dailyLimit
-        ? `${Math.floor(dailyLimit / 60)}ц${dailyLimit % 60 > 0 ? ` ${dailyLimit % 60}м` : ''} өдөрт · ${perAppCount} аппын хязгаар · ${scheduleCount} хуваарь`
-        : 'Тохируулаагүй',
+      color: C.amber,
+      bgColor: '#FEF3C7',
+      summary: screenTimeSummary,
       onPress: () => navigation.navigate('ScreenTimeRules', { childId, childName }),
     },
     {
+      key: 'app-rules',
       title: 'Аппын удирдлага',
       description: 'Тодорхой аппыг хаах эсвэл зөвшөөрөх',
       icon: 'apps-outline' as const,
-      color: '#4F46E5',
-      bgColor: '#4F46E520',
+      color: C.ink900,
+      bgColor: C.ink100,
       summary: blockedAppsCount > 0
         ? `${blockedAppsCount} апп хаагдсан`
         : 'Хаагдсан апп байхгүй',
       onPress: () => navigation.navigate('AppRules', { childId, childName }),
     },
     {
+      key: 'web-filter',
       title: 'Вэб шүүлт',
       description: 'Агуулгын ангилал болон домайны дүрмийг тохируулах',
       icon: 'globe-outline' as const,
-      color: '#0D9488',
-      bgColor: '#0D948820',
+      color: C.teal,
+      bgColor: '#1A0d9488',
       summary: webCategories > 0 || customBlocked > 0
         ? `${webCategories} ангилал · ${customBlocked} домайн`
         : 'Идэвхтэй шүүлт байхгүй',
@@ -73,48 +83,52 @@ export default function RulesOverviewScreen({ navigation, route }: Props) {
 
   return (
     <ScrollView className="flex-1 bg-surface-secondary">
-      <Text className="text-xl font-bold text-slate-800 mx-4 mt-5">
-        {childName}-ийн дүрмүүд
-      </Text>
-      <Text className="text-sm text-slate-500 mx-4 mt-1 mb-5">
-        Эцэг эхийн хяналт болон хязгаарлалтуудыг тохируулах.
-      </Text>
+      {/* Page header */}
+      <View className="mx-5 mt-6 mb-7">
+        <Text style={[LABEL, { marginBottom: 6 }]}>ДҮРМҮҮД</Text>
+        <Text className="font-serif text-[32px] text-ink-900" style={{ lineHeight: 36 }}>
+          {childName}-ийн дүрмүүд
+        </Text>
+        <Text className="text-sm text-ink-500 mt-2">
+          Эцэг эхийн хяналт болон хязгаарлалтуудыг тохируулах.
+        </Text>
+      </View>
 
       {loading ? (
         <View className="items-center py-8">
-          <ActivityIndicator size="small" color="#4F46E5" />
+          <ActivityIndicator size="small" color={C.ink900} />
         </View>
       ) : (
-        ruleCategories.map((category, index) => (
-          <View
-            key={index}
-            className="mx-4 mb-3 rounded-2xl overflow-hidden bg-white shadow-sm shadow-black/5"
+        ruleCategories.map((category) => (
+          <Pressable
+            key={category.key}
+            onPress={category.onPress}
+            style={{ ...CARD, marginHorizontal: 16, marginBottom: 12 }}
+            className="flex-row items-center px-5 py-4 gap-4"
           >
-            <Pressable onPress={category.onPress} className="p-4">
-              <View className="flex-row items-center">
-                <View
-                  className="w-13 h-13 rounded-2xl justify-center items-center"
-                  style={{ backgroundColor: category.bgColor }}
-                >
-                  <Ionicons name={category.icon} size={28} color={category.color} />
-                </View>
-                <View className="flex-1 ml-3.5">
-                  <Text className="text-base font-semibold text-slate-800">
-                    {category.title}
-                  </Text>
-                  <Text className="text-xs text-slate-500 mt-0.5">
-                    {category.description}
-                  </Text>
-                  <Text className="text-[11px] text-primary-600 font-medium mt-1.5">
-                    {category.summary}
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color="#64748B" />
-              </View>
-            </Pressable>
-          </View>
+            <View
+              className="w-12 h-12 rounded-2xl justify-center items-center"
+              style={{ backgroundColor: category.bgColor, flexShrink: 0 }}
+            >
+              <Ionicons name={category.icon} size={26} color={category.color} />
+            </View>
+            <View className="flex-1">
+              <Text className="text-sm font-semibold text-ink-900">
+                {category.title}
+              </Text>
+              <Text className="text-xs text-ink-400 mt-0.5">
+                {category.description}
+              </Text>
+              <Text className="text-[11px] text-ink-500 font-medium mt-1.5">
+                {category.summary}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={C.ink300} />
+          </Pressable>
         ))
       )}
+
+      <View className="h-8" />
     </ScrollView>
   );
 }

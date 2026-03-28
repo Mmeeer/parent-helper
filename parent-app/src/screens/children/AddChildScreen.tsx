@@ -8,10 +8,12 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import * as api from '../../services/api';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../types';
+import { C, CARD, LABEL } from '../../theme';
 
 type Props = {
   readonly navigation: NativeStackNavigationProp<RootStackParamList, 'AddChild'>;
@@ -49,48 +51,77 @@ export default function AddChildScreen({ navigation }: Props) {
       className="flex-1 bg-surface-secondary"
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View className="p-6">
-        <Text className="text-xl font-bold mb-6 text-slate-800">
-          Хүүхдийн профайл нэмэх
-        </Text>
-
-        <View className="mb-4">
-          <Text className="text-sm font-semibold text-slate-700 mb-1.5">Хүүхдийн нэр</Text>
-          <TextInput
-            placeholder="Нэр оруулах"
-            value={name}
-            onChangeText={setName}
-            autoFocus
-            className="bg-white border border-slate-300 rounded-xl px-4 py-3 text-base text-slate-800"
-            placeholderTextColor="#94A3B8"
-          />
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}>
+        {/* Page header */}
+        <View className="mt-6 mb-7">
+          <Text style={[LABEL, { marginBottom: 6 }]}>ПРОФАЙЛ</Text>
+          <Text className="font-serif text-[32px] text-ink-900" style={{ lineHeight: 36 }}>
+            Хүүхэд нэмэх
+          </Text>
         </View>
 
-        <View className="mb-8">
-          <Text className="text-sm font-semibold text-slate-700 mb-1.5">Нас</Text>
-          <TextInput
-            placeholder="Нас оруулах (1-18)"
-            value={age}
-            onChangeText={setAge}
-            keyboardType="number-pad"
-            maxLength={2}
-            className="bg-white border border-slate-300 rounded-xl px-4 py-3 text-base text-slate-800"
-            placeholderTextColor="#94A3B8"
-          />
+        {/* Form card */}
+        <View style={{ ...CARD, padding: 20 }}>
+          <View className="mb-5">
+            <Text style={[LABEL, { marginBottom: 6 }]}>ХҮҮХДИЙН НЭР</Text>
+            <TextInput
+              placeholder="Нэр оруулах"
+              value={name}
+              onChangeText={setName}
+              autoFocus
+              style={{
+                backgroundColor: C.bg,
+                borderWidth: 1,
+                borderColor: C.ink200,
+                borderRadius: 12,
+                paddingHorizontal: 16,
+                paddingVertical: 14,
+                fontSize: 14,
+                color: C.ink900,
+              }}
+              placeholderTextColor={C.ink300}
+            />
+          </View>
+
+          <View>
+            <Text style={[LABEL, { marginBottom: 6 }]}>НАС</Text>
+            <TextInput
+              placeholder="Нас оруулах (1-18)"
+              value={age}
+              onChangeText={setAge}
+              keyboardType="number-pad"
+              maxLength={2}
+              style={{
+                backgroundColor: C.bg,
+                borderWidth: 1,
+                borderColor: C.ink200,
+                borderRadius: 12,
+                paddingHorizontal: 16,
+                paddingVertical: 14,
+                fontSize: 14,
+                color: C.ink900,
+              }}
+              placeholderTextColor={C.ink300}
+            />
+          </View>
         </View>
 
+        {/* Submit button */}
         <TouchableOpacity
           onPress={handleCreate}
           disabled={loading}
-          className={`bg-primary-600 rounded-xl py-3.5 items-center ${loading ? 'opacity-60' : ''}`}
+          className="bg-ink-900 rounded-xl items-center justify-center mt-6"
+          style={{ height: 52, opacity: loading ? 0.6 : 1 }}
         >
           {loading ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
-            <Text className="text-white font-bold text-lg">Хүүхэд нэмэх</Text>
+            <Text className="text-sm font-bold text-white" style={{ letterSpacing: 0.4 }}>
+              Хүүхэд нэмэх
+            </Text>
           )}
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }

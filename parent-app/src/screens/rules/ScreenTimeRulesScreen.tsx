@@ -19,6 +19,7 @@ import * as api from '../../services/api';
 import type { RouteProp } from '@react-navigation/native';
 import type { RootStackParamList, Schedule, PerAppLimit } from '../../types';
 import type { InstalledApp } from '../../services/api';
+import { C, CARD, LABEL } from '../../theme';
 
 type Props = {
   readonly route: RouteProp<RootStackParamList, 'ScreenTimeRules'>;
@@ -54,7 +55,6 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
         setSchedules(rules.screenTime.schedule ?? []);
       }
 
-      // Load installed apps for the app picker
       const devices = await api.getChildDevices(childId);
       let allApps: InstalledApp[] = [];
       for (const device of devices) {
@@ -107,7 +107,6 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
     setSearchQuery('');
   };
 
-  // ─── Per-App Limits ────────────────────────────────
   const addPerAppLimit = () => {
     if (!selectedApp) {
       Alert.alert('Алдаа', 'Эхлээд апп сонгоно уу.');
@@ -131,7 +130,6 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
     setPerAppLimits(perAppLimits.filter((_, i) => i !== index));
   };
 
-  // Schedules
   const addSchedule = () => {
     setSchedules([
       ...schedules,
@@ -169,30 +167,53 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
   if (loading) {
     return (
       <View className="flex-1 justify-center items-center bg-surface-secondary">
-        <ActivityIndicator size="large" color="#4F46E5" />
+        <ActivityIndicator size="large" color={C.ink900} />
       </View>
     );
   }
 
+  const parsedLimit = Number.parseInt(dailyLimit, 10);
+
   return (
     <>
     <ScrollView className="flex-1 bg-surface-secondary">
+      {/* Page header */}
+      <View className="mx-5 mt-6 mb-7">
+        <Text style={[LABEL, { marginBottom: 6 }]}>ХЯНАЛТ</Text>
+        <Text className="font-serif text-[32px] text-ink-900" style={{ lineHeight: 36 }}>
+          Дэлгэцийн цаг
+        </Text>
+      </View>
+
       {/* Daily Limit */}
-      <View className="mx-4 mt-4 rounded-2xl p-4 bg-white shadow-sm shadow-black/5">
-        <Text className="text-base font-bold text-slate-800">
+      <View style={{ ...CARD, marginHorizontal: 16, marginBottom: 12, padding: 20 }}>
+        <Text style={[LABEL, { marginBottom: 12 }]}>ӨДРИЙН ХЯЗГААР</Text>
+        <Text className="text-sm font-semibold text-ink-900 mb-3">
           Өдрийн дэлгэцийн цагийн хязгаар
         </Text>
-        <View className="flex-row items-center mt-3 gap-2">
+        <View className="flex-row items-center gap-2">
           <TextInput
-            className="w-24 text-center bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm text-slate-800"
+            style={{
+              width: 96,
+              textAlign: 'center',
+              backgroundColor: C.bg,
+              borderWidth: 1,
+              borderColor: C.ink200,
+              borderRadius: 12,
+              paddingHorizontal: 16,
+              paddingVertical: 14,
+              fontSize: 14,
+              color: C.ink900,
+            }}
             value={dailyLimit}
             onChangeText={setDailyLimit}
             keyboardType="number-pad"
             maxLength={4}
+            placeholderTextColor={C.ink300}
           />
-          <Text className="text-sm text-slate-500">минут</Text>
-          <Text className="text-xs text-primary-600 font-medium">
-            ({formatDuration(Number.parseInt(dailyLimit, 10) || 0)})
+          <Text className="text-sm text-ink-500">минут</Text>
+          <Text className="text-xs text-ink-400 font-medium">
+            ({formatDuration(parsedLimit || 0)})
           </Text>
         </View>
 
@@ -202,9 +223,13 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
             <TouchableOpacity
               key={mins}
               onPress={() => setDailyLimit(String(mins))}
-              className={`px-3 py-1.5 rounded-xl ${Number.parseInt(dailyLimit, 10) === mins ? 'bg-primary-600' : 'bg-slate-100'}`}
+              className="px-3 py-1.5 rounded-xl"
+              style={{ backgroundColor: parsedLimit === mins ? C.ink900 : C.ink100 }}
             >
-              <Text className={`${Number.parseInt(dailyLimit, 10) === mins ? 'text-white' : 'text-slate-500'} text-xs font-medium`}>
+              <Text
+                className="text-xs font-medium"
+                style={{ color: parsedLimit === mins ? '#FFFFFF' : C.ink500 }}
+              >
                 {formatDuration(mins)}
               </Text>
             </TouchableOpacity>
@@ -213,40 +238,52 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
       </View>
 
       {/* Per-App Limits */}
-      <View className="mx-4 mt-4 rounded-2xl p-4 bg-white shadow-sm shadow-black/5">
-        <Text className="text-base font-bold text-slate-800">
-          Аппын хязгаар
-        </Text>
-        <Text className="text-xs text-slate-500 mt-1 mb-3">
+      <View style={{ ...CARD, marginHorizontal: 16, marginBottom: 12, padding: 20 }}>
+        <Text style={[LABEL, { marginBottom: 12 }]}>АППЫН ХЯЗГААР</Text>
+        <Text className="text-sm font-semibold text-ink-900 mb-1">Аппын хязгаар</Text>
+        <Text className="text-xs text-ink-400 mb-4">
           Тодорхой аппуудад хугацааны хязгаар тохируулах.
         </Text>
 
         {/* Add per-app form */}
         <View className="gap-2 mb-3">
           <Pressable
-            className="flex-row items-center bg-surface-secondary rounded-xl px-3.5 py-3 gap-2"
+            className="flex-row items-center rounded-xl px-3.5 py-3 gap-2"
+            style={{ backgroundColor: C.bg, borderWidth: 1, borderColor: C.ink200, borderRadius: 12 }}
             onPress={() => setPickerVisible(true)}
           >
-            <Ionicons name="cube-outline" size={20} color={selectedApp ? '#1E293B' : '#64748B'} />
+            <Ionicons name="cube-outline" size={20} color={selectedApp ? C.ink900 : C.ink400} />
             <Text
-              className={`flex-1 text-sm ${selectedApp ? 'text-slate-800' : 'text-slate-400'}`}
+              className="flex-1 text-sm"
+              style={{ color: selectedApp ? C.ink900 : C.ink300 }}
             >
               {selectedApp ? selectedApp.appName : 'Апп сонгох...'}
             </Text>
-            <Ionicons name="chevron-down" size={18} color="#64748B" />
+            <Ionicons name="chevron-down" size={18} color={C.ink400} />
           </Pressable>
           <View className="flex-row items-center gap-2">
             <TextInput
-              className="flex-1 bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm text-slate-800"
+              style={{
+                flex: 1,
+                backgroundColor: C.bg,
+                borderWidth: 1,
+                borderColor: C.ink200,
+                borderRadius: 12,
+                paddingHorizontal: 16,
+                height: 48,
+                fontSize: 14,
+                color: C.ink900,
+              }}
               value={newAppLimit}
               onChangeText={setNewAppLimit}
               placeholder="30"
               keyboardType="number-pad"
               maxLength={4}
+              placeholderTextColor={C.ink300}
             />
-            <Text className="text-sm text-slate-500">мин/өдөр</Text>
+            <Text className="text-sm text-ink-500">мин/өдөр</Text>
             <TouchableOpacity
-              className="w-10 h-10 rounded-xl bg-primary-600 items-center justify-center"
+              className="w-10 h-10 rounded-xl bg-ink-900 items-center justify-center"
               onPress={addPerAppLimit}
             >
               <Ionicons name="add" size={22} color="#FFFFFF" />
@@ -256,28 +293,29 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
 
         {/* Per-app list */}
         {perAppLimits.length === 0 ? (
-          <Text className="text-xs text-slate-400 text-center py-4">
+          <Text className="text-xs text-ink-400 text-center py-4">
             Аппын хязгаар тохируулаагүй.
           </Text>
         ) : (
           perAppLimits.map((app, index) => (
             <View
-              key={index}
-              className="flex-row items-center py-2.5 border-b border-slate-200 gap-2.5"
+              key={app.appId}
+              className="flex-row items-center py-2.5 gap-2.5"
+              style={{ borderBottomWidth: 1, borderBottomColor: C.ink200 }}
             >
               <View className="flex-1">
-                <Text className="text-sm font-medium text-slate-800" numberOfLines={1}>
+                <Text className="text-sm font-medium text-ink-900" numberOfLines={1}>
                   {app.appName || app.appId}
                 </Text>
-                <Text className="text-[11px] text-slate-400 mt-0.5 font-mono" numberOfLines={1}>
+                <Text className="text-[11px] text-ink-400 mt-0.5 font-mono" numberOfLines={1}>
                   {app.appId}
                 </Text>
               </View>
-              <Text className="text-sm font-semibold text-primary-600">
+              <Text className="text-sm font-semibold text-ink-900">
                 {formatDuration(app.limitMin)}
               </Text>
               <TouchableOpacity onPress={() => removePerAppLimit(index)} className="p-1">
-                <Ionicons name="close-circle-outline" size={20} color="#64748B" />
+                <Ionicons name="close-circle-outline" size={20} color={C.ink400} />
               </TouchableOpacity>
             </View>
           ))
@@ -285,30 +323,30 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
       </View>
 
       {/* Schedules */}
-      <View className="mx-4 mt-4 rounded-2xl p-4 bg-white shadow-sm shadow-black/5">
-        <View className="flex-row justify-between items-center">
-          <Text className="text-base font-bold text-slate-800">
-            Хаагдсан хуваарь
-          </Text>
+      <View style={{ ...CARD, marginHorizontal: 16, marginBottom: 12, padding: 20 }}>
+        <View className="flex-row justify-between items-center mb-1">
+          <Text style={[LABEL]}>ХААГДСАН ХУВААРЬ</Text>
           <TouchableOpacity onPress={addSchedule} className="p-1">
-            <Ionicons name="add-circle" size={26} color="#4F46E5" />
+            <Ionicons name="add-circle" size={26} color={C.ink900} />
           </TouchableOpacity>
         </View>
-        <Text className="text-xs text-slate-500 mt-1 mb-3">
+        <Text className="text-sm font-semibold text-ink-900 mb-1">Хаагдсан хуваарь</Text>
+        <Text className="text-xs text-ink-400 mb-3">
           Тодорхой цагуудад төхөөрөмжийн хэрэглээг хаах.
         </Text>
 
         {schedules.map((schedule, index) => (
           <View
             key={index}
-            className="rounded-xl p-3.5 mt-2.5 bg-surface-secondary"
+            className="rounded-xl p-3.5 mt-2.5"
+            style={{ backgroundColor: C.ink100 }}
           >
             <View className="flex-row justify-between items-center mb-2.5">
-              <Text className="text-sm font-semibold text-slate-800">
+              <Text className="text-sm font-semibold text-ink-900">
                 {index + 1}-р хуваарь
               </Text>
               <TouchableOpacity onPress={() => removeSchedule(index)} className="p-1">
-                <Ionicons name="trash-outline" size={20} color="#E11D48" />
+                <Ionicons name="trash-outline" size={20} color={C.red} />
               </TouchableOpacity>
             </View>
 
@@ -318,9 +356,17 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
                 <TouchableOpacity
                   key={day}
                   onPress={() => toggleDay(index, day)}
-                  className={`px-3 py-1.5 rounded-xl ${schedule.days.includes(day) ? 'bg-primary-600' : 'bg-white border border-slate-200'}`}
+                  className="px-3 py-1.5 rounded-xl"
+                  style={{
+                    backgroundColor: schedule.days.includes(day) ? C.ink900 : '#FFFFFF',
+                    borderWidth: schedule.days.includes(day) ? 0 : 1,
+                    borderColor: C.ink200,
+                  }}
                 >
-                  <Text className={`${schedule.days.includes(day) ? 'text-white' : 'text-slate-500'} text-xs font-medium`}>
+                  <Text
+                    className="text-xs font-medium"
+                    style={{ color: schedule.days.includes(day) ? '#FFFFFF' : C.ink500 }}
+                  >
                     {day.slice(0, 3)}
                   </Text>
                 </TouchableOpacity>
@@ -330,22 +376,44 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
             {/* Time Range */}
             <View className="flex-row items-end mt-3 gap-2">
               <View className="flex-1">
-                <Text className="text-[11px] text-slate-500 mb-1">Эхлэх</Text>
+                <Text className="text-[11px] text-ink-400 mb-1">Эхлэх</Text>
                 <TextInput
-                  className="bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm text-slate-800 text-center"
+                  style={{
+                    backgroundColor: '#FFFFFF',
+                    borderWidth: 1,
+                    borderColor: C.ink200,
+                    borderRadius: 12,
+                    paddingHorizontal: 16,
+                    height: 48,
+                    fontSize: 14,
+                    color: C.ink900,
+                    textAlign: 'center',
+                  }}
                   value={schedule.startTime}
                   onChangeText={(v) => updateScheduleTime(index, 'startTime', v)}
                   placeholder="08:00"
+                  placeholderTextColor={C.ink300}
                 />
               </View>
-              <Text className="text-sm text-slate-500 pb-2">—</Text>
+              <Text className="text-sm text-ink-400 pb-2">—</Text>
               <View className="flex-1">
-                <Text className="text-[11px] text-slate-500 mb-1">Дуусах</Text>
+                <Text className="text-[11px] text-ink-400 mb-1">Дуусах</Text>
                 <TextInput
-                  className="bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm text-slate-800 text-center"
+                  style={{
+                    backgroundColor: '#FFFFFF',
+                    borderWidth: 1,
+                    borderColor: C.ink200,
+                    borderRadius: 12,
+                    paddingHorizontal: 16,
+                    height: 48,
+                    fontSize: 14,
+                    color: C.ink900,
+                    textAlign: 'center',
+                  }}
                   value={schedule.endTime}
                   onChangeText={(v) => updateScheduleTime(index, 'endTime', v)}
                   placeholder="15:00"
+                  placeholderTextColor={C.ink300}
                 />
               </View>
             </View>
@@ -353,26 +421,27 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
         ))}
 
         {schedules.length === 0 && (
-          <Text className="text-xs text-slate-400 text-center py-4">
+          <Text className="text-xs text-ink-400 text-center py-4">
             Хаагдсан хуваарь байхгүй. + дарж нэмнэ үү.
           </Text>
         )}
       </View>
 
       {/* Save Button */}
-      <View className="mx-4 mt-6">
-        <TouchableOpacity
-          onPress={handleSave}
-          disabled={saving}
-          className={`rounded-xl py-3.5 items-center justify-center ${saving ? 'bg-primary-400' : 'bg-primary-600'}`}
-        >
-          {saving ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
-          ) : (
-            <Text className="text-white font-bold text-base">Өөрчлөлт хадгалах</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity
+        onPress={handleSave}
+        disabled={saving}
+        className="bg-ink-900 rounded-xl items-center justify-center mx-4 mt-2"
+        style={{ height: 52, opacity: saving ? 0.6 : 1 }}
+      >
+        {saving ? (
+          <ActivityIndicator size="small" color="#FFFFFF" />
+        ) : (
+          <Text className="text-sm font-bold text-white" style={{ letterSpacing: 0.4 }}>
+            Өөрчлөлт хадгалах
+          </Text>
+        )}
+      </TouchableOpacity>
 
       <View className="h-10" />
     </ScrollView>
@@ -380,25 +449,26 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
     {/* App Picker Modal */}
     <Modal visible={pickerVisible} animationType="slide" presentationStyle="pageSheet">
       <View className="flex-1 bg-surface-secondary">
-        <View className="flex-row justify-between items-center px-4 pt-4 pb-3">
-          <Text className="text-lg font-bold text-slate-800">
-            Апп сонгох
-          </Text>
+        <View className="flex-row justify-between items-center px-5 pt-5 pb-3">
+          <Text className="font-serif text-[24px] text-ink-900">Апп сонгох</Text>
           <TouchableOpacity
             onPress={() => { setPickerVisible(false); setSearchQuery(''); }}
             className="p-1"
           >
-            <Ionicons name="close" size={24} color="#1E293B" />
+            <Ionicons name="close" size={24} color={C.ink900} />
           </TouchableOpacity>
         </View>
-        <View className="flex-row items-center bg-white mx-4 rounded-xl px-3 mb-2 gap-2">
-          <Ionicons name="search" size={20} color="#64748B" />
+        <View
+          className="flex-row items-center mx-4 rounded-xl px-3 mb-2 gap-2"
+          style={{ backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: C.ink200, borderRadius: 12 }}
+        >
+          <Ionicons name="search" size={20} color={C.ink400} />
           <TextInput
-            className="flex-1 bg-transparent h-12 text-sm text-slate-800"
+            style={{ flex: 1, height: 48, fontSize: 14, color: C.ink900 }}
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholder="Апп хайх..."
-            placeholderTextColor="#64748B"
+            placeholderTextColor={C.ink300}
             autoFocus
           />
         </View>
@@ -407,24 +477,25 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
           keyExtractor={item => item.packageName}
           renderItem={({ item }) => (
             <Pressable
-              className="flex-row items-center bg-white mx-4 mt-px py-3 px-4 gap-3"
+              style={{ ...CARD, marginHorizontal: 16, marginBottom: 4 }}
+              className="flex-row items-center py-3 px-4 gap-3"
               onPress={() => pickAppForLimit(item)}
             >
-              <View className="w-10 h-10 rounded-xl bg-primary-100 justify-center items-center">
-                <Ionicons name="cube-outline" size={24} color="#4F46E5" />
+              <View className="w-10 h-10 rounded-xl bg-ink-100 justify-center items-center">
+                <Ionicons name="cube-outline" size={22} color={C.ink600} />
               </View>
               <View className="flex-1">
-                <Text className="text-sm font-medium text-slate-800">
+                <Text className="text-sm font-medium text-ink-900">
                   {item.appName}
                 </Text>
-                <Text className="text-[11px] text-slate-400 mt-0.5">
+                <Text className="text-[11px] text-ink-400 mt-0.5">
                   {item.packageName}
                 </Text>
               </View>
             </Pressable>
           )}
           ListEmptyComponent={
-            <Text className="text-xs text-slate-400 text-center py-4">
+            <Text className="text-xs text-ink-400 text-center py-4">
               {installedApps.length === 0 ? 'Хүүхдийн аппын жагсаалт синхрончлогдоогүй байна.' : 'Тохирох апп олдсонгүй.'}
             </Text>
           }
