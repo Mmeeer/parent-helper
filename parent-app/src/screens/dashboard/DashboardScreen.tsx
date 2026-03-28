@@ -162,37 +162,39 @@ export default function HomeScreen({ navigation }: Props) {
           </View>
         ) : (
           <View style={{ ...CARD, padding: 24, marginBottom: 24 }}>
-            <Text style={[LABEL, { marginBottom: 16 }]}>Идэвхжүүлэлт</Text>
-            <View className="flex-row gap-3">
-              <TextInput
-                style={{
-                  flex: 1, paddingHorizontal: 16, paddingVertical: 14,
-                  backgroundColor: C.bg, borderWidth: 1, borderColor: C.ink200,
-                  borderRadius: 12, fontSize: 14, color: C.ink900, letterSpacing: 1,
-                }}
-                placeholder="Код оруулах"
-                placeholderTextColor={C.ink300}
-                value={subKey}
-                onChangeText={setSubKey}
-                autoCapitalize="characters"
-                autoCorrect={false}
-              />
-              <TouchableOpacity
-                style={{
-                  paddingHorizontal: 20, paddingVertical: 14,
-                  backgroundColor: C.ink900, borderRadius: 12,
-                  alignItems: 'center', justifyContent: 'center',
-                  opacity: subLoading ? 0.6 : 1,
-                }}
-                onPress={handleActivate}
-                disabled={subLoading}
-              >
-                {subLoading
-                  ? <ActivityIndicator color="#fff" size="small" />
-                  : <Text className="text-sm font-semibold text-white">Эхлэх</Text>
-                }
-              </TouchableOpacity>
-            </View>
+            <Text style={[LABEL, { marginBottom: 6 }]}>Идэвхжүүлэлт</Text>
+            <Text className="font-serif text-[28px] text-ink-900 mb-5" style={{ lineHeight: 32 }}>
+              Түлхүүр оруулах
+            </Text>
+            <Text className="text-sm text-ink-400 mb-5" style={{ lineHeight: 20 }}>
+              Администраторын өгсөн захиалгын түлхүүрийг оруулна уу.
+            </Text>
+            <TextInput
+              style={{
+                backgroundColor: C.bg, borderWidth: 1, borderColor: C.ink200,
+                borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14,
+                fontSize: 16, color: C.ink900, letterSpacing: 2,
+                textAlign: 'center', marginBottom: 16,
+              }}
+              placeholder="PK-XXXX-XXXX"
+              placeholderTextColor={C.ink300}
+              value={subKey}
+              onChangeText={setSubKey}
+              autoCapitalize="characters"
+              autoCorrect={false}
+            />
+            <TouchableOpacity
+              className="bg-ink-900 rounded-xl items-center justify-center"
+              style={{ height: 52, opacity: subLoading ? 0.6 : 1 }}
+              onPress={handleActivate}
+              disabled={subLoading}
+              activeOpacity={0.85}
+            >
+              {subLoading
+                ? <ActivityIndicator color="#fff" />
+                : <Text className="text-sm font-bold text-white" style={{ letterSpacing: 0.4 }}>Түлхүүр идэвхжүүлэх</Text>
+              }
+            </TouchableOpacity>
           </View>
         )}
 
