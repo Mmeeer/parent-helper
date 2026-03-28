@@ -81,7 +81,7 @@ const webFilterRules = [
 const subscriptionActivate = [
   body('key').trim().notEmpty().withMessage('Subscription key is required')
     .isLength({ min: 4, max: 50 }).withMessage('Invalid key format')
-    .isAlphanumeric().withMessage('Key must be alphanumeric'),
+    .matches(/^[A-Z0-9-]+$/i).withMessage('Invalid key format'),
   checkValidation,
 ];
 
