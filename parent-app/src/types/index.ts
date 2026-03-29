@@ -153,7 +153,8 @@ export type AlertType =
   | 'geofence_trigger'
   | 'device_offline'
   | 'unusual_pattern'
-  | 'uninstall_attempt';
+  | 'uninstall_attempt'
+  | 'sos';
 
 export interface Alert {
   _id: string;

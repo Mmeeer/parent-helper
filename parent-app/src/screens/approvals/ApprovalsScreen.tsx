@@ -5,7 +5,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { formatTimeAgo } from '../../utils/formatters';
 import * as api from '../../services/api';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { C, CARD, LABEL } from '../../theme';
+import { C } from '../../theme';
 import type { Alert as AlertType } from '../../types';
 
 const AGE_RATINGS: Record<string, string> = {
@@ -40,7 +40,7 @@ export default function ApprovalsScreen() {
       setApprovals((prev) => prev.filter((a) => a._id !== approvalId));
       Alert.alert('Дууссан', action === 'approve' ? 'Апп зөвшөөрөгдлөө.' : 'Апп хаагдлаа.');
     } catch (error: any) {
-      Alert.alert('Алдаа', error.message || 'Зөвшөөрөлийг боловсруулахад алдаа гарлаа.');
+      Alert.alert('Алдаа', error.message || 'Зөвшөөрлийг боловсруулахад алдаа гарлаа.');
     } finally {
       setProcessingId(null);
     }
@@ -54,30 +54,31 @@ export default function ApprovalsScreen() {
     const hasRatingBadge = ageRating && AGE_RATINGS[ageRating];
 
     return (
-      <View style={{ ...CARD, padding: 20, marginBottom: 12 }}>
+      <View className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 mb-3">
         <View className="flex-row items-start gap-4 mb-5">
-          {/* App icon placeholder */}
-          <View className="w-11 h-11 rounded-xl bg-ink-100 items-center justify-center shrink-0">
+          {/* App icon */}
+          <View className="w-12 h-12 rounded-2xl bg-nest-100 items-center justify-center shrink-0 shadow-md">
             <Text className="text-xl">📱</Text>
           </View>
 
           <View className="flex-1">
-            <Text className="text-sm font-semibold text-ink-800" numberOfLines={1}>
+            <Text className="font-bold text-gray-900" numberOfLines={1}>
               {appName}
             </Text>
             {packageName && packageName !== appName && (
-              <Text className="text-[11px] text-ink-400 mt-0.5" numberOfLines={1}>
+              <Text className="text-[10px] text-gray-400 mt-0.5" numberOfLines={1}>
                 {packageName}
               </Text>
             )}
-            <Text className="text-[11px] text-ink-400 mt-0.5">
-              {formatTimeAgo(item.createdAt)}
+            <Text className="text-xs text-gray-400 mt-0.5">
+              <Text className="font-bold text-gray-600">{item.data?.childName as string || ''}</Text>
+              {item.data?.childName ? ' · ' : ''}{formatTimeAgo(item.createdAt)}
             </Text>
           </View>
 
           {hasRatingBadge && (
-            <View className="px-2 py-1 rounded-lg shrink-0" style={{ backgroundColor: '#FEF3C7' }}>
-              <Text className="text-[10px] font-semibold" style={{ color: C.amber }}>{ageRating}</Text>
+            <View className="bg-warm-50 px-2 py-1 rounded-lg shrink-0">
+              <Text className="text-[10px] font-bold text-warm-600">{ageRating}</Text>
             </View>
           )}
         </View>
@@ -86,22 +87,20 @@ export default function ApprovalsScreen() {
           <TouchableOpacity
             onPress={() => handleDecision(item._id, 'approve')}
             disabled={isProcessing}
-            className="flex-1 bg-ink-900 rounded-xl items-center justify-center"
-            style={{ paddingVertical: 13, opacity: isProcessing ? 0.5 : 1 }}
+            className={`flex-1 bg-safe-500 rounded-2xl items-center justify-center shadow-md py-[13px] ${isProcessing ? 'opacity-50' : 'opacity-100'}`}
           >
             {isProcessing
               ? <ActivityIndicator size="small" color="#fff" />
-              : <Text className="text-sm font-semibold text-white">Зөвшөөрөх</Text>
+              : <Text className="text-sm font-display font-bold text-white">Зөвшөөрөх</Text>
             }
           </TouchableOpacity>
 
           <TouchableOpacity
             onPress={() => handleDecision(item._id, 'block')}
             disabled={isProcessing}
-            className="flex-1 border border-ink-200 rounded-xl items-center justify-center"
-            style={{ paddingVertical: 13, opacity: isProcessing ? 0.5 : 1 }}
+            className={`flex-1 bg-gray-100 rounded-2xl items-center justify-center py-[13px] ${isProcessing ? 'opacity-50' : 'opacity-100'}`}
           >
-            <Text className="text-sm font-semibold text-ink-500">Хаах</Text>
+            <Text className="text-sm font-display font-bold text-gray-600">Хаах</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -110,39 +109,44 @@ export default function ApprovalsScreen() {
 
   if (loading) {
     return (
-      <View className="flex-1 items-center justify-center bg-surface-secondary">
-        <ActivityIndicator size="large" color={C.ink900} />
+      <View className="flex-1 items-center justify-center bg-surface">
+        <ActivityIndicator size="large" color={C.gray900} />
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-surface-secondary" style={{ paddingTop: top * 2 }}>
+    <View className="flex-1 bg-surface" style={{ paddingTop: top * 2 }}>
       <FlatList
         data={approvals}
         renderItem={renderApproval}
         keyExtractor={(item) => item._id}
-        contentContainerStyle={{ paddingHorizontal: 28, paddingBottom: 32 }}
+        contentContainerClassName="px-7 pb-8"
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={() => { setRefreshing(true); loadApprovals(); }}
-            tintColor={C.ink900}
+            tintColor={C.gray900}
           />
         }
         ListHeaderComponent={
           <View className="mt-6 mb-7">
-            <Text style={[LABEL, { marginBottom: 6 }]}>Хянах</Text>
-            <Text className="font-serif text-[32px] text-ink-900" style={{ lineHeight: 36 }}>Зөвшөөрлүүд</Text>
+            <Text className="font-display font-extrabold text-xl text-gray-900">Зөвшөөрлүүд</Text>
+            <Text className="text-sm text-gray-400 mt-1">App install requests from your children</Text>
+            {approvals.length > 0 && (
+              <Text className="text-xs text-gray-400 font-bold mt-5 tracking-wide">
+                PENDING ({approvals.length})
+              </Text>
+            )}
           </View>
         }
         ListEmptyComponent={
           <View className="items-center pt-[60px] px-10">
-            <View className="w-16 h-16 rounded-full bg-ink-100 items-center justify-center mb-4">
-              <Ionicons name="checkmark-circle-outline" size={32} color={C.ink300} />
+            <View className="w-16 h-16 rounded-full bg-safe-50 items-center justify-center mb-4">
+              <Ionicons name="checkmark-circle-outline" size={32} color={C.safe500} />
             </View>
-            <Text className="text-sm font-semibold text-ink-500">Цэвэр</Text>
-            <Text className="text-[13px] text-ink-400 text-center mt-1.5" style={{ lineHeight: 20 }}>
+            <Text className="text-sm font-bold text-gray-600">Цэвэр</Text>
+            <Text className="text-sm text-gray-400 text-center mt-1.5 leading-5">
               Хүлээгдэж буй апп зөвшөөрөл байхгүй.
             </Text>
           </View>

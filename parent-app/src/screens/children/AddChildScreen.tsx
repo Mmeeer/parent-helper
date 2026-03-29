@@ -13,7 +13,7 @@ import {
 import * as api from '../../services/api';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../types';
-import { C, CARD, LABEL } from '../../theme';
+import { C } from '../../theme';
 
 type Props = {
   readonly navigation: NativeStackNavigationProp<RootStackParamList, 'AddChild'>;
@@ -48,60 +48,42 @@ export default function AddChildScreen({ navigation }: Props) {
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-surface-secondary"
+      className="flex-1 bg-surface"
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}>
+      <ScrollView contentContainerClassName="px-5 pb-10">
         {/* Page header */}
         <View className="mt-6 mb-7">
-          <Text style={[LABEL, { marginBottom: 6 }]}>ПРОФАЙЛ</Text>
-          <Text className="font-serif text-[32px] text-ink-900" style={{ lineHeight: 36 }}>
+          <Text className="text-xs font-bold text-gray-400 tracking-wide mb-1.5">ПРОФАЙЛ</Text>
+          <Text className="font-display font-bold text-[32px] text-gray-900 leading-9">
             Хүүхэд нэмэх
           </Text>
         </View>
 
         {/* Form card */}
-        <View style={{ ...CARD, padding: 20 }}>
+        <View className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
           <View className="mb-5">
-            <Text style={[LABEL, { marginBottom: 6 }]}>ХҮҮХДИЙН НЭР</Text>
+            <Text className="text-xs font-bold text-gray-400 tracking-wide mb-1.5">ХҮҮХДИЙН НЭР</Text>
             <TextInput
               placeholder="Нэр оруулах"
               value={name}
               onChangeText={setName}
               autoFocus
-              style={{
-                backgroundColor: C.bg,
-                borderWidth: 1,
-                borderColor: C.ink200,
-                borderRadius: 12,
-                paddingHorizontal: 16,
-                paddingVertical: 14,
-                fontSize: 14,
-                color: C.ink900,
-              }}
-              placeholderTextColor={C.ink300}
+              className="rounded-2xl bg-gray-50 border border-gray-200 px-4 py-3 text-sm text-gray-900"
+              placeholderTextColor={C.gray400}
             />
           </View>
 
           <View>
-            <Text style={[LABEL, { marginBottom: 6 }]}>НАС</Text>
+            <Text className="text-xs font-bold text-gray-400 tracking-wide mb-1.5">НАС</Text>
             <TextInput
               placeholder="Нас оруулах (1-18)"
               value={age}
               onChangeText={setAge}
               keyboardType="number-pad"
               maxLength={2}
-              style={{
-                backgroundColor: C.bg,
-                borderWidth: 1,
-                borderColor: C.ink200,
-                borderRadius: 12,
-                paddingHorizontal: 16,
-                paddingVertical: 14,
-                fontSize: 14,
-                color: C.ink900,
-              }}
-              placeholderTextColor={C.ink300}
+              className="rounded-2xl bg-gray-50 border border-gray-200 px-4 py-3 text-sm text-gray-900"
+              placeholderTextColor={C.gray400}
             />
           </View>
         </View>
@@ -110,13 +92,12 @@ export default function AddChildScreen({ navigation }: Props) {
         <TouchableOpacity
           onPress={handleCreate}
           disabled={loading}
-          className="bg-ink-900 rounded-xl items-center justify-center mt-6"
-          style={{ height: 52, opacity: loading ? 0.6 : 1 }}
+          className={`bg-nest-500 rounded-2xl items-center justify-center mt-6 shadow-lg h-[52px] ${loading ? 'opacity-60' : 'opacity-100'}`}
         >
           {loading ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
-            <Text className="text-sm font-bold text-white" style={{ letterSpacing: 0.4 }}>
+            <Text className="font-display font-bold text-sm text-white tracking-tight">
               Хүүхэд нэмэх
             </Text>
           )}

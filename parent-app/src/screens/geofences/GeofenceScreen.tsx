@@ -18,7 +18,7 @@ import type { Geofence } from '../../services/api';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import type { RootStackParamList } from '../../types';
-import { C, CARD, LABEL } from '../../theme';
+import { C } from '../../theme';
 
 type Props = {
   readonly navigation: NativeStackNavigationProp<RootStackParamList, 'Geofences'>;
@@ -184,8 +184,8 @@ export default function GeofenceScreen({ route }: Props) {
 
   if (loading) {
     return (
-      <View className="flex-1 justify-center items-center bg-surface-secondary">
-        <ActivityIndicator size="large" color={C.ink900} />
+      <View className="flex-1 justify-center items-center bg-surface">
+        <ActivityIndicator size="large" color={C.nest500} />
       </View>
     );
   }
@@ -215,13 +215,13 @@ export default function GeofenceScreen({ route }: Props) {
               coordinate={{ latitude: g.lat, longitude: g.lng }}
               title={g.name}
               description={`${g.radiusMeters}м радиус`}
-              pinColor={g.active ? C.ink900 : C.ink400}
+              pinColor={g.active ? C.nest500 : C.gray400}
             />
             <Circle
               center={{ latitude: g.lat, longitude: g.lng }}
               radius={g.radiusMeters}
-              fillColor={g.active ? 'rgba(28,25,23,0.08)' : 'rgba(153,153,153,0.1)'}
-              strokeColor={g.active ? C.ink900 : C.ink400}
+              fillColor={g.active ? 'rgba(11,122,237,0.10)' : 'rgba(156,163,175,0.1)'}
+              strokeColor={g.active ? C.nest500 : C.gray400}
               strokeWidth={2}
             />
           </React.Fragment>
@@ -237,13 +237,13 @@ export default function GeofenceScreen({ route }: Props) {
                 const { latitude, longitude } = e.nativeEvent.coordinate;
                 setForm((prev) => ({ ...prev, lat: latitude, lng: longitude }));
               }}
-              pinColor={C.teal}
+              pinColor={C.nest500}
             />
             <Circle
               center={{ latitude: form.lat, longitude: form.lng }}
               radius={form.radiusMeters}
-              fillColor="rgba(13,148,136,0.12)"
-              strokeColor={C.teal}
+              fillColor="rgba(11,122,237,0.12)"
+              strokeColor={C.nest500}
               strokeWidth={2}
             />
           </>
@@ -253,16 +253,16 @@ export default function GeofenceScreen({ route }: Props) {
       {/* Form Panel */}
       {showForm && (
         <View
-          style={{ ...CARD, position: 'absolute', bottom: 0, left: 0, right: 0, borderBottomLeftRadius: 0, borderBottomRightRadius: 0, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, maxHeight: '55%' }}
+          className="bg-white rounded-t-3xl shadow-lg absolute bottom-0 left-0 right-0 p-5 max-h-[55%]"
         >
           <ScrollView>
-            <Text style={[LABEL, { marginBottom: 8 }]}>
+            <Text className="text-xs font-bold text-gray-400 tracking-wide mb-2">
               {editingId ? 'ГЕОФЕНС ЗАСАХ' : 'ШИНЭ ГЕОФЕНС'}
             </Text>
-            <Text className="text-sm font-semibold text-ink-900 mb-1">
+            <Text className="text-sm font-display font-bold text-gray-900 mb-1">
               {editingId ? 'Геофенс засах' : 'Шинэ геофенс'}
             </Text>
-            <Text className="text-xs text-ink-400 mb-4">
+            <Text className="text-xs text-gray-400 mb-4">
               Байршил тохируулахын тулд газрын зурагт дарах эсвэл маркерийг чирэх
             </Text>
 
@@ -270,32 +270,22 @@ export default function GeofenceScreen({ route }: Props) {
               value={form.name}
               onChangeText={(text) => setForm((prev) => ({ ...prev, name: text }))}
               placeholder="Жнь. Гэр, Сургууль"
-              style={{
-                marginBottom: 12,
-                backgroundColor: C.bg,
-                borderWidth: 1,
-                borderColor: C.ink200,
-                borderRadius: 12,
-                paddingHorizontal: 16,
-                height: 48,
-                fontSize: 14,
-                color: C.ink900,
-              }}
-              placeholderTextColor={C.ink300}
+              className="rounded-2xl bg-gray-50 border border-gray-200 mb-3 px-4 h-12 text-sm text-gray-900"
+              placeholderTextColor={C.gray300}
             />
 
-            <Text style={[LABEL, { marginBottom: 8 }]}>РАДИУС (МЕТР)</Text>
+            <Text className="text-xs font-bold text-gray-400 tracking-wide mb-2">РАДИУС (МЕТР)</Text>
             <View className="flex-row gap-x-2 mb-3">
               {[100, 200, 500, 1000].map((r) => (
                 <TouchableOpacity
                   key={r}
                   onPress={() => setForm((prev) => ({ ...prev, radiusMeters: r }))}
-                  className="px-3 py-1.5 rounded-xl"
-                  style={{ backgroundColor: form.radiusMeters === r ? C.ink900 : C.ink100 }}
+                  className="px-3 py-1.5 rounded-2xl"
+                  style={{ backgroundColor: form.radiusMeters === r ? C.nest500 : C.gray100 }}
                 >
                   <Text
                     className="text-xs font-medium"
-                    style={{ color: form.radiusMeters === r ? '#FFFFFF' : C.ink500 }}
+                    style={{ color: form.radiusMeters === r ? '#FFFFFF' : C.gray500 }}
                   >
                     {r}м
                   </Text>
@@ -304,21 +294,21 @@ export default function GeofenceScreen({ route }: Props) {
             </View>
 
             <View className="flex-row justify-between items-center mt-2">
-              <Text className="text-sm text-ink-900">Орхоор мэдэгдэх</Text>
+              <Text className="text-sm text-gray-900">Орхоор мэдэгдэх</Text>
               <Switch
                 value={form.alertOnEntry}
                 onValueChange={(val) => setForm((prev) => ({ ...prev, alertOnEntry: val }))}
-                trackColor={{ true: C.teal, false: C.ink200 }}
+                trackColor={{ true: C.nest500, false: C.gray200 }}
                 thumbColor="#FFFFFF"
               />
             </View>
 
             <View className="flex-row justify-between items-center mt-2">
-              <Text className="text-sm text-ink-900">Гарахад мэдэгдэх</Text>
+              <Text className="text-sm text-gray-900">Гарахад мэдэгдэх</Text>
               <Switch
                 value={form.alertOnExit}
                 onValueChange={(val) => setForm((prev) => ({ ...prev, alertOnExit: val }))}
-                trackColor={{ true: C.teal, false: C.ink200 }}
+                trackColor={{ true: C.nest500, false: C.gray200 }}
                 thumbColor="#FFFFFF"
               />
             </View>
@@ -326,21 +316,19 @@ export default function GeofenceScreen({ route }: Props) {
             <View className="flex-row mt-5 gap-x-3">
               <TouchableOpacity
                 onPress={resetForm}
-                className="flex-1 border border-ink-200 rounded-xl items-center justify-center"
-                style={{ height: 52 }}
+                className="flex-1 border border-gray-200 rounded-2xl items-center justify-center h-[52px]"
               >
-                <Text className="text-sm font-semibold text-ink-500">Цуцлах</Text>
+                <Text className="text-sm font-semibold text-gray-500">Цуцлах</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleSave}
                 disabled={saving}
-                className="flex-1 bg-ink-900 rounded-xl items-center justify-center"
-                style={{ height: 52, opacity: saving ? 0.6 : 1 }}
+                className={`flex-1 bg-nest-500 rounded-2xl items-center justify-center shadow-lg h-[52px] ${saving ? 'opacity-60' : 'opacity-100'}`}
               >
                 {saving ? (
                   <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
-                  <Text className="text-sm font-bold text-white" style={{ letterSpacing: 0.4 }}>
+                  <Text className="text-sm font-display font-bold text-white tracking-wide">
                     {editingId ? 'Шинэчлэх' : 'Үүсгэх'}
                   </Text>
                 )}
@@ -353,7 +341,7 @@ export default function GeofenceScreen({ route }: Props) {
       {/* Geofence List (shown when form is hidden) */}
       {!showForm && (
         <View
-          style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#FFFFFF', borderTopLeftRadius: 24, borderTopRightRadius: 24, borderWidth: 1, borderColor: C.border, paddingTop: 16, paddingHorizontal: 16, maxHeight: '45%' }}
+          className="bg-white rounded-t-3xl shadow-lg border border-gray-100 absolute bottom-0 left-0 right-0 pt-4 px-4 max-h-[45%]"
         >
           <ScrollView
             refreshControl={
@@ -362,52 +350,51 @@ export default function GeofenceScreen({ route }: Props) {
           >
             <View className="flex-row justify-between items-center mb-4">
               <View>
-                <Text style={[LABEL, { marginBottom: 4 }]}>ГЕОФЕНС</Text>
-                <Text className="text-sm font-semibold text-ink-900">
+                <Text className="text-xs font-bold text-gray-400 tracking-wide mb-1">ГЕОФЕНС</Text>
+                <Text className="text-sm font-display font-bold text-gray-900">
                   Геофенсүүд ({geofences.length})
                 </Text>
               </View>
               <TouchableOpacity
                 onPress={() => setShowForm(true)}
-                className="bg-ink-900 rounded-full flex-row items-center gap-1 px-4"
-                style={{ height: 36 }}
+                className="bg-nest-500 rounded-full flex-row items-center gap-1 px-4 shadow-lg h-9"
               >
                 <Ionicons name="add" size={18} color="#FFFFFF" />
-                <Text className="text-white font-bold text-sm">Нэмэх</Text>
+                <Text className="text-white font-display font-bold text-sm">Нэмэх</Text>
               </TouchableOpacity>
             </View>
 
             {geofences.length === 0 ? (
               <View className="items-center py-6">
-                <View className="w-14 h-14 rounded-full bg-ink-100 items-center justify-center mb-3">
-                  <Ionicons name="navigate-outline" size={28} color={C.ink300} />
+                <View className="w-14 h-14 rounded-full bg-gray-100 items-center justify-center mb-3">
+                  <Ionicons name="navigate-outline" size={28} color={C.gray300} />
                 </View>
-                <Text className="text-sm font-semibold text-ink-500 mt-1">
+                <Text className="text-sm font-semibold text-gray-500 mt-1">
                   Геофенс байхгүй
                 </Text>
-                <Text className="text-xs text-ink-400 text-center mt-1.5 px-5" style={{ lineHeight: 18 }}>
+                <Text className="text-xs text-gray-400 text-center mt-1.5 px-5 leading-[18px]">
                   Хүүхдийн тодорхой газруудад орж, гарахад мэдэгдэл авахын тулд геофенс үүсгэнэ үү.
                 </Text>
               </View>
             ) : (
               geofences.map((geofence) => (
-                <View key={geofence._id} style={{ ...CARD, marginBottom: 10, padding: 14 }}>
+                <View key={geofence._id} className="bg-white rounded-3xl border border-gray-100 mb-2.5 p-3.5">
                   <View className="flex-row items-center gap-x-2.5">
                     <View
-                      className="w-9 h-9 rounded-xl items-center justify-center"
-                      style={{ backgroundColor: geofence.active ? '#1A0d9488' : C.ink100 }}
+                      className="w-10 h-10 rounded-2xl items-center justify-center"
+                      style={{ backgroundColor: geofence.active ? C.nest50 : C.gray100 }}
                     >
                       <Ionicons
                         name="navigate-circle"
                         size={22}
-                        color={geofence.active ? C.teal : C.ink400}
+                        color={geofence.active ? C.nest500 : C.gray400}
                       />
                     </View>
                     <View className="flex-1">
-                      <Text className="text-sm font-semibold text-ink-900">
+                      <Text className="text-sm font-bold text-gray-900">
                         {geofence.name}
                       </Text>
-                      <Text className="text-[11px] text-ink-400 mt-0.5">
+                      <Text className="text-[11px] text-gray-400 mt-0.5">
                         {geofence.radiusMeters}м радиус
                         {geofence.alertOnEntry ? ' · Орох' : ''}
                         {geofence.alertOnExit ? ' · Гарах' : ''}
@@ -416,13 +403,13 @@ export default function GeofenceScreen({ route }: Props) {
                     <Switch
                       value={geofence.active}
                       onValueChange={() => { void handleToggleActive(geofence); }}
-                      trackColor={{ true: C.teal, false: C.ink200 }}
+                      trackColor={{ true: C.nest500, false: C.gray200 }}
                       thumbColor="#FFFFFF"
                     />
                   </View>
                   <View className="flex-row mt-2.5 pl-11 gap-x-4">
                     <TouchableOpacity onPress={() => handleEdit(geofence)} className="p-1">
-                      <Ionicons name="create-outline" size={18} color={C.ink600} />
+                      <Ionicons name="create-outline" size={18} color={C.nest500} />
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={() => {
@@ -435,10 +422,10 @@ export default function GeofenceScreen({ route }: Props) {
                       }}
                       className="p-1"
                     >
-                      <Ionicons name="locate-outline" size={18} color={C.teal} />
+                      <Ionicons name="locate-outline" size={18} color={C.nest500} />
                     </TouchableOpacity>
                     <TouchableOpacity onPress={() => handleDelete(geofence)} className="p-1">
-                      <Ionicons name="trash-outline" size={18} color={C.red} />
+                      <Ionicons name="trash-outline" size={18} color={C.danger500} />
                     </TouchableOpacity>
                   </View>
                 </View>

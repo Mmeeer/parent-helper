@@ -10,29 +10,61 @@ import { showError } from '../../utils/showError';
 import * as api from '../../services/api';
 import { onSocketEvent } from '../../services/socket';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { C, CARD, LABEL } from '../../theme';
 import type { Alert as AlertType } from '../../types';
+import { C } from '../../theme';
 
-const DOT_COLOR: Record<string, string> = {
-  screen_time_limit: '#D97706',
-  new_app_installed: '#a8a29e',
-  blocked_content:   '#E11D48',
-  geofence_trigger:  '#D97706',
-  device_offline:    '#a8a29e',
-  unusual_pattern:   '#D97706',
-  uninstall_attempt: '#E11D48',
-  sos:               '#f87171',
+type AlertCategory = 'all' | 'location' | 'app' | 'web' | 'sos';
+
+const FILTERS: { key: AlertCategory; label: string }[] = [
+  { key: 'all', label: 'Бүгд' },
+  { key: 'location', label: 'Байршил' },
+  { key: 'app', label: 'Апп' },
+  { key: 'web', label: 'Вэб' },
+  { key: 'sos', label: 'SOS' },
+];
+
+const CATEGORY_MAP: Record<string, AlertCategory> = {
+  geofence_trigger: 'location',
+  new_app_installed: 'app',
+  uninstall_attempt: 'app',
+  blocked_content: 'web',
+  screen_time_limit: 'app',
+  device_offline: 'app',
+  unusual_pattern: 'app',
+  sos: 'sos',
 };
 
 const TYPE_LABEL: Record<string, string> = {
   screen_time_limit: 'Дэлгэцийн цаг',
   new_app_installed: 'Апп',
-  blocked_content:   'Хаагдсан',
-  geofence_trigger:  'Байршил',
-  device_offline:    'Төхөөрөмж',
-  unusual_pattern:   'Үйл ажиллагаа',
+  blocked_content: 'Хаагдсан',
+  geofence_trigger: 'Байршил',
+  device_offline: 'Төхөөрөмж',
+  unusual_pattern: 'Үйл ажиллагаа',
   uninstall_attempt: 'Устгалт',
-  sos:               'SOS',
+  sos: 'SOS',
+};
+
+const ICON_CONFIG: Record<string, { name: string; bgClass: string; iconColor: string }> = {
+  geofence_trigger:  { name: 'location-outline',      bgClass: 'bg-warm-50',   iconColor: '#D97706' },
+  new_app_installed: { name: 'apps-outline',           bgClass: 'bg-purple-50', iconColor: '#9333EA' },
+  blocked_content:   { name: 'shield-outline',         bgClass: 'bg-danger-50', iconColor: '#E11D48' },
+  screen_time_limit: { name: 'time-outline',           bgClass: 'bg-warm-50',   iconColor: '#D97706' },
+  device_offline:    { name: 'phone-portrait-outline',  bgClass: 'bg-nest-50',  iconColor: '#0D9488' },
+  unusual_pattern:   { name: 'trending-up-outline',    bgClass: 'bg-warm-50',   iconColor: '#D97706' },
+  uninstall_attempt: { name: 'trash-outline',          bgClass: 'bg-danger-50', iconColor: '#E11D48' },
+  sos:               { name: 'alert-circle-outline',   bgClass: 'bg-white/20',  iconColor: '#FFFFFF' },
+};
+
+const BADGE_STYLE: Record<string, { textClass: string; bgClass: string }> = {
+  geofence_trigger:  { textClass: 'text-warm-600',   bgClass: 'bg-warm-50' },
+  new_app_installed: { textClass: 'text-purple-600', bgClass: 'bg-purple-50' },
+  blocked_content:   { textClass: 'text-danger-600', bgClass: 'bg-danger-50' },
+  screen_time_limit: { textClass: 'text-warm-600',   bgClass: 'bg-warm-50' },
+  device_offline:    { textClass: 'text-nest-600',   bgClass: 'bg-nest-50' },
+  unusual_pattern:   { textClass: 'text-warm-600',   bgClass: 'bg-warm-50' },
+  uninstall_attempt: { textClass: 'text-danger-600', bgClass: 'bg-danger-50' },
+  sos:               { textClass: 'text-white',      bgClass: 'bg-white/20' },
 };
 
 // Pulsing dot for SOS alerts
@@ -51,11 +83,31 @@ function PulsingDot() {
   }, [opacity]);
 
   return (
-    <Animated.View style={{
-      width: 10, height: 10, borderRadius: 5,
-      backgroundColor: '#f87171', marginTop: 4, flexShrink: 0,
-      opacity,
-    }} />
+    <Animated.View
+      className="w-2.5 h-2.5 rounded-full bg-white mt-1"
+      style={{ opacity }}
+    />
+  );
+}
+
+function isYesterday(dateStr: string): boolean {
+  const date = new Date(dateStr);
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  return (
+    date.getFullYear() === yesterday.getFullYear() &&
+    date.getMonth() === yesterday.getMonth() &&
+    date.getDate() === yesterday.getDate()
+  );
+}
+
+function isToday(dateStr: string): boolean {
+  const date = new Date(dateStr);
+  const today = new Date();
+  return (
+    date.getFullYear() === today.getFullYear() &&
+    date.getMonth() === today.getMonth() &&
+    date.getDate() === today.getDate()
   );
 }
 
@@ -67,6 +119,7 @@ export default function AlertsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<AlertCategory>('all');
 
   const loadAlerts = useCallback(async (pageNum = 1, append = false) => {
     try {
@@ -108,66 +161,110 @@ export default function AlertsScreen() {
     }
   };
 
-  const renderAlert = ({ item }: { item: AlertType }) => {
+  const filteredAlerts = activeFilter === 'all'
+    ? alerts
+    : alerts.filter((a) => CATEGORY_MAP[a.type] === activeFilter);
+
+  const renderAlert = ({ item, index }: { item: AlertType; index: number }) => {
     const isSOS = item.type === 'sos';
-    const dotColor = DOT_COLOR[item.type] || C.ink400;
     const typeLabel = TYPE_LABEL[item.type] || item.type;
+    const icon = ICON_CONFIG[item.type] || ICON_CONFIG.device_offline;
+    const badge = BADGE_STYLE[item.type] || BADGE_STYLE.device_offline;
+
+    // Determine if we need a "Yesterday" section header
+    const isYesterdayItem = !isToday(item.createdAt) && isYesterday(item.createdAt);
+    const prevItem = index > 0 ? filteredAlerts[index - 1] : null;
+    const showYesterdayHeader = isYesterdayItem && (!prevItem || isToday(prevItem.createdAt));
+    const isOlderItem = !isToday(item.createdAt);
 
     return (
-      <Pressable onPress={() => handleMarkRead(item._id)} className="mb-3">
-        {({ pressed }) => (
-          <View style={{
-            ...CARD,
-            padding: 20,
-            opacity: pressed ? 0.85 : 1,
-            ...(isSOS ? { backgroundColor: C.ink900, borderColor: C.ink900 } : {}),
-            ...((item.read || isSOS) ? {} : { borderLeftWidth: 3, borderLeftColor: C.ink900 }),
-          }}>
-            <View className="flex-row items-start gap-3">
-              {isSOS
-                ? <PulsingDot />
-                : <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: dotColor, marginTop: 4, flexShrink: 0 }} />
-              }
-              <View className="flex-1">
-                <Text style={[LABEL, { color: isSOS ? C.ink600 : C.ink400, marginBottom: 6 }]}>
-                  {typeLabel} · {formatTimeAgo(item.createdAt)}
-                </Text>
-                <Text className="text-sm font-semibold" style={{ color: isSOS ? '#fff' : C.ink800, lineHeight: 20 }}>
-                  {item.message}
-                </Text>
-                {Boolean(item.data?.childName) && (
-                  <Text className="text-xs text-ink-400 mt-1">
-                    {item.data?.childName as string}
-                  </Text>
-                )}
-              </View>
-            </View>
-          </View>
+      <View className={isOlderItem ? 'opacity-60' : ''}>
+        {showYesterdayHeader && (
+          <Text className="text-xs text-gray-400 font-bold mb-3 mt-2">Өчигдөр</Text>
         )}
-      </Pressable>
+        <Pressable onPress={() => handleMarkRead(item._id)} className="mb-3">
+          {({ pressed }) => (
+            isSOS ? (
+              /* SOS alert card with gradient */
+              <View
+                className={`rounded-3xl p-4 bg-danger-500 ${pressed ? 'opacity-85' : 'opacity-100'}`}
+              >
+                <View className="flex-row items-start gap-3">
+                  <View className="w-10 h-10 rounded-2xl bg-white/20 items-center justify-center">
+                    <Ionicons name="alert-circle-outline" size={22} color="#FFFFFF" />
+                  </View>
+                  <View className="flex-1">
+                    <View className="flex-row items-center gap-2 mb-1">
+                      <View className="bg-white/20 rounded-full px-2 py-0.5">
+                        <Text className="text-white text-[10px] font-bold">{typeLabel}</Text>
+                      </View>
+                      <PulsingDot />
+                      <Text className="text-[10px] text-white/60">{formatTimeAgo(item.createdAt)}</Text>
+                    </View>
+                    <Text className="text-sm font-bold text-white">{item.message}</Text>
+                    {Boolean(item.data?.childName) && (
+                      <Text className="text-xs text-white/70 mt-1">
+                        {item.data?.childName as string}
+                      </Text>
+                    )}
+                  </View>
+                </View>
+              </View>
+            ) : (
+              /* Regular alert card */
+              <View
+                className={`bg-white rounded-3xl p-4 border border-gray-100 shadow-sm ${pressed ? 'opacity-85' : 'opacity-100'}`}
+              >
+                <View className="flex-row items-start gap-3">
+                  <View className={`w-10 h-10 rounded-2xl items-center justify-center ${icon.bgClass}`}>
+                    <Ionicons name={icon.name as any} size={22} color={icon.iconColor} />
+                  </View>
+                  <View className="flex-1">
+                    <View className="flex-row items-center gap-2 mb-1">
+                      <View className={`rounded-full px-2 py-0.5 ${badge.bgClass}`}>
+                        <Text className={`text-[10px] font-bold ${badge.textClass}`}>{typeLabel}</Text>
+                      </View>
+                      <Text className="text-[10px] text-gray-400">{formatTimeAgo(item.createdAt)}</Text>
+                      {!item.read && (
+                        <View className="w-1.5 h-1.5 rounded-full bg-danger-500" />
+                      )}
+                    </View>
+                    <Text className="text-sm font-bold text-gray-900">{item.message}</Text>
+                    {Boolean(item.data?.childName) && (
+                      <Text className="text-xs text-gray-500 mt-1">
+                        {item.data?.childName as string}
+                      </Text>
+                    )}
+                  </View>
+                </View>
+              </View>
+            )
+          )}
+        </Pressable>
+      </View>
     );
   };
 
   if (loading) {
     return (
-      <View className="flex-1 items-center justify-center bg-surface-secondary">
-        <ActivityIndicator size="large" color={C.ink900} />
+      <View className="flex-1 items-center justify-center bg-surface">
+        <ActivityIndicator size="large" color={C.nest500} />
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-surface-secondary" style={{ paddingTop: top * 2 }}>
+    <View className="flex-1 bg-surface" style={{ paddingTop: top * 2 }}>
       <FlatList
-        data={alerts}
+        data={filteredAlerts}
         renderItem={renderAlert}
         keyExtractor={(item) => item._id}
-        contentContainerStyle={{ paddingHorizontal: 28, paddingBottom: 32 }}
+        contentContainerClassName="px-5 pb-8"
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={() => { setRefreshing(true); loadAlerts(1); }}
-            tintColor={C.ink900}
+            tintColor="#0D9488"
           />
         }
         onEndReached={() => {
@@ -178,30 +275,57 @@ export default function AlertsScreen() {
         }}
         onEndReachedThreshold={0.5}
         ListHeaderComponent={
-          <View className="mt-6 mb-7 flex-row items-end justify-between">
-            <View>
-              <Text style={[LABEL, { marginBottom: 6 }]}>Мэдэгдэл</Text>
-              <Text className="font-serif text-[32px] text-ink-900" style={{ lineHeight: 36 }}>Мэдэгдлүүд</Text>
+          <View className="mt-4 mb-5">
+            {/* Page header */}
+            <View className="flex-row items-end justify-between mb-4">
+              <View>
+                <Text className="font-display font-extrabold text-xl text-gray-900">Мэдэгдлүүд</Text>
+                <Text className="text-sm text-gray-400">Чухал мэдэгдлүүд</Text>
+              </View>
+              {alerts.some((a) => !a.read) && (
+                <TouchableOpacity onPress={handleMarkAllRead} className="py-1">
+                  <Text className="text-xs text-nest-500 font-bold">Бүгдийг уншсан болгох</Text>
+                </TouchableOpacity>
+              )}
             </View>
-            {alerts.some((a) => !a.read) && (
-              <TouchableOpacity onPress={handleMarkAllRead} className="py-1">
-                <Text className="text-xs text-ink-500 font-medium">Бүгдийг уншсан болгох</Text>
-              </TouchableOpacity>
-            )}
+            {/* Filter chips */}
+            <View className="flex-row gap-2">
+              {FILTERS.map((f) => (
+                <TouchableOpacity
+                  key={f.key}
+                  onPress={() => setActiveFilter(f.key)}
+                  className={`px-3.5 py-1.5 rounded-2xl ${
+                    activeFilter === f.key
+                      ? 'bg-nest-500'
+                      : 'bg-white border border-gray-200'
+                  }`}
+                >
+                  <Text
+                    className={`text-xs font-bold ${
+                      activeFilter === f.key
+                        ? 'text-white'
+                        : 'text-gray-600'
+                    }`}
+                  >
+                    {f.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
         }
         ListFooterComponent={
           loadingMore
-            ? <ActivityIndicator style={{ paddingVertical: 16 }} color={C.ink900} />
+            ? <ActivityIndicator className="py-4" color={C.nest500} />
             : null
         }
         ListEmptyComponent={
           <View className="items-center pt-[60px] px-10">
-            <View className="w-16 h-16 rounded-full bg-ink-100 items-center justify-center mb-4">
-              <Ionicons name="notifications-outline" size={32} color={C.ink300} />
+            <View className="w-16 h-16 rounded-2xl bg-nest-50 items-center justify-center mb-4">
+              <Ionicons name="notifications-outline" size={32} color={C.nest500} />
             </View>
-            <Text className="text-sm font-semibold text-ink-500">Мэдэгдэл байхгүй</Text>
-            <Text className="text-[13px] text-ink-400 text-center mt-1.5" style={{ lineHeight: 20 }}>
+            <Text className="text-sm font-bold text-gray-900">Мэдэгдэл байхгүй</Text>
+            <Text className="text-xs text-gray-500 text-center mt-1.5 leading-5">
               Чухал үйл явдлын талаар энд мэдэгдэнэ.
             </Text>
           </View>

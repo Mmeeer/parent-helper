@@ -10,16 +10,9 @@ import {
   addNotificationReceivedListener,
   setBadgeCount,
 } from './src/services/notifications';
-import {
-  useFonts,
-  CormorantGaramond_700Bold_Italic,
-  CormorantGaramond_500Medium_Italic,
-  CormorantGaramond_400Regular_Italic,
-} from '@expo-google-fonts/cormorant-garamond';
-import * as SplashScreen from 'expo-splash-screen';
+// @ts-ignore - expo-font may not have types installed
+import * as Font from 'expo-font';
 import type { NavigationContainerRef } from '@react-navigation/native';
-
-SplashScreen.preventAutoHideAsync();
 
 // Navigation ref so we can navigate from notification taps
 export const navigationRef = React.createRef<NavigationContainerRef<any>>();
@@ -28,15 +21,18 @@ export default function App() {
   const notificationListener = useRef<any>();
   const responseListener = useRef<any>();
 
-  const [fontsLoaded] = useFonts({
-    CormorantGaramond_700Bold_Italic,
-    CormorantGaramond_500Medium_Italic,
-    CormorantGaramond_400Regular_Italic,
-  });
+  const [fontsLoaded, setFontsLoaded] = React.useState(false);
 
   useEffect(() => {
-    if (fontsLoaded) SplashScreen.hideAsync();
-  }, [fontsLoaded]);
+    Font.loadAsync({
+      Nunito_400Regular: require('./assets/fonts/Nunito-Regular.ttf'),
+      Nunito_500Medium: require('./assets/fonts/Nunito-Medium.ttf'),
+      Nunito_600SemiBold: require('./assets/fonts/Nunito-SemiBold.ttf'),
+      Nunito_700Bold: require('./assets/fonts/Nunito-Bold.ttf'),
+      Outfit_700Bold: require('./assets/fonts/Outfit-Bold.ttf'),
+      Outfit_800ExtraBold: require('./assets/fonts/Outfit-ExtraBold.ttf'),
+    }).then(() => setFontsLoaded(true)).catch(() => setFontsLoaded(true));
+  }, []);
 
   useEffect(() => {
     // Foreground notification — just update badge

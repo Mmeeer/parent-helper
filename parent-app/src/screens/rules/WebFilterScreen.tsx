@@ -5,7 +5,7 @@ import { WEB_FILTER_CATEGORIES } from '../../utils/constants';
 import * as api from '../../services/api';
 import type { RouteProp } from '@react-navigation/native';
 import type { RootStackParamList } from '../../types';
-import { C, CARD, LABEL } from '../../theme';
+import { C } from '../../theme';
 
 type Props = {
   readonly route: RouteProp<RootStackParamList, 'WebFilter'>;
@@ -66,47 +66,47 @@ export default function WebFilterScreen({ route }: Props) {
     cat.charAt(0).toUpperCase() + cat.slice(1).replaceAll('_', ' ');
 
   return (
-    <ScrollView className="flex-1 bg-surface-secondary">
+    <ScrollView className="flex-1 bg-surface">
       {/* Page header */}
       <View className="mx-5 mt-6 mb-7">
-        <Text style={[LABEL, { marginBottom: 6 }]}>ХЯНАЛТ</Text>
-        <Text className="font-serif text-[32px] text-ink-900" style={{ lineHeight: 36 }}>
+        <Text className="text-xs text-gray-400 font-bold uppercase mb-1.5">ХЯНАЛТ</Text>
+        <Text className="font-display text-[32px] font-bold text-gray-900 leading-9">
           Вэб шүүлт
         </Text>
       </View>
 
       {/* Category Filters */}
-      <View style={{ ...CARD, marginHorizontal: 16, marginBottom: 12, padding: 20 }}>
-        <Text style={[LABEL, { marginBottom: 12 }]}>АГУУЛГЫН АНГИЛАЛ</Text>
-        <Text className="text-sm font-semibold text-ink-900 mb-1">Агуулгын ангилал</Text>
-        <Text className="text-xs text-ink-400 mb-4">
+      <View className="bg-white rounded-3xl p-5 mx-4 mb-3 border border-gray-100 shadow-sm">
+        <Text className="text-xs text-gray-400 font-bold uppercase mb-3">АГУУЛГЫН АНГИЛАЛ</Text>
+        <Text className="text-sm font-display font-bold text-gray-900 mb-1">Агуулгын ангилал</Text>
+        <Text className="text-xs text-gray-400 mb-4">
           Эдгээр ангиллын вэбсайтыг хаах.
         </Text>
 
         {WEB_FILTER_CATEGORIES.map((cat, index) => (
           <View key={cat}>
             <View className="flex-row justify-between items-center py-3">
-              <Text className="text-sm text-ink-900">
+              <Text className="text-sm text-gray-900">
                 {formatCategory(cat)}
               </Text>
               <Switch
                 value={categories.includes(cat)}
                 onValueChange={() => toggleCategory(cat)}
-                trackColor={{ true: C.teal, false: C.ink200 }}
+                trackColor={{ true: C.safe500, false: C.gray200 }}
                 thumbColor="#FFFFFF"
               />
             </View>
             {index < WEB_FILTER_CATEGORIES.length - 1 && (
-              <View style={{ height: 1, backgroundColor: C.ink200 }} />
+              <View className="h-px bg-gray-200" />
             )}
           </View>
         ))}
       </View>
 
       {/* Custom Block List */}
-      <View style={{ ...CARD, marginHorizontal: 16, marginBottom: 12, padding: 20 }}>
-        <Text style={[LABEL, { marginBottom: 12 }]}>ХААГДСАН ДОМАЙНУУД</Text>
-        <Text className="text-sm font-semibold text-ink-900 mb-3">Хаагдсан домайнууд</Text>
+      <View className="bg-white rounded-3xl p-5 mx-4 mb-3 border border-gray-100 shadow-sm">
+        <Text className="text-xs text-gray-400 font-bold uppercase mb-3">ХААГДСАН ДОМАЙНУУД</Text>
+        <Text className="text-sm font-display font-bold text-gray-900 mb-3">Хаагдсан домайнууд</Text>
         <View className="flex-row gap-2 mb-3">
           <TextInput
             value={newBlockDomain}
@@ -115,21 +115,11 @@ export default function WebFilterScreen({ route }: Props) {
             autoCapitalize="none"
             autoCorrect={false}
             onSubmitEditing={() => addDomain('block')}
-            style={{
-              flex: 1,
-              backgroundColor: C.bg,
-              borderWidth: 1,
-              borderColor: C.ink200,
-              borderRadius: 12,
-              paddingHorizontal: 16,
-              height: 48,
-              fontSize: 14,
-              color: C.ink900,
-            }}
-            placeholderTextColor={C.ink300}
+            className="flex-1 rounded-2xl bg-gray-50 border border-gray-200 px-4 py-3 text-sm text-gray-900"
+            placeholderTextColor={C.gray300}
           />
           <TouchableOpacity
-            className="w-10 h-10 rounded-xl bg-ink-900 items-center justify-center self-center"
+            className="w-10 h-10 rounded-2xl bg-nest-500 items-center justify-center self-center"
             onPress={() => addDomain('block')}
           >
             <Ionicons name="add" size={22} color="#FFFFFF" />
@@ -137,22 +127,22 @@ export default function WebFilterScreen({ route }: Props) {
         </View>
         {customBlock.map((domain, index) => (
           <View key={domain} className="flex-row items-center py-2 gap-2">
-            <Ionicons name="ban" size={16} color={C.red} />
-            <Text className="flex-1 text-sm text-ink-900">
+            <Ionicons name="ban" size={16} color={C.danger500} />
+            <Text className="flex-1 text-sm text-gray-900">
               {domain}
             </Text>
             <TouchableOpacity onPress={() => removeDomain('block', index)} className="p-1">
-              <Ionicons name="close-circle-outline" size={18} color={C.ink400} />
+              <Ionicons name="close-circle-outline" size={18} color={C.gray400} />
             </TouchableOpacity>
           </View>
         ))}
       </View>
 
       {/* Custom Allow List */}
-      <View style={{ ...CARD, marginHorizontal: 16, marginBottom: 12, padding: 20 }}>
-        <Text style={[LABEL, { marginBottom: 12 }]}>ЗӨВШӨӨРӨГДСӨН ДОМАЙНУУД</Text>
-        <Text className="text-sm font-semibold text-ink-900 mb-1">Зөвшөөрөгдсөн домайнууд</Text>
-        <Text className="text-xs text-ink-400 mb-3">
+      <View className="bg-white rounded-3xl p-5 mx-4 mb-3 border border-gray-100 shadow-sm">
+        <Text className="text-xs text-gray-400 font-bold uppercase mb-3">ЗӨВШӨӨРӨГДСӨН ДОМАЙНУУД</Text>
+        <Text className="text-sm font-display font-bold text-gray-900 mb-1">Зөвшөөрөгдсөн домайнууд</Text>
+        <Text className="text-xs text-gray-400 mb-3">
           Эдгээр домайнууд тухайн ангилал хаагдсан байсан ч нээлттэй байна.
         </Text>
         <View className="flex-row gap-2 mb-3">
@@ -163,22 +153,11 @@ export default function WebFilterScreen({ route }: Props) {
             autoCapitalize="none"
             autoCorrect={false}
             onSubmitEditing={() => addDomain('allow')}
-            style={{
-              flex: 1,
-              backgroundColor: C.bg,
-              borderWidth: 1,
-              borderColor: C.ink200,
-              borderRadius: 12,
-              paddingHorizontal: 16,
-              height: 48,
-              fontSize: 14,
-              color: C.ink900,
-            }}
-            placeholderTextColor={C.ink300}
+            className="flex-1 rounded-2xl bg-gray-50 border border-gray-200 px-4 py-3 text-sm text-gray-900"
+            placeholderTextColor={C.gray300}
           />
           <TouchableOpacity
-            className="w-10 h-10 rounded-xl items-center justify-center self-center"
-            style={{ backgroundColor: C.teal }}
+            className="w-10 h-10 rounded-2xl bg-safe-500 items-center justify-center self-center"
             onPress={() => addDomain('allow')}
           >
             <Ionicons name="add" size={22} color="#FFFFFF" />
@@ -186,12 +165,12 @@ export default function WebFilterScreen({ route }: Props) {
         </View>
         {customAllow.map((domain, index) => (
           <View key={domain} className="flex-row items-center py-2 gap-2">
-            <Ionicons name="checkmark-circle" size={16} color={C.teal} />
-            <Text className="flex-1 text-sm text-ink-900">
+            <Ionicons name="checkmark-circle" size={16} color={C.safe500} />
+            <Text className="flex-1 text-sm text-gray-900">
               {domain}
             </Text>
             <TouchableOpacity onPress={() => removeDomain('allow', index)} className="p-1">
-              <Ionicons name="close-circle-outline" size={18} color={C.ink400} />
+              <Ionicons name="close-circle-outline" size={18} color={C.gray400} />
             </TouchableOpacity>
           </View>
         ))}
@@ -199,15 +178,14 @@ export default function WebFilterScreen({ route }: Props) {
 
       {/* Save Button */}
       <TouchableOpacity
-        className="bg-ink-900 rounded-xl items-center justify-center mx-4 mt-2"
-        style={{ height: 52, opacity: saving ? 0.6 : 1 }}
+        className={`bg-nest-500 rounded-2xl items-center justify-center mx-4 mt-2 h-[52px] ${saving ? 'opacity-60' : 'opacity-100'}`}
         onPress={handleSave}
         disabled={saving}
       >
         {saving ? (
           <ActivityIndicator color="#FFFFFF" />
         ) : (
-          <Text className="text-sm font-bold text-white" style={{ letterSpacing: 0.4 }}>
+          <Text className="text-sm font-display font-bold text-white tracking-tight">
             Өөрчлөлт хадгалах
           </Text>
         )}

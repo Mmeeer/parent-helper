@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as api from '../../services/api';
 import type { RouteProp } from '@react-navigation/native';
 import type { RootStackParamList, PairDeviceResponse } from '../../types';
-import { C, CARD, LABEL } from '../../theme';
+import { C } from '../../theme';
 
 type Props = {
   readonly route: RouteProp<RootStackParamList, 'PairDevice'>;
@@ -59,40 +59,40 @@ export default function PairDeviceScreen({ route }: Props) {
   };
 
   return (
-    <ScrollView className="flex-1 bg-surface-secondary" contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}>
+    <ScrollView className="flex-1 bg-surface" contentContainerClassName="px-5 pb-10">
       {/* Page header */}
       <View className="mt-6 mb-7">
-        <Text style={[LABEL, { marginBottom: 6 }]}>ХОЛБОЛТ</Text>
-        <Text className="font-serif text-[32px] text-ink-900" style={{ lineHeight: 36 }}>
+        <Text className="text-xs font-bold text-gray-400 tracking-wide mb-1.5">ХОЛБОЛТ</Text>
+        <Text className="font-display text-[32px] font-extrabold text-gray-900 leading-9">
           Төхөөрөмж холбох
         </Text>
       </View>
 
       {/* Subtitle */}
-      <Text className="text-sm text-ink-500 mb-8">
+      <Text className="text-sm text-gray-500 mb-8">
         {childName}-д шинэ төхөөрөмж холбох.
       </Text>
 
       {pairingData ? (
-        <View style={{ ...CARD, padding: 28, alignItems: 'center' }}>
-          <Text style={[LABEL, { marginBottom: 10 }]}>ХОЛБОЛТЫН КОД</Text>
+        <View className="bg-white rounded-3xl border border-gray-100 p-7 items-center">
+          <Text className="text-xs font-bold text-gray-400 tracking-wide mb-2.5">ХОЛБОЛТЫН КОД</Text>
+          <View className="bg-gray-50 rounded-2xl px-6 py-4 items-center">
+            <Text
+              className="font-display font-extrabold text-3xl text-gray-900"
+              style={{ letterSpacing: 10, fontFamily: 'monospace' }}
+            >
+              {pairingData.pairingCode}
+            </Text>
+          </View>
           <Text
-            className="text-ink-900"
-            style={{ fontSize: 44, fontWeight: '800', letterSpacing: 10, fontFamily: 'monospace' }}
-          >
-            {pairingData.pairingCode}
-          </Text>
-          <Text
+            className="font-bold text-base mt-3"
             style={{
-              fontSize: 16,
-              fontWeight: '600',
-              marginTop: 12,
-              color: countdown <= 60 ? C.red : C.teal,
+              color: countdown <= 60 ? C.danger500 : C.nest500,
             }}
           >
             {countdown > 0 ? formatTime(countdown) : 'Хугацаа дууссан'}
           </Text>
-          <Text className="text-xs text-ink-400 text-center mt-3" style={{ lineHeight: 20 }}>
+          <Text className="text-xs text-gray-400 text-center mt-3 leading-5">
             Энэ кодыг хүүхдийн төхөөрөмж дээрх Prime Kids апп-д оруулна уу.
           </Text>
 
@@ -100,15 +100,15 @@ export default function PairDeviceScreen({ route }: Props) {
             onPress={handleGenerateCode}
             className="mt-5 flex-row items-center gap-x-1.5"
           >
-            <Ionicons name="refresh" size={18} color={C.teal} />
-            <Text style={{ fontSize: 14, fontWeight: '500', color: C.teal }}>Шинэ код үүсгэх</Text>
+            <Ionicons name="refresh" size={18} color={C.nest500} />
+            <Text className="text-sm font-medium text-nest-500">Шинэ код үүсгэх</Text>
           </TouchableOpacity>
         </View>
       ) : (
         <>
           {/* Steps */}
-          <View style={{ ...CARD, padding: 20, marginBottom: 24 }}>
-            <Text style={[LABEL, { marginBottom: 14 }]}>АЛХМУУД</Text>
+          <View className="bg-white rounded-3xl border border-gray-100 p-5 mb-6">
+            <Text className="text-xs font-bold text-gray-400 tracking-wide mb-3.5">АЛХМУУД</Text>
             {[
               { num: '1', text: 'Хүүхдийн төхөөрөмжид "Prime Kids" апп суулгах' },
               { num: '2', text: 'Доорх холболтын код үүсгэх' },
@@ -116,14 +116,13 @@ export default function PairDeviceScreen({ route }: Props) {
             ].map((step) => (
               <View key={step.num} className="flex-row items-center gap-x-3.5 mb-4 last:mb-0">
                 <View
-                  className="w-8 h-8 rounded-full bg-ink-100 justify-center items-center"
-                  style={{ flexShrink: 0 }}
+                  className="w-8 h-8 rounded-full bg-nest-50 justify-center items-center shrink-0"
                 >
-                  <Text className="text-sm font-semibold text-ink-600">
+                  <Text className="text-sm font-bold text-nest-500">
                     {step.num}
                   </Text>
                 </View>
-                <Text className="flex-1 text-sm text-ink-800" style={{ lineHeight: 20 }}>
+                <Text className="flex-1 text-sm text-gray-800 leading-5">
                   {step.text}
                 </Text>
               </View>
@@ -134,13 +133,12 @@ export default function PairDeviceScreen({ route }: Props) {
           <TouchableOpacity
             onPress={handleGenerateCode}
             disabled={loading}
-            className="bg-ink-900 rounded-xl items-center justify-center"
-            style={{ height: 52, opacity: loading ? 0.6 : 1 }}
+            className={`bg-nest-500 rounded-2xl items-center justify-center shadow-lg h-[52px] ${loading ? 'opacity-60' : ''}`}
           >
             {loading ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text className="text-sm font-bold text-white" style={{ letterSpacing: 0.4 }}>
+              <Text className="text-sm font-display font-bold text-white tracking-wide">
                 Холболтын код үүсгэх
               </Text>
             )}

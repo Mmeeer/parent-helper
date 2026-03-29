@@ -7,7 +7,7 @@ import * as api from '../../services/api';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import type { RootStackParamList, Rules } from '../../types';
-import { C, CARD, LABEL } from '../../theme';
+import { C } from '../../theme';
 
 type Props = {
   readonly navigation: NativeStackNavigationProp<RootStackParamList, 'RulesOverview'>;
@@ -50,8 +50,8 @@ export default function RulesOverviewScreen({ navigation, route }: Props) {
       title: 'Дэлгэцийн цагийн хязгаар',
       description: 'Өдрийн хязгаар, аппын хязгаар болон хуваарь тохируулах',
       icon: 'time-outline' as const,
-      color: C.amber,
-      bgColor: '#FEF3C7',
+      color: C.warm500,
+      bgColor: C.warm50,
       summary: screenTimeSummary,
       onPress: () => navigation.navigate('ScreenTimeRules', { childId, childName }),
     },
@@ -60,8 +60,8 @@ export default function RulesOverviewScreen({ navigation, route }: Props) {
       title: 'Аппын удирдлага',
       description: 'Тодорхой аппыг хаах эсвэл зөвшөөрөх',
       icon: 'apps-outline' as const,
-      color: C.ink900,
-      bgColor: C.ink100,
+      color: C.nest500,
+      bgColor: C.nest50,
       summary: blockedAppsCount > 0
         ? `${blockedAppsCount} апп хаагдсан`
         : 'Хаагдсан апп байхгүй',
@@ -72,8 +72,8 @@ export default function RulesOverviewScreen({ navigation, route }: Props) {
       title: 'Вэб шүүлт',
       description: 'Агуулгын ангилал болон домайны дүрмийг тохируулах',
       icon: 'globe-outline' as const,
-      color: C.teal,
-      bgColor: '#1A0d9488',
+      color: C.safe500,
+      bgColor: C.safe50,
       summary: webCategories > 0 || customBlocked > 0
         ? `${webCategories} ангилал · ${customBlocked} домайн`
         : 'Идэвхтэй шүүлт байхгүй',
@@ -82,48 +82,47 @@ export default function RulesOverviewScreen({ navigation, route }: Props) {
   ];
 
   return (
-    <ScrollView className="flex-1 bg-surface-secondary">
+    <ScrollView className="flex-1 bg-surface">
       {/* Page header */}
       <View className="mx-5 mt-6 mb-7">
-        <Text style={[LABEL, { marginBottom: 6 }]}>ДҮРМҮҮД</Text>
-        <Text className="font-serif text-[32px] text-ink-900" style={{ lineHeight: 36 }}>
+        <Text className="text-xs text-gray-400 font-bold uppercase mb-1.5">ДҮРМҮҮД</Text>
+        <Text className="font-display text-[32px] font-bold text-gray-900 leading-9">
           {childName}-ийн дүрмүүд
         </Text>
-        <Text className="text-sm text-ink-500 mt-2">
+        <Text className="text-sm text-gray-500 mt-2">
           Эцэг эхийн хяналт болон хязгаарлалтуудыг тохируулах.
         </Text>
       </View>
 
       {loading ? (
         <View className="items-center py-8">
-          <ActivityIndicator size="small" color={C.ink900} />
+          <ActivityIndicator size="small" color={C.nest500} />
         </View>
       ) : (
         ruleCategories.map((category) => (
           <Pressable
             key={category.key}
             onPress={category.onPress}
-            style={{ ...CARD, marginHorizontal: 16, marginBottom: 12 }}
-            className="flex-row items-center px-5 py-4 gap-4"
+            className="bg-white rounded-3xl p-5 mx-4 mb-3 flex-row items-center gap-4 border border-gray-100 shadow-sm"
           >
             <View
-              className="w-12 h-12 rounded-2xl justify-center items-center"
-              style={{ backgroundColor: category.bgColor, flexShrink: 0 }}
+              className="w-10 h-10 rounded-2xl justify-center items-center shrink-0"
+              style={{ backgroundColor: category.bgColor }}
             >
-              <Ionicons name={category.icon} size={26} color={category.color} />
+              <Ionicons name={category.icon} size={22} color={category.color} />
             </View>
             <View className="flex-1">
-              <Text className="text-sm font-semibold text-ink-900">
+              <Text className="text-sm font-display font-bold text-gray-900">
                 {category.title}
               </Text>
-              <Text className="text-xs text-ink-400 mt-0.5">
+              <Text className="text-xs text-gray-400 mt-0.5">
                 {category.description}
               </Text>
-              <Text className="text-[11px] text-ink-500 font-medium mt-1.5">
+              <Text className="text-[11px] text-gray-500 font-medium mt-1.5">
                 {category.summary}
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={16} color={C.ink300} />
+            <Ionicons name="chevron-forward" size={16} color={C.gray300} />
           </Pressable>
         ))
       )}
