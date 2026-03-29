@@ -1,7 +1,7 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, FlatList, RefreshControl, Alert, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { formatTimeAgo } from '../../utils/formatters';
 import * as api from '../../services/api';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,6 +14,7 @@ const AGE_RATINGS: Record<string, string> = {
 
 export default function ApprovalsScreen() {
   const { top } = useSafeAreaInsets();
+  const navigation = useNavigation();
   const [approvals, setApprovals] = useState<AlertType[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -33,6 +34,10 @@ export default function ApprovalsScreen() {
 
   useFocusEffect(useCallback(() => { loadApprovals(); }, [loadApprovals]));
 
+  useEffect(() => {
+    navigation.setOptions({ tabBarBadge: approvals.length > 0 ? approvals.length : undefined });
+  }, [approvals.length, navigation]);
+
   const handleDecision = async (approvalId: string, action: 'approve' | 'block') => {
     setProcessingId(approvalId);
     try {
@@ -46,19 +51,28 @@ export default function ApprovalsScreen() {
     }
   };
 
+  const getAppIconStyle = (pkg?: string, rating?: string) => {
+    if (rating && ['16+', '17+', '18+'].includes(rating)) return { bg: C.danger50, icon: '🔞' };
+    if (pkg?.includes('game') || pkg?.includes('play')) return { bg: '#f0fdf4', icon: '🎮' };
+    if (pkg?.includes('social') || pkg?.includes('chat') || pkg?.includes('messenger')) return { bg: '#fdf4ff', icon: '💬' };
+    if (pkg?.includes('video') || pkg?.includes('tube') || pkg?.includes('stream')) return { bg: '#fff7ed', icon: '▶️' };
+    return { bg: C.nest100, icon: '📱' };
+  };
+
   const renderApproval = ({ item }: { item: AlertType }) => {
     const isProcessing = processingId === item._id;
     const appName = (item.data?.appName as string) || (item.data?.target as string) || 'Unknown App';
     const packageName = item.data?.packageName as string | undefined;
     const ageRating = item.data?.ageRating as string | undefined;
     const hasRatingBadge = ageRating && AGE_RATINGS[ageRating];
+    const appIcon = getAppIconStyle(packageName, ageRating);
 
     return (
       <View className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 mb-3">
         <View className="flex-row items-start gap-4 mb-5">
           {/* App icon */}
-          <View className="w-12 h-12 rounded-2xl bg-nest-100 items-center justify-center shrink-0 shadow-md">
-            <Text className="text-xl">📱</Text>
+          <View className="w-12 h-12 rounded-2xl items-center justify-center shrink-0" style={{ backgroundColor: appIcon.bg }}>
+            <Text className="text-xl">{appIcon.icon}</Text>
           </View>
 
           <View className="flex-1">

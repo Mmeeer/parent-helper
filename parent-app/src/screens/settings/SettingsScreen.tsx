@@ -74,6 +74,14 @@ export default function SettingsScreen() {
 
   const supportItems: SettingsItem[] = [
     {
+      title: 'Хэл',
+      icon: 'language-outline',
+      iconBg: 'bg-nest-50',
+      iconColor: C.nest500,
+      value: 'Монгол',
+      onPress: () => {},
+    },
+    {
       title: 'Тусламж',
       icon: 'help-circle-outline',
       iconBg: 'bg-safe-50',
@@ -144,7 +152,8 @@ export default function SettingsScreen() {
         {/* Profile card */}
         <View className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 mb-6">
           <View className="flex-row items-center">
-            <View className="w-14 h-14 rounded-3xl bg-nest-500 items-center justify-center mr-4 shadow-lg">
+            <View className="w-14 h-14 rounded-2xl items-center justify-center mr-4" style={{ backgroundColor: C.nest500 }}>
+              <View className="absolute inset-0 rounded-2xl opacity-30" style={{ backgroundColor: C.nest400, transform: [{ scale: 0.7 }] }} />
               <Text className="font-display font-bold text-white text-xl">
                 {user?.name?.charAt(0).toUpperCase() ?? 'P'}
               </Text>
@@ -157,12 +166,13 @@ export default function SettingsScreen() {
                 {user?.email || ''}
               </Text>
               <View className="flex-row items-center mt-1.5">
-                <View className="w-2 h-2 rounded-full bg-safe-400 mr-1.5" />
-                <Text className="text-xs font-bold text-safe-600">
-                  {subInfo?.active ? 'Premium Active' : 'Захиалга байхгүй'}
+                <View className={`w-2 h-2 rounded-full mr-1.5 ${subInfo?.active ? 'bg-safe-400' : 'bg-gray-300'}`} />
+                <Text className={`text-xs font-bold ${subInfo?.active ? 'text-safe-600' : 'text-gray-400'}`}>
+                  {subInfo?.active ? 'Premium идэвхтэй' : 'Захиалга байхгүй'}
                 </Text>
               </View>
             </View>
+            <Ionicons name="chevron-forward" size={16} color={C.gray300} />
           </View>
         </View>
 

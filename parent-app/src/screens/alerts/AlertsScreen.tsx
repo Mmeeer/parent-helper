@@ -4,7 +4,7 @@ import {
   Pressable, TouchableOpacity, Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { formatTimeAgo } from '../../utils/formatters';
 import { showError } from '../../utils/showError';
 import * as api from '../../services/api';
@@ -113,6 +113,7 @@ function isToday(dateStr: string): boolean {
 
 export default function AlertsScreen() {
   const { top } = useSafeAreaInsets();
+  const navigation = useNavigation();
   const [alerts, setAlerts] = useState<AlertType[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -160,6 +161,12 @@ export default function AlertsScreen() {
       showError(err, 'Мэдэгдлүүдийг уншсан болгоход алдаа гарлаа.');
     }
   };
+
+  const unreadCount = alerts.filter((a) => !a.read).length;
+
+  useEffect(() => {
+    navigation.setOptions({ tabBarBadge: unreadCount > 0 ? unreadCount : undefined });
+  }, [unreadCount, navigation]);
 
   const filteredAlerts = activeFilter === 'all'
     ? alerts
@@ -280,9 +287,11 @@ export default function AlertsScreen() {
             <View className="flex-row items-end justify-between mb-4">
               <View>
                 <Text className="font-display font-extrabold text-xl text-gray-900">Мэдэгдлүүд</Text>
-                <Text className="text-sm text-gray-400">Чухал мэдэгдлүүд</Text>
+                <Text className="text-sm text-gray-400">
+                  {unreadCount > 0 ? `${unreadCount} уншаагүй` : 'Бүгдийг уншсан'}
+                </Text>
               </View>
-              {alerts.some((a) => !a.read) && (
+              {unreadCount > 0 && (
                 <TouchableOpacity onPress={handleMarkAllRead} className="py-1">
                   <Text className="text-xs text-nest-500 font-bold">Бүгдийг уншсан болгох</Text>
                 </TouchableOpacity>

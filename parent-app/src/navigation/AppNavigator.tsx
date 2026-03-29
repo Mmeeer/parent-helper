@@ -82,6 +82,7 @@ function MainTabs() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="notifications-outline" size={size} color={color} />
           ),
+          tabBarBadgeStyle: { backgroundColor: C.danger500, fontSize: 9, minWidth: 16, height: 16, lineHeight: 16 },
         }}
       />
       <Tab.Screen
@@ -92,6 +93,7 @@ function MainTabs() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="checkmark-circle-outline" size={size} color={color} />
           ),
+          tabBarBadgeStyle: { backgroundColor: C.warm500, fontSize: 9, minWidth: 16, height: 16, lineHeight: 16 },
         }}
       />
       <Tab.Screen

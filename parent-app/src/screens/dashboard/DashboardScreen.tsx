@@ -311,9 +311,12 @@ export default function HomeScreen({ navigation }: Props) {
                 onPress={() => navigation.getParent()?.navigate('Alerts')}
               >
                 {({ pressed }) => (
-                  <View className={`bg-white rounded-2xl border border-gray-100 p-4 items-center ${pressed ? 'opacity-80' : ''}`}>
-                    <Text className="font-display text-[32px] font-extrabold text-gray-900 leading-9">{alerts.length}</Text>
-                    <Text className="text-xs text-gray-400 font-bold uppercase tracking-wide mt-1.5">Мэдэгдэл</Text>
+                  <View className={`bg-white rounded-2xl border border-gray-100 p-4 ${pressed ? 'opacity-80' : ''}`}>
+                    <View className="w-8 h-8 rounded-xl bg-danger-50 items-center justify-center mb-2">
+                      <Ionicons name="notifications-outline" size={16} color={C.danger500} />
+                    </View>
+                    <Text className="font-display text-[28px] font-extrabold text-gray-900 leading-8">{alerts.length}</Text>
+                    <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-wide mt-1">Мэдэгдэл</Text>
                   </View>
                 )}
               </Pressable>
@@ -322,9 +325,12 @@ export default function HomeScreen({ navigation }: Props) {
                 onPress={() => navigation.getParent()?.navigate('Approvals')}
               >
                 {({ pressed }) => (
-                  <View className={`bg-white rounded-2xl border border-gray-100 p-4 items-center ${pressed ? 'opacity-80' : ''}`}>
-                    <Text className="font-display text-[32px] font-extrabold text-gray-900 leading-9">{pendingCount}</Text>
-                    <Text className="text-xs text-gray-400 font-bold uppercase tracking-wide mt-1.5">Хүлээгдэж буй</Text>
+                  <View className={`bg-white rounded-2xl border border-gray-100 p-4 ${pressed ? 'opacity-80' : ''}`}>
+                    <View className="w-8 h-8 rounded-xl bg-warm-100 items-center justify-center mb-2">
+                      <Ionicons name="checkmark-circle-outline" size={16} color={C.warm500} />
+                    </View>
+                    <Text className="font-display text-[28px] font-extrabold text-gray-900 leading-8">{pendingCount}</Text>
+                    <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-wide mt-1">Хүлээгдэж буй</Text>
                   </View>
                 )}
               </Pressable>
