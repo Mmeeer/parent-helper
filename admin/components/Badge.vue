@@ -11,11 +11,11 @@ const props = defineProps<{
 }>();
 
 const variantMap: Record<string, string> = {
-  green: 'bg-green-50 text-green-700',
-  red: 'bg-red-50 text-red-700',
-  yellow: 'bg-yellow-50 text-yellow-700',
-  blue: 'bg-ac-500/10 text-ac-600',
-  gray: 'bg-ink-100 text-ink-500',
+  green:  'bg-safe-50 text-safe-700',
+  red:    'bg-danger-50 text-danger-700',
+  yellow: 'bg-warm-100 text-warm-700',
+  blue:   'bg-nest-50 text-nest-600',
+  gray:   'bg-ink-100 text-ink-500',
   purple: 'bg-purple-50 text-purple-700',
 };
 

@@ -2,13 +2,13 @@
   <div>
     <PageHeader title="Users" subtitle="Manage parent accounts" :breadcrumbs="[{ label: 'Users' }]">
       <template #actions>
-        <select v-model="planFilter" @change="page = 1; loadUsers()" class="px-3 py-2 border border-ink-200 rounded-lg text-xs bg-white focus:ring-1 focus:ring-ac-500 outline-none text-ink-700">
+        <select v-model="planFilter" @change="page = 1; loadUsers()" class="px-3 py-2 border border-ink-200 rounded-lg text-xs bg-white focus:ring-1 focus:ring-nest-500 outline-none text-ink-700">
           <option value="">All Plans</option>
           <option value="free">Free</option>
           <option value="subscribed">Subscribed</option>
         </select>
         <input v-model="search" type="text" placeholder="Search users..."
-          class="px-3 py-2 border border-ink-200 rounded-lg text-xs focus:ring-1 focus:ring-ac-500 outline-none w-48 text-ink-700 placeholder:text-ink-300"
+          class="px-3 py-2 border border-ink-200 rounded-lg text-xs focus:ring-1 focus:ring-nest-500 outline-none w-48 text-ink-700 placeholder:text-ink-300"
           @input="debouncedSearch" />
       </template>
     </PageHeader>
@@ -21,14 +21,14 @@
           <tr class="border-b border-ink-100 bg-ink-50/60">
             <th class="px-5 py-3 text-left text-[10px] font-semibold text-ink-400 uppercase tracking-widest cursor-pointer hover:text-ink-600"
               @click="toggleSort('name')">
-              User <span v-if="sortBy === 'name'" class="text-ac-500">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span>
+              User <span v-if="sortBy === 'name'" class="text-nest-500">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span>
             </th>
             <th class="px-5 py-3 text-left text-[10px] font-semibold text-ink-400 uppercase tracking-widest">Plan</th>
             <th class="px-5 py-3 text-left text-[10px] font-semibold text-ink-400 uppercase tracking-widest">Children</th>
             <th class="px-5 py-3 text-left text-[10px] font-semibold text-ink-400 uppercase tracking-widest">Devices</th>
             <th class="px-5 py-3 text-left text-[10px] font-semibold text-ink-400 uppercase tracking-widest cursor-pointer hover:text-ink-600"
               @click="toggleSort('createdAt')">
-              Joined <span v-if="sortBy === 'createdAt'" class="text-ac-500">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span>
+              Joined <span v-if="sortBy === 'createdAt'" class="text-nest-500">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span>
             </th>
             <th class="px-5 py-3 text-right text-[10px] font-semibold text-ink-400 uppercase tracking-widest">Actions</th>
           </tr>
@@ -46,7 +46,7 @@
             <td class="px-5 py-3.5 text-sm text-ink-600">{{ user.deviceCount ?? 0 }}</td>
             <td class="px-5 py-3.5 text-xs text-ink-400">{{ fmt.formatDate(user.createdAt) }}</td>
             <td class="px-5 py-3.5 text-right">
-              <NuxtLink :to="`/users/${user._id}`" class="text-xs text-ac-500 hover:text-ac-600 font-medium">View</NuxtLink>
+              <NuxtLink :to="`/users/${user._id}`" class="text-xs text-nest-500 hover:text-nest-600 font-medium">View</NuxtLink>
             </td>
           </tr>
         </tbody>

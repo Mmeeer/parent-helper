@@ -3,7 +3,7 @@
     <PageHeader title="Subscription Keys" subtitle="Create and manage subscription keys for clients" :breadcrumbs="[{ label: 'Subscriptions' }]">
       <template #actions>
         <select v-model="statusFilter" @change="page = 1; loadKeys()"
-          class="px-3 py-2 border border-ink-200 rounded-lg text-xs bg-white focus:ring-1 focus:ring-ac-500 outline-none text-ink-700">
+          class="px-3 py-2 border border-ink-200 rounded-lg text-xs bg-white focus:ring-1 focus:ring-nest-500 outline-none text-ink-700">
           <option value="">All statuses</option>
           <option value="unused">Unused</option>
           <option value="active">Active</option>
@@ -19,19 +19,19 @@
         <div>
           <label for="new-max-kids" class="block text-[10px] font-medium text-ink-400 uppercase tracking-widest mb-1.5">Max Kids</label>
           <input id="new-max-kids" v-model.number="newKey.maxKids" type="number" min="1" max="20"
-            class="w-20 px-3 py-2 border border-ink-200 rounded-lg text-xs focus:ring-1 focus:ring-ac-500 outline-none text-ink-700" />
+            class="w-20 px-3 py-2 border border-ink-200 rounded-lg text-xs focus:ring-1 focus:ring-nest-500 outline-none text-ink-700" />
         </div>
         <div>
           <label for="new-duration" class="block text-[10px] font-medium text-ink-400 uppercase tracking-widest mb-1.5">Duration</label>
           <select id="new-duration" v-model.number="newKey.durationMonths"
-            class="px-3 py-2 border border-ink-200 rounded-lg text-xs bg-white focus:ring-1 focus:ring-ac-500 outline-none text-ink-700">
+            class="px-3 py-2 border border-ink-200 rounded-lg text-xs bg-white focus:ring-1 focus:ring-nest-500 outline-none text-ink-700">
             <option v-for="m in 12" :key="m" :value="m">{{ m }} month{{ m > 1 ? 's' : '' }}</option>
           </select>
         </div>
         <div class="flex-1 min-w-[180px]">
           <label for="new-note" class="block text-[10px] font-medium text-ink-400 uppercase tracking-widest mb-1.5">Note (optional)</label>
           <input id="new-note" v-model="newKey.note" type="text" placeholder="Client name, purpose..."
-            class="w-full px-3 py-2 border border-ink-200 rounded-lg text-xs focus:ring-1 focus:ring-ac-500 outline-none text-ink-700 placeholder:text-ink-300" />
+            class="w-full px-3 py-2 border border-ink-200 rounded-lg text-xs focus:ring-1 focus:ring-nest-500 outline-none text-ink-700 placeholder:text-ink-300" />
         </div>
         <button :disabled="creating" @click="handleCreate"
           class="px-4 py-2 bg-ink-900 text-white text-xs font-semibold rounded-lg hover:bg-ink-800 disabled:opacity-50 transition">
@@ -39,12 +39,12 @@
         </button>
       </div>
 
-      <div v-if="createdKey" class="mt-3 p-3 bg-ac-500/5 border border-ac-500/20 rounded-lg flex items-center gap-3">
-        <div class="text-xs text-ac-600">
+      <div v-if="createdKey" class="mt-3 p-3 bg-nest-500/5 border border-nest-500/20 rounded-lg flex items-center gap-3">
+        <div class="text-xs text-nest-600">
           <span class="font-medium">Key created!</span> Share this with the client:
         </div>
         <code class="text-sm font-mono font-bold text-ink-900 tracking-wider flex-1">{{ createdKey }}</code>
-        <button @click="copyKey" class="px-2.5 py-1 text-[11px] bg-ink-900 text-white rounded-lg hover:bg-ink-800 transition">Copy</button>
+        <button @click="copyKey" class="px-2.5 py-1 text-[11px] bg-nest-500 text-white rounded-lg hover:bg-nest-600 transition">Copy</button>
       </div>
     </div>
 
@@ -90,7 +90,7 @@
                 <button v-if="k.status === 'active' || k.status === 'expired'" @click="openExtend(k)"
                   class="px-2 py-1 text-[11px] text-green-700 border border-green-200 rounded-lg hover:bg-green-50 transition">Extend</button>
                 <button @click="openEdit(k)"
-                  class="px-2 py-1 text-[11px] text-ac-600 border border-ac-500/30 rounded-lg hover:bg-ac-500/5 transition">Edit</button>
+                  class="px-2 py-1 text-[11px] text-nest-600 border border-nest-500/30 rounded-lg hover:bg-nest-500/5 transition">Edit</button>
                 <button v-if="k.status !== 'active'" @click="confirmDelete(k)"
                   class="px-2 py-1 text-[11px] text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition">Delete</button>
               </div>
@@ -116,22 +116,22 @@
     <Teleport to="body">
       <div v-if="editKey" class="fixed inset-0 bg-ink-900/40 backdrop-blur-sm flex items-center justify-center z-50" @click.self="editKey = null">
         <div class="bg-white rounded-2xl border border-ink-100 p-5 w-full max-w-sm mx-4 shadow-xl">
-          <h3 class="font-serif italic text-lg font-semibold text-ink-900 mb-3">Edit Key: <code class="font-mono text-sm">{{ editKey.key }}</code></h3>
+          <h3 class="font-display font-bold text-base text-ink-900 mb-3">Edit Key: <code class="font-mono text-sm">{{ editKey.key }}</code></h3>
           <div class="space-y-3">
             <div>
               <label for="edit-max-kids" class="block text-[10px] font-medium text-ink-400 uppercase tracking-widest mb-1.5">Max Kids</label>
               <input id="edit-max-kids" v-model.number="editKey.maxKids" type="number" min="1" max="20"
-                class="w-full px-3 py-2 border border-ink-200 rounded-lg text-xs outline-none focus:ring-1 focus:ring-ac-500 text-ink-700" />
+                class="w-full px-3 py-2 border border-ink-200 rounded-lg text-xs outline-none focus:ring-1 focus:ring-nest-500 text-ink-700" />
             </div>
             <div>
               <label for="edit-note" class="block text-[10px] font-medium text-ink-400 uppercase tracking-widest mb-1.5">Note</label>
               <input id="edit-note" v-model="editKey.note" type="text"
-                class="w-full px-3 py-2 border border-ink-200 rounded-lg text-xs outline-none focus:ring-1 focus:ring-ac-500 text-ink-700" />
+                class="w-full px-3 py-2 border border-ink-200 rounded-lg text-xs outline-none focus:ring-1 focus:ring-nest-500 text-ink-700" />
             </div>
           </div>
           <div class="flex gap-2 mt-4">
             <button @click="editKey = null" class="flex-1 px-3 py-2 text-xs border border-ink-200 rounded-lg hover:bg-ink-50 transition text-ink-600">Cancel</button>
-            <button @click="handleEdit" class="flex-1 px-3 py-2 text-xs bg-ink-900 text-white rounded-lg hover:bg-ink-800 transition">Save</button>
+            <button @click="handleEdit" class="flex-1 px-3 py-2 text-xs bg-nest-500 text-white rounded-lg hover:bg-nest-600 transition">Save</button>
           </div>
         </div>
       </div>
@@ -141,12 +141,12 @@
     <Teleport to="body">
       <div v-if="extendData" class="fixed inset-0 bg-ink-900/40 backdrop-blur-sm flex items-center justify-center z-50" @click.self="extendData = null">
         <div class="bg-white rounded-2xl border border-ink-100 p-5 w-full max-w-sm mx-4 shadow-xl">
-          <h3 class="font-serif italic text-lg font-semibold text-ink-900 mb-1">Extend Subscription</h3>
+          <h3 class="font-display font-bold text-base text-ink-900 mb-1">Extend Subscription</h3>
           <p class="text-xs text-ink-400 mb-3">Key: <code class="font-mono font-medium text-ink-700">{{ extendData.key.key }}</code></p>
           <div>
             <label for="extend-months" class="block text-[10px] font-medium text-ink-400 uppercase tracking-widest mb-1.5">Add months</label>
             <select id="extend-months" v-model.number="extendData.months"
-              class="w-full px-3 py-2 border border-ink-200 rounded-lg text-xs outline-none bg-white focus:ring-1 focus:ring-ac-500 text-ink-700">
+              class="w-full px-3 py-2 border border-ink-200 rounded-lg text-xs outline-none bg-white focus:ring-1 focus:ring-nest-500 text-ink-700">
               <option v-for="m in 12" :key="m" :value="m">{{ m }} month{{ m > 1 ? 's' : '' }}</option>
             </select>
           </div>

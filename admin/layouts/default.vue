@@ -9,20 +9,27 @@
       :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
     >
       <!-- Logo -->
-      <div class="px-6 py-5 border-b border-ink-700/60">
-        <h1 class="font-serif italic text-2xl text-white font-semibold leading-none">Prime Kids</h1>
-        <p class="text-[10px] text-ink-500 tracking-widest uppercase mt-1">Admin Console</p>
+      <div class="px-6 py-5 border-b border-white/10">
+        <div class="flex items-center gap-2.5">
+          <div class="w-7 h-7 rounded-lg bg-nest-500 flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5L12 1zm-2 16l-3.5-3.5 1.41-1.41L10 14.17l5.59-5.59L17 10l-7 7z"/></svg>
+          </div>
+          <div>
+            <h1 class="font-display font-bold text-sm text-white leading-none">Prime Kids</h1>
+            <p class="text-[9px] text-white/40 tracking-widest uppercase mt-0.5">Admin Console</p>
+          </div>
+        </div>
       </div>
 
       <!-- Admin user info -->
-      <div v-if="user" class="px-4 py-3 border-b border-ink-800">
+      <div v-if="user" class="px-4 py-3 border-b border-white/[0.07]">
         <div class="flex items-center gap-2.5">
-          <div class="w-7 h-7 rounded-full bg-ac-500/20 flex items-center justify-center flex-shrink-0">
-            <span class="text-[11px] font-semibold text-ac-500">{{ user.name?.charAt(0)?.toUpperCase() || 'A' }}</span>
+          <div class="w-7 h-7 rounded-full bg-nest-500/20 flex items-center justify-center flex-shrink-0">
+            <span class="text-[11px] font-bold text-nest-400">{{ user.name?.charAt(0)?.toUpperCase() || 'A' }}</span>
           </div>
           <div class="min-w-0">
-            <div class="text-xs font-medium text-ink-200 truncate">{{ user.name || 'Admin' }}</div>
-            <div class="text-[10px] text-ink-500 truncate">{{ user.email }}</div>
+            <div class="text-xs font-medium text-white/80 truncate">{{ user.name || 'Admin' }}</div>
+            <div class="text-[10px] text-white/40 truncate">{{ user.email }}</div>
           </div>
         </div>
       </div>
@@ -32,10 +39,10 @@
           v-for="item in navItems"
           :key="item.path"
           :to="item.path"
-          class="flex items-center gap-3 px-3 py-2 text-[11px] font-medium tracking-wide transition-all rounded-lg border-l-2"
+          class="flex items-center gap-3 px-3 py-2 text-[11px] font-medium tracking-wide transition-all rounded-lg"
           :class="isActive(item.path)
-            ? 'text-white bg-white/10 border-ac-500'
-            : 'text-ink-400 hover:text-ink-200 hover:bg-white/5 border-transparent'"
+            ? 'text-white bg-nest-500/20 border-l-2 border-nest-400 pl-[10px]'
+            : 'text-white/50 hover:text-white/80 hover:bg-white/5 border-l-2 border-transparent'"
           @click="sidebarOpen = false"
         >
           <span class="w-4 h-4 flex-shrink-0" v-html="item.icon"></span>
@@ -43,9 +50,9 @@
         </NuxtLink>
       </nav>
 
-      <div class="px-2 py-3 border-t border-ink-800">
+      <div class="px-2 py-3 border-t border-white/[0.07]">
         <button
-          class="w-full flex items-center gap-3 px-3 py-2 text-[11px] text-ink-500 hover:text-red-400 hover:bg-white/5 rounded-lg transition-all"
+          class="w-full flex items-center gap-3 px-3 py-2 text-[11px] text-white/40 hover:text-danger-400 hover:bg-white/5 rounded-lg transition-all"
           @click="handleLogout"
         >
           <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
@@ -57,11 +64,16 @@
     <!-- Main Content -->
     <div class="flex-1 flex flex-col min-w-0">
       <!-- Mobile header -->
-      <header class="lg:hidden flex items-center gap-3 px-4 py-3 bg-ink-900 border-b border-ink-700">
+      <header class="lg:hidden flex items-center gap-3 px-4 py-3 bg-ink-900 border-b border-white/10">
         <button @click="sidebarOpen = true" class="p-1.5 rounded-lg hover:bg-white/10 transition">
-          <svg class="w-5 h-5 text-ink-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16" /></svg>
+          <svg class="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16" /></svg>
         </button>
-        <span class="font-serif italic text-xl text-white font-semibold">Prime Kids</span>
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 rounded-md bg-nest-500 flex items-center justify-center">
+            <svg class="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5L12 1z"/></svg>
+          </div>
+          <span class="font-display font-bold text-white text-sm">Prime Kids</span>
+        </div>
       </header>
 
       <main class="flex-1 overflow-auto p-5 sm:p-7">

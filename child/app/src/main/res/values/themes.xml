@@ -14,6 +14,7 @@
         <item name="android:windowLightNavigationBar">true</item>
         <item name="shapeAppearanceSmallComponent">@style/RoundedSmall</item>
         <item name="shapeAppearanceMediumComponent">@style/RoundedMedium</item>
+        <item name="shapeAppearanceLargeComponent">@style/RoundedLarge</item>
     </style>
 
     <style name="CodeBox">
@@ -40,5 +41,9 @@
 
     <style name="RoundedMedium" parent="ShapeAppearance.MaterialComponents.MediumComponent">
         <item name="cornerSize">16dp</item>
+    </style>
+
+    <style name="RoundedLarge" parent="ShapeAppearance.MaterialComponents.LargeComponent">
+        <item name="cornerSize">20dp</item>
     </style>
 </resources>

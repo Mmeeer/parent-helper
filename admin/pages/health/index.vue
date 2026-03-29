@@ -52,7 +52,7 @@
                   :stroke-dasharray="`${onlinePct} ${100 - onlinePct}`" stroke-linecap="round" />
               </svg>
               <div class="absolute inset-0 flex items-center justify-center">
-                <span class="font-serif italic text-lg font-semibold text-ink-900">{{ Math.round(onlinePct) }}%</span>
+                <span class="font-display font-bold text-base text-ink-900">{{ Math.round(onlinePct) }}%</span>
               </div>
             </div>
             <div class="space-y-2.5 text-xs">
@@ -123,7 +123,7 @@ const maxAlertCount = computed(() => {
 
 function alertBarColor(type: string) {
   const colors: Record<string, string> = {
-    screen_time_limit: 'bg-yellow-400', new_app_installed: 'bg-ac-500',
+    screen_time_limit: 'bg-yellow-400', new_app_installed: 'bg-nest-500',
     blocked_content: 'bg-red-400', geofence_trigger: 'bg-purple-400',
     device_offline: 'bg-ink-400', unusual_pattern: 'bg-red-500', uninstall_attempt: 'bg-red-600',
   };

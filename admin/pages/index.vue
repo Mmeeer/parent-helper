@@ -21,7 +21,7 @@
         <div class="lg:col-span-2 bg-white rounded-xl border border-ink-100 p-5">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-sm font-semibold text-ink-800">Recent Alerts</h2>
-            <NuxtLink to="/alerts" class="text-xs text-ac-500 hover:text-ac-600 font-medium">View all</NuxtLink>
+            <NuxtLink to="/alerts" class="text-xs text-nest-500 hover:text-nest-600 font-medium">View all</NuxtLink>
           </div>
           <div v-if="data?.recentAlerts?.length" class="space-y-1 max-h-80 overflow-y-auto">
             <div v-for="alert in data.recentAlerts.slice(0, 10)" :key="alert._id"
@@ -44,7 +44,7 @@
         <div class="bg-white rounded-xl border border-ink-100 p-5">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-sm font-semibold text-ink-800">System Status</h2>
-            <NuxtLink to="/health" class="text-xs text-ac-500 hover:text-ac-600 font-medium">Details</NuxtLink>
+            <NuxtLink to="/health" class="text-xs text-nest-500 hover:text-nest-600 font-medium">Details</NuxtLink>
           </div>
 
           <div class="flex items-center justify-center mb-4">
@@ -55,7 +55,7 @@
                   :stroke-dasharray="`${onlinePct * 0.88} 88`" stroke-linecap="round" />
               </svg>
               <div class="absolute inset-0 flex flex-col items-center justify-center">
-                <span class="font-serif italic text-lg font-semibold text-ink-800">{{ onlinePct }}%</span>
+                <span class="font-display font-bold text-base text-ink-800">{{ onlinePct }}%</span>
                 <span class="text-[10px] text-ink-400">online</span>
               </div>
             </div>
@@ -90,7 +90,7 @@
                 <span class="text-ink-400">{{ data?.planDistribution.subscribed ?? 0 }} users</span>
               </div>
               <div class="w-full bg-ink-100 rounded-full h-1.5">
-                <div class="h-1.5 rounded-full bg-ac-500" :style="{ width: planPct('subscribed') + '%' }"></div>
+                <div class="h-1.5 rounded-full bg-nest-500" :style="{ width: planPct('subscribed') + '%' }"></div>
               </div>
             </div>
           </div>
@@ -104,7 +104,7 @@
         <div class="bg-white rounded-xl border border-ink-100 p-5">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-sm font-semibold text-ink-800">Alerts by Type (Today)</h2>
-            <NuxtLink to="/alerts" class="text-xs text-ac-500 hover:text-ac-600 font-medium">View all</NuxtLink>
+            <NuxtLink to="/alerts" class="text-xs text-nest-500 hover:text-nest-600 font-medium">View all</NuxtLink>
           </div>
           <div v-if="Object.keys(data?.alertsByType ?? {}).length" class="space-y-2.5">
             <div v-for="(count, type) in data.alertsByType" :key="type">
@@ -152,7 +152,7 @@ function planPct(key: string): number {
 function alertDotColor(type: string): string {
   const map: Record<string, string> = {
     screen_time_limit: 'bg-yellow-400', blocked_content: 'bg-red-400',
-    new_app_installed: 'bg-ac-500', geofence_trigger: 'bg-purple-400',
+    new_app_installed: 'bg-nest-500', geofence_trigger: 'bg-purple-400',
     device_offline: 'bg-ink-300', unusual_pattern: 'bg-orange-400',
     uninstall_attempt: 'bg-red-500',
   };

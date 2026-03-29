@@ -2,11 +2,11 @@
   <div>
     <PageHeader title="Alerts" subtitle="Platform-wide alert monitoring" :breadcrumbs="[{ label: 'Alerts' }]">
       <template #actions>
-        <select v-model="typeFilter" @change="alertPage = 1; loadAlerts()" class="px-3 py-2 border border-ink-200 rounded-lg text-xs bg-white focus:ring-1 focus:ring-ac-500 outline-none text-ink-700">
+        <select v-model="typeFilter" @change="alertPage = 1; loadAlerts()" class="px-3 py-2 border border-ink-200 rounded-lg text-xs bg-white focus:ring-1 focus:ring-nest-500 outline-none text-ink-700">
           <option value="">All Types</option>
           <option v-for="t in alertTypes" :key="t" :value="t">{{ fmt.formatAlertType(t) }}</option>
         </select>
-        <select v-model="readFilter" @change="alertPage = 1; loadAlerts()" class="px-3 py-2 border border-ink-200 rounded-lg text-xs bg-white focus:ring-1 focus:ring-ac-500 outline-none text-ink-700">
+        <select v-model="readFilter" @change="alertPage = 1; loadAlerts()" class="px-3 py-2 border border-ink-200 rounded-lg text-xs bg-white focus:ring-1 focus:ring-nest-500 outline-none text-ink-700">
           <option value="">All</option>
           <option value="false">Unread</option>
           <option value="true">Read</option>
@@ -82,7 +82,7 @@
               <td class="px-4 py-2.5 text-ink-600">{{ a.parentId?.name || a.parentId?.email || '-' }}</td>
               <td class="px-4 py-2.5 text-ink-500 truncate max-w-xs">{{ a.message }}</td>
               <td class="px-4 py-2.5">
-                <span class="w-2 h-2 rounded-full inline-block" :class="a.read ? 'bg-ink-300' : 'bg-ac-500'"></span>
+                <span class="w-2 h-2 rounded-full inline-block" :class="a.read ? 'bg-ink-300' : 'bg-nest-500'"></span>
               </td>
             </tr>
           </tbody>

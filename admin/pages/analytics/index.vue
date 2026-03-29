@@ -36,7 +36,7 @@
                 <span class="text-ink-400">{{ analytics?.subscriptions?.subscribed ?? 0 }}</span>
               </div>
               <div class="w-full bg-ink-100 rounded-full h-1.5">
-                <div class="h-1.5 rounded-full bg-ac-500" :style="{ width: pct(analytics?.subscriptions?.subscribed ?? 0) + '%' }"></div>
+                <div class="h-1.5 rounded-full bg-nest-500" :style="{ width: pct(analytics?.subscriptions?.subscribed ?? 0) + '%' }"></div>
               </div>
             </div>
           </div>

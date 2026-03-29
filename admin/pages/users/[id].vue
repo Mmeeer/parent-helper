@@ -19,8 +19,8 @@
       <!-- User Info Card -->
       <div class="bg-white rounded-xl border border-ink-100 p-5 mb-6">
         <div class="flex items-center gap-4">
-          <div class="w-12 h-12 rounded-full bg-ink-900 flex items-center justify-center flex-shrink-0">
-            <span class="font-serif italic text-lg font-semibold text-white">{{ user.name?.charAt(0)?.toUpperCase() || '?' }}</span>
+          <div class="w-12 h-12 rounded-full bg-nest-500 flex items-center justify-center flex-shrink-0">
+            <span class="font-display font-bold text-base text-white">{{ user.name?.charAt(0)?.toUpperCase() || '?' }}</span>
           </div>
           <div class="min-w-0 flex-1">
             <h2 class="text-base font-semibold text-ink-800">{{ user.name }}</h2>
@@ -39,7 +39,7 @@
       <div class="flex gap-1 mb-4 border-b border-ink-200">
         <button v-for="tab in tabs" :key="tab.key" @click="activeTab = tab.key"
           class="px-4 py-2.5 text-xs font-medium transition border-b-2 -mb-px"
-          :class="activeTab === tab.key ? 'text-ac-500 border-ac-500' : 'text-ink-400 border-transparent hover:text-ink-600'">
+          :class="activeTab === tab.key ? 'text-nest-500 border-nest-500' : 'text-ink-400 border-transparent hover:text-ink-600'">
           {{ tab.label }}
         </button>
       </div>

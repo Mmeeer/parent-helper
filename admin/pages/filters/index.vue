@@ -9,12 +9,12 @@
         <div class="flex-1 min-w-[200px]">
           <label for="new-domain" class="block text-[10px] font-medium text-ink-400 uppercase tracking-widest mb-1.5">Domain</label>
           <input id="new-domain" v-model="newDomain" type="text" placeholder="example.com"
-            class="w-full px-3 py-2 border border-ink-200 rounded-lg text-xs focus:ring-1 focus:ring-ac-500 outline-none text-ink-700 placeholder:text-ink-300" />
+            class="w-full px-3 py-2 border border-ink-200 rounded-lg text-xs focus:ring-1 focus:ring-nest-500 outline-none text-ink-700 placeholder:text-ink-300" />
         </div>
         <div>
           <label for="new-category" class="block text-[10px] font-medium text-ink-400 uppercase tracking-widest mb-1.5">Category</label>
           <select id="new-category" v-model="newCategory"
-            class="px-3 py-2 border border-ink-200 rounded-lg text-xs bg-white focus:ring-1 focus:ring-ac-500 outline-none text-ink-700">
+            class="px-3 py-2 border border-ink-200 rounded-lg text-xs bg-white focus:ring-1 focus:ring-nest-500 outline-none text-ink-700">
             <option value="" disabled>Select category</option>
             <option v-for="cat in categories" :key="cat" :value="cat">{{ formatCategory(cat) }}</option>
           </select>

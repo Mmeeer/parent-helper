@@ -2,7 +2,7 @@
   <div>
     <PageHeader title="Activity Monitoring" subtitle="Platform-wide usage analytics" :breadcrumbs="[{ label: 'Activity' }]">
       <template #actions>
-        <select v-model="period" @change="load()" class="px-3 py-2 border border-ink-200 rounded-lg text-xs bg-white focus:ring-1 focus:ring-ac-500 outline-none text-ink-700">
+        <select v-model="period" @change="load()" class="px-3 py-2 border border-ink-200 rounded-lg text-xs bg-white focus:ring-1 focus:ring-nest-500 outline-none text-ink-700">
           <option value="1d">Today</option>
           <option value="7d">Last 7 days</option>
           <option value="14d">Last 14 days</option>
