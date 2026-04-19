@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const http = require('http');
+const path = require('path');
 const cors = require('cors');
 const helmet = require('helmet');
 const { Server } = require('socket.io');
@@ -55,6 +56,9 @@ app.use(cors({
 }));
 
 app.use(express.json({ limit: '10mb' }));
+
+// Serve legal/public pages without auth (privacy policy, terms, COPPA)
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // Global rate limit
 app.use(apiLimiter);
