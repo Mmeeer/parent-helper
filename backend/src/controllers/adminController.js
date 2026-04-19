@@ -6,6 +6,7 @@ const ActivityLog = require('../models/ActivityLog');
 const ContentFilter = require('../models/ContentFilter');
 const SubscriptionKey = require('../models/SubscriptionKey');
 const Rule = require('../models/Rule');
+const Geofence = require('../models/Geofence');
 
 // POST /admin/seed — Create initial admin account (only if no admin exists)
 exports.seed = async (req, res, next) => {
@@ -690,6 +691,103 @@ exports.getSystemHealth = async (req, res, next) => {
       serverTime: now.toISOString(),
       uptime: process.uptime(),
     });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// GET /admin/deletions — List accounts pending deletion
+exports.getDeletionsPending = async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+
+    const query = { deletionRequestedAt: { $ne: null } };
+
+    const [users, total] = await Promise.all([
+      User.find(query)
+        .select('-passwordHash -refreshToken')
+        .sort({ deletionRequestedAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean(),
+      User.countDocuments(query),
+    ]);
+
+    const now = new Date();
+    const GRACE_PERIOD_MS = 30 * 24 * 60 * 60 * 1000;
+    const enriched = users.map((u) => {
+      const purgeAt = new Date(new Date(u.deletionRequestedAt).getTime() + GRACE_PERIOD_MS);
+      return {
+        ...u,
+        purgeAt,
+        daysRemaining: Math.max(0, Math.ceil((purgeAt - now) / (24 * 60 * 60 * 1000))),
+      };
+    });
+
+    res.json({ users: enriched, total, page, totalPages: Math.ceil(total / limit) });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// PUT /admin/deletions/:id/cancel — Cancel a pending account deletion
+exports.cancelDeletion = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (!user.deletionRequestedAt) {
+      return res.status(400).json({ error: 'This account has no pending deletion request' });
+    }
+
+    user.deletionRequestedAt = null;
+    user.deletionReason = null;
+    await user.save();
+
+    res.json({ message: 'Account deletion cancelled' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POST /admin/deletions/purge — Permanently delete accounts past the 30-day grace period
+exports.purgeDeletions = async (req, res, next) => {
+  try {
+    const GRACE_PERIOD_MS = 30 * 24 * 60 * 60 * 1000;
+    const cutoff = new Date(Date.now() - GRACE_PERIOD_MS);
+
+    const users = await User.find({
+      deletionRequestedAt: { $ne: null, $lte: cutoff },
+    });
+
+    let purged = 0;
+    for (const user of users) {
+      const children = await Child.find({ parentId: user._id });
+      const childIds = children.map((c) => c._id);
+
+      await Promise.all([
+        Rule.deleteMany({ childId: { $in: childIds } }),
+        ActivityLog.deleteMany({ childId: { $in: childIds } }),
+        Alert.deleteMany({ parentId: user._id }),
+        Geofence.deleteMany({ parentId: user._id }),
+        Device.deleteMany({ parentId: user._id }),
+        Child.deleteMany({ parentId: user._id }),
+      ]);
+
+      // Unlink subscription key
+      if (user.subscriptionKey) {
+        await SubscriptionKey.findByIdAndUpdate(user.subscriptionKey, {
+          activatedBy: null,
+          status: 'expired',
+        });
+      }
+
+      await User.findByIdAndDelete(user._id);
+      console.log(`[Purge] Permanently deleted user ${user.email} (requested ${user.deletionRequestedAt.toISOString()})`);
+      purged++;
+    }
+
+    res.json({ message: `Purged ${purged} account(s)`, purged });
   } catch (err) {
     next(err);
   }

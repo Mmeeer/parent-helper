@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { View, ScrollView, Alert, Text, Pressable, TouchableOpacity, Switch } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, ScrollView, Alert, Text, Pressable, TouchableOpacity, Switch, Modal, TextInput, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../store/AuthContext';
 import { useNavigation } from '@react-navigation/native';
@@ -27,10 +27,35 @@ export default function SettingsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [subInfo, setSubInfo] = useState<api.SubscriptionInfo | null>(null);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     api.getSubscription().then((data) => { setSubInfo(data); }).catch(() => {});
   }, []);
+
+  const handleDeleteAccount = useCallback(async () => {
+    if (!deletePassword) {
+      Alert.alert('Алдаа', 'Нууц үгээ оруулна уу.');
+      return;
+    }
+    setDeleteLoading(true);
+    try {
+      await api.deleteAccount(deletePassword);
+      setDeleteModalVisible(false);
+      setDeletePassword('');
+      Alert.alert(
+        'Бүртгэл устгах хүсэлт илгээгдлээ',
+        'Таны бүртгэл 30 хоногийн дараа бүрмөсөн устгагдана. Цуцлахыг хүсвэл тусламжтай холбогдоно уу.',
+        [{ text: 'Ойлголоо', onPress: () => void logout() }],
+      );
+    } catch (err: any) {
+      Alert.alert('Алдаа', err.message || 'Бүртгэл устгахад алдаа гарлаа.');
+    } finally {
+      setDeleteLoading(false);
+    }
+  }, [deletePassword, logout]);
 
   const handleLogout = () => {
     Alert.alert('Гарах', 'Гарахдаа итгэлтэй байна уу?', [
@@ -191,6 +216,79 @@ export default function SettingsScreen() {
             Гарах
           </Text>
         </TouchableOpacity>
+
+        {/* Delete Account */}
+        <TouchableOpacity
+          onPress={() => {
+            Alert.alert(
+              'Бүртгэл устгах',
+              'Бүртгэлээ устгахыг хүсэж байна уу? Таны бүх мэдээлэл 30 хоногийн дараа бүрмөсөн устгагдана.',
+              [
+                { text: 'Цуцлах', style: 'cancel' },
+                { text: 'Үргэлжлүүлэх', style: 'destructive', onPress: () => setDeleteModalVisible(true) },
+              ],
+            );
+          }}
+          className="w-full py-3.5 mt-3 rounded-2xl items-center justify-center"
+          activeOpacity={0.7}
+        >
+          <Text className="font-display font-semibold text-xs text-danger-400">
+            Бүртгэл устгах
+          </Text>
+        </TouchableOpacity>
+
+        {/* Delete Account Modal */}
+        <Modal visible={deleteModalVisible} transparent animationType="fade">
+          <View className="flex-1 bg-black/50 justify-center items-center px-6">
+            <View className="bg-white rounded-3xl p-6 w-full max-w-sm">
+              <View className="w-12 h-12 rounded-2xl bg-danger-50 items-center justify-center self-center mb-4">
+                <Ionicons name="warning-outline" size={24} color={C.danger500} />
+              </View>
+              <Text className="font-display font-bold text-lg text-gray-900 text-center mb-2">
+                Бүртгэл устгах
+              </Text>
+              <Text className="text-sm text-gray-500 text-center mb-5">
+                Баталгаажуулахын тулд нууц үгээ оруулна уу. Таны бүх мэдээлэл 30 хоногийн дараа бүрмөсөн устгагдана.
+              </Text>
+              <View className="bg-gray-50 rounded-2xl px-4 py-3 border border-gray-200 mb-4">
+                <TextInput
+                  placeholder="Нууц үг"
+                  placeholderTextColor="#9ca3af"
+                  secureTextEntry
+                  value={deletePassword}
+                  onChangeText={setDeletePassword}
+                  className="text-sm text-gray-900"
+                  editable={!deleteLoading}
+                />
+              </View>
+              <TouchableOpacity
+                onPress={handleDeleteAccount}
+                disabled={deleteLoading || !deletePassword}
+                className="w-full py-3.5 rounded-2xl items-center justify-center mb-3"
+                style={{ backgroundColor: deleteLoading || !deletePassword ? '#fca5a5' : C.danger500 }}
+                activeOpacity={0.7}
+              >
+                {deleteLoading ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <Text className="font-display font-bold text-sm text-white">
+                    Бүртгэл устгах
+                  </Text>
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => { setDeleteModalVisible(false); setDeletePassword(''); }}
+                className="w-full py-3 rounded-2xl items-center justify-center"
+                activeOpacity={0.7}
+                disabled={deleteLoading}
+              >
+                <Text className="font-display font-bold text-sm text-gray-500">
+                  Цуцлах
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
 
         {/* Version */}
         <Text className="text-xs text-gray-400 font-bold text-center mt-8">

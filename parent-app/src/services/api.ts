@@ -147,6 +147,13 @@ export async function getMe(): Promise<User> {
   return request<User>('/auth/me');
 }
 
+export async function deleteAccount(password: string, reason?: string): Promise<{ message: string }> {
+  return request<{ message: string }>('/auth/account', {
+    method: 'DELETE',
+    body: JSON.stringify({ password, reason }),
+  });
+}
+
 // ─── Children ────────────────────────────────────────────
 export async function getChildren(): Promise<Child[]> {
   return request<Child[]>('/children');

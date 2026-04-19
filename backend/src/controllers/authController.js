@@ -276,6 +276,39 @@ exports.registerFcmToken = async (req, res, next) => {
   }
 };
 
+// DELETE /auth/account — Request account deletion (30-day grace period)
+exports.deleteAccount = async (req, res, next) => {
+  try {
+    const { password, reason } = req.body;
+    if (!password) {
+      return res.status(400).json({ error: 'Password is required to confirm account deletion' });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Incorrect password' });
+    }
+
+    // Mark account for deletion with 30-day grace period
+    user.deletionRequestedAt = new Date();
+    user.deletionReason = reason || null;
+    user.refreshToken = null;
+    user.tokenFamily = null;
+    await user.save();
+
+    console.log(`[Account Deletion] User ${user.email} requested account deletion. Will be purged after 30 days.`);
+
+    res.json({ message: 'Account deletion requested. Your data will be permanently deleted after 30 days. You can contact support to cancel.' });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // DELETE /auth/fcm-token — Remove FCM token on logout
 exports.removeFcmToken = async (req, res, next) => {
   try {

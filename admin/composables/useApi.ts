@@ -181,5 +181,19 @@ export function useApi() {
     async deleteKey(keyId: string) {
       return request(`/admin/keys/${keyId}`, { method: 'DELETE' });
     },
+
+    // Account deletions
+    async getDeletionsPending(page = 1, limit = 20) {
+      const qs = new URLSearchParams({ page: String(page), limit: String(limit) });
+      return request<{ users: any[]; total: number; page: number; totalPages: number }>(`/admin/deletions?${qs}`);
+    },
+
+    async cancelDeletion(userId: string) {
+      return request(`/admin/deletions/${userId}/cancel`, { method: 'PUT' });
+    },
+
+    async purgeDeletions() {
+      return request<{ message: string; purged: number }>('/admin/deletions/purge', { method: 'POST' });
+    },
   };
 }

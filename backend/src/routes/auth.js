@@ -23,6 +23,9 @@ router.post('/reset-password', resetLimiter, authController.resetPassword);
 const auth = require('../middleware/auth');
 router.get('/me', auth, authController.me);
 
+// Account deletion
+router.delete('/account', auth, authController.deleteAccount);
+
 // FCM push token registration
 router.post('/fcm-token', auth, [
   body('token').trim().notEmpty().withMessage('FCM token is required'),

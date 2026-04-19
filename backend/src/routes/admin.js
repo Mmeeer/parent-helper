@@ -33,6 +33,11 @@ router.get('/activity/summary', adminController.getActivitySummary);
 router.get('/alerts/summary', adminController.getAlertsSummary);
 router.get('/alerts', adminController.getAlerts);
 
+// Account deletions
+router.get('/deletions', adminController.getDeletionsPending);
+router.put('/deletions/:id/cancel', adminController.cancelDeletion);
+router.post('/deletions/purge', adminController.purgeDeletions);
+
 // Content filters
 router.get('/filters', adminController.getFilters);
 router.put('/filters', adminController.updateFilter);

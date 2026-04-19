@@ -61,6 +61,14 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
+  deletionRequestedAt: {
+    type: Date,
+    default: null,
+  },
+  deletionReason: {
+    type: String,
+    default: null,
+  },
 }, { timestamps: true });
 
 userSchema.pre('save', async function (next) {
