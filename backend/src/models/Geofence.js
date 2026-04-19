@@ -49,5 +49,6 @@ const geofenceSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 geofenceSchema.index({ childId: 1, parentId: 1 });
+geofenceSchema.index({ parentId: 1 });
 
 module.exports = mongoose.model('Geofence', geofenceSchema);
