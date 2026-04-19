@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
 const User = require('../models/User');
-const { sendVerificationCode, sendPasswordResetCode } = require('../services/email');
+const { sendVerificationCode, sendPasswordResetCode, sendWelcomeEmail } = require('../services/email');
 
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCK_TIME_MS = 15 * 60 * 1000; // 15 minutes
@@ -44,11 +44,12 @@ exports.register = async (req, res, next) => {
     user.refreshToken = tokens.refreshToken;
     await user.save();
 
-    // Send verification email
+    // Send verification + welcome emails
     try {
       await sendVerificationCode(email, verificationCode);
+      await sendWelcomeEmail(email, name);
     } catch (err) {
-      console.error(`[Email] Failed to send verification to ${email}:`, err.message);
+      console.error(`[Email] Failed to send verification/welcome to ${email}:`, err.message);
     }
 
     const response = {
