@@ -156,7 +156,7 @@ object LockScreenOverlay {
                 return true
             }
         }.apply {
-            orientation = VERTICAL
+            orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
             setBackgroundColor(Color.parseColor("#FF1E293B")) // fully opaque dark
             setPadding(64, 64, 64, 64)
