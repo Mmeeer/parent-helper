@@ -4,6 +4,8 @@ import java.util.*
 
 /**
  * Utility to check whether device usage is currently blocked by schedule rules.
+ * Supports both same-day schedules (e.g. 22:00–06:00 wraps to next day)
+ * and standard schedules (e.g. 08:00–15:00).
  */
 object ScheduleEnforcer {
 
@@ -20,10 +22,7 @@ object ScheduleEnforcer {
         )
 
         return schedules.any { schedule ->
-            day in schedule.days &&
-                schedule.blocked &&
-                currentTime >= schedule.startTime &&
-                currentTime <= schedule.endTime
+            schedule.blocked && isTimeInSchedule(day, currentTime, schedule)
         }
     }
 
@@ -40,12 +39,29 @@ object ScheduleEnforcer {
         )
 
         val activeSchedule = schedules.find { schedule ->
-            day in schedule.days &&
-                schedule.blocked &&
-                currentTime >= schedule.startTime &&
-                currentTime <= schedule.endTime
+            schedule.blocked && isTimeInSchedule(day, currentTime, schedule)
         }
 
         return activeSchedule?.endTime
+    }
+
+    /**
+     * Checks if the given day+time falls within a schedule.
+     * Handles cross-midnight schedules (startTime > endTime) correctly.
+     */
+    private fun isTimeInSchedule(day: Int, currentTime: String, schedule: com.parenthelper.child.data.models.Schedule): Boolean {
+        return if (schedule.startTime <= schedule.endTime) {
+            // Same-day schedule (e.g. 08:00 - 15:00)
+            day in schedule.days &&
+                currentTime >= schedule.startTime &&
+                currentTime <= schedule.endTime
+        } else {
+            // Cross-midnight schedule (e.g. 22:00 - 06:00)
+            // Blocked if: today is a scheduled day AND time >= start,
+            //         OR: yesterday was a scheduled day AND time <= end
+            val yesterday = if (day == 0) 6 else day - 1
+            (day in schedule.days && currentTime >= schedule.startTime) ||
+                (yesterday in schedule.days && currentTime <= schedule.endTime)
+        }
     }
 }

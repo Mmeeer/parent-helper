@@ -43,7 +43,7 @@ class ScreenTimeLimiter(
 
         if (totalScreenTime >= dailyLimit) {
             val remainingMsg = "Resets at midnight"
-            LockScreenOverlay.show(context, LockScreenOverlay.Reason.DAILY_LIMIT, remainingMsg)
+            LockScreenOverlay.ensureShowing(context, LockScreenOverlay.Reason.DAILY_LIMIT, remainingMsg)
             appBlocker.checkAndBlockIfNeeded()
             return
         }
@@ -58,7 +58,7 @@ class ScreenTimeLimiter(
 
                 if (appTime >= appLimit) {
                     val appName = appUsage.find { it.packageName == foregroundPackage }?.appName ?: foregroundPackage
-                    LockScreenOverlay.show(context, LockScreenOverlay.Reason.APP_LIMIT, "Limit for $appName reached")
+                    LockScreenOverlay.ensureShowing(context, LockScreenOverlay.Reason.APP_LIMIT, "Limit for $appName reached")
                     appBlocker.checkAndBlockIfNeeded()
                     return
                 }
@@ -69,34 +69,18 @@ class ScreenTimeLimiter(
         dismissOverlayIfNotRemoteLocked()
     }
 
+    /**
+     * Checks schedule-based blocking using ScheduleEnforcer.
+     * Returns true if device is currently blocked by schedule.
+     */
     private fun checkSchedule(): Boolean {
-        val rules = RuleManager.currentRules.value ?: return false
-        val schedules = rules.screenTime?.schedule ?: return false
+        if (!ScheduleEnforcer.isCurrentlyBlocked()) return false
 
-        val now = java.util.Calendar.getInstance()
-        val dayOfWeek = now.get(java.util.Calendar.DAY_OF_WEEK) // 1=Sunday
-        val day = dayOfWeek - 1
-
-        val currentTime = String.format(
-            "%02d:%02d",
-            now.get(java.util.Calendar.HOUR_OF_DAY),
-            now.get(java.util.Calendar.MINUTE),
-        )
-
-        for (schedule in schedules) {
-            if (day in schedule.days &&
-                schedule.blocked &&
-                currentTime >= schedule.startTime &&
-                currentTime <= schedule.endTime
-            ) {
-                val detail = "Unlocks at ${schedule.endTime}"
-                LockScreenOverlay.show(context, LockScreenOverlay.Reason.SCHEDULE_BLOCKED, detail)
-                appBlocker.checkAndBlockIfNeeded()
-                return true
-            }
-        }
-
-        return false
+        val unlockTime = ScheduleEnforcer.getNextUnblockTime()
+        val detail = if (unlockTime != null) "Unlocks at $unlockTime" else null
+        LockScreenOverlay.ensureShowing(context, LockScreenOverlay.Reason.SCHEDULE_BLOCKED, detail)
+        appBlocker.checkAndBlockIfNeeded()
+        return true
     }
 
     private fun dismissOverlayIfNotRemoteLocked() {
