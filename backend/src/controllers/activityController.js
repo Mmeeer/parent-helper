@@ -4,12 +4,47 @@ const Device = require('../models/Device');
 const Alert = require('../models/Alert');
 const { sendBatchAlertNotifications } = require('../services/pushNotification');
 
+// Throttle location points: drop points that are <50m from previous and <60s apart.
+// This cuts API/storage costs while keeping meaningful movement data.
+const MIN_DISTANCE_METERS = 50;
+const MIN_INTERVAL_MS = 60 * 1000;
+
+function haversineMeters(lat1, lng1, lat2, lng2) {
+  const R = 6371000;
+  const toRad = (d) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function throttleLocations(points) {
+  if (!points || points.length === 0) return [];
+  const result = [points[0]];
+  for (let i = 1; i < points.length; i++) {
+    const prev = result[result.length - 1];
+    const curr = points[i];
+    const dist = haversineMeters(prev.lat, prev.lng, curr.lat, curr.lng);
+    const dt = Math.abs(new Date(curr.timestamp) - new Date(prev.timestamp));
+    // Keep point if moved enough OR enough time passed (5 min cap)
+    if (dist >= MIN_DISTANCE_METERS || dt >= 5 * MIN_INTERVAL_MS) {
+      result.push(curr);
+    }
+  }
+  return result;
+}
+
 exports.sync = async (req, res, next) => {
   try {
     // Use authenticated device identity instead of trusting request body
     const childId = req.device.childId;
     const deviceId = req.device._id;
-    const { date, apps, web, location, blockedAttempts } = req.body;
+    const { date, apps, web, location: rawLocation, blockedAttempts } = req.body;
+
+    // Throttle location points to reduce storage and API costs
+    const location = throttleLocations(rawLocation);
 
     // Upsert: for apps use $set (child sends full daily snapshot each sync),
     // for web/location/blockedAttempts use $push (discrete events that accumulate)
@@ -19,7 +54,7 @@ exports.sync = async (req, res, next) => {
     }
     const pushFields = {};
     if (web) pushFields.web = { $each: web };
-    if (location) pushFields.location = { $each: location };
+    if (location && location.length > 0) pushFields.location = { $each: location };
     if (blockedAttempts) pushFields.blockedAttempts = { $each: blockedAttempts };
     if (Object.keys(pushFields).length > 0) {
       update.$push = pushFields;

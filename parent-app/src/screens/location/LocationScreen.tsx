@@ -72,7 +72,29 @@ export default function LocationScreen({ route }: Props) {
     return unsub;
   }, [childId]);
 
+  const [address, setAddress] = useState<string | null>(null);
+  const [addressLoading, setAddressLoading] = useState(false);
+
   const latestLocation = locations.length > 0 ? (locations.at(-1) ?? null) : null;
+
+  // Reverse geocode on demand — only when user taps, not for every location ping
+  const loadAddress = useCallback(async () => {
+    if (!latestLocation || addressLoading) return;
+    setAddressLoading(true);
+    try {
+      const result = await api.reverseGeocode(latestLocation.lat, latestLocation.lng);
+      setAddress(result.address);
+    } catch {
+      setAddress(null);
+    } finally {
+      setAddressLoading(false);
+    }
+  }, [latestLocation?.lat, latestLocation?.lng, addressLoading]);
+
+  // Reset address when location changes significantly
+  useEffect(() => {
+    setAddress(null);
+  }, [latestLocation?.lat, latestLocation?.lng]);
 
   const openInExternalMap = (lat: number, lng: number) => {
     const url = Platform.select({
@@ -255,6 +277,15 @@ export default function LocationScreen({ route }: Props) {
             Сүүлд мэдэгдсэн байршил
           </Text>
         </View>
+        {address ? (
+          <Text className="text-xs text-gray-700 mb-1">{address}</Text>
+        ) : (
+          <TouchableOpacity onPress={loadAddress} disabled={addressLoading}>
+            <Text className="text-xs text-nest-500 underline mb-1">
+              {addressLoading ? 'Хаяг ачааллаж байна...' : 'Хаяг харах'}
+            </Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity onPress={() => openInExternalMap(latestLocation.lat, latestLocation.lng)}>
           <Text
             className="text-xs text-nest-500 underline font-mono"

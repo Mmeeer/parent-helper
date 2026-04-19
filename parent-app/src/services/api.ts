@@ -340,6 +340,14 @@ export async function activateSubscription(key: string): Promise<{ message: stri
   });
 }
 
+// ─── Geocoding ──────────────────────────────────────────
+export async function reverseGeocode(lat: number, lng: number): Promise<{ address: string; cached: boolean }> {
+  return request('/geocode/reverse', {
+    method: 'POST',
+    body: JSON.stringify({ lat, lng }),
+  });
+}
+
 // ─── Geofences ──────────────────────────────────────────
 export interface Geofence {
   _id: string;
