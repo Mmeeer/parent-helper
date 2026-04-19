@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "787600193492",
+    "project_id": "prime-kids",
+    "storage_bucket": "prime-kids.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:787600193492:android:e111a07cde4819cbbf8841",
+        "android_client_info": {
+          "package_name": "com.parenthelper.child"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBLhPXXVN2jWYdw_0Jcd1MDbqYjfwqDZDU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
