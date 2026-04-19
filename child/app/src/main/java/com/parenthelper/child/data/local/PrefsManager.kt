@@ -24,6 +24,7 @@ class PrefsManager(private val context: Context) {
         private val KEY_PAIRED = booleanPreferencesKey("is_paired")
         private val KEY_BASE_URL = stringPreferencesKey("base_url")
         private val KEY_CACHED_RULES = stringPreferencesKey("cached_rules")
+        private val KEY_GEOFENCE_STATES = stringPreferencesKey("geofence_states")
     }
 
     val deviceToken: Flow<String?> = context.dataStore.data.map { it[KEY_DEVICE_TOKEN] }
@@ -68,6 +69,27 @@ class PrefsManager(private val context: Context) {
                 null
             }
         }
+    }
+
+    /**
+     * Persist geofence inside/outside states returned by the backend.
+     * Map of geofenceId → boolean (true = inside).
+     */
+    suspend fun saveGeofenceStates(states: Map<String, Boolean>) {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_GEOFENCE_STATES] = gson.toJson(states)
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    val geofenceStates: Flow<Map<String, Boolean>> = context.dataStore.data.map { prefs ->
+        prefs[KEY_GEOFENCE_STATES]?.let { json ->
+            try {
+                gson.fromJson(json, Map::class.java) as? Map<String, Boolean> ?: emptyMap()
+            } catch (_: Exception) {
+                emptyMap()
+            }
+        } ?: emptyMap()
     }
 
     suspend fun clear() {

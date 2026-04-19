@@ -28,7 +28,7 @@ exports.create = async (req, res, next) => {
     const child = await verifyChild(childId, req.user._id);
     if (!child) return res.status(404).json({ error: 'Child not found' });
 
-    const { name, lat, lng, radiusMeters, alertOnEntry, alertOnExit } = req.body;
+    const { name, lat, lng, radiusMeters, alertOnEntry, alertOnExit, alertCooldownMinutes, hysteresisMeters } = req.body;
 
     if (!name || lat == null || lng == null) {
       return res.status(400).json({ error: 'Name, lat, and lng are required' });
@@ -43,6 +43,8 @@ exports.create = async (req, res, next) => {
       radiusMeters: radiusMeters || 200,
       alertOnEntry: alertOnEntry !== false,
       alertOnExit: alertOnExit !== false,
+      alertCooldownMinutes: alertCooldownMinutes != null ? alertCooldownMinutes : 30,
+      hysteresisMeters: hysteresisMeters != null ? hysteresisMeters : 20,
     });
 
     res.status(201).json(geofence);
@@ -60,7 +62,7 @@ exports.update = async (req, res, next) => {
     });
     if (!geofence) return res.status(404).json({ error: 'Geofence not found' });
 
-    const { name, lat, lng, radiusMeters, alertOnEntry, alertOnExit, active } = req.body;
+    const { name, lat, lng, radiusMeters, alertOnEntry, alertOnExit, active, alertCooldownMinutes, hysteresisMeters } = req.body;
 
     if (name !== undefined) geofence.name = name;
     if (lat !== undefined) geofence.lat = lat;
@@ -69,6 +71,8 @@ exports.update = async (req, res, next) => {
     if (alertOnEntry !== undefined) geofence.alertOnEntry = alertOnEntry;
     if (alertOnExit !== undefined) geofence.alertOnExit = alertOnExit;
     if (active !== undefined) geofence.active = active;
+    if (alertCooldownMinutes !== undefined) geofence.alertCooldownMinutes = alertCooldownMinutes;
+    if (hysteresisMeters !== undefined) geofence.hysteresisMeters = hysteresisMeters;
 
     await geofence.save();
     res.json(geofence);
@@ -92,85 +96,129 @@ exports.remove = async (req, res, next) => {
   }
 };
 
-// Called by activity sync to check geofence entry/exit triggers
-exports.checkLocation = async (childId, lat, lng, io) => {
+/**
+ * Check geofence entry/exit for multiple location points.
+ * Processes locations chronologically to catch transitions between syncs.
+ * @param {string} childId
+ * @param {Array<{lat: number, lng: number, timestamp?: string}>} locations - all location points from this sync
+ * @param {object} io - socket.io instance
+ * @returns {object} geofenceStates - map of geofenceId → boolean (inside)
+ */
+exports.checkLocations = async (childId, locations, io) => {
+  const geofenceStates = {};
   try {
+    if (!locations || locations.length === 0) return geofenceStates;
+
     const geofences = await Geofence.find({ childId, active: true });
     const Alert = require('../models/Alert');
 
+    // Sort locations chronologically
+    const sortedLocations = [...locations].sort(
+      (a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0),
+    );
+
     for (const fence of geofences) {
-      const distance = getDistanceMeters(lat, lng, fence.lat, fence.lng);
-      const isInside = distance <= fence.radiusMeters;
-      const wasInside = (fence.childrenInside || []).some(
+      const fenceId = fence._id.toString();
+      const hysteresis = fence.hysteresisMeters || 20;
+      const cooldownMs = (fence.alertCooldownMinutes || 30) * 60 * 1000;
+
+      let wasInside = (fence.childrenInside || []).some(
         (id) => id.toString() === childId.toString(),
       );
 
-      // --- ENTRY: was outside, now inside ---
-      if (isInside && !wasInside && fence.alertOnEntry) {
-        // Mark child as inside this fence
-        await Geofence.findByIdAndUpdate(fence._id, {
-          $addToSet: { childrenInside: childId },
-        });
+      // Process each location point to detect all transitions
+      for (const loc of sortedLocations) {
+        const distance = getDistanceMeters(loc.lat, loc.lng, fence.lat, fence.lng);
 
-        const alert = await Alert.create({
-          parentId: fence.parentId,
-          childId,
-          type: 'geofence_trigger',
-          message: `Entered zone: ${fence.name}`,
-          data: {
-            geofenceId: fence._id,
-            geofenceName: fence.name,
-            event: 'entry',
-            lat, lng,
-            distance: Math.round(distance),
-          },
-        });
+        // Hysteresis: use radius for entry threshold, radius + buffer for exit threshold.
+        // This prevents rapid toggling when GPS drifts near the boundary.
+        const isInside = wasInside
+          ? distance <= fence.radiusMeters + hysteresis  // already inside: must move beyond radius + buffer to exit
+          : distance <= fence.radiusMeters;              // outside: must cross radius to enter
 
-        if (io) io.to(`parent:${fence.parentId}`).emit('alert:new', alert);
-        sendAlertNotification(fence.parentId, alert);
+        if (isInside && !wasInside) {
+          // --- ENTRY ---
+          await Geofence.findByIdAndUpdate(fence._id, {
+            $addToSet: { childrenInside: childId },
+          });
+
+          if (fence.alertOnEntry && !(await isInCooldown(Alert, fence, childId, 'entry', cooldownMs))) {
+            const alert = await Alert.create({
+              parentId: fence.parentId,
+              childId,
+              type: 'geofence_trigger',
+              message: `Entered zone: ${fence.name}`,
+              data: {
+                geofenceId: fence._id,
+                geofenceName: fence.name,
+                event: 'entry',
+                lat: loc.lat,
+                lng: loc.lng,
+                distance: Math.round(distance),
+              },
+            });
+            if (io) io.to(`parent:${fence.parentId}`).emit('alert:new', alert);
+            sendAlertNotification(fence.parentId, alert);
+          }
+          wasInside = true;
+        } else if (!isInside && wasInside) {
+          // --- EXIT ---
+          await Geofence.findByIdAndUpdate(fence._id, {
+            $pull: { childrenInside: childId },
+          });
+
+          if (fence.alertOnExit && !(await isInCooldown(Alert, fence, childId, 'exit', cooldownMs))) {
+            const alert = await Alert.create({
+              parentId: fence.parentId,
+              childId,
+              type: 'geofence_trigger',
+              message: `Left zone: ${fence.name}`,
+              data: {
+                geofenceId: fence._id,
+                geofenceName: fence.name,
+                event: 'exit',
+                lat: loc.lat,
+                lng: loc.lng,
+                distance: Math.round(distance),
+              },
+            });
+            if (io) io.to(`parent:${fence.parentId}`).emit('alert:new', alert);
+            sendAlertNotification(fence.parentId, alert);
+          }
+          wasInside = false;
+        }
       }
 
-      // --- EXIT: was inside, now outside ---
-      if (!isInside && wasInside && fence.alertOnExit) {
-        // Mark child as outside this fence
-        await Geofence.findByIdAndUpdate(fence._id, {
-          $pull: { childrenInside: childId },
-        });
-
-        const alert = await Alert.create({
-          parentId: fence.parentId,
-          childId,
-          type: 'geofence_trigger',
-          message: `Left zone: ${fence.name}`,
-          data: {
-            geofenceId: fence._id,
-            geofenceName: fence.name,
-            event: 'exit',
-            lat, lng,
-            distance: Math.round(distance),
-          },
-        });
-
-        if (io) io.to(`parent:${fence.parentId}`).emit('alert:new', alert);
-        sendAlertNotification(fence.parentId, alert);
-      }
-
-      // Update state even if no alert is configured (keep tracking accurate)
-      if (isInside && !wasInside && !fence.alertOnEntry) {
-        await Geofence.findByIdAndUpdate(fence._id, {
-          $addToSet: { childrenInside: childId },
-        });
-      }
-      if (!isInside && wasInside && !fence.alertOnExit) {
-        await Geofence.findByIdAndUpdate(fence._id, {
-          $pull: { childrenInside: childId },
-        });
-      }
+      geofenceStates[fenceId] = wasInside;
     }
   } catch (err) {
     console.error('[Geofence] Check error:', err.message);
   }
+  return geofenceStates;
 };
+
+// Backward-compatible single-location wrapper
+exports.checkLocation = async (childId, lat, lng, io) => {
+  return exports.checkLocations(childId, [{ lat, lng, timestamp: new Date().toISOString() }], io);
+};
+
+/**
+ * Check if a geofence alert of the same event type was created within the cooldown window.
+ */
+async function isInCooldown(Alert, fence, childId, event, cooldownMs) {
+  if (cooldownMs <= 0) return false;
+
+  const cutoff = new Date(Date.now() - cooldownMs);
+  const recentAlert = await Alert.findOne({
+    childId,
+    type: 'geofence_trigger',
+    'data.geofenceId': fence._id,
+    'data.event': event,
+    createdAt: { $gte: cutoff },
+  }).lean();
+
+  return !!recentAlert;
+}
 
 function getDistanceMeters(lat1, lng1, lat2, lng2) {
   const R = 6371000; // Earth radius in meters

@@ -38,6 +38,7 @@ exports.sync = async (req, res, next) => {
     });
 
     // Emit real-time location if present + check geofences
+    let geofenceStates = {};
     if (location && location.length > 0) {
       const device = await Device.findById(deviceId);
       if (device) {
@@ -48,9 +49,9 @@ exports.sync = async (req, res, next) => {
           location: lastLoc,
         });
 
-        // Check geofence triggers for the latest location
-        const { checkLocation } = require('./geofenceController');
-        await checkLocation(childId, lastLoc.lat, lastLoc.lng, io);
+        // Check geofence triggers for ALL location points to catch exits between syncs
+        const { checkLocations } = require('./geofenceController');
+        geofenceStates = await checkLocations(childId, location, io);
       }
     }
 
@@ -101,7 +102,7 @@ exports.sync = async (req, res, next) => {
       }
     }
 
-    res.json({ status: 'synced', id: log._id });
+    res.json({ status: 'synced', id: log._id, geofenceStates });
   } catch (err) {
     next(err);
   }

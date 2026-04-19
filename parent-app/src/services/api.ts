@@ -351,6 +351,8 @@ export interface Geofence {
   alertOnEntry: boolean;
   alertOnExit: boolean;
   active: boolean;
+  alertCooldownMinutes: number;
+  hysteresisMeters: number;
 }
 
 export async function getGeofences(childId: string): Promise<Geofence[]> {
@@ -359,7 +361,7 @@ export async function getGeofences(childId: string): Promise<Geofence[]> {
 
 export async function createGeofence(
   childId: string,
-  data: { name: string; lat: number; lng: number; radiusMeters?: number; alertOnEntry?: boolean; alertOnExit?: boolean },
+  data: { name: string; lat: number; lng: number; radiusMeters?: number; alertOnEntry?: boolean; alertOnExit?: boolean; alertCooldownMinutes?: number; hysteresisMeters?: number },
 ): Promise<Geofence> {
   return request<Geofence>(`/geofences/${childId}`, {
     method: 'POST',

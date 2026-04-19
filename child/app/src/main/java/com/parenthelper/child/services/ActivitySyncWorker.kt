@@ -67,8 +67,13 @@ class ActivitySyncWorker(
                 blockedAttempts = allBlockedAttempts,
             )
 
-            ApiClient.service.syncActivity(request)
+            val response = ApiClient.service.syncActivity(request)
             LocationCollector.clearRecentLocations()
+
+            // Persist geofence inside/outside states from backend for state continuity
+            response.geofenceStates?.let { states ->
+                prefs.saveGeofenceStates(states)
+            }
 
             Result.success()
         } catch (e: Exception) {

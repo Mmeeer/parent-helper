@@ -38,4 +38,5 @@ data class BlockedAttempt(
 data class ActivitySyncResponse(
     val status: String,
     val id: String,
+    val geofenceStates: Map<String, Boolean>? = null,
 )

@@ -41,6 +41,18 @@ const geofenceSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  // Configurable cooldown between repeated alerts for the same event type (entry/exit)
+  alertCooldownMinutes: {
+    type: Number,
+    default: 30,
+    min: 0,
+  },
+  // Buffer zone in meters to prevent GPS-drift toggling near boundaries
+  hysteresisMeters: {
+    type: Number,
+    default: 20,
+    min: 0,
+  },
   // Track per-child inside/outside state for entry/exit detection
   childrenInside: [{
     type: mongoose.Schema.Types.ObjectId,
