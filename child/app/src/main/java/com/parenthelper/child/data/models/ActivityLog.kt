@@ -32,6 +32,7 @@ data class BlockedAttempt(
     val type: String,
     val target: String,
     val timestamp: String,
+    val packageName: String? = null,
 )
 
 data class ActivitySyncResponse(

@@ -14,6 +14,7 @@ import androidx.core.app.NotificationCompat
 import androidx.work.*
 import com.parenthelper.child.ParentHelperApp
 import com.parenthelper.child.R
+import com.parenthelper.child.collectors.AppInstallReceiver
 import com.parenthelper.child.collectors.InstalledAppsCollector
 import com.parenthelper.child.collectors.LocationCollector
 import com.parenthelper.child.collectors.ScreenTimeCollector
@@ -38,6 +39,7 @@ class MonitoringService : Service() {
     private var locationCollector: LocationCollector? = null
     private var screenTimeLimiter: ScreenTimeLimiter? = null
     private var wakeLock: PowerManager.WakeLock? = null
+    private var appInstallReceiver: AppInstallReceiver? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -85,6 +87,10 @@ class MonitoringService : Service() {
             // Start screen time limiter
             screenTimeLimiter = ScreenTimeLimiter(this@MonitoringService, prefs)
             screenTimeLimiter?.startMonitoring()
+
+            // Register app install receiver dynamically as a backup
+            // in case the static manifest receiver is killed by aggressive OEMs
+            registerAppInstallReceiver()
 
             // Register remote command handler
             registerCommandHandler()
@@ -237,6 +243,23 @@ class MonitoringService : Service() {
         )
     }
 
+    private fun registerAppInstallReceiver() {
+        if (appInstallReceiver != null) return
+        appInstallReceiver = AppInstallReceiver()
+        registerReceiver(appInstallReceiver, AppInstallReceiver.createIntentFilter())
+        Log.d(TAG, "Dynamically registered AppInstallReceiver")
+    }
+
+    private fun unregisterAppInstallReceiver() {
+        appInstallReceiver?.let {
+            try {
+                unregisterReceiver(it)
+                Log.d(TAG, "Unregistered AppInstallReceiver")
+            } catch (_: Exception) { }
+        }
+        appInstallReceiver = null
+    }
+
     private fun syncInstalledApps() {
         serviceScope.launch {
             try {
@@ -327,6 +350,7 @@ class MonitoringService : Service() {
         Log.d(TAG, "Service destroyed — scheduling restart")
         scheduleRestart()
         releaseWakeLock()
+        unregisterAppInstallReceiver()
         serviceScope.cancel()
         locationCollector?.stopTracking()
         screenTimeLimiter?.stopMonitoring()

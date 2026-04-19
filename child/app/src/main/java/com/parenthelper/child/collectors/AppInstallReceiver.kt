@@ -3,6 +3,7 @@ package com.parenthelper.child.collectors
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.util.Log
 import com.parenthelper.child.ParentHelperApp
@@ -21,12 +22,22 @@ import java.util.*
 class AppInstallReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action != Intent.ACTION_PACKAGE_ADDED) return
-        if (intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) return
-
         val packageName = intent.data?.schemeSpecificPart ?: return
 
-        // Skip our own app and system apps
+        when (intent.action) {
+            Intent.ACTION_PACKAGE_ADDED -> {
+                if (intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) return
+                handleNewInstall(context, packageName)
+            }
+            Intent.ACTION_PACKAGE_REMOVED -> {
+                if (intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) return
+                handleUninstall(context, packageName)
+            }
+        }
+    }
+
+    private fun handleNewInstall(context: Context, packageName: String) {
+        // Skip our own app and core system packages
         if (packageName == context.packageName) return
         if (packageName.startsWith("com.android.")) return
 
@@ -62,7 +73,7 @@ class AppInstallReceiver : BroadcastReceiver() {
                     timeZone = TimeZone.getTimeZone("UTC")
                 }.format(Date())
 
-                // Notify backend — sends appName and packageName separately
+                // Notify backend with both appName and packageName for the approval flow
                 val request = ActivitySyncRequest(
                     childId = childId,
                     deviceId = deviceId,
@@ -75,12 +86,14 @@ class AppInstallReceiver : BroadcastReceiver() {
                             type = "new_app",
                             target = appName,
                             timestamp = now,
+                            packageName = packageName,
                         )
                     ),
                 )
                 ApiClient.service.syncActivity(request)
+                Log.d(TAG, "Sent new_app alert for $appName ($packageName)")
 
-                // Re-sync installed apps list
+                // Re-sync installed apps list so backend has the full picture
                 val allApps = InstalledAppsCollector.getInstalledApps(context)
                 val syncRequest = com.parenthelper.child.data.models.InstalledAppsSyncRequest(
                     apps = allApps.map { com.parenthelper.child.data.models.InstalledAppEntry(it.packageName, it.appName) }
@@ -92,7 +105,43 @@ class AppInstallReceiver : BroadcastReceiver() {
         }
     }
 
+    private fun handleUninstall(context: Context, packageName: String) {
+        if (packageName == context.packageName) return
+        if (packageName.startsWith("com.android.")) return
+
+        Log.d(TAG, "App uninstalled: $packageName")
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val prefs = (context.applicationContext as ParentHelperApp).prefsManager
+                if (!prefs.isPaired.first()) return@launch
+
+                // Re-sync installed apps list so backend stays up-to-date
+                val allApps = InstalledAppsCollector.getInstalledApps(context)
+                val syncRequest = com.parenthelper.child.data.models.InstalledAppsSyncRequest(
+                    apps = allApps.map { com.parenthelper.child.data.models.InstalledAppEntry(it.packageName, it.appName) }
+                )
+                ApiClient.service.syncInstalledApps(syncRequest)
+                Log.d(TAG, "Re-synced installed apps after uninstall")
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to re-sync after uninstall: ${e.message}")
+            }
+        }
+    }
+
     companion object {
         private const val TAG = "AppInstallReceiver"
+
+        /**
+         * Creates an IntentFilter for dynamic registration in MonitoringService.
+         * This serves as a backup in case the static manifest receiver is killed by the OS.
+         */
+        fun createIntentFilter(): IntentFilter {
+            return IntentFilter().apply {
+                addAction(Intent.ACTION_PACKAGE_ADDED)
+                addAction(Intent.ACTION_PACKAGE_REMOVED)
+                addDataScheme("package")
+            }
+        }
     }
 }
