@@ -42,6 +42,10 @@ object LockScreenOverlay {
     var isShowing = false
         private set
 
+    /** Expose the current reason name for state persistence. */
+    val currentReasonName: String?
+        get() = currentReason?.name
+
     fun show(context: Context, reason: Reason, detail: String? = null) {
         if (isShowing) {
             // Update message if already showing

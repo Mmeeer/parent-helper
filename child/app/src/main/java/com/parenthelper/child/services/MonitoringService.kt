@@ -6,9 +6,11 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.IBinder
 import android.os.PowerManager
 import android.os.SystemClock
+import android.provider.Settings
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.work.*
@@ -45,6 +47,7 @@ class MonitoringService : Service() {
         super.onCreate()
         startForeground(NOTIFICATION_ID, createNotification())
         acquireWakeLock()
+        requestBatteryOptimizationExemption()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -52,6 +55,9 @@ class MonitoringService : Service() {
             val prefs = (application as ParentHelperApp).prefsManager
             val childId = prefs.childId.first() ?: return@launch
             val deviceToken = prefs.deviceToken.first() ?: return@launch
+
+            // Restore persisted remote lock state (survives reboot / process kill)
+            restoreEnforcementState(prefs)
 
             // Start WebSocket connection
             SocketManager.connect(deviceToken)
@@ -119,6 +125,11 @@ class MonitoringService : Service() {
 
     private fun executeLock() {
         isDeviceLocked = true
+        serviceScope.launch {
+            val prefs = (application as ParentHelperApp).prefsManager
+            prefs.setRemoteLocked(true)
+            prefs.saveOverlayState("REMOTE_LOCK", "Ask your parent to unlock")
+        }
         com.parenthelper.child.enforcement.LockScreenOverlay.show(
             this@MonitoringService,
             com.parenthelper.child.enforcement.LockScreenOverlay.Reason.REMOTE_LOCK,
@@ -128,6 +139,11 @@ class MonitoringService : Service() {
 
     private fun executeUnlock() {
         isDeviceLocked = false
+        serviceScope.launch {
+            val prefs = (application as ParentHelperApp).prefsManager
+            prefs.setRemoteLocked(false)
+            prefs.saveOverlayState(null, null)
+        }
         com.parenthelper.child.enforcement.LockScreenOverlay.dismiss()
     }
 
@@ -287,6 +303,53 @@ class MonitoringService : Service() {
         // If vpnIntent is not null, the UI must prompt the user — handled in MainActivity
     }
 
+    /**
+     * Restore enforcement state after service restart or device reboot.
+     * Re-shows the overlay if it was active before the interruption.
+     */
+    private suspend fun restoreEnforcementState(prefs: com.parenthelper.child.data.local.PrefsManager) {
+        val remoteLocked = prefs.isRemoteLocked.first()
+        if (remoteLocked) {
+            isDeviceLocked = true
+            val detail = prefs.overlayDetail.first() ?: "Ask your parent to unlock"
+            com.parenthelper.child.enforcement.LockScreenOverlay.show(
+                this@MonitoringService,
+                com.parenthelper.child.enforcement.LockScreenOverlay.Reason.REMOTE_LOCK,
+                detail,
+            )
+            Log.d(TAG, "Restored remote lock overlay after restart")
+            return
+        }
+
+        // For non-remote-lock overlays (daily limit, schedule, etc.),
+        // the ScreenTimeLimiter will re-evaluate within 30s and re-show if needed.
+        // But check immediately to minimize the gap.
+        val savedReason = prefs.overlayReason.first()
+        if (savedReason != null && savedReason != "REMOTE_LOCK") {
+            Log.d(TAG, "Overlay was active ($savedReason) before restart — ScreenTimeLimiter will re-check shortly")
+        }
+    }
+
+    /**
+     * Request battery optimization exemption so the service survives Doze mode.
+     * This prompts the user once; subsequent calls are no-ops if already exempt.
+     */
+    private fun requestBatteryOptimizationExemption() {
+        val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+        if (!pm.isIgnoringBatteryOptimizations(packageName)) {
+            try {
+                val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                    data = Uri.parse("package:$packageName")
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                startActivity(intent)
+                Log.d(TAG, "Requested battery optimization exemption")
+            } catch (e: Exception) {
+                Log.w(TAG, "Could not request battery optimization exemption", e)
+            }
+        }
+    }
+
     private fun createNotification(): Notification {
         val intent = Intent(this, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(
@@ -348,6 +411,15 @@ class MonitoringService : Service() {
 
     override fun onDestroy() {
         Log.d(TAG, "Service destroyed — scheduling restart")
+        // Persist current overlay state so it can be restored after restart
+        val overlay = com.parenthelper.child.enforcement.LockScreenOverlay
+        if (overlay.isShowing) {
+            val prefs = (application as ParentHelperApp).prefsManager
+            val reason = overlay.currentReasonName
+            kotlinx.coroutines.runBlocking {
+                prefs.saveOverlayState(reason, null)
+            }
+        }
         scheduleRestart()
         releaseWakeLock()
         unregisterAppInstallReceiver()

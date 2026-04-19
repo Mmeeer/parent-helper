@@ -43,7 +43,7 @@ class ScreenTimeLimiter(
 
         if (totalScreenTime >= dailyLimit) {
             val remainingMsg = "Resets at midnight"
-            LockScreenOverlay.ensureShowing(context, LockScreenOverlay.Reason.DAILY_LIMIT, remainingMsg)
+            showAndPersistOverlay(LockScreenOverlay.Reason.DAILY_LIMIT, remainingMsg)
             appBlocker.checkAndBlockIfNeeded()
             return
         }
@@ -58,7 +58,7 @@ class ScreenTimeLimiter(
 
                 if (appTime >= appLimit) {
                     val appName = appUsage.find { it.packageName == foregroundPackage }?.appName ?: foregroundPackage
-                    LockScreenOverlay.ensureShowing(context, LockScreenOverlay.Reason.APP_LIMIT, "Limit for $appName reached")
+                    showAndPersistOverlay(LockScreenOverlay.Reason.APP_LIMIT, "Limit for $appName reached")
                     appBlocker.checkAndBlockIfNeeded()
                     return
                 }
@@ -69,26 +69,32 @@ class ScreenTimeLimiter(
         dismissOverlayIfNotRemoteLocked()
     }
 
+    private suspend fun showAndPersistOverlay(reason: LockScreenOverlay.Reason, detail: String?) {
+        LockScreenOverlay.ensureShowing(context, reason, detail)
+        prefs.saveOverlayState(reason.name, detail)
+    }
+
     /**
      * Checks schedule-based blocking using ScheduleEnforcer.
      * Returns true if device is currently blocked by schedule.
      */
-    private fun checkSchedule(): Boolean {
+    private suspend fun checkSchedule(): Boolean {
         if (!ScheduleEnforcer.isCurrentlyBlocked()) return false
 
         val unlockTime = ScheduleEnforcer.getNextUnblockTime()
         val detail = if (unlockTime != null) "Unlocks at $unlockTime" else null
-        LockScreenOverlay.ensureShowing(context, LockScreenOverlay.Reason.SCHEDULE_BLOCKED, detail)
+        showAndPersistOverlay(LockScreenOverlay.Reason.SCHEDULE_BLOCKED, detail)
         appBlocker.checkAndBlockIfNeeded()
         return true
     }
 
-    private fun dismissOverlayIfNotRemoteLocked() {
+    private suspend fun dismissOverlayIfNotRemoteLocked() {
         // Only dismiss if not remotely locked by parent
         if (!com.parenthelper.child.services.MonitoringService.isDeviceLocked &&
             LockScreenOverlay.isShowing
         ) {
             LockScreenOverlay.dismiss()
+            prefs.saveOverlayState(null, null)
         }
     }
 

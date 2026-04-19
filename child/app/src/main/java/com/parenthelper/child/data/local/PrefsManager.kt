@@ -25,6 +25,9 @@ class PrefsManager(private val context: Context) {
         private val KEY_BASE_URL = stringPreferencesKey("base_url")
         private val KEY_CACHED_RULES = stringPreferencesKey("cached_rules")
         private val KEY_GEOFENCE_STATES = stringPreferencesKey("geofence_states")
+        private val KEY_REMOTE_LOCKED = booleanPreferencesKey("remote_locked")
+        private val KEY_OVERLAY_REASON = stringPreferencesKey("overlay_reason")
+        private val KEY_OVERLAY_DETAIL = stringPreferencesKey("overlay_detail")
     }
 
     val deviceToken: Flow<String?> = context.dataStore.data.map { it[KEY_DEVICE_TOKEN] }
@@ -90,6 +93,32 @@ class PrefsManager(private val context: Context) {
                 emptyMap()
             }
         } ?: emptyMap()
+    }
+
+    // --- Enforcement state persistence (survives reboot / process kill) ---
+
+    val isRemoteLocked: Flow<Boolean> = context.dataStore.data.map { it[KEY_REMOTE_LOCKED] ?: false }
+
+    suspend fun setRemoteLocked(locked: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_REMOTE_LOCKED] = locked
+        }
+    }
+
+    val overlayReason: Flow<String?> = context.dataStore.data.map { it[KEY_OVERLAY_REASON] }
+    val overlayDetail: Flow<String?> = context.dataStore.data.map { it[KEY_OVERLAY_DETAIL] }
+
+    suspend fun saveOverlayState(reason: String?, detail: String?) {
+        context.dataStore.edit { prefs ->
+            if (reason != null) {
+                prefs[KEY_OVERLAY_REASON] = reason
+                if (detail != null) prefs[KEY_OVERLAY_DETAIL] = detail
+                else prefs.remove(KEY_OVERLAY_DETAIL)
+            } else {
+                prefs.remove(KEY_OVERLAY_REASON)
+                prefs.remove(KEY_OVERLAY_DETAIL)
+            }
+        }
     }
 
     suspend fun clear() {
