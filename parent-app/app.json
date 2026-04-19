@@ -34,7 +34,8 @@
           "sounds": [],
           "defaultChannel": "general_alerts"
         }
-      ]
+      ],
+      "expo-asset"
     ]
   }
 }
