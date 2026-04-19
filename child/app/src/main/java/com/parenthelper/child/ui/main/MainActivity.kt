@@ -31,6 +31,7 @@ import com.parenthelper.child.collectors.LocationCollector
 import com.parenthelper.child.collectors.ScreenTimeCollector
 import com.parenthelper.child.data.api.ApiClient
 import com.parenthelper.child.data.models.SosRequest
+import com.parenthelper.child.enforcement.OverlayPermissionHelper
 import com.parenthelper.child.enforcement.ParentHelperDeviceAdmin
 import com.parenthelper.child.enforcement.WebFilterVpnService
 import com.parenthelper.child.services.MonitoringService
@@ -66,6 +67,15 @@ class MainActivity : AppCompatActivity() {
         if (result.resultCode == RESULT_OK) {
             startService(Intent(this, WebFilterVpnService::class.java))
         }
+    }
+
+    private val overlayPermissionRequest = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { _ ->
+        if (OverlayPermissionHelper.hasPermission(this)) {
+            OverlayPermissionHelper.reportPermissionRestored()
+        }
+        checkPermissionsAndStart()
     }
 
     private val deviceAdminRequest = registerForActivityResult(
@@ -238,8 +248,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun checkPermissionsAndStart() {
         val missingPermissions = getMissingPermissions()
+        val hasOverlay = OverlayPermissionHelper.hasPermission(this)
 
-        if (missingPermissions.isEmpty() && hasUsageStatsPermission()) {
+        if (missingPermissions.isEmpty() && hasUsageStatsPermission() && hasOverlay) {
             btnRequestPermissions.visibility = View.GONE
             tvMonitoringStatus.text = getString(R.string.status_monitoring)
             startMonitoringService()
@@ -275,6 +286,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun requestAllPermissions() {
+        // Overlay permission requires its own system settings page
+        if (!OverlayPermissionHelper.hasPermission(this)) {
+            overlayPermissionRequest.launch(OverlayPermissionHelper.createRequestIntent(this))
+            return
+        }
+
         if (!hasUsageStatsPermission()) {
             startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
             return

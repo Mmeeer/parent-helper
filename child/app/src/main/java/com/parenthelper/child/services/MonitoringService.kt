@@ -24,6 +24,7 @@ import com.parenthelper.child.collectors.WebActivityCollector
 import com.parenthelper.child.data.api.ApiClient
 import com.parenthelper.child.data.models.ActivitySyncRequest
 import com.parenthelper.child.enforcement.DomainBlockList
+import com.parenthelper.child.enforcement.OverlayPermissionHelper
 import com.parenthelper.child.enforcement.RuleManager
 import com.parenthelper.child.enforcement.ScreenTimeLimiter
 import com.parenthelper.child.enforcement.WebFilterVpnService
@@ -42,6 +43,8 @@ class MonitoringService : Service() {
     private var screenTimeLimiter: ScreenTimeLimiter? = null
     private var wakeLock: PowerManager.WakeLock? = null
     private var appInstallReceiver: AppInstallReceiver? = null
+    private var overlayPermissionCheckJob: Job? = null
+    private var wasOverlayGranted = true
 
     override fun onCreate() {
         super.onCreate()
@@ -100,6 +103,9 @@ class MonitoringService : Service() {
 
             // Register remote command handler
             registerCommandHandler()
+
+            // Monitor overlay permission status
+            startOverlayPermissionCheck()
 
             // Schedule periodic workers
             scheduleHeartbeat()
@@ -257,6 +263,24 @@ class MonitoringService : Service() {
             ExistingPeriodicWorkPolicy.KEEP,
             syncWork,
         )
+    }
+
+    private fun startOverlayPermissionCheck() {
+        wasOverlayGranted = OverlayPermissionHelper.hasPermission(this)
+        overlayPermissionCheckJob = serviceScope.launch {
+            while (isActive) {
+                delay(OVERLAY_CHECK_INTERVAL_MS)
+                val granted = OverlayPermissionHelper.hasPermission(this@MonitoringService)
+                if (!granted && wasOverlayGranted) {
+                    Log.w(TAG, "Overlay permission revoked — notifying parent")
+                    OverlayPermissionHelper.reportPermissionRevoked()
+                } else if (granted && !wasOverlayGranted) {
+                    Log.d(TAG, "Overlay permission restored")
+                    OverlayPermissionHelper.reportPermissionRestored()
+                }
+                wasOverlayGranted = granted
+            }
+        }
     }
 
     private fun registerAppInstallReceiver() {
@@ -423,6 +447,7 @@ class MonitoringService : Service() {
         scheduleRestart()
         releaseWakeLock()
         unregisterAppInstallReceiver()
+        overlayPermissionCheckJob?.cancel()
         serviceScope.cancel()
         locationCollector?.stopTracking()
         screenTimeLimiter?.stopMonitoring()
@@ -436,6 +461,7 @@ class MonitoringService : Service() {
         private const val TAG = "MonitoringService"
         const val NOTIFICATION_ID = 1001
         private const val RESTART_REQUEST_CODE = 9999
+        private const val OVERLAY_CHECK_INTERVAL_MS = 60_000L // Check every 60 seconds
         @Volatile
         var isDeviceLocked = false
     }

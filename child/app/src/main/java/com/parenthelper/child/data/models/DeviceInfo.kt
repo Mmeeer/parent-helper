@@ -54,3 +54,13 @@ data class SosResponse(
     val status: String,
     val alertId: String,
 )
+
+data class PermissionReportRequest(
+    val permission: String,
+    val granted: Boolean,
+)
+
+data class PermissionReportResponse(
+    val status: String,
+    val alertId: String? = null,
+)

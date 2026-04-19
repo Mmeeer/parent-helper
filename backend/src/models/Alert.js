@@ -22,6 +22,7 @@ const alertSchema = new mongoose.Schema({
       'unusual_pattern',
       'uninstall_attempt',
       'sos',
+      'overlay_permission_revoked',
     ],
     required: true,
   },

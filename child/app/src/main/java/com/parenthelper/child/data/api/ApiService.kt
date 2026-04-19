@@ -25,4 +25,7 @@ interface ApiService {
 
     @POST("devices/sos")
     suspend fun sendSos(@Body request: SosRequest): SosResponse
+
+    @POST("devices/report-permission")
+    suspend fun reportPermission(@Body request: PermissionReportRequest): PermissionReportResponse
 }

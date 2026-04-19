@@ -54,7 +54,8 @@ object LockScreenOverlay {
         }
 
         if (!Settings.canDrawOverlays(context)) {
-            Log.w(TAG, "Cannot draw overlays — permission not granted")
+            Log.w(TAG, "Cannot draw overlays — permission not granted, notifying parent")
+            OverlayPermissionHelper.reportPermissionRevoked()
             return
         }
 

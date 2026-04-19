@@ -317,6 +317,72 @@ exports.sos = async (req, res, next) => {
   }
 };
 
+// POST /devices/report-permission — child reports a critical permission change
+exports.reportPermission = async (req, res, next) => {
+  try {
+    const Alert = require('../models/Alert');
+    const device = req.device;
+    const { permission, granted } = req.body;
+
+    if (!permission) {
+      return res.status(400).json({ error: 'permission field is required' });
+    }
+
+    if (granted) {
+      // Permission restored — no alert needed
+      return res.json({ status: 'ok' });
+    }
+
+    // Prevent alert spam: only create if no unread alert of same type exists for this child
+    const recentAlert = await Alert.findOne({
+      parentId: device.parentId,
+      childId: device.childId,
+      type: 'overlay_permission_revoked',
+      read: false,
+    });
+
+    if (recentAlert) {
+      return res.json({ status: 'already_reported' });
+    }
+
+    const child = await Child.findById(device.childId);
+    const childName = child ? child.name : 'Your child';
+
+    const alert = await Alert.create({
+      parentId: device.parentId,
+      childId: device.childId,
+      type: 'overlay_permission_revoked',
+      message: `Screen time enforcement cannot work on ${childName}'s device. The "Display over other apps" permission has been revoked.`,
+      data: {
+        deviceId: device._id,
+        model: device.model,
+        permission,
+        timestamp: new Date().toISOString(),
+      },
+    });
+
+    // Notify parent in real-time
+    const io = req.app.get('io');
+    io.to(`parent:${device.parentId}`).emit('alert:new', {
+      id: alert._id,
+      type: alert.type,
+      childId: device.childId,
+      childName,
+      message: alert.message,
+      data: alert.data,
+      createdAt: alert.createdAt,
+    });
+
+    sendAlertNotification(device.parentId, alert);
+
+    console.log(`[PERMISSION] Overlay permission revoked on device ${device._id} for child ${childName}`);
+    res.json({ status: 'reported', alertId: alert._id });
+  } catch (err) {
+    console.error('[PERMISSION] ERROR:', err.message);
+    next(err);
+  }
+};
+
 exports.heartbeat = async (req, res, next) => {
   try {
     const { batteryLevel } = req.body;

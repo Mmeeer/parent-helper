@@ -11,6 +11,7 @@ router.post('/complete-pairing', devicePairing, devicesController.completePairin
 router.post('/heartbeat', deviceAuth, syncLimiter, devicesController.heartbeat);
 router.post('/sync-apps', deviceAuth, syncLimiter, devicesController.syncInstalledApps);
 router.post('/sos', deviceAuth, devicesController.sos);
+router.post('/report-permission', deviceAuth, devicesController.reportPermission);
 
 // Parent endpoints
 router.post('/pair', auth, emailVerified, devicesController.pair);

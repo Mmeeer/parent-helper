@@ -41,6 +41,7 @@ const ALERT_TITLES = {
   unusual_pattern: 'Unusual Activity',
   uninstall_attempt: 'Uninstall Attempt',
   sos: 'SOS Emergency',
+  overlay_permission_revoked: 'Permission Revoked',
 };
 
 const ALERT_CHANNELS = {
