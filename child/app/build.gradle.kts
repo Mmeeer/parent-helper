@@ -42,7 +42,7 @@ android {
         buildConfigField(
             "String",
             "SERVER_URL",
-            "\"${envProps.getProperty("SERVER_URL", "http://10.0.2.2:3000/")}\""
+            "\"${envProps.getProperty("SERVER_URL", "http://139.59.107.13:8080/parent-helper/")}\""
         )
     }
 

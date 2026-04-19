@@ -1,6 +1,7 @@
-export const API_BASE_URL = __DEV__
-  ? 'http://10.0.2.2:3000'  // Android emulator → host machine
-  : 'https://api.primekids.com';
+// Both dev and prod builds target the VPS-hosted staging backend.
+// `/parent-helper` prefix is stripped by nginx on port 8080 and proxied to
+// the backend on internal port 5003 (including Socket.io upgrades).
+export const API_BASE_URL = 'http://139.59.107.13:8080/parent-helper';
 
 export const ALERT_TYPE_LABELS: Record<string, string> = {
   screen_time_limit: 'Screen Time Limit',
