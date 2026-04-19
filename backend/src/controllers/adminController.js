@@ -360,6 +360,27 @@ exports.deleteKey = async (req, res, next) => {
   }
 };
 
+// PUT /admin/users/:id/verify-email — Manually verify a user's email
+exports.verifyUserEmail = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    if (user.emailVerified) {
+      return res.json({ message: 'Email already verified' });
+    }
+
+    user.emailVerified = true;
+    user.emailVerificationCode = null;
+    user.emailVerificationCodeExpiresAt = null;
+    await user.save();
+
+    res.json({ message: `Email verified for ${user.email}` });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // PUT /admin/users/:id/unsuspend — Restore a suspended user
 exports.unsuspendUser = async (req, res, next) => {
   try {

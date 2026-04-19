@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
 const User = require('../models/User');
+const { sendVerificationCode, sendPasswordResetCode } = require('../services/email');
 
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCK_TIME_MS = 15 * 60 * 1000; // 15 minutes
@@ -33,15 +34,31 @@ exports.register = async (req, res, next) => {
     }
 
     const tokenFamily = crypto.randomUUID();
-    const user = new User({ email, passwordHash: password, name, tokenFamily });
+    const verificationCode = crypto.randomInt(100000, 999999).toString();
+    const user = new User({
+      email, passwordHash: password, name, tokenFamily,
+      emailVerificationCode: verificationCode,
+      emailVerificationCodeExpiresAt: new Date(Date.now() + 15 * 60 * 1000),
+    });
     const tokens = generateTokens(user._id, tokenFamily);
     user.refreshToken = tokens.refreshToken;
     await user.save();
 
-    res.status(201).json({
-      user: { id: user._id, email: user.email, name: user.name },
+    // Send verification email
+    try {
+      await sendVerificationCode(email, verificationCode);
+    } catch (err) {
+      console.error(`[Email] Failed to send verification to ${email}:`, err.message);
+    }
+
+    const response = {
+      user: { id: user._id, email: user.email, name: user.name, emailVerified: false },
       ...tokens,
-    });
+    };
+    if (process.env.NODE_ENV !== 'production') {
+      response.verificationCode = verificationCode;
+    }
+    res.status(201).json(response);
   } catch (err) {
     next(err);
   }
@@ -91,7 +108,7 @@ exports.login = async (req, res, next) => {
     await user.save();
 
     res.json({
-      user: { id: user._id, email: user.email, name: user.name, role: user.role },
+      user: { id: user._id, email: user.email, name: user.name, role: user.role, emailVerified: user.emailVerified },
       ...tokens,
     });
   } catch (err) {
@@ -118,6 +135,7 @@ exports.me = async (req, res, next) => {
       email: user.email,
       name: user.name,
       role: user.role,
+      emailVerified: user.emailVerified,
       subscription: sub ? {
         active: subscriptionActive,
         key: sub.key,
@@ -192,8 +210,12 @@ exports.forgotPassword = async (req, res, next) => {
     user.resetCodeExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
     await user.save();
 
-    // In production, send email here. For now, log it (and return in dev mode).
-    console.log(`[Password Reset] Code for ${email}: ${resetCode}`);
+    // Send password reset email
+    try {
+      await sendPasswordResetCode(email, resetCode);
+    } catch (err) {
+      console.error(`[Email] Failed to send reset code to ${email}:`, err.message);
+    }
 
     const response = { message: 'If that email is registered, a reset code has been sent.' };
     if (process.env.NODE_ENV !== 'production') {
@@ -236,6 +258,75 @@ exports.resetPassword = async (req, res, next) => {
     await user.save();
 
     res.json({ message: 'Password has been reset successfully. Please log in.' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POST /auth/verify-email — Verify email with 6-digit code
+exports.verifyEmail = async (req, res, next) => {
+  try {
+    const { code } = req.body;
+    if (!code) {
+      return res.status(400).json({ error: 'Verification code is required' });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (user.emailVerified) {
+      return res.json({ message: 'Email already verified' });
+    }
+
+    if (user.emailVerificationCode !== code) {
+      return res.status(400).json({ error: 'Invalid verification code' });
+    }
+
+    if (!user.emailVerificationCodeExpiresAt || user.emailVerificationCodeExpiresAt < new Date()) {
+      return res.status(400).json({ error: 'Verification code has expired. Please request a new one.' });
+    }
+
+    user.emailVerified = true;
+    user.emailVerificationCode = null;
+    user.emailVerificationCodeExpiresAt = null;
+    await user.save();
+
+    res.json({ message: 'Email verified successfully', emailVerified: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POST /auth/resend-verification — Resend email verification code
+exports.resendVerification = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (user.emailVerified) {
+      return res.json({ message: 'Email already verified' });
+    }
+
+    const verificationCode = crypto.randomInt(100000, 999999).toString();
+    user.emailVerificationCode = verificationCode;
+    user.emailVerificationCodeExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+    await user.save();
+
+    try {
+      await sendVerificationCode(user.email, verificationCode);
+    } catch (err) {
+      console.error(`[Email] Failed to send verification to ${user.email}:`, err.message);
+    }
+
+    const response = { message: 'Verification code sent' };
+    if (process.env.NODE_ENV !== 'production') {
+      response.verificationCode = verificationCode;
+    }
+    res.json(response);
   } catch (err) {
     next(err);
   }

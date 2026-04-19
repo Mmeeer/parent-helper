@@ -21,6 +21,7 @@ router.get('/users/:id/activity', adminController.getUserActivity);
 router.get('/users/:id/alerts', adminController.getUserAlerts);
 router.put('/users/:id/suspend', adminController.suspendUser);
 router.put('/users/:id/unsuspend', adminController.unsuspendUser);
+router.put('/users/:id/verify-email', adminController.verifyUserEmail);
 
 // Analytics & health
 router.get('/analytics', adminController.getAnalytics);

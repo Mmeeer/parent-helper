@@ -23,6 +23,10 @@ router.post('/reset-password', resetLimiter, authController.resetPassword);
 const auth = require('../middleware/auth');
 router.get('/me', auth, authController.me);
 
+// Email verification (authenticated but no emailVerified check)
+router.post('/verify-email', auth, authController.verifyEmail);
+router.post('/resend-verification', auth, resetLimiter, authController.resendVerification);
+
 // Account deletion
 router.delete('/account', auth, authController.deleteAccount);
 

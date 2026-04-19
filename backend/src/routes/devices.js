@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const auth = require('../middleware/auth');
+const emailVerified = require('../middleware/emailVerified');
 const deviceAuth = require('../middleware/deviceAuth');
 const devicesController = require('../controllers/devicesController');
 const { syncLimiter } = require('../middleware/rateLimiter');
@@ -12,7 +13,7 @@ router.post('/sync-apps', deviceAuth, syncLimiter, devicesController.syncInstall
 router.post('/sos', deviceAuth, devicesController.sos);
 
 // Parent endpoints
-router.post('/pair', auth, devicesController.pair);
+router.post('/pair', auth, emailVerified, devicesController.pair);
 router.get('/child/:childId', auth, devicesController.listByChild);
 router.get('/:id/status', auth, devicesController.getStatus);
 router.get('/:id/installed-apps', auth, devicesController.getInstalledApps);

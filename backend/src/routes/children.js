@@ -1,9 +1,11 @@
 const router = require('express').Router();
 const { body } = require('express-validator');
 const auth = require('../middleware/auth');
+const emailVerified = require('../middleware/emailVerified');
 const childrenController = require('../controllers/childrenController');
 
 router.use(auth);
+router.use(emailVerified);
 
 router.post('/', [
   body('name').trim().notEmpty(),
