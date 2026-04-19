@@ -19,6 +19,7 @@
         "backgroundColor": "#4A90D9"
       },
       "package": "com.parenthelper.parent",
+      "googleServicesFile": "./google-services.json",
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyDCTsWSROklg46X3sd4g7GDAg7ZISNRTj8"
