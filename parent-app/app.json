@@ -43,7 +43,8 @@
         {
           "android": {
             "compileSdkVersion": 35,
-            "targetSdkVersion": 35
+            "targetSdkVersion": 35,
+            "ndkAbiFilters": ["arm64-v8a", "x86_64"]
           }
         }
       ],
