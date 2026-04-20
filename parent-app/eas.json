@@ -9,7 +9,7 @@
         "image": "latest",
         "cache": {
           "disabled": false,
-          "key": "v1-rns-4.4.0"
+          "key": "v2-clean-native"
         }
       }
     },
