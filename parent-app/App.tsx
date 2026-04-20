@@ -10,9 +10,13 @@ import {
   addNotificationReceivedListener,
   setBadgeCount,
 } from './src/services/notifications';
+import { initSentry } from './src/services/sentry';
 // @ts-ignore - expo-font may not have types installed
 import * as Font from 'expo-font';
 import type { NavigationContainerRef } from '@react-navigation/native';
+
+// Initialize Sentry as early as possible
+initSentry();
 
 // Navigation ref so we can navigate from notification taps
 export const navigationRef = React.createRef<NavigationContainerRef<any>>();

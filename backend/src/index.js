@@ -1,4 +1,5 @@
 require('dotenv').config();
+const Sentry = require('@sentry/node');
 const express = require('express');
 const http = require('http');
 const path = require('path');
@@ -8,6 +9,23 @@ const { Server } = require('socket.io');
 const connectDB = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
 const { apiLimiter } = require('./middleware/rateLimiter');
+
+// Initialize Sentry early, before Express app is created
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    release: `parent-helper-backend@${require('../package.json').version}`,
+    environment: process.env.NODE_ENV || 'development',
+    tracesSampleRate: 0.2,
+    ignoreErrors: [
+      'NetworkError',
+      'ECONNRESET',
+      'ECONNABORTED',
+      'ETIMEDOUT',
+    ],
+  });
+  console.log('[Sentry] Initialized for backend');
+}
 
 const authRoutes = require('./routes/auth');
 const childrenRoutes = require('./routes/children');
@@ -116,6 +134,16 @@ app.get('/health', async (_req, res) => {
   });
 });
 
+// Sentry test endpoint (only in non-production or for admin verification)
+app.get('/debug-sentry', (_req, _res) => {
+  throw new Error('Sentry test crash from parent-helper backend');
+});
+
+// Sentry error handler — must be before custom errorHandler
+if (process.env.SENTRY_DSN) {
+  Sentry.setupExpressErrorHandler(app);
+}
+
 app.use(errorHandler);
 
 // WebSocket
@@ -205,6 +233,12 @@ const shutdown = async (signal) => {
     console.log('[Shutdown] MongoDB connection closed');
   } catch (err) {
     console.error('[Shutdown] MongoDB close error:', err.message);
+  }
+
+  // Flush Sentry events before exit
+  if (process.env.SENTRY_DSN) {
+    await Sentry.close(2000);
+    console.log('[Shutdown] Sentry flushed');
   }
 
   // Allow 5 seconds for in-flight requests, then force exit

@@ -3,6 +3,8 @@ package com.parenthelper.child
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.util.Log
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.parenthelper.child.data.api.ApiClient
 import com.parenthelper.child.data.local.PrefsManager
 import kotlinx.coroutines.flow.first
@@ -17,12 +19,23 @@ class ParentHelperApp : Application() {
         super.onCreate()
         instance = this
 
+        // Initialize Firebase Crashlytics
+        initCrashlytics()
+
         prefsManager = PrefsManager(this)
 
         val baseUrl = runBlocking { prefsManager.baseUrl.first() }
         ApiClient.init(baseUrl, prefsManager)
 
         createNotificationChannels()
+    }
+
+    private fun initCrashlytics() {
+        val crashlytics = FirebaseCrashlytics.getInstance()
+        crashlytics.setCrashlyticsCollectionEnabled(true)
+        crashlytics.setCustomKey("app_type", "child")
+        crashlytics.setCustomKey("app_version", BuildConfig.VERSION_NAME)
+        Log.i(TAG, "Firebase Crashlytics initialized")
     }
 
     private fun createNotificationChannels() {
@@ -49,6 +62,7 @@ class ParentHelperApp : Application() {
     }
 
     companion object {
+        private const val TAG = "ParentHelperApp"
         const val CHANNEL_MONITORING = "monitoring"
         const val CHANNEL_ALERTS = "alerts"
 

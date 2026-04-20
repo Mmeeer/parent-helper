@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.parenthelper.child.BuildConfig
 import com.parenthelper.child.data.models.Rule
 import com.google.gson.Gson
@@ -49,6 +50,12 @@ class PrefsManager(private val context: Context) {
             prefs[KEY_CHILD_ID] = childId
             prefs[KEY_PARENT_ID] = parentId
             prefs[KEY_PAIRED] = true
+        }
+        // Tag Crashlytics with device/child identity for crash triage
+        FirebaseCrashlytics.getInstance().apply {
+            setUserId(deviceId)
+            setCustomKey("child_id", childId)
+            setCustomKey("parent_id", parentId)
         }
     }
 
