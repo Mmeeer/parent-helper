@@ -96,6 +96,10 @@ export function useApi() {
       return request(`/admin/users/${userId}/unsuspend`, { method: 'PUT' });
     },
 
+    async verifyUserEmail(userId: string) {
+      return request(`/admin/users/${userId}/verify-email`, { method: 'PUT' });
+    },
+
     // Analytics
     async getAnalytics() {
       return request<{

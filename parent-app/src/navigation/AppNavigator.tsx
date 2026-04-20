@@ -12,6 +12,7 @@ import { C } from '../theme';
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
+import EmailVerificationScreen from '../screens/auth/EmailVerificationScreen';
 
 // Main Screens
 import HomeScreen from '../screens/dashboard/DashboardScreen';
@@ -111,7 +112,7 @@ function MainTabs() {
 }
 
 const AppNavigator = React.forwardRef<any>((_, ref) => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
     return (
@@ -131,7 +132,13 @@ const AppNavigator = React.forwardRef<any>((_, ref) => {
           headerBackButtonDisplayMode: 'minimal',
         }}
       >
-        {isAuthenticated ? (
+        {isAuthenticated && !user?.emailVerified ? (
+          <Stack.Screen
+            name="VerifyEmail"
+            component={EmailVerificationScreen}
+            options={{ headerShown: false }}
+          />
+        ) : isAuthenticated ? (
           <>
             <Stack.Screen
               name="MainTabs"

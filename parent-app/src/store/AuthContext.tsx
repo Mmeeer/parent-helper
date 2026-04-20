@@ -14,6 +14,8 @@ interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
+  verifyEmail: (code: string) => Promise<void>;
+  resendVerification: () => Promise<{ message: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -68,8 +70,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setState({ user: null, isLoading: false, isAuthenticated: false });
   }, []);
 
+  const verifyEmail = useCallback(async (code: string) => {
+    await api.verifyEmail(code);
+    setState((prev) => ({
+      ...prev,
+      user: prev.user ? { ...prev.user, emailVerified: true } : null,
+    }));
+  }, []);
+
+  const resendVerification = useCallback(async () => {
+    return api.resendVerification();
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ ...state, login, register, logout }}>
+    <AuthContext.Provider value={{ ...state, login, register, logout, verifyEmail, resendVerification }}>
       {children}
     </AuthContext.Provider>
   );

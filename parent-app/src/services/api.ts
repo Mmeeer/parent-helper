@@ -147,6 +147,19 @@ export async function getMe(): Promise<User> {
   return request<User>('/auth/me');
 }
 
+export async function verifyEmail(code: string): Promise<{ message: string; emailVerified: boolean }> {
+  return request('/auth/verify-email', {
+    method: 'POST',
+    body: JSON.stringify({ code }),
+  });
+}
+
+export async function resendVerification(): Promise<{ message: string }> {
+  return request('/auth/resend-verification', {
+    method: 'POST',
+  });
+}
+
 export async function deleteAccount(password: string, reason?: string): Promise<{ message: string }> {
   return request<{ message: string }>('/auth/account', {
     method: 'DELETE',

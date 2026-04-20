@@ -3,6 +3,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  emailVerified: boolean;
   subscription?: {
     active: boolean;
     key?: string;
@@ -194,4 +195,5 @@ export type RootStackParamList = {
   ForgotPassword: undefined;
   AddChild: undefined;
   ActivateSubscription: undefined;
+  VerifyEmail: undefined;
 };

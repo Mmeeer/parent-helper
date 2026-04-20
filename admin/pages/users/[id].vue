@@ -2,6 +2,10 @@
   <div>
     <PageHeader :title="user?.name || 'User Detail'" :subtitle="user?.email" :breadcrumbs="[{ label: 'Users', to: '/users' }, { label: user?.name || '...' }]">
       <template #actions>
+        <button v-if="user && !user.emailVerified" @click="handleVerifyEmail"
+          class="px-3 py-2 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition">
+          Verify Email
+        </button>
         <button v-if="user?.refreshToken === null" @click="handleUnsuspend"
           class="px-3 py-2 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition">
           Unsuspend
@@ -24,7 +28,11 @@
           </div>
           <div class="min-w-0 flex-1">
             <h2 class="text-base font-semibold text-ink-800">{{ user.name }}</h2>
-            <p class="text-xs text-ink-400">{{ user.email }}</p>
+            <div class="flex items-center gap-1.5">
+              <p class="text-xs text-ink-400">{{ user.email }}</p>
+              <Badge v-if="user.emailVerified" label="Verified" variant="green" />
+              <Badge v-else label="Unverified" variant="yellow" />
+            </div>
           </div>
           <div class="hidden sm:flex items-center gap-6 text-xs">
             <div class="text-center"><div class="text-ink-400 mb-1">Plan</div><Badge :label="user.subscriptionKey ? 'Subscribed' : 'Free'" :variant="user.subscriptionKey ? 'blue' : 'gray'" /></div>
@@ -156,7 +164,7 @@
 
 <script setup lang="ts">
 const route = useRoute();
-const { getUserDetail, getUserRules, getUserActivity, getUserAlerts, suspendUser, unsuspendUser } = useApi();
+const { getUserDetail, getUserRules, getUserActivity, getUserAlerts, suspendUser, unsuspendUser, verifyUserEmail } = useApi();
 const fmt = useFormatters();
 const toast = useToast();
 
@@ -204,6 +212,14 @@ watch(activeTab, async (tab) => {
     finally { alertsLoading.value = false; }
   }
 });
+
+async function handleVerifyEmail() {
+  try {
+    await verifyUserEmail(route.params.id as string);
+    toast.success('Email verified');
+    user.value = await getUserDetail(route.params.id as string);
+  } catch (e: any) { toast.error(e.message || 'Failed to verify email'); }
+}
 
 async function handleSuspend() {
   showSuspendModal.value = false;
