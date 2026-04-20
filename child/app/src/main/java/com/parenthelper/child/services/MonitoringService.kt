@@ -274,9 +274,11 @@ class MonitoringService : Service() {
                 if (!granted && wasOverlayGranted) {
                     Log.w(TAG, "Overlay permission revoked — notifying parent")
                     OverlayPermissionHelper.reportPermissionRevoked()
+                    OverlayPermissionHelper.showPermissionLostNotification(this@MonitoringService)
                 } else if (granted && !wasOverlayGranted) {
                     Log.d(TAG, "Overlay permission restored")
                     OverlayPermissionHelper.reportPermissionRestored()
+                    OverlayPermissionHelper.dismissPermissionLostNotification(this@MonitoringService)
                 }
                 wasOverlayGranted = granted
             }

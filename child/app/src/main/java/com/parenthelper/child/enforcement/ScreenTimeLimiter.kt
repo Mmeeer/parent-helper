@@ -70,6 +70,14 @@ class ScreenTimeLimiter(
     }
 
     private suspend fun showAndPersistOverlay(reason: LockScreenOverlay.Reason, detail: String?) {
+        if (!OverlayPermissionHelper.hasPermission(context)) {
+            // Cannot show overlay — permission was revoked.
+            // MonitoringService already reports this to backend and shows
+            // a notification, but log so the enforcement gap is visible.
+            android.util.Log.w("ScreenTimeLimiter",
+                "Cannot enforce $reason — overlay permission not granted")
+            return
+        }
         LockScreenOverlay.ensureShowing(context, reason, detail)
         prefs.saveOverlayState(reason.name, detail)
     }

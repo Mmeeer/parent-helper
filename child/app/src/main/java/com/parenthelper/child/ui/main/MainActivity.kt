@@ -107,6 +107,10 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         checkPermissionsAndStart()
         updateScreenTimeDisplay()
+        // If overlay permission was just re-granted, dismiss the warning notification
+        if (OverlayPermissionHelper.hasPermission(this)) {
+            OverlayPermissionHelper.dismissPermissionLostNotification(this)
+        }
     }
 
     override fun onDestroy() {

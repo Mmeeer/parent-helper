@@ -24,4 +24,17 @@
     <string name="sos_hold_countdown">Барьж байгаарай&#8230;</string>
     <string name="status_permissions_needed">Зөвшөөрөл шаардлагатай</string>
     <string name="daily_limit_no_limit">Өдрийн хязгаар: тогтоогдоогүй</string>
+
+    <!-- Permission setup -->
+    <string name="permission_setup_title">Зөвшөөрөл тохируулах</string>
+    <string name="permission_setup_description">Дэлгэцийн цагийн хязгаарыг хэрэгжүүлэхийн тулд доорх зөвшөөрлийг олгоно уу</string>
+    <string name="permission_overlay_title">Бусад апп дээр харуулах</string>
+    <string name="permission_overlay_explanation">Дэлгэцийн цагийн хязгаарт хүрсэн үед төхөөрөмжийн ашиглалтыг хязгаарлахын тулд энэ зөвшөөрөл шаардлагатай.</string>
+    <string name="permission_grant_overlay">Зөвшөөрөл олгох</string>
+    <string name="permission_granted">ЗӨВШӨӨРӨГДСӨН</string>
+    <string name="permission_not_granted">ЗӨВШӨӨРӨГДӨӨГҮЙ</string>
+    <string name="permission_continue">Үргэлжлүүлэх</string>
+    <string name="permission_skip">Дараа тохируулах</string>
+    <string name="overlay_permission_lost_title">Зөвшөөрөл шаардлагатай</string>
+    <string name="overlay_permission_lost_text">Дэлгэцийн цагийн хяналт ажиллахгүй байна. Зөвшөөрлийг дахин олгоно уу.</string>
 </resources>

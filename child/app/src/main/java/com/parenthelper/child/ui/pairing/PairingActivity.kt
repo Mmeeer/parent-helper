@@ -19,7 +19,9 @@ import com.parenthelper.child.ParentHelperApp
 import com.parenthelper.child.R
 import com.parenthelper.child.data.api.ApiClient
 import com.parenthelper.child.data.models.PairingRequest
+import com.parenthelper.child.enforcement.OverlayPermissionHelper
 import com.parenthelper.child.ui.main.MainActivity
+import com.parenthelper.child.ui.setup.PermissionSetupActivity
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.json.JSONObject
@@ -65,8 +67,7 @@ class PairingActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val paired = (application as ParentHelperApp).prefsManager.isPaired.first()
             if (paired) {
-                startActivity(Intent(this@PairingActivity, MainActivity::class.java))
-                finish()
+                navigateAfterPairing()
             }
         }
     }
@@ -150,8 +151,7 @@ class PairingActivity : AppCompatActivity() {
                     parentId = response.parentId,
                 )
 
-                startActivity(Intent(this@PairingActivity, MainActivity::class.java))
-                finish()
+                navigateAfterPairing()
             } catch (e: HttpException) {
                 val errorMsg = try {
                     val body = e.response()?.errorBody()?.string()
@@ -176,6 +176,20 @@ class PairingActivity : AppCompatActivity() {
         btnPair.isEnabled = !loading
         progressBar.visibility = if (loading) View.VISIBLE else View.GONE
         tvError.visibility = View.GONE
+    }
+
+    /**
+     * After pairing, route through PermissionSetupActivity if overlay
+     * permission hasn't been granted yet, otherwise go straight to Main.
+     */
+    private fun navigateAfterPairing() {
+        val target = if (OverlayPermissionHelper.hasPermission(this)) {
+            MainActivity::class.java
+        } else {
+            PermissionSetupActivity::class.java
+        }
+        startActivity(Intent(this@PairingActivity, target))
+        finish()
     }
 
     private fun showError(message: String) {
