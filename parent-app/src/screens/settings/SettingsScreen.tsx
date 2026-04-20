@@ -29,6 +29,7 @@ export default function SettingsScreen() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
+  const [deleteReason, setDeleteReason] = useState('');
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
@@ -42,9 +43,10 @@ export default function SettingsScreen() {
     }
     setDeleteLoading(true);
     try {
-      await api.deleteAccount(deletePassword);
+      await api.deleteAccount(deletePassword, deleteReason || undefined);
       setDeleteModalVisible(false);
       setDeletePassword('');
+      setDeleteReason('');
       Alert.alert(
         'Бүртгэл устгах хүсэлт илгээгдлээ',
         'Таны бүртгэл 30 хоногийн дараа бүрмөсөн устгагдана. Цуцлахыг хүсвэл тусламжтай холбогдоно уу.',
@@ -250,7 +252,7 @@ export default function SettingsScreen() {
               <Text className="text-sm text-gray-500 text-center mb-5">
                 Баталгаажуулахын тулд нууц үгээ оруулна уу. Таны бүх мэдээлэл 30 хоногийн дараа бүрмөсөн устгагдана.
               </Text>
-              <View className="bg-gray-50 rounded-2xl px-4 py-3 border border-gray-200 mb-4">
+              <View className="bg-gray-50 rounded-2xl px-4 py-3 border border-gray-200 mb-3">
                 <TextInput
                   placeholder="Нууц үг"
                   placeholderTextColor="#9ca3af"
@@ -259,6 +261,19 @@ export default function SettingsScreen() {
                   onChangeText={setDeletePassword}
                   className="text-sm text-gray-900"
                   editable={!deleteLoading}
+                />
+              </View>
+              <View className="bg-gray-50 rounded-2xl px-4 py-3 border border-gray-200 mb-4">
+                <TextInput
+                  placeholder="Шалтгаан (заавал биш)"
+                  placeholderTextColor="#9ca3af"
+                  value={deleteReason}
+                  onChangeText={setDeleteReason}
+                  className="text-sm text-gray-900"
+                  editable={!deleteLoading}
+                  multiline
+                  numberOfLines={2}
+                  style={{ minHeight: 48, textAlignVertical: 'top' }}
                 />
               </View>
               <TouchableOpacity
@@ -277,7 +292,7 @@ export default function SettingsScreen() {
                 )}
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => { setDeleteModalVisible(false); setDeletePassword(''); }}
+                onPress={() => { setDeleteModalVisible(false); setDeletePassword(''); setDeleteReason(''); }}
                 className="w-full py-3 rounded-2xl items-center justify-center"
                 activeOpacity={0.7}
                 disabled={deleteLoading}

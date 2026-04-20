@@ -154,6 +154,12 @@ export async function deleteAccount(password: string, reason?: string): Promise<
   });
 }
 
+export async function cancelDeletion(): Promise<{ message: string }> {
+  return request<{ message: string }>('/auth/cancel-deletion', {
+    method: 'POST',
+  });
+}
+
 // ─── Children ────────────────────────────────────────────
 export async function getChildren(): Promise<Child[]> {
   return request<Child[]>('/children');

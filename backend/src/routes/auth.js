@@ -29,6 +29,7 @@ router.post('/resend-verification', auth, resetLimiter, authController.resendVer
 
 // Account deletion
 router.delete('/account', auth, authController.deleteAccount);
+router.post('/cancel-deletion', auth, authController.cancelDeletion);
 
 // FCM push token registration
 router.post('/fcm-token', auth, [

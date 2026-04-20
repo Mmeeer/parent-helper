@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
 const User = require('../models/User');
-const { sendVerificationCode, sendPasswordResetCode, sendWelcomeEmail } = require('../services/email');
+const { sendVerificationCode, sendPasswordResetCode, sendWelcomeEmail, sendAccountDeletionEmail } = require('../services/email');
 
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCK_TIME_MS = 15 * 60 * 1000; // 15 minutes
@@ -106,11 +106,22 @@ exports.login = async (req, res, next) => {
     user.tokenFamily = tokenFamily;
     user.failedLoginAttempts = 0;
     user.lockUntil = null;
+
+    // Auto-cancel pending account deletion on login
+    let deletionCancelled = false;
+    if (user.deletionRequestedAt) {
+      user.deletionRequestedAt = null;
+      user.deletionReason = null;
+      deletionCancelled = true;
+      console.log(`[Account Deletion] User ${user.email} logged in — deletion request cancelled.`);
+    }
+
     await user.save();
 
     res.json({
       user: { id: user._id, email: user.email, name: user.name, role: user.role, emailVerified: user.emailVerified },
       ...tokens,
+      deletionCancelled,
     });
   } catch (err) {
     next(err);
@@ -393,9 +404,40 @@ exports.deleteAccount = async (req, res, next) => {
     user.tokenFamily = null;
     await user.save();
 
+    // Send deletion confirmation email
+    try {
+      await sendAccountDeletionEmail(user.email, user.name);
+    } catch (err) {
+      console.error(`[Email] Failed to send deletion confirmation to ${user.email}:`, err.message);
+    }
+
     console.log(`[Account Deletion] User ${user.email} requested account deletion. Will be purged after 30 days.`);
 
-    res.json({ message: 'Account deletion requested. Your data will be permanently deleted after 30 days. You can contact support to cancel.' });
+    res.json({ message: 'Account deletion requested. Your data will be permanently deleted after 30 days. Log back in within 30 days to cancel.' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POST /auth/cancel-deletion — Cancel a pending account deletion
+exports.cancelDeletion = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (!user.deletionRequestedAt) {
+      return res.json({ message: 'No pending deletion request' });
+    }
+
+    user.deletionRequestedAt = null;
+    user.deletionReason = null;
+    await user.save();
+
+    console.log(`[Account Deletion] User ${user.email} cancelled their deletion request.`);
+
+    res.json({ message: 'Account deletion has been cancelled. Your account is safe.' });
   } catch (err) {
     next(err);
   }

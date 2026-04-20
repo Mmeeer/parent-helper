@@ -1,13 +1,14 @@
 /**
  * Email Service with provider abstraction.
- * Supports: SendGrid, SMTP (nodemailer)
- * Provider is selected via EMAIL_PROVIDER env var ('sendgrid' | 'smtp').
+ * Supports: SendGrid, Mailgun, SMTP (nodemailer)
+ * Provider is selected via EMAIL_PROVIDER env var ('sendgrid' | 'mailgun' | 'smtp').
  */
 const nodemailer = require('nodemailer');
 const sgMail = require('@sendgrid/mail');
 
-let provider = null; // 'sendgrid' | 'smtp' | null
+let provider = null; // 'sendgrid' | 'mailgun' | 'smtp' | null
 let smtpTransporter = null;
+let mailgunConfig = null;
 
 function initEmail() {
   const selected = (process.env.EMAIL_PROVIDER || '').toLowerCase();
@@ -21,6 +22,23 @@ function initEmail() {
     sgMail.setApiKey(apiKey);
     provider = 'sendgrid';
     console.log('[Email] SendGrid provider initialized');
+    return true;
+  }
+
+  if (selected === 'mailgun') {
+    const apiKey = process.env.MAILGUN_API_KEY;
+    const domain = process.env.MAILGUN_DOMAIN;
+    if (!apiKey || !domain) {
+      console.warn('[Email] Mailgun selected but MAILGUN_API_KEY or MAILGUN_DOMAIN is missing. Emails will be logged to console.');
+      return false;
+    }
+    mailgunConfig = {
+      apiKey,
+      domain,
+      baseUrl: process.env.MAILGUN_API_URL || 'https://api.mailgun.net',
+    };
+    provider = 'mailgun';
+    console.log('[Email] Mailgun provider initialized');
     return true;
   }
 
@@ -66,6 +84,34 @@ async function sendEmail({ to, subject, text, html }) {
     const [response] = await sgMail.send(msg);
     console.log(`[Email] Sent via SendGrid to ${to} (status ${response.statusCode})`);
     return { provider: 'sendgrid', statusCode: response.statusCode };
+  }
+
+  if (provider === 'mailgun') {
+    const { apiKey, domain, baseUrl } = mailgunConfig;
+    const url = `${baseUrl}/v3/${domain}/messages`;
+    const formData = new URLSearchParams();
+    formData.append('from', from);
+    formData.append('to', to);
+    formData.append('subject', subject);
+    if (text) formData.append('text', text);
+    if (html) formData.append('html', html);
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: 'Basic ' + Buffer.from(`api:${apiKey}`).toString('base64'),
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errBody = await response.text();
+      throw new Error(`Mailgun API error (${response.status}): ${errBody}`);
+    }
+
+    const result = await response.json();
+    console.log(`[Email] Sent via Mailgun to ${to}: ${result.id}`);
+    return { provider: 'mailgun', id: result.id };
   }
 
   if (provider === 'smtp') {
@@ -167,10 +213,39 @@ async function sendWelcomeEmail(email, name) {
   });
 }
 
+async function sendAccountDeletionEmail(email, name) {
+  const html = baseTemplate(`
+    <h2 style="margin:0 0 12px;color:#333;font-size:20px">Account Deletion Requested</h2>
+    <p style="color:#555;line-height:1.6">Hi ${name || 'there'},</p>
+    <p style="color:#555;line-height:1.6">We have received your request to delete your Prime Kids account. Your account has been scheduled for permanent deletion.</p>
+    <div style="margin:24px 0;padding:20px;background:#fef2f2;border-radius:8px;border-left:4px solid #ef4444">
+      <p style="margin:0;color:#333;font-size:14px"><strong>What happens next:</strong></p>
+      <ul style="margin:8px 0 0;padding-left:20px;color:#555;font-size:14px;line-height:1.8">
+        <li>Your account will be permanently deleted after <strong>30 days</strong></li>
+        <li>All your data including children profiles, devices, rules, activity logs, alerts, and geofences will be removed</li>
+        <li>You have been logged out of all devices</li>
+      </ul>
+    </div>
+    <div style="margin:24px 0;padding:20px;background:#f0fdf4;border-radius:8px;border-left:4px solid #22c55e">
+      <p style="margin:0;color:#333;font-size:14px"><strong>Changed your mind?</strong></p>
+      <p style="margin:8px 0 0;color:#555;font-size:14px;line-height:1.6">Simply log back in to your account within 30 days to cancel the deletion request.</p>
+    </div>
+    <p style="color:#999;font-size:13px;margin-top:24px">If you did not request this deletion, please log in immediately to secure your account and change your password.</p>
+  `);
+
+  return sendEmail({
+    to: email,
+    subject: 'Prime Kids - Account Deletion Confirmation',
+    text: `Hi ${name || 'there'},\n\nWe have received your request to delete your Prime Kids account.\n\nYour account will be permanently deleted after 30 days. All your data (children, devices, rules, activity logs, alerts, geofences) will be removed.\n\nChanged your mind? Simply log back in within 30 days to cancel the deletion.\n\nIf you did not request this, please log in immediately and change your password.`,
+    html,
+  });
+}
+
 module.exports = {
   initEmail,
   sendEmail,
   sendPasswordResetCode,
   sendVerificationCode,
   sendWelcomeEmail,
+  sendAccountDeletionEmail,
 };
