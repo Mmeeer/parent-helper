@@ -149,17 +149,38 @@ app.use(errorHandler);
 // WebSocket
 const jwt = require('jsonwebtoken');
 const Device = require('./models/Device');
+const { applyRateLimit, startReauthTimer, isUserRejected } = require('./middleware/socketGuard');
 
 io.on('connection', (socket) => {
   const transport = socket.conn.transport.name;
   const origin = socket.handshake.headers.origin || socket.handshake.headers.referer || 'unknown';
   console.log(`[SOCKET] Client connected: ${socket.id} (transport: ${transport}, origin: ${origin})`);
 
+  // Apply per-socket rate limiting (max 60 events/min)
+  applyRateLimit(socket);
+
+  // Start periodic JWT re-validation (every 5 min)
+  startReauthTimer(socket);
+
   // Parent joins with JWT token
   socket.on('join:parent', async (token) => {
     console.log(`[SOCKET] join:parent requested by ${socket.id}`);
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+      // Reject suspended/deleted users
+      const rejected = await isUserRejected(decoded.id);
+      if (rejected) {
+        console.log(`[SOCKET] join:parent rejected — user ${decoded.id} suspended/deleted`);
+        socket.emit('auth:revoked', { message: 'Account suspended or deleted.' });
+        socket.disconnect(true);
+        return;
+      }
+
+      // Store token & userId for periodic re-auth checks
+      socket._parentToken = token;
+      socket._parentUserId = decoded.id;
+
       socket.join(`parent:${decoded.id}`);
       console.log(`[SOCKET] Parent joined room: parent:${decoded.id}`);
     } catch (err) {
@@ -188,6 +209,8 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', (reason) => {
     console.log(`[SOCKET] Client disconnected: ${socket.id} (reason: ${reason})`);
+    // Clean up re-auth timer
+    if (socket._reauthTimer) clearInterval(socket._reauthTimer);
     // Clean up room memberships to prevent stale references
     const rooms = [...socket.rooms].filter((r) => r !== socket.id);
     for (const room of rooms) {
