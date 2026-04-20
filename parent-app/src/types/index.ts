@@ -197,4 +197,8 @@ export type RootStackParamList = {
   AddChild: undefined;
   ActivateSubscription: undefined;
   VerifyEmail: undefined;
+  EditProfile: undefined;
+  ChangePassword: undefined;
+  NotificationSettings: undefined;
+  PrivacyPolicy: undefined;
 };

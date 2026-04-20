@@ -443,6 +443,105 @@ exports.cancelDeletion = async (req, res, next) => {
   }
 };
 
+// PUT /auth/profile — Update user profile (name)
+exports.updateProfile = async (req, res, next) => {
+  try {
+    const { name } = req.body;
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'Name is required' });
+    }
+    if (name.trim().length > 100) {
+      return res.status(400).json({ error: 'Name must be under 100 characters' });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    user.name = name.trim();
+    await user.save();
+
+    res.json({
+      id: user._id,
+      email: user.email,
+      name: user.name,
+      emailVerified: user.emailVerified,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// PUT /auth/password — Change password (requires current password)
+exports.changePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Current password and new password are required' });
+    }
+    if (newPassword.length < 8) {
+      return res.status(400).json({ error: 'New password must be at least 8 characters' });
+    }
+    if (!/[a-zA-Z]/.test(newPassword) || !/\d/.test(newPassword)) {
+      return res.status(400).json({ error: 'Password must contain at least one letter and one number' });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+
+    user.passwordHash = newPassword; // Will be hashed by pre-save hook
+    await user.save();
+
+    res.json({ message: 'Password changed successfully' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// PUT /auth/alert-settings — Update notification/alert preferences
+exports.updateAlertSettings = async (req, res, next) => {
+  try {
+    const { settings } = req.body;
+    if (!settings || typeof settings !== 'object') {
+      return res.status(400).json({ error: 'Settings object is required' });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    user.alertSettings = settings;
+    await user.save();
+
+    res.json({ alertSettings: user.alertSettings });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// GET /auth/alert-settings — Get notification/alert preferences
+exports.getAlertSettings = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id).lean();
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({ alertSettings: user.alertSettings });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // DELETE /auth/fcm-token — Remove FCM token on logout
 exports.removeFcmToken = async (req, res, next) => {
   try {

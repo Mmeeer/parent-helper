@@ -173,6 +173,52 @@ export async function cancelDeletion(): Promise<{ message: string }> {
   });
 }
 
+// ─── Profile ────────────────────────────────────────────
+export async function updateProfile(name: string): Promise<User> {
+  return request<User>('/auth/profile', {
+    method: 'PUT',
+    body: JSON.stringify({ name }),
+  });
+}
+
+export async function changePassword(currentPassword: string, newPassword: string): Promise<{ message: string }> {
+  return request<{ message: string }>('/auth/password', {
+    method: 'PUT',
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+}
+
+// ─── Alert Settings ─────────────────────────────────────
+export interface AlertSettings {
+  enabled: boolean;
+  types: {
+    screen_time_limit: boolean;
+    new_app_installed: boolean;
+    blocked_content: boolean;
+    geofence_trigger: boolean;
+    device_offline: boolean;
+    unusual_pattern: boolean;
+    uninstall_attempt: boolean;
+    sos: boolean;
+  };
+  quietHours: {
+    enabled: boolean;
+    start: string; // "HH:mm"
+    end: string;   // "HH:mm"
+  };
+}
+
+export async function getAlertSettings(): Promise<{ alertSettings: AlertSettings | null }> {
+  return request<{ alertSettings: AlertSettings | null }>('/auth/alert-settings');
+}
+
+export async function updateAlertSettings(settings: AlertSettings): Promise<{ alertSettings: AlertSettings }> {
+  return request<{ alertSettings: AlertSettings }>('/auth/alert-settings', {
+    method: 'PUT',
+    body: JSON.stringify({ settings }),
+  });
+}
+
 // ─── Children ────────────────────────────────────────────
 export async function getChildren(): Promise<Child[]> {
   return request<Child[]>('/children');

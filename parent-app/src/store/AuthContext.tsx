@@ -16,6 +16,7 @@ interface AuthContextType extends AuthState {
   logout: () => Promise<void>;
   verifyEmail: (code: string) => Promise<void>;
   resendVerification: () => Promise<{ message: string }>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -82,8 +83,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return api.resendVerification();
   }, []);
 
+  const refreshUser = useCallback(async () => {
+    try {
+      const user = await api.getMe();
+      setState((prev) => ({ ...prev, user }));
+    } catch {}
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ ...state, login, register, logout, verifyEmail, resendVerification }}>
+    <AuthContext.Provider value={{ ...state, login, register, logout, verifyEmail, resendVerification, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

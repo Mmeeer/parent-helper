@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, ScrollView, Alert, Text, Pressable, TouchableOpacity, Switch, Modal, TextInput, ActivityIndicator } from 'react-native';
+import { View, ScrollView, Alert, Text, Pressable, TouchableOpacity, Modal, TextInput, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../store/AuthContext';
 import { useNavigation } from '@react-navigation/native';
@@ -17,7 +17,6 @@ type SettingsItem = {
   subtitle?: string;
   value?: string;
   valueColor?: string;
-  toggle?: boolean;
   onPress: () => void;
 };
 
@@ -26,7 +25,6 @@ export default function SettingsScreen() {
   const { user, logout } = useAuth();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [subInfo, setSubInfo] = useState<api.SubscriptionInfo | null>(null);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteReason, setDeleteReason] = useState('');
@@ -57,7 +55,7 @@ export default function SettingsScreen() {
     } finally {
       setDeleteLoading(false);
     }
-  }, [deletePassword, logout]);
+  }, [deletePassword, deleteReason, logout]);
 
   const handleLogout = () => {
     Alert.alert('Гарах', 'Гарахдаа итгэлтэй байна уу?', [
@@ -66,26 +64,36 @@ export default function SettingsScreen() {
     ]);
   };
 
+  const profileItems: SettingsItem[] = [
+    {
+      title: 'Профайл засах',
+      icon: 'person-outline',
+      iconBg: 'bg-nest-50',
+      iconColor: C.nest500,
+      subtitle: 'Нэр өөрчлөх',
+      onPress: () => navigation.navigate('EditProfile'),
+    },
+    {
+      title: 'Нууц үг солих',
+      icon: 'lock-closed-outline',
+      iconBg: 'bg-warm-50',
+      iconColor: C.warm500,
+      onPress: () => navigation.navigate('ChangePassword'),
+    },
+  ];
+
   const notificationItems: SettingsItem[] = [
     {
-      title: 'Мэдэгдэл',
+      title: 'Мэдэгдлийн тохиргоо',
       icon: 'notifications-outline',
       iconBg: 'bg-warm-50',
       iconColor: C.warm500,
-      toggle: true,
-      onPress: () => setNotificationsEnabled((v) => !v),
+      subtitle: 'Төрөл, чимээгүй цаг',
+      onPress: () => navigation.navigate('NotificationSettings'),
     },
   ];
 
   const accountItems: SettingsItem[] = [
-    {
-      title: 'Бүртгэл',
-      icon: 'person-outline',
-      iconBg: 'bg-nest-50',
-      iconColor: C.nest500,
-      subtitle: user?.email || 'Бүртгэлийг удирдах',
-      onPress: () => {},
-    },
     {
       title: 'Захиалга',
       icon: 'key-outline',
@@ -101,26 +109,11 @@ export default function SettingsScreen() {
 
   const supportItems: SettingsItem[] = [
     {
-      title: 'Хэл',
-      icon: 'language-outline',
-      iconBg: 'bg-nest-50',
-      iconColor: C.nest500,
-      value: 'Монгол',
-      onPress: () => {},
-    },
-    {
-      title: 'Тусламж',
-      icon: 'help-circle-outline',
-      iconBg: 'bg-safe-50',
-      iconColor: C.safe500,
-      onPress: () => {},
-    },
-    {
-      title: 'Нууцлалын бодлого',
+      title: 'Нууцлалын бодлого & Нөхцөл',
       icon: 'document-text-outline',
       iconBg: 'bg-gray-100',
       iconColor: C.gray500,
-      onPress: () => {},
+      onPress: () => navigation.navigate('PrivacyPolicy'),
     },
   ];
 
@@ -149,16 +142,7 @@ export default function SettingsScreen() {
                     {item.value}
                   </Text>
                 )}
-                {item.toggle ? (
-                  <Switch
-                    value={notificationsEnabled}
-                    onValueChange={setNotificationsEnabled}
-                    trackColor={{ false: C.gray200, true: C.safe500 }}
-                    thumbColor="#ffffff"
-                  />
-                ) : (
-                  <Ionicons name="chevron-forward" size={16} color="#d1d5db" />
-                )}
+                <Ionicons name="chevron-forward" size={16} color="#d1d5db" />
               </View>
             )}
           </Pressable>
@@ -177,36 +161,41 @@ export default function SettingsScreen() {
         </View>
 
         {/* Profile card */}
-        <View className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 mb-6">
-          <View className="flex-row items-center">
-            <View className="w-14 h-14 rounded-2xl items-center justify-center mr-4" style={{ backgroundColor: C.nest500 }}>
-              <View className="absolute inset-0 rounded-2xl opacity-30" style={{ backgroundColor: C.nest400, transform: [{ scale: 0.7 }] }} />
-              <Text className="font-display font-bold text-white text-xl">
-                {user?.name?.charAt(0).toUpperCase() ?? 'P'}
-              </Text>
-            </View>
-            <View className="flex-1">
-              <Text className="font-display font-bold text-gray-900 text-lg">
-                {user?.name || 'Parent'}
-              </Text>
-              <Text className="text-sm text-gray-400 mt-0.5">
-                {user?.email || ''}
-              </Text>
-              <View className="flex-row items-center mt-1.5">
-                <View className={`w-2 h-2 rounded-full mr-1.5 ${subInfo?.active ? 'bg-safe-400' : 'bg-gray-300'}`} />
-                <Text className={`text-xs font-bold ${subInfo?.active ? 'text-safe-600' : 'text-gray-400'}`}>
-                  {subInfo?.active ? 'Premium идэвхтэй' : 'Захиалга байхгүй'}
-                </Text>
+        <Pressable onPress={() => navigation.navigate('EditProfile')}>
+          {({ pressed }) => (
+            <View className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 mb-6" style={{ opacity: pressed ? 0.7 : 1 }}>
+              <View className="flex-row items-center">
+                <View className="w-14 h-14 rounded-2xl items-center justify-center mr-4" style={{ backgroundColor: C.nest500 }}>
+                  <View className="absolute inset-0 rounded-2xl opacity-30" style={{ backgroundColor: C.nest400, transform: [{ scale: 0.7 }] }} />
+                  <Text className="font-display font-bold text-white text-xl">
+                    {user?.name?.charAt(0).toUpperCase() ?? 'P'}
+                  </Text>
+                </View>
+                <View className="flex-1">
+                  <Text className="font-display font-bold text-gray-900 text-lg">
+                    {user?.name || 'Parent'}
+                  </Text>
+                  <Text className="text-sm text-gray-400 mt-0.5">
+                    {user?.email || ''}
+                  </Text>
+                  <View className="flex-row items-center mt-1.5">
+                    <View className={`w-2 h-2 rounded-full mr-1.5 ${subInfo?.active ? 'bg-safe-400' : 'bg-gray-300'}`} />
+                    <Text className={`text-xs font-bold ${subInfo?.active ? 'text-safe-600' : 'text-gray-400'}`}>
+                      {subInfo?.active ? 'Premium идэвхтэй' : 'Захиалга байхгүй'}
+                    </Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={C.gray300} />
               </View>
             </View>
-            <Ionicons name="chevron-forward" size={16} color={C.gray300} />
-          </View>
-        </View>
+          )}
+        </Pressable>
 
         {/* Settings sections */}
-        {renderSection('NOTIFICATIONS', notificationItems)}
-        {renderSection('ACCOUNT', accountItems)}
-        {renderSection('SUPPORT', supportItems)}
+        {renderSection('ПРОФАЙЛ', profileItems)}
+        {renderSection('МЭДЭГДЭЛ', notificationItems)}
+        {renderSection('ЗАХИАЛГА', accountItems)}
+        {renderSection('ТУСЛАМЖ', supportItems)}
 
         {/* Logout button */}
         <TouchableOpacity

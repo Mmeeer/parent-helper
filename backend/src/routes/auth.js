@@ -27,6 +27,22 @@ router.get('/me', auth, authController.me);
 router.post('/verify-email', auth, authController.verifyEmail);
 router.post('/resend-verification', auth, resetLimiter, authController.resendVerification);
 
+// Profile management
+router.put('/profile', auth, [
+  body('name').trim().notEmpty().isLength({ max: 100 }),
+], authController.updateProfile);
+
+router.put('/password', auth, [
+  body('currentPassword').notEmpty(),
+  body('newPassword').isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
+    .matches(/[a-zA-Z]/).withMessage('Password must contain at least one letter')
+    .matches(/\d/).withMessage('Password must contain at least one number'),
+], authController.changePassword);
+
+// Alert/notification settings
+router.get('/alert-settings', auth, authController.getAlertSettings);
+router.put('/alert-settings', auth, authController.updateAlertSettings);
+
 // Account deletion
 router.delete('/account', auth, authController.deleteAccount);
 router.post('/cancel-deletion', auth, authController.cancelDeletion);

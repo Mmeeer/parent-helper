@@ -35,6 +35,10 @@ import PairDeviceScreen from '../screens/devices/PairDeviceScreen';
 import ReportsScreen from '../screens/reports/ReportsScreen';
 import GeofenceScreen from '../screens/geofences/GeofenceScreen';
 import ActivateSubscriptionScreen from '../screens/settings/ActivateSubscriptionScreen';
+import EditProfileScreen from '../screens/settings/EditProfileScreen';
+import ChangePasswordScreen from '../screens/settings/ChangePasswordScreen';
+import NotificationSettingsScreen from '../screens/settings/NotificationSettingsScreen';
+import PrivacyPolicyScreen from '../screens/settings/PrivacyPolicyScreen';
 import OnboardingScreen from '../screens/onboarding/OnboardingScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -221,6 +225,26 @@ const AppNavigator = React.forwardRef<any>((_, ref) => {
               name="ActivateSubscription"
               component={ActivateSubscriptionScreen}
               options={{ title: 'Subscription' }}
+            />
+            <Stack.Screen
+              name="EditProfile"
+              component={EditProfileScreen}
+              options={{ title: 'Профайл засах' }}
+            />
+            <Stack.Screen
+              name="ChangePassword"
+              component={ChangePasswordScreen}
+              options={{ title: 'Нууц үг солих' }}
+            />
+            <Stack.Screen
+              name="NotificationSettings"
+              component={NotificationSettingsScreen}
+              options={{ title: 'Мэдэгдлийн тохиргоо' }}
+            />
+            <Stack.Screen
+              name="PrivacyPolicy"
+              component={PrivacyPolicyScreen}
+              options={{ title: 'Нууцлалын бодлого' }}
             />
           </>
         ) : (
