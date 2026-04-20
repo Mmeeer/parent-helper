@@ -45,6 +45,9 @@ router.put('/filters', adminController.updateFilter);
 router.delete('/filters/:domain', adminController.deleteFilter);
 
 // Subscription key management
+router.post('/subscription-keys', adminController.createKeysBatch);
+router.get('/keys/export', adminController.exportKeys);
+router.put('/keys/bulk-revoke', adminController.bulkRevokeKeys);
 router.post('/keys', adminController.createKey);
 router.get('/keys', adminController.getKeys);
 router.put('/keys/:id', adminController.updateKey);

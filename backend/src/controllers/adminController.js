@@ -263,14 +263,141 @@ exports.createKey = async (req, res, next) => {
   }
 };
 
+// POST /admin/subscription-keys — Batch create subscription keys
+exports.createKeysBatch = async (req, res, next) => {
+  try {
+    const { quantity, duration_days, prefix, maxKids, note } = req.body;
+    if (!quantity || quantity < 1 || quantity > 500) {
+      return res.status(400).json({ error: 'quantity must be between 1 and 500' });
+    }
+    if (!duration_days || duration_days < 1 || duration_days > 365) {
+      return res.status(400).json({ error: 'duration_days must be between 1 and 365' });
+    }
+
+    const durationMonths = Math.max(1, Math.round(duration_days / 30));
+    const kids = maxKids || 2;
+    const keyPrefix = prefix || 'PK';
+
+    // Validate prefix: 2-6 alphanumeric chars
+    if (!/^[A-Za-z0-9]{2,6}$/.test(keyPrefix)) {
+      return res.status(400).json({ error: 'prefix must be 2-6 alphanumeric characters' });
+    }
+
+    const created = [];
+    for (let i = 0; i < quantity; i++) {
+      let key;
+      let attempts = 0;
+      // Retry on collision
+      while (attempts < 5) {
+        key = SubscriptionKey.generateKey(keyPrefix);
+        const exists = await SubscriptionKey.findOne({ key });
+        if (!exists) break;
+        attempts++;
+      }
+      const subKey = await SubscriptionKey.create({
+        key,
+        maxKids: kids,
+        durationMonths,
+        note: note || '',
+        createdBy: req.user._id,
+      });
+      created.push(subKey);
+    }
+
+    res.status(201).json({ message: `${created.length} keys created`, keys: created });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// GET /admin/keys/export — Export keys as CSV
+exports.exportKeys = async (req, res, next) => {
+  try {
+    const status = req.query.status;
+    const search = req.query.search;
+
+    const query = {};
+    if (status) query.status = status;
+    if (search) {
+      const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      query.$or = [
+        { key: { $regex: escaped, $options: 'i' } },
+        { note: { $regex: escaped, $options: 'i' } },
+      ];
+    }
+
+    const keys = await SubscriptionKey.find(query)
+      .populate('activatedBy', 'name email')
+      .populate('createdBy', 'name')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const header = 'Key,Status,Max Kids,Duration (months),User,User Email,Expires At,Note,Created At';
+    const rows = keys.map(k => {
+      const userName = k.activatedBy ? k.activatedBy.name : '';
+      const userEmail = k.activatedBy ? k.activatedBy.email : '';
+      const expiresAt = k.expiresAt ? new Date(k.expiresAt).toISOString() : '';
+      const noteEscaped = (k.note || '').replace(/"/g, '""');
+      return `${k.key},${k.status},${k.maxKids},${k.durationMonths},${userName},${userEmail},${expiresAt},"${noteEscaped}",${new Date(k.createdAt).toISOString()}`;
+    });
+
+    const csv = [header, ...rows].join('\n');
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename=subscription-keys-${Date.now()}.csv`);
+    res.send(csv);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// PUT /admin/keys/bulk-revoke — Revoke multiple keys
+exports.bulkRevokeKeys = async (req, res, next) => {
+  try {
+    const { keyIds } = req.body;
+    if (!Array.isArray(keyIds) || keyIds.length === 0) {
+      return res.status(400).json({ error: 'keyIds array is required' });
+    }
+    if (keyIds.length > 500) {
+      return res.status(400).json({ error: 'Cannot revoke more than 500 keys at once' });
+    }
+
+    const keys = await SubscriptionKey.find({ _id: { $in: keyIds } });
+    let revoked = 0;
+
+    for (const key of keys) {
+      if (key.status === 'active' && key.activatedBy) {
+        // Unlink from user
+        await User.findByIdAndUpdate(key.activatedBy, { subscriptionKey: null });
+      }
+      key.status = 'expired';
+      key.expiresAt = new Date();
+      await key.save();
+      revoked++;
+    }
+
+    res.json({ message: `${revoked} key(s) revoked`, revoked });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // GET /admin/keys — List all subscription keys
 exports.getKeys = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
     const status = req.query.status;
+    const search = req.query.search;
 
-    const query = status ? { status } : {};
+    const query = {};
+    if (status) query.status = status;
+    if (search) {
+      const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      query.$or = [
+        { key: { $regex: escaped, $options: 'i' } },
+        { note: { $regex: escaped, $options: 'i' } },
+      ];
+    }
     const [keys, total] = await Promise.all([
       SubscriptionKey.find(query)
         .populate('activatedBy', 'name email')

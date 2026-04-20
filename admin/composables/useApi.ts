@@ -164,14 +164,34 @@ export function useApi() {
     },
 
     // Subscription keys
-    async getKeys(page = 1, limit = 20, status = '') {
+    async getKeys(page = 1, limit = 20, status = '', search = '') {
       const qs = new URLSearchParams({ page: String(page), limit: String(limit) });
       if (status) qs.append('status', status);
+      if (search) qs.append('search', search);
       return request<{ keys: any[]; total: number; page: number; totalPages: number }>(`/admin/keys?${qs}`);
     },
 
     async createKey(maxKids: number, durationMonths: number, note = '') {
       return request<any>('/admin/keys', { method: 'POST', body: JSON.stringify({ maxKids, durationMonths, note }) });
+    },
+
+    async createKeysBatch(data: { quantity: number; duration_days: number; prefix?: string; maxKids?: number; note?: string }) {
+      return request<{ message: string; keys: any[] }>('/admin/subscription-keys', { method: 'POST', body: JSON.stringify(data) });
+    },
+
+    async exportKeysCSV(status = '', search = '') {
+      const qs = new URLSearchParams();
+      if (status) qs.append('status', status);
+      if (search) qs.append('search', search);
+      const headers: Record<string, string> = {};
+      if (token.value) headers['Authorization'] = `Bearer ${token.value}`;
+      const res = await fetch(`${baseUrl}/admin/keys/export?${qs}`, { headers });
+      if (!res.ok) throw new Error('Export failed');
+      return res.text();
+    },
+
+    async bulkRevokeKeys(keyIds: string[]) {
+      return request<{ message: string; revoked: number }>('/admin/keys/bulk-revoke', { method: 'PUT', body: JSON.stringify({ keyIds }) });
     },
 
     async updateKey(keyId: string, data: { maxKids?: number; note?: string }) {
