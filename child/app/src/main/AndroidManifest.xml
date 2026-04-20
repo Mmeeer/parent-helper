@@ -32,6 +32,10 @@
     <!-- Notification -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- Camera (for QR code scanning) -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
     <application
         android:name=".ParentHelperApp"
         android:allowBackup="true"
@@ -45,8 +49,9 @@
         android:networkSecurityConfig="@xml/network_security_config"
         android:theme="@style/Theme.MyApplication">
 
+        <!-- Splash screen (new launcher) -->
         <activity
-            android:name=".ui.pairing.PairingActivity"
+            android:name=".ui.onboarding.SplashActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -54,7 +59,22 @@
             </intent-filter>
         </activity>
 
+        <!-- Pairing (no longer the launcher) -->
+        <activity android:name=".ui.pairing.PairingActivity" />
+
+        <!-- QR Scanner -->
+        <activity
+            android:name=".ui.pairing.QrScannerActivity"
+            android:theme="@style/Theme.MyApplication" />
+
+        <!-- Onboarding flow -->
+        <activity android:name=".ui.onboarding.PairingSuccessActivity" />
+        <activity android:name=".ui.onboarding.OnboardingPermissionsActivity" />
+        <activity android:name=".ui.onboarding.OnboardingCompleteActivity" />
+
+        <!-- Legacy permission setup (kept for backward compat) -->
         <activity android:name=".ui.setup.PermissionSetupActivity" />
+
         <activity android:name=".ui.main.MainActivity" />
 
         <service

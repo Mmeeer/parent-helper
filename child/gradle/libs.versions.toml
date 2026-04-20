@@ -16,6 +16,7 @@ datastore = "1.1.1"
 playServicesLocation = "21.3.0"
 serialization = "1.7.3"
 socketio = "2.1.1"
+mlkitBarcode = "17.3.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -54,6 +55,9 @@ kotlinx-serialization = { group = "org.jetbrains.kotlinx", name = "kotlinx-seria
 
 # Socket.IO
 socketio-client = { group = "io.socket", name = "socket.io-client", version.ref = "socketio" }
+
+# ML Kit Barcode Scanning
+mlkit-barcode = { group = "com.google.mlkit", name = "barcode-scanning", version.ref = "mlkitBarcode" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

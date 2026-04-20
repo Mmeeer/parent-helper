@@ -11,6 +11,7 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
@@ -19,9 +20,8 @@ import com.parenthelper.child.ParentHelperApp
 import com.parenthelper.child.R
 import com.parenthelper.child.data.api.ApiClient
 import com.parenthelper.child.data.models.PairingRequest
-import com.parenthelper.child.enforcement.OverlayPermissionHelper
 import com.parenthelper.child.ui.main.MainActivity
-import com.parenthelper.child.ui.setup.PermissionSetupActivity
+import com.parenthelper.child.ui.onboarding.PairingSuccessActivity
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.json.JSONObject
@@ -34,8 +34,26 @@ class PairingActivity : AppCompatActivity() {
 
     private lateinit var boxes: List<EditText>
     private lateinit var btnPair: MaterialButton
+    private lateinit var btnScanQr: MaterialButton
     private lateinit var progressBar: ProgressBar
     private lateinit var tvError: TextView
+
+    private val qrScannerLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val code = result.data?.getStringExtra(QrScannerActivity.EXTRA_PAIRING_CODE)
+            if (code != null && code.length == 6) {
+                // Fill the code boxes with the scanned code
+                code.forEachIndexed { index, char ->
+                    if (index < boxes.size) {
+                        boxes[index].setText(char.toString())
+                    }
+                }
+                attemptPairing()
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,11 +68,13 @@ class PairingActivity : AppCompatActivity() {
             findViewById(R.id.box6),
         )
         btnPair = findViewById(R.id.btnPair)
+        btnScanQr = findViewById(R.id.btnScanQr)
         progressBar = findViewById(R.id.progressBar)
         tvError = findViewById(R.id.tvError)
 
         setupBoxListeners()
         btnPair.setOnClickListener { attemptPairing() }
+        btnScanQr.setOnClickListener { openQrScanner() }
 
         // Auto-focus first box and show keyboard
         boxes[0].postDelayed({
@@ -67,9 +87,14 @@ class PairingActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val paired = (application as ParentHelperApp).prefsManager.isPaired.first()
             if (paired) {
-                navigateAfterPairing()
+                startActivity(Intent(this@PairingActivity, MainActivity::class.java))
+                finish()
             }
         }
+    }
+
+    private fun openQrScanner() {
+        qrScannerLauncher.launch(Intent(this, QrScannerActivity::class.java))
     }
 
     private fun setupBoxListeners() {
@@ -151,7 +176,9 @@ class PairingActivity : AppCompatActivity() {
                     parentId = response.parentId,
                 )
 
-                navigateAfterPairing()
+                // Navigate to pairing success screen (part of onboarding flow)
+                startActivity(Intent(this@PairingActivity, PairingSuccessActivity::class.java))
+                finish()
             } catch (e: HttpException) {
                 val errorMsg = try {
                     val body = e.response()?.errorBody()?.string()
@@ -174,22 +201,9 @@ class PairingActivity : AppCompatActivity() {
 
     private fun setLoading(loading: Boolean) {
         btnPair.isEnabled = !loading
+        btnScanQr.isEnabled = !loading
         progressBar.visibility = if (loading) View.VISIBLE else View.GONE
         tvError.visibility = View.GONE
-    }
-
-    /**
-     * After pairing, route through PermissionSetupActivity if overlay
-     * permission hasn't been granted yet, otherwise go straight to Main.
-     */
-    private fun navigateAfterPairing() {
-        val target = if (OverlayPermissionHelper.hasPermission(this)) {
-            MainActivity::class.java
-        } else {
-            PermissionSetupActivity::class.java
-        }
-        startActivity(Intent(this@PairingActivity, target))
-        finish()
     }
 
     private fun showError(message: String) {

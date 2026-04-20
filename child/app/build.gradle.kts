@@ -101,6 +101,15 @@ dependencies {
     // Socket.IO
     implementation(libs.socketio.client)
 
+    // ML Kit Barcode Scanning (QR code pairing)
+    implementation(libs.mlkit.barcode)
+
+    // CameraX (for QR scanner)
+    implementation("androidx.camera:camera-core:1.4.1")
+    implementation("androidx.camera:camera-camera2:1.4.1")
+    implementation("androidx.camera:camera-lifecycle:1.4.1")
+    implementation("androidx.camera:camera-view:1.4.1")
+
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

@@ -37,4 +37,58 @@
     <string name="permission_skip">Дараа тохируулах</string>
     <string name="overlay_permission_lost_title">Зөвшөөрөл шаардлагатай</string>
     <string name="overlay_permission_lost_text">Дэлгэцийн цагийн хяналт ажиллахгүй байна. Зөвшөөрлийг дахин олгоно уу.</string>
+
+    <!-- Splash screen -->
+    <string name="splash_title">Prime Kids</string>
+    <string name="splash_subtitle">Аюулгүй, хамгаалагдсан орчин</string>
+
+    <!-- Pairing - QR scan -->
+    <string name="pairing_or_divider">эсвэл</string>
+    <string name="pairing_scan_qr">QR код уншуулах</string>
+    <string name="pairing_camera_permission_needed">QR код уншуулахын тулд камерын зөвшөөрөл шаардлагатай</string>
+    <string name="pairing_qr_scanning">QR код хайж байна…</string>
+    <string name="pairing_qr_invalid">QR код хүчингүй байна. Эцэг эхийн апп дээрх QR кодыг уншуулна уу.</string>
+
+    <!-- Pairing success -->
+    <string name="pairing_success_title">Амжилттай холбогдлоо!</string>
+    <string name="pairing_success_description">Таны төхөөрөмж эцэг эхийн апптай амжилттай холбогдлоо. Одоо зөвшөөрлүүдийг тохируулъя.</string>
+    <string name="pairing_success_continue">Үргэлжлүүлэх</string>
+
+    <!-- Onboarding permissions -->
+    <string name="onboarding_permissions_title">Зөвшөөрөл тохируулах</string>
+    <string name="onboarding_permissions_subtitle">Хүүхдийн аюулгүй байдлыг хангахын тулд дараах зөвшөөрлүүдийг олгоно уу</string>
+    <string name="onboarding_step_format">Алхам %1$d / %2$d</string>
+    <string name="onboarding_grant_button">Зөвшөөрөл олгох</string>
+    <string name="onboarding_next_button">Дараах</string>
+    <string name="onboarding_skip_button">Дараа тохируулах</string>
+
+    <!-- Permission: Usage Stats -->
+    <string name="perm_usage_stats_title">Апп ашиглалтын мэдээлэл</string>
+    <string name="perm_usage_stats_why">Дэлгэцийн цагийг хянаж, ямар апп хэр удаан ашигласныг харуулна. Энэ нь эцэг эхэд хүүхдийн цахим зуршлыг ойлгоход тусална.</string>
+
+    <!-- Permission: Device Admin -->
+    <string name="perm_device_admin_title">Төхөөрөмжийн админ</string>
+    <string name="perm_device_admin_why">Аппыг зөвшөөрөлгүй устгахаас хамгаална. Хамгаалалтыг тасралтгүй ажиллуулахын тулд энэ зөвшөөрөл шаардлагатай.</string>
+
+    <!-- Permission: Location -->
+    <string name="perm_location_title">Байршлын мэдээлэл</string>
+    <string name="perm_location_why">Эцэг эхэд хүүхдийн байршлыг мэдэх боломж олгоно. Аюулгүй бүс тогтоож, бүсээс гарсан тохиолдолд мэдэгдэл илгээнэ.</string>
+
+    <!-- Permission: Battery Optimization -->
+    <string name="perm_battery_title">Батарейн оновчлолоос хасах</string>
+    <string name="perm_battery_why">Хяналтын үйлчилгээг тасралтгүй ажиллуулна. Батарейн оновчлол идэвхтэй бол хяналт тасалдаж болно.</string>
+
+    <!-- Permission: Accessibility -->
+    <string name="perm_accessibility_title">Хүртээмжийн үйлчилгээ</string>
+    <string name="perm_accessibility_why">Вэб агуулгыг шүүж, хориглосон апп руу нэвтрэхийг хязгаарлана. Энэ нь хүүхдийг хортой агуулгаас хамгаалахад чухал үүрэгтэй.</string>
+
+    <!-- Permission: Overlay -->
+    <string name="perm_overlay_title">Бусад апп дээр харуулах</string>
+    <string name="perm_overlay_why">Дэлгэцийн цагийн хязгаарт хүрсэн үед блоклох дэлгэц харуулна. Энэ зөвшөөрөлгүйгээр хязгаарлалт ажиллахгүй.</string>
+
+    <!-- Onboarding complete -->
+    <string name="onboarding_complete_title">Бүх зүйл бэлэн!</string>
+    <string name="onboarding_complete_description">Таны төхөөрөмж одоо хамгаалагдсан. Эцэг эх таны аюулгүй байдлыг хянах боломжтой боллоо.</string>
+    <string name="onboarding_complete_monitoring">Хяналт идэвхжлээ</string>
+    <string name="onboarding_complete_finish">Эхлэх</string>
 </resources>

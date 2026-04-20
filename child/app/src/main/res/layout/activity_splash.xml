@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <!-- Shield icon -->
+        <ImageView
+            android:id="@+id/ivSplashIcon"
+            android:layout_width="96dp"
+            android:layout_height="96dp"
+            android:layout_marginBottom="24dp"
+            android:alpha="0"
+            android:contentDescription="@string/app_name"
+            android:src="@drawable/ic_shield_check" />
+
+        <!-- App name -->
+        <TextView
+            android:id="@+id/tvSplashTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:alpha="0"
+            android:letterSpacing="0.08"
+            android:text="@string/splash_title"
+            android:textColor="@color/text_primary"
+            android:textSize="32sp"
+            android:textStyle="bold" />
+
+        <!-- Tagline -->
+        <TextView
+            android:id="@+id/tvSplashSubtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:alpha="0"
+            android:text="@string/splash_subtitle"
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp" />
+
+    </LinearLayout>
+</FrameLayout>

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingHorizontal="32dp">
+
+        <!-- Shield icon with success circle -->
+        <FrameLayout
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:layout_marginBottom="32dp">
+
+            <View
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                android:background="@drawable/bg_success_circle" />
+
+            <ImageView
+                android:id="@+id/ivCompleteIcon"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_gravity="center"
+                android:alpha="0"
+                android:contentDescription="Setup complete"
+                android:src="@drawable/ic_shield_check" />
+        </FrameLayout>
+
+        <!-- Title -->
+        <TextView
+            android:id="@+id/tvCompleteTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:alpha="0"
+            android:gravity="center"
+            android:letterSpacing="0.01"
+            android:text="@string/onboarding_complete_title"
+            android:textColor="@color/text_primary"
+            android:textSize="26sp"
+            android:textStyle="bold" />
+
+        <!-- Description -->
+        <TextView
+            android:id="@+id/tvCompleteDescription"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:alpha="0"
+            android:gravity="center"
+            android:lineSpacingExtra="4dp"
+            android:text="@string/onboarding_complete_description"
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp" />
+
+        <!-- Monitoring status chip -->
+        <TextView
+            android:id="@+id/tvMonitoringChip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="48dp"
+            android:alpha="0"
+            android:background="@drawable/bg_status_chip"
+            android:letterSpacing="0.08"
+            android:text="@string/onboarding_complete_monitoring"
+            android:textAllCaps="true"
+            android:textColor="@color/status_active"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <!-- Finish button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnFinish"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:alpha="0"
+            android:backgroundTint="@color/primary"
+            android:letterSpacing="0.06"
+            android:text="@string/onboarding_complete_finish"
+            android:textColor="@color/white"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            app:cornerRadius="16dp" />
+
+    </LinearLayout>
+</FrameLayout>
