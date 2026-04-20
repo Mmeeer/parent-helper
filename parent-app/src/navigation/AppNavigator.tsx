@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator, Pressable } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../store/AuthContext';
 import type { RootStackParamList } from '../types';
 import { C } from '../theme';
+import { ONBOARDING_COMPLETE_KEY } from '../screens/onboarding/OnboardingScreen';
 
 // Auth Screens
 import LoginScreen from '../screens/auth/LoginScreen';
@@ -33,6 +35,7 @@ import PairDeviceScreen from '../screens/devices/PairDeviceScreen';
 import ReportsScreen from '../screens/reports/ReportsScreen';
 import GeofenceScreen from '../screens/geofences/GeofenceScreen';
 import ActivateSubscriptionScreen from '../screens/settings/ActivateSubscriptionScreen';
+import OnboardingScreen from '../screens/onboarding/OnboardingScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator();
@@ -113,14 +116,21 @@ function MainTabs() {
 
 const AppNavigator = React.forwardRef<any>((_, ref) => {
   const { isAuthenticated, isLoading, user } = useAuth();
+  const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
 
-  if (isLoading) {
+  useEffect(() => {
+    AsyncStorage.getItem(ONBOARDING_COMPLETE_KEY).then((v) => setOnboardingDone(v === 'true'));
+  }, []);
+
+  if (isLoading || onboardingDone === null) {
     return (
       <View className="flex-1 items-center justify-center bg-surface">
         <ActivityIndicator size="large" color={C.nest500} />
       </View>
     );
   }
+
+  const needsOnboarding = isAuthenticated && user?.emailVerified && !onboardingDone;
 
   return (
     <NavigationContainer ref={ref}>
@@ -140,6 +150,13 @@ const AppNavigator = React.forwardRef<any>((_, ref) => {
           />
         ) : isAuthenticated ? (
           <>
+            {needsOnboarding && (
+              <Stack.Screen
+                name="Onboarding"
+                component={OnboardingScreen}
+                options={{ headerShown: false }}
+              />
+            )}
             <Stack.Screen
               name="MainTabs"
               component={MainTabs}

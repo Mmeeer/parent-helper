@@ -180,6 +180,7 @@ export interface AlertsResponse {
 export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
+  Onboarding: undefined;
   MainTabs: undefined;
   ChildDetail: { childId: string; childName: string };
   RulesOverview: { childId: string; childName: string };
