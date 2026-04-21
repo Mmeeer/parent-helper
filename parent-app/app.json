@@ -77,11 +77,10 @@
         "@sentry/react-native",
         {
           "organization": "mevento-nb",
-          "project": "react-native",
-          "autoUploadSourceMaps": false,
-          "autoUploadNativeSymbols": false
+          "project": "react-native"
         }
       ],
+      "./plugins/disable-sentry-upload",
       "expo-localization"
     ]
   }
