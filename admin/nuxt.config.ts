@@ -1,7 +1,22 @@
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
   devtools: { enabled: true },
-  modules: ['@nuxtjs/tailwindcss'],
+  modules: ['@nuxtjs/tailwindcss', '@nuxtjs/i18n'],
+
+  i18n: {
+    locales: [
+      { code: 'en', name: 'English', file: 'en.json' },
+      { code: 'mn', name: 'Монгол', file: 'mn.json' },
+    ],
+    defaultLocale: 'en',
+    langDir: 'locales',
+    strategy: 'no_prefix',
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'i18n_locale',
+      fallbackLocale: 'en',
+    },
+  },
 
   runtimeConfig: {
     adminSecret: process.env.ADMIN_SECRET || 'admin-secret-key',
@@ -11,6 +26,9 @@ export default defineNuxtConfig({
   },
 
   app: {
+    // Served under /parent-helper-admin/ in production via nginx.
+    // Set NUXT_APP_BASE_URL=/parent-helper-admin/ in env. Defaults to / for local dev.
+    baseURL: process.env.NUXT_APP_BASE_URL || '/',
     head: {
       title: 'Prime Kids Admin',
       meta: [
