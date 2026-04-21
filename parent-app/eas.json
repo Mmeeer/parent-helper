@@ -11,13 +11,21 @@
           "disabled": false,
           "key": "v2-clean-native"
         }
+      },
+      "env": {
+        "SENTRY_ORG": "parent-helper",
+        "SENTRY_PROJECT": "parent-app"
       }
     },
     "preview": {
       "android": {
         "buildType": "apk"
       },
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "SENTRY_ORG": "parent-helper",
+        "SENTRY_PROJECT": "parent-app"
+      }
     }
   }
 }

@@ -27,6 +27,24 @@
         }
       }
     },
+    "extra": {
+      "sentryDsn": "",
+      "sentryDist": "1",
+      "eas": {
+        "projectId": "parent-helper"
+      }
+    },
+    "hooks": {
+      "postPublish": [
+        {
+          "file": "@sentry/react-native/expo",
+          "config": {
+            "organization": "parent-helper",
+            "project": "parent-app"
+          }
+        }
+      ]
+    },
     "plugins": [
       "expo-secure-store",
       [

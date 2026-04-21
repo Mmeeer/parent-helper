@@ -12,19 +12,27 @@ const { apiLimiter } = require('./middleware/rateLimiter');
 
 // Initialize Sentry early, before Express app is created
 if (process.env.SENTRY_DSN) {
+  const { execSync } = require('child_process');
+  const { version } = require('../package.json');
+  let release;
+  try { release = `parent-helper-api@${execSync('git rev-parse --short HEAD').toString().trim()}`; } catch { release = `parent-helper-api@${version}`; }
+
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
-    release: `parent-helper-backend@${require('../package.json').version}`,
+    release,
     environment: process.env.NODE_ENV || 'development',
     tracesSampleRate: 0.2,
+    profilesSampleRate: 0.1,
     ignoreErrors: [
       'NetworkError',
       'ECONNRESET',
       'ECONNABORTED',
       'ETIMEDOUT',
+      'jwt expired',
+      'invalid token',
     ],
   });
-  console.log('[Sentry] Initialized for backend');
+  console.log(`[Sentry] Initialized — release: ${release}`);
 }
 
 const authRoutes = require('./routes/auth');

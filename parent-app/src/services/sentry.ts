@@ -1,6 +1,10 @@
 import * as Sentry from '@sentry/react-native';
+import Constants from 'expo-constants';
 
-const SENTRY_DSN = ''; // Set your DSN here or via EAS env variable
+const SENTRY_DSN =
+  Constants.expoConfig?.extra?.sentryDsn ||
+  process.env.EXPO_PUBLIC_SENTRY_DSN ||
+  '';
 
 export function initSentry() {
   if (!SENTRY_DSN) {
@@ -8,9 +12,14 @@ export function initSentry() {
     return;
   }
 
+  const release = Constants.expoConfig?.version
+    ? `com.parenthelper.parent@${Constants.expoConfig.version}`
+    : 'com.parenthelper.parent@1.0.0';
+
   Sentry.init({
     dsn: SENTRY_DSN,
-    release: 'com.parenthelper.parent@1.0.0',
+    release,
+    dist: Constants.expoConfig?.extra?.sentryDist || '1',
     environment: __DEV__ ? 'development' : 'production',
     tracesSampleRate: __DEV__ ? 1.0 : 0.2,
     enableAutoSessionTracking: true,
@@ -18,7 +27,7 @@ export function initSentry() {
     debug: __DEV__,
   });
 
-  console.log('[Sentry] Initialized for parent-app');
+  console.log(`[Sentry] Initialized — release: ${release}`);
 }
 
 export function captureError(error: Error, context?: Record<string, any>) {
@@ -41,6 +50,11 @@ export function setUser(id: string, email?: string) {
 
 export function clearUser() {
   Sentry.setUser(null);
+}
+
+/** Trigger a test crash for verifying Sentry integration */
+export function triggerTestCrash() {
+  throw new Error('Sentry test crash from parent-app');
 }
 
 export { Sentry };

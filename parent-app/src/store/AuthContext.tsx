@@ -3,6 +3,7 @@ import type { User } from '../types';
 import * as api from '../services/api';
 import { connectSocket, disconnectSocket } from '../services/socket';
 import { registerForPushNotifications, unregisterPushNotifications } from '../services/notifications';
+import { setUser as setSentryUser, clearUser as clearSentryUser } from '../services/sentry';
 
 interface AuthState {
   user: User | null;
@@ -53,6 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(async (email: string, password: string) => {
     const data = await api.login(email, password);
     setState({ user: data.user, isLoading: false, isAuthenticated: true });
+    setSentryUser(data.user._id || data.user.id, data.user.email);
     connectSocket();
     registerForPushNotifications();
   }, []);
@@ -60,6 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = useCallback(async (email: string, password: string, name: string) => {
     const data = await api.register(email, password, name);
     setState({ user: data.user, isLoading: false, isAuthenticated: true });
+    setSentryUser(data.user._id || data.user.id, data.user.email);
     connectSocket();
     registerForPushNotifications();
   }, []);
@@ -68,6 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await unregisterPushNotifications();
     disconnectSocket();
     await api.logout();
+    clearSentryUser();
     setState({ user: null, isLoading: false, isAuthenticated: false });
   }, []);
 

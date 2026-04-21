@@ -176,6 +176,12 @@ class PairingActivity : AppCompatActivity() {
                     parentId = response.parentId,
                 )
 
+                // Set crash reporting context with device identity
+                (application as ParentHelperApp).setCrashlyticsUser(
+                    response.deviceId,
+                    null
+                )
+
                 // Navigate to pairing success screen (part of onboarding flow)
                 startActivity(Intent(this@PairingActivity, PairingSuccessActivity::class.java))
                 finish()
