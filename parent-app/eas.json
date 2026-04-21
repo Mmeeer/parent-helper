@@ -14,7 +14,8 @@
       },
       "env": {
         "SENTRY_ORG": "parent-helper",
-        "SENTRY_PROJECT": "parent-app"
+        "SENTRY_PROJECT": "parent-app",
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     },
     "preview": {
@@ -24,7 +25,8 @@
       "distribution": "internal",
       "env": {
         "SENTRY_ORG": "parent-helper",
-        "SENTRY_PROJECT": "parent-app"
+        "SENTRY_PROJECT": "parent-app",
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     }
   }
