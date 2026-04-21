@@ -30,21 +30,36 @@ Drag all folders into the Xcode project:
 2. Product Name: `DeviceActivityMonitor`
 3. Requires FamilyControls entitlement from Apple
 
-### 4. Configure Capabilities
+### 4. Configure Entitlements
+
+Entitlements files are provided in the repository:
+
+**Main App Target:**
+- Add `PrimeKidsChild/PrimeKidsChild.entitlements` to the main target
+- In Build Settings > Code Signing Entitlements, set to `PrimeKidsChild/PrimeKidsChild.entitlements`
+
+**Content Blocker Extension:**
+- Add `ContentBlocker/ContentBlocker.entitlements` to the extension target
+- In Build Settings > Code Signing Entitlements, set to `ContentBlocker/ContentBlocker.entitlements`
+
+### 5. Configure Capabilities
 
 In the main target's Signing & Capabilities:
 - [x] Background Modes: Location updates, Background fetch, Background processing, Remote notifications
 - [x] Push Notifications
 - [x] App Groups: `group.com.primekids.child`
-- [ ] Family Controls (requires Apple approval)
+- [ ] Family Controls (requires Apple approval — see `FamilyControlsEntitlement.md`)
 
-### 5. Configure Info.plist
+### 6. Configure Info.plist
 The Info.plist is provided with:
 - Background task identifiers
 - Location permission descriptions
 - Background modes
+- App Transport Security (ATS) — enforced (no arbitrary loads)
+- Export compliance (no non-exempt encryption)
+- URL scheme: `primekids-child`
 
-### 6. Required Environment
+### 7. Required Environment
 
 Set the server URL before building:
 - In `PrefsManager.swift`, update the default `serverURL`
@@ -85,10 +100,12 @@ ContentBlocker/             # Safari Content Blocker extension
 | App Install Monitor | Yes | No | iOS privacy restriction |
 | Lock Screen Overlay | Yes | No | iOS doesn't allow overlays |
 
-## Apple Review Notes
+## App Store Submission
 
-1. **FamilyControls entitlement** requires manual application at developer.apple.com
-2. Apple will review the justification for parental control capabilities
-3. Ensure consent flows are clear (Family Sharing requirement)
-4. Privacy policy must document all data collection
-5. App must clearly indicate it's a child monitoring tool
+See the following documents for App Store release preparation:
+- `FamilyControlsEntitlement.md` — How to apply for the FamilyControls entitlement
+- `AppStoreMetadata.md` — App Store listing content (description, keywords, screenshots)
+- `PrivacyNutritionLabels.md` — Privacy nutrition label declarations
+- `APPLE_REVIEW_NOTES.md` — Detailed notes for the Apple review team
+- `TestFlightChecklist.md` — TestFlight beta testing checklist
+- `ExportOptions.plist` — Archive export configuration for App Store upload
