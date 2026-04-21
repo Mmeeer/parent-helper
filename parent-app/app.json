@@ -28,7 +28,7 @@
       }
     },
     "extra": {
-      "sentryDsn": "",
+      "sentryDsn": "https://881ecc2b632b3f0c0a872b7bdb1c00c4@o4511256863244288.ingest.us.sentry.io/4511256865079296",
       "sentryDist": "1",
       "eas": {
         "projectId": "parent-helper"
@@ -39,8 +39,8 @@
         {
           "file": "@sentry/react-native/expo",
           "config": {
-            "organization": "parent-helper",
-            "project": "parent-app"
+            "organization": "mevento-nb",
+            "project": "react-native"
           }
         }
       ]
@@ -76,10 +76,13 @@
       [
         "@sentry/react-native",
         {
-          "organization": "parent-helper",
-          "project": "parent-app"
+          "organization": "mevento-nb",
+          "project": "react-native",
+          "autoUploadSourceMaps": false,
+          "autoUploadNativeSymbols": false
         }
-      ]
+      ],
+      "expo-localization"
     ]
   }
 }

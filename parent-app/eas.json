@@ -13,8 +13,8 @@
         }
       },
       "env": {
-        "SENTRY_ORG": "parent-helper",
-        "SENTRY_PROJECT": "parent-app",
+        "SENTRY_ORG": "mevento-nb",
+        "SENTRY_PROJECT": "react-native",
         "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     },
@@ -24,8 +24,8 @@
       },
       "distribution": "internal",
       "env": {
-        "SENTRY_ORG": "parent-helper",
-        "SENTRY_PROJECT": "parent-app",
+        "SENTRY_ORG": "mevento-nb",
+        "SENTRY_PROJECT": "react-native",
         "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     }
