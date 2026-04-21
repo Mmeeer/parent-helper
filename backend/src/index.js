@@ -35,6 +35,9 @@ if (process.env.SENTRY_DSN) {
   console.log(`[Sentry] Initialized — release: ${release}`);
 }
 
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./config/swagger');
+
 const authRoutes = require('./routes/auth');
 const childrenRoutes = require('./routes/children');
 const devicesRoutes = require('./routes/devices');
@@ -98,6 +101,13 @@ app.use((req, res, next) => {
 
 // Make io accessible to routes
 app.set('io', io);
+
+// API Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customSiteTitle: 'Parent Helper API Docs',
+  customCss: '.swagger-ui .topbar { display: none }',
+}));
+app.get('/api-docs.json', (req, res) => res.json(swaggerSpec));
 
 // Routes
 app.use('/auth', authRoutes);
