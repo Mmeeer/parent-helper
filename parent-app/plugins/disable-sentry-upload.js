@@ -24,8 +24,14 @@ module.exports = function disableSentryUpload(config) {
       `${marker}\n// sentry.gradle apply removed — uploads disabled\n`
     );
 
-    // Also inject sentry DSL block to disable uploads (belt-and-suspenders)
-    const sentryBlock = `
+    // Only inject sentry DSL block if the Sentry Android Gradle Plugin is applied.
+    // The sentry {} block is only valid when io.sentry.android.gradle is present.
+    // Without it, Gradle throws: "Could not find method sentry()".
+    const hasGradlePlugin =
+      config.modResults.contents.includes('io.sentry.android.gradle');
+
+    if (hasGradlePlugin) {
+      const sentryBlock = `
 sentry {
     autoUploadSourceMap = false
     autoUploadNativeSymbols = false
@@ -34,15 +40,15 @@ sentry {
     autoInstallation { enabled = false }
 }
 `;
-
-    // Insert before the first android { block if present, else append
-    if (config.modResults.contents.includes("android {")) {
-      config.modResults.contents = config.modResults.contents.replace(
-        "android {",
-        `${sentryBlock}\nandroid {`
-      );
-    } else {
-      config.modResults.contents += `\n${sentryBlock}`;
+      // Insert before the first android { block if present, else append
+      if (config.modResults.contents.includes("android {")) {
+        config.modResults.contents = config.modResults.contents.replace(
+          "android {",
+          `${sentryBlock}\nandroid {`
+        );
+      } else {
+        config.modResults.contents += `\n${sentryBlock}`;
+      }
     }
 
     return config;
