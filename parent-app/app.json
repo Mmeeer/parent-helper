@@ -28,22 +28,9 @@
       }
     },
     "extra": {
-      "sentryDsn": "https://881ecc2b632b3f0c0a872b7bdb1c00c4@o4511256863244288.ingest.us.sentry.io/4511256865079296",
-      "sentryDist": "1",
       "eas": {
         "projectId": "parent-helper"
       }
-    },
-    "hooks": {
-      "postPublish": [
-        {
-          "file": "@sentry/react-native/expo",
-          "config": {
-            "organization": "mevento-nb",
-            "project": "react-native"
-          }
-        }
-      ]
     },
     "plugins": [
       "expo-secure-store",
@@ -73,14 +60,6 @@
         }
       ],
       "./plugins/pin-androidx-core",
-      [
-        "@sentry/react-native",
-        {
-          "organization": "mevento-nb",
-          "project": "react-native"
-        }
-      ],
-      "./plugins/disable-sentry-upload",
       "expo-localization"
     ]
   }

@@ -10,13 +10,10 @@ import {
   addNotificationReceivedListener,
   setBadgeCount,
 } from './src/services/notifications';
-import { initSentry } from './src/services/sentry';
+import { initI18n } from './src/i18n';
 // @ts-ignore - expo-font may not have types installed
 import * as Font from 'expo-font';
 import type { NavigationContainerRef } from '@react-navigation/native';
-
-// Initialize Sentry as early as possible
-initSentry();
 
 // Navigation ref so we can navigate from notification taps
 export const navigationRef = React.createRef<NavigationContainerRef<any>>();
@@ -26,6 +23,11 @@ export default function App() {
   const responseListener = useRef<any>();
 
   const [fontsLoaded, setFontsLoaded] = React.useState(false);
+  const [i18nReady, setI18nReady] = React.useState(false);
+
+  useEffect(() => {
+    initI18n().then(() => setI18nReady(true)).catch(() => setI18nReady(true));
+  }, []);
 
   useEffect(() => {
     Font.loadAsync({
@@ -63,7 +65,7 @@ export default function App() {
     };
   }, []);
 
-  if (!fontsLoaded) return null;
+  if (!fontsLoaded || !i18nReady) return null;
 
   return (
     <ErrorBoundary>
