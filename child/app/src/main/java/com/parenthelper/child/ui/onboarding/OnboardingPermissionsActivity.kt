@@ -9,18 +9,20 @@ import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
-import android.view.Gravity
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.google.android.material.button.MaterialButton
 import com.parenthelper.child.R
 import com.parenthelper.child.enforcement.OverlayPermissionHelper
 import com.parenthelper.child.enforcement.ParentHelperDeviceAdmin
+import com.parenthelper.child.services.ParentHelperAccessibilityService
 
 class OnboardingPermissionsActivity : AppCompatActivity() {
 
@@ -153,9 +155,7 @@ class OnboardingPermissionsActivity : AppCompatActivity() {
                 titleRes = R.string.perm_accessibility_title,
                 whyRes = R.string.perm_accessibility_why,
                 checkGranted = { isAccessibilityServiceEnabled() },
-                requestPermission = {
-                    accessibilityLauncher.launch(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-                },
+                requestPermission = { launchAccessibilitySettings() },
             ),
             // 6. Overlay (Display over other apps)
             PermissionStep(
@@ -299,9 +299,32 @@ class OnboardingPermissionsActivity : AppCompatActivity() {
             contentResolver,
             Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
         ) ?: return false
-        val expectedComponent = ComponentName(this, "$packageName.services.ParentHelperAccessibilityService")
+        val expectedComponent = ComponentName(this, ParentHelperAccessibilityService::class.java)
         return enabledServices.contains(expectedComponent.flattenToString()) ||
             enabledServices.contains("$packageName/")
+    }
+
+    private fun launchAccessibilitySettings() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.perm_accessibility_title)
+            .setMessage(R.string.perm_accessibility_instruction)
+            .setPositiveButton(R.string.onboarding_grant_button) { _, _ ->
+                // Try the per-service detail page first (Android 14+); fall back to the list.
+                val component = ComponentName(this, ParentHelperAccessibilityService::class.java)
+                val detailIntent = Intent("android.settings.ACCESSIBILITY_DETAILS_SETTINGS").apply {
+                    putExtra(":settings:fragment_args_key", component.flattenToString())
+                }
+                val launched = try {
+                    accessibilityLauncher.launch(detailIntent)
+                    true
+                } catch (_: Exception) { false }
+                if (!launched) {
+                    accessibilityLauncher.launch(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                }
+                Toast.makeText(this, R.string.perm_accessibility_instruction, Toast.LENGTH_LONG).show()
+            }
+            .setCancelable(true)
+            .show()
     }
 
     private fun dpToPx(dp: Int): Int {

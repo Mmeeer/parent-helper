@@ -81,6 +81,9 @@
     <!-- Permission: Accessibility -->
     <string name="perm_accessibility_title">Хүртээмжийн үйлчилгээ</string>
     <string name="perm_accessibility_why">Вэб агуулгыг шүүж, хориглосон апп руу нэвтрэхийг хязгаарлана. Энэ нь хүүхдийг хортой агуулгаас хамгаалахад чухал үүрэгтэй.</string>
+    <string name="perm_accessibility_instruction">Тохиргоо нээгдэх үед \"Prime Kids\"-ийг олж, идэвхжүүлнэ үү. Дараа нь \"Allow\" / \"OK\" дарж энэ апп руу буцна уу.</string>
+    <string name="accessibility_service_description">Prime Kids нь хүүхдийн төхөөрөмж дээрх хориглосон апп нээх оролдлогыг таслан зогсоож, веб хөтчүүдээс хийгдэж буй хайлтын хаягийг шүүхэд энэ зөвшөөрлийг ашиглана. Хувийн нууцлагдсан мэдээллийг хадгалахгүй.</string>
+    <string name="accessibility_service_summary">Хориглосон апп ба хүсээгүй веб хуудсыг блоклоно</string>
 
     <!-- Permission: Overlay -->
     <string name="perm_overlay_title">Бусад апп дээр харуулах</string>
