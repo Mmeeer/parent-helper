@@ -35,20 +35,22 @@ export function connectSocket(): void {
   });
 
   // Re-emit stored handlers
-  socket.on('alert:new', (...args: unknown[]) => {
-    const handlers = eventHandlers.get('alert:new');
-    handlers?.forEach((handler) => handler(...args));
-  });
+  const forward = (event: string) => {
+    socket?.on(event, (...args: unknown[]) => {
+      const handlers = eventHandlers.get(event);
+      handlers?.forEach((handler) => handler(...args));
+    });
+  };
 
-  socket.on('location:update', (...args: unknown[]) => {
-    const handlers = eventHandlers.get('location:update');
-    handlers?.forEach((handler) => handler(...args));
+  forward('alert:new');
+  // Backend emits 'alert:sos' for SOS events; surface it both as 'alert:sos'
+  // and as a regular 'alert:new' so existing alerts UI updates without extra wiring.
+  socket.on('alert:sos', (...args: unknown[]) => {
+    eventHandlers.get('alert:sos')?.forEach((handler) => handler(...args));
+    eventHandlers.get('alert:new')?.forEach((handler) => handler(...args));
   });
-
-  socket.on('rules:updated', (...args: unknown[]) => {
-    const handlers = eventHandlers.get('rules:updated');
-    handlers?.forEach((handler) => handler(...args));
-  });
+  forward('location:update');
+  forward('rules:updated');
 }
 
 export function disconnectSocket(): void {
