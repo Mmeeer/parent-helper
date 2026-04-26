@@ -11,9 +11,7 @@
       <!-- Logo -->
       <div class="px-6 py-5 border-b border-white/10">
         <div class="flex items-center gap-2.5">
-          <div class="w-7 h-7 rounded-lg bg-nest-500 flex items-center justify-center flex-shrink-0">
-            <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5L12 1zm-2 16l-3.5-3.5 1.41-1.41L10 14.17l5.59-5.59L17 10l-7 7z"/></svg>
-          </div>
+          <img src="/logo-mark.png" alt="Prime Kids" class="w-8 h-8 flex-shrink-0" />
           <div>
             <h1 class="font-display font-bold text-sm text-white leading-none">Prime Kids</h1>
             <p class="text-[9px] text-white/40 tracking-widest uppercase mt-0.5">{{ $t('nav.adminConsole') }}</p>
@@ -78,9 +76,7 @@
           <svg class="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16" /></svg>
         </button>
         <div class="flex items-center gap-2">
-          <div class="w-6 h-6 rounded-md bg-nest-500 flex items-center justify-center">
-            <svg class="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5L12 1z"/></svg>
-          </div>
+          <img src="/logo-mark.png" alt="Prime Kids" class="w-6 h-6" />
           <span class="font-display font-bold text-white text-sm">Prime Kids</span>
         </div>
       </header>

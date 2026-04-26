@@ -8,6 +8,8 @@
     "newArchEnabled": true,
     "userInterfaceStyle": "light",
     "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
       "backgroundColor": "#4A90D9"
     },
     "ios": {
@@ -17,7 +19,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#4A90D9"
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFFFFF"
       },
       "package": "com.parenthelper.parent",
       "googleServicesFile": "./google-services.json",

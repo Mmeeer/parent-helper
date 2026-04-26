@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   Dimensions,
   FlatList,
+  Image,
   type ViewToken,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -117,20 +118,28 @@ export default function OnboardingScreen({ navigation }: Props) {
 
   const renderSlide = ({ item }: { item: Slide }) => (
     <View style={{ width: SCREEN_WIDTH, paddingHorizontal: 28 }}>
-      {/* Icon */}
-      <View
-        style={{
-          width: 80,
-          height: 80,
-          borderRadius: 24,
-          backgroundColor: item.iconBg,
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: 28,
-        }}
-      >
-        <Ionicons name={item.icon} size={36} color={item.iconColor} />
-      </View>
+      {/* Icon — welcome slide shows the brand mark, others use semantic icons */}
+      {item.id === 'welcome' ? (
+        <Image
+          source={require('../../../assets/branding/logo-mark.png')}
+          style={{ width: 110, height: 110, marginBottom: 24 }}
+          resizeMode="contain"
+        />
+      ) : (
+        <View
+          style={{
+            width: 80,
+            height: 80,
+            borderRadius: 24,
+            backgroundColor: item.iconBg,
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: 28,
+          }}
+        >
+          <Ionicons name={item.icon} size={36} color={item.iconColor} />
+        </View>
+      )}
 
       {/* Title */}
       <Text

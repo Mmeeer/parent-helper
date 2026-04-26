@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity,
+  View, Text, TextInput, TouchableOpacity, Image,
   KeyboardAvoidingView, Platform, Alert, ScrollView, ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -62,10 +62,12 @@ export default function RegisterScreen({ navigation }: Props) {
         showsVerticalScrollIndicator={false}
       >
         {/* Branding */}
-        <View className="items-center mb-8">
-          <View className="w-10 h-10 rounded-2xl bg-nest-500 items-center justify-center shadow-lg mb-3">
-            <Ionicons name="shield-checkmark" size={22} color="#fff" />
-          </View>
+        <View className="items-center mb-6">
+          <Image
+            source={require('../../../assets/branding/logo-mark.png')}
+            style={{ width: 64, height: 64, marginBottom: 12 }}
+            resizeMode="contain"
+          />
           <Text className="font-display font-extrabold text-xl text-gray-900 tracking-tight">
             {t('auth.createAccount')}
           </Text>

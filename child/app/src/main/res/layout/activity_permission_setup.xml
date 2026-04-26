@@ -27,13 +27,13 @@
             android:letterSpacing="0.15"
             android:textAllCaps="true" />
 
-        <!-- Shield icon -->
+        <!-- Brand logo mark -->
         <ImageView
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:layout_marginBottom="24dp"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_marginBottom="20dp"
             android:contentDescription="@string/app_name"
-            android:src="@drawable/ic_shield_check" />
+            android:src="@drawable/logo_mark" />
 
         <!-- Page title -->
         <TextView
