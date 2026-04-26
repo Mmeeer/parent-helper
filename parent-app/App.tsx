@@ -13,6 +13,7 @@ import {
 import { initI18n } from './src/i18n';
 // @ts-ignore - expo-font may not have types installed
 import * as Font from 'expo-font';
+import { Ionicons } from '@expo/vector-icons';
 import type { NavigationContainerRef } from '@react-navigation/native';
 
 // Navigation ref so we can navigate from notification taps
@@ -31,6 +32,7 @@ export default function App() {
 
   useEffect(() => {
     Font.loadAsync({
+      ...Ionicons.font,
       Nunito_400Regular: require('./assets/fonts/Nunito-Regular.ttf'),
       Nunito_500Medium: require('./assets/fonts/Nunito-Medium.ttf'),
       Nunito_600SemiBold: require('./assets/fonts/Nunito-SemiBold.ttf'),

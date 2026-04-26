@@ -11,7 +11,6 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.TextView
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
@@ -34,26 +33,8 @@ class PairingActivity : AppCompatActivity() {
 
     private lateinit var boxes: List<EditText>
     private lateinit var btnPair: MaterialButton
-    private lateinit var btnScanQr: MaterialButton
     private lateinit var progressBar: ProgressBar
     private lateinit var tvError: TextView
-
-    private val qrScannerLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == RESULT_OK) {
-            val code = result.data?.getStringExtra(QrScannerActivity.EXTRA_PAIRING_CODE)
-            if (code != null && code.length == 6) {
-                // Fill the code boxes with the scanned code
-                code.forEachIndexed { index, char ->
-                    if (index < boxes.size) {
-                        boxes[index].setText(char.toString())
-                    }
-                }
-                attemptPairing()
-            }
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,15 +47,15 @@ class PairingActivity : AppCompatActivity() {
             findViewById(R.id.box4),
             findViewById(R.id.box5),
             findViewById(R.id.box6),
+            findViewById(R.id.box7),
+            findViewById(R.id.box8),
         )
         btnPair = findViewById(R.id.btnPair)
-        btnScanQr = findViewById(R.id.btnScanQr)
         progressBar = findViewById(R.id.progressBar)
         tvError = findViewById(R.id.tvError)
 
         setupBoxListeners()
         btnPair.setOnClickListener { attemptPairing() }
-        btnScanQr.setOnClickListener { openQrScanner() }
 
         // Auto-focus first box and show keyboard
         boxes[0].postDelayed({
@@ -93,10 +74,6 @@ class PairingActivity : AppCompatActivity() {
         }
     }
 
-    private fun openQrScanner() {
-        qrScannerLauncher.launch(Intent(this, QrScannerActivity::class.java))
-    }
-
     private fun setupBoxListeners() {
         boxes.forEachIndexed { index, box ->
             box.addTextChangedListener(object : TextWatcher {
@@ -113,7 +90,7 @@ class PairingActivity : AppCompatActivity() {
                             box.clearFocus()
                             val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
                             imm.hideSoftInputFromWindow(box.windowToken, 0)
-                            if (getCode().length == 6) attemptPairing()
+                            if (getCode().length == PAIRING_CODE_LENGTH) attemptPairing()
                         }
                     }
                     tvError.visibility = View.GONE
@@ -145,7 +122,7 @@ class PairingActivity : AppCompatActivity() {
 
     private fun attemptPairing() {
         val code = getCode()
-        if (code.length < 6) {
+        if (code.length < PAIRING_CODE_LENGTH) {
             showError(getString(R.string.pairing_error_empty))
             return
         }
@@ -207,7 +184,6 @@ class PairingActivity : AppCompatActivity() {
 
     private fun setLoading(loading: Boolean) {
         btnPair.isEnabled = !loading
-        btnScanQr.isEnabled = !loading
         progressBar.visibility = if (loading) View.VISIBLE else View.GONE
         tvError.visibility = View.GONE
     }
@@ -218,5 +194,9 @@ class PairingActivity : AppCompatActivity() {
         // Shake boxes to indicate error — clear them so user can retry
         boxes.forEach { it.text.clear() }
         boxes[0].requestFocus()
+    }
+
+    companion object {
+        private const val PAIRING_CODE_LENGTH = 8
     }
 }

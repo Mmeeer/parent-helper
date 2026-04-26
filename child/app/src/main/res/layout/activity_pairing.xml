@@ -27,13 +27,13 @@
             android:letterSpacing="0.15"
             android:textAllCaps="true" />
 
-        <!-- Shield icon -->
+        <!-- Brand logo mark -->
         <ImageView
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:layout_marginBottom="24dp"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_marginBottom="20dp"
             android:contentDescription="@string/app_name"
-            android:src="@drawable/ic_shield_check" />
+            android:src="@drawable/logo_mark" />
 
         <!-- Page title -->
         <TextView
@@ -58,7 +58,7 @@
             android:textSize="14sp"
             android:lineSpacingExtra="4dp" />
 
-        <!-- 6-box OTP input row -->
+        <!-- 8-box OTP input row (4 - 4 split) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -69,13 +69,17 @@
             <EditText
                 android:id="@+id/box1"
                 style="@style/CodeBox" />
-            <View android:layout_width="8dp" android:layout_height="1dp" />
+            <View android:layout_width="6dp" android:layout_height="1dp" />
             <EditText
                 android:id="@+id/box2"
                 style="@style/CodeBox" />
-            <View android:layout_width="8dp" android:layout_height="1dp" />
+            <View android:layout_width="6dp" android:layout_height="1dp" />
             <EditText
                 android:id="@+id/box3"
+                style="@style/CodeBox" />
+            <View android:layout_width="6dp" android:layout_height="1dp" />
+            <EditText
+                android:id="@+id/box4"
                 style="@style/CodeBox" />
 
             <!-- Dash separator -->
@@ -89,15 +93,19 @@
                 android:textStyle="bold" />
 
             <EditText
-                android:id="@+id/box4"
-                style="@style/CodeBox" />
-            <View android:layout_width="8dp" android:layout_height="1dp" />
-            <EditText
                 android:id="@+id/box5"
                 style="@style/CodeBox" />
-            <View android:layout_width="8dp" android:layout_height="1dp" />
+            <View android:layout_width="6dp" android:layout_height="1dp" />
             <EditText
                 android:id="@+id/box6"
+                style="@style/CodeBox" />
+            <View android:layout_width="6dp" android:layout_height="1dp" />
+            <EditText
+                android:id="@+id/box7"
+                style="@style/CodeBox" />
+            <View android:layout_width="6dp" android:layout_height="1dp" />
+            <EditText
+                android:id="@+id/box8"
                 style="@style/CodeBox" />
 
         </LinearLayout>
@@ -115,55 +123,6 @@
             android:letterSpacing="0.06"
             android:layout_marginBottom="16dp"
             app:cornerRadius="16dp" />
-
-        <!-- OR divider -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="16dp"
-            android:orientation="horizontal">
-
-            <View
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_weight="1"
-                android:background="@color/ink_200" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingHorizontal="16dp"
-                android:text="@string/pairing_or_divider"
-                android:textColor="@color/text_hint"
-                android:textSize="12sp" />
-
-            <View
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_weight="1"
-                android:background="@color/ink_200" />
-        </LinearLayout>
-
-        <!-- Scan QR button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnScanQr"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="@string/pairing_scan_qr"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            android:textColor="@color/primary"
-            android:letterSpacing="0.06"
-            android:layout_marginBottom="16dp"
-            app:icon="@drawable/ic_qr_code"
-            app:iconGravity="textStart"
-            app:iconTint="@color/primary"
-            app:iconPadding="8dp"
-            app:cornerRadius="16dp"
-            app:strokeColor="@color/primary"
-            app:strokeWidth="1.5dp" />
 
         <ProgressBar
             android:id="@+id/progressBar"

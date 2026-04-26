@@ -62,11 +62,6 @@
         <!-- Pairing (no longer the launcher) -->
         <activity android:name=".ui.pairing.PairingActivity" />
 
-        <!-- QR Scanner -->
-        <activity
-            android:name=".ui.pairing.QrScannerActivity"
-            android:theme="@style/Theme.MyApplication" />
-
         <!-- Onboarding flow -->
         <activity android:name=".ui.onboarding.PairingSuccessActivity" />
         <activity android:name=".ui.onboarding.OnboardingPermissionsActivity" />
