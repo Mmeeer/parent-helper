@@ -1,13 +1,13 @@
 <template>
   <div>
-    <PageHeader title="Users" subtitle="Manage parent accounts" :breadcrumbs="[{ label: 'Users' }]">
+    <PageHeader :title="$t('users.title')" :subtitle="$t('users.subtitle')" :breadcrumbs="[{ label: $t('users.title') }]">
       <template #actions>
         <select v-model="planFilter" @change="page = 1; loadUsers()" class="px-3 py-2 border border-ink-200 rounded-lg text-xs bg-white focus:ring-1 focus:ring-nest-500 outline-none text-ink-700">
-          <option value="">All Plans</option>
-          <option value="free">Free</option>
-          <option value="subscribed">Subscribed</option>
+          <option value="">{{ $t('users.allPlans') }}</option>
+          <option value="free">{{ $t('users.free') }}</option>
+          <option value="subscribed">{{ $t('users.subscribed') }}</option>
         </select>
-        <input v-model="search" type="text" placeholder="Search users..."
+        <input v-model="search" type="text" :placeholder="$t('users.searchUsers')"
           class="px-3 py-2 border border-ink-200 rounded-lg text-xs focus:ring-1 focus:ring-nest-500 outline-none w-48 text-ink-700 placeholder:text-ink-300"
           @input="debouncedSearch" />
       </template>
@@ -21,16 +21,16 @@
           <tr class="border-b border-ink-100 bg-ink-50/60">
             <th class="px-5 py-3 text-left text-[10px] font-semibold text-ink-400 uppercase tracking-widest cursor-pointer hover:text-ink-600"
               @click="toggleSort('name')">
-              User <span v-if="sortBy === 'name'" class="text-nest-500">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span>
+              {{ $t('users.user') }} <span v-if="sortBy === 'name'" class="text-nest-500">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span>
             </th>
-            <th class="px-5 py-3 text-left text-[10px] font-semibold text-ink-400 uppercase tracking-widest">Plan</th>
-            <th class="px-5 py-3 text-left text-[10px] font-semibold text-ink-400 uppercase tracking-widest">Children</th>
-            <th class="px-5 py-3 text-left text-[10px] font-semibold text-ink-400 uppercase tracking-widest">Devices</th>
+            <th class="px-5 py-3 text-left text-[10px] font-semibold text-ink-400 uppercase tracking-widest">{{ $t('users.plan') }}</th>
+            <th class="px-5 py-3 text-left text-[10px] font-semibold text-ink-400 uppercase tracking-widest">{{ $t('users.childrenCol') }}</th>
+            <th class="px-5 py-3 text-left text-[10px] font-semibold text-ink-400 uppercase tracking-widest">{{ $t('users.devices') }}</th>
             <th class="px-5 py-3 text-left text-[10px] font-semibold text-ink-400 uppercase tracking-widest cursor-pointer hover:text-ink-600"
               @click="toggleSort('createdAt')">
-              Joined <span v-if="sortBy === 'createdAt'" class="text-nest-500">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span>
+              {{ $t('users.joined') }} <span v-if="sortBy === 'createdAt'" class="text-nest-500">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span>
             </th>
-            <th class="px-5 py-3 text-right text-[10px] font-semibold text-ink-400 uppercase tracking-widest">Actions</th>
+            <th class="px-5 py-3 text-right text-[10px] font-semibold text-ink-400 uppercase tracking-widest">{{ $t('users.actions') }}</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-ink-50">
@@ -46,22 +46,22 @@
             <td class="px-5 py-3.5 text-sm text-ink-600">{{ user.deviceCount ?? 0 }}</td>
             <td class="px-5 py-3.5 text-xs text-ink-400">{{ fmt.formatDate(user.createdAt) }}</td>
             <td class="px-5 py-3.5 text-right">
-              <NuxtLink :to="`/users/${user._id}`" class="text-xs text-nest-500 hover:text-nest-600 font-medium">View</NuxtLink>
+              <NuxtLink :to="`/users/${user._id}`" class="text-xs text-nest-500 hover:text-nest-600 font-medium">{{ $t('common.view') }}</NuxtLink>
             </td>
           </tr>
         </tbody>
       </table>
 
-      <EmptyState v-else title="No users found" :message="search ? 'Try a different search term' : 'No users have registered yet'" />
+      <EmptyState v-else :title="$t('users.noUsersFound')" :message="search ? $t('users.tryDifferentSearch') : $t('users.noUsersRegistered')" />
 
       <!-- Pagination -->
       <div v-if="totalPages > 1" class="flex items-center justify-between px-5 py-3 border-t border-ink-100 bg-ink-50/40">
         <p class="text-xs text-ink-400">Page {{ page }} of {{ totalPages }} ({{ total }} total)</p>
         <div class="flex gap-1.5">
           <button :disabled="page <= 1" @click="page--; loadUsers()"
-            class="px-3 py-1.5 text-xs border border-ink-200 rounded-lg disabled:opacity-30 hover:bg-white transition text-ink-600">Prev</button>
+            class="px-3 py-1.5 text-xs border border-ink-200 rounded-lg disabled:opacity-30 hover:bg-white transition text-ink-600">{{ $t('common.prev') }}</button>
           <button :disabled="page >= totalPages" @click="page++; loadUsers()"
-            class="px-3 py-1.5 text-xs border border-ink-200 rounded-lg disabled:opacity-30 hover:bg-white transition text-ink-600">Next</button>
+            class="px-3 py-1.5 text-xs border border-ink-200 rounded-lg disabled:opacity-30 hover:bg-white transition text-ink-600">{{ $t('common.next') }}</button>
         </div>
       </div>
     </div>

@@ -4,6 +4,7 @@ import {
   KeyboardAvoidingView, Platform, Alert, ScrollView, ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../store/AuthContext';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../types';
@@ -13,6 +14,7 @@ type Props = {
 };
 
 export default function RegisterScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const { register } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -28,22 +30,22 @@ export default function RegisterScreen({ navigation }: Props) {
 
   const handleRegister = async () => {
     if (!name.trim() || !email.trim() || !password.trim()) {
-      Alert.alert('Алдаа', 'Бүх талбарыг бөглөнө үү.');
+      Alert.alert(t('common.error'), t('auth.fillAllFields'));
       return;
     }
     if (password.length < 8) {
-      Alert.alert('Алдаа', 'Нууц үг хамгийн багадаа 8 тэмдэгт байх ёстой.');
+      Alert.alert(t('common.error'), t('auth.passwordMin8'));
       return;
     }
     if (password !== confirmPassword) {
-      Alert.alert('Алдаа', 'Нууц үг таарахгүй байна.');
+      Alert.alert(t('common.error'), t('auth.passwordMismatch'));
       return;
     }
     setLoading(true);
     try {
       await register(email.trim(), password, name.trim());
     } catch (error: any) {
-      Alert.alert('Бүртгэл амжилтгүй', error.message || 'Бүртгэл үүсгэж чадсангүй.');
+      Alert.alert(t('auth.registerFailed'), error.message || t('auth.registerError'));
     } finally {
       setLoading(false);
     }
@@ -65,10 +67,10 @@ export default function RegisterScreen({ navigation }: Props) {
             <Ionicons name="shield-checkmark" size={22} color="#fff" />
           </View>
           <Text className="font-display font-extrabold text-xl text-gray-900 tracking-tight">
-            Бүртгэл үүсгэх
+            {t('auth.createAccount')}
           </Text>
           <Text className="text-xs text-gray-400 font-medium mt-1">
-            Эцэг эхийн бүртгэл үүсгэх.
+            {t('auth.parentAccount')}
           </Text>
         </View>
 
@@ -76,7 +78,7 @@ export default function RegisterScreen({ navigation }: Props) {
         <View className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
           {/* Name */}
           <View className="mb-5">
-            <Text className="font-display font-bold text-gray-900 mb-2">Бүтэн нэр</Text>
+            <Text className="font-display font-bold text-gray-900 mb-2">{t('auth.fullName')}</Text>
             <View className="flex-row items-center px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200">
               <Ionicons name="person-outline" size={17} color="#9ca3af" />
               <TextInput
@@ -94,7 +96,7 @@ export default function RegisterScreen({ navigation }: Props) {
 
           {/* Email */}
           <View className="mb-5">
-            <Text className="font-display font-bold text-gray-900 mb-2">Имэйл</Text>
+            <Text className="font-display font-bold text-gray-900 mb-2">{t('auth.email')}</Text>
             <View className="flex-row items-center px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200">
               <Ionicons name="mail-outline" size={17} color="#9ca3af" />
               <TextInput
@@ -115,13 +117,13 @@ export default function RegisterScreen({ navigation }: Props) {
 
           {/* Password */}
           <View className="mb-5">
-            <Text className="font-display font-bold text-gray-900 mb-2">Нууц үг</Text>
+            <Text className="font-display font-bold text-gray-900 mb-2">{t('auth.password')}</Text>
             <View className="flex-row items-center px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200">
               <Ionicons name="lock-closed-outline" size={17} color="#9ca3af" />
               <TextInput
                 ref={passwordRef}
                 className="flex-1 text-sm font-semibold text-gray-700 ml-3"
-                placeholder="Хамгийн багадаа 8 тэмдэгт"
+                placeholder={t('auth.min8Chars')}
                 placeholderTextColor="#d1d5db"
                 value={password}
                 onChangeText={setPassword}
@@ -138,13 +140,13 @@ export default function RegisterScreen({ navigation }: Props) {
 
           {/* Confirm password */}
           <View className="mb-7">
-            <Text className="font-display font-bold text-gray-900 mb-2">Нууц үг баталгаажуулах</Text>
+            <Text className="font-display font-bold text-gray-900 mb-2">{t('auth.confirmPassword')}</Text>
             <View className="flex-row items-center px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200">
               <Ionicons name="lock-closed-outline" size={17} color="#9ca3af" />
               <TextInput
                 ref={confirmRef}
                 className="flex-1 text-sm font-semibold text-gray-700 ml-3"
-                placeholder="Нууц үгийг дахин оруулах"
+                placeholder={t('auth.reenterPassword')}
                 placeholderTextColor="#d1d5db"
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
@@ -166,15 +168,15 @@ export default function RegisterScreen({ navigation }: Props) {
           >
             {loading
               ? <ActivityIndicator color="#fff" />
-              : <Text className="font-display font-bold text-sm text-white">Бүртгэл үүсгэх</Text>
+              : <Text className="font-display font-bold text-sm text-white">{t('auth.createAccount')}</Text>
             }
           </TouchableOpacity>
         </View>
 
         <View className="flex-row justify-center mt-6">
-          <Text className="text-sm text-gray-500">Бүртгэл байна уу? </Text>
+          <Text className="text-sm text-gray-500">{t('auth.hasAccount')} </Text>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text className="text-sm font-bold text-nest-500">Нэвтрэх</Text>
+            <Text className="text-sm font-bold text-nest-500">{t('auth.login')}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

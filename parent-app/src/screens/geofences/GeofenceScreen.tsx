@@ -13,6 +13,7 @@ import {
 import MapView, { Marker, Circle } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import * as api from '../../services/api';
 import type { Geofence } from '../../services/api';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -44,6 +45,7 @@ const DEFAULT_REGION = {
 
 export default function GeofenceScreen({ route }: Props) {
   const { childId } = route.params;
+  const { t } = useTranslation();
   const [geofences, setGeofences] = useState<Geofence[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -99,7 +101,7 @@ export default function GeofenceScreen({ route }: Props) {
 
   const handleSave = async () => {
     if (!form.name.trim()) {
-      Alert.alert('Алдаа', 'Геофенсийн нэрийг оруулна уу.');
+      Alert.alert(t('common.error'), t('geofence.nameError'));
       return;
     }
 
@@ -128,7 +130,7 @@ export default function GeofenceScreen({ route }: Props) {
       }
       resetForm();
     } catch (err: any) {
-      Alert.alert('Алдаа', err.message || 'Геофенс хадгалахад алдаа гарлаа.');
+      Alert.alert(t('common.error'), err.message || t('geofence.saveError'));
     } finally {
       setSaving(false);
     }
@@ -158,17 +160,17 @@ export default function GeofenceScreen({ route }: Props) {
       await api.deleteGeofence(geofence._id);
       setGeofences((prev) => prev.filter((g) => g._id !== geofence._id));
     } catch (err: any) {
-      Alert.alert('Алдаа', err.message || 'Геофенс устгахад алдаа гарлаа.');
+      Alert.alert(t('common.error'), err.message || t('geofence.deleteError'));
     }
   };
 
   const handleDelete = (geofence: Geofence) => {
     Alert.alert(
-      'Геофенс устгах',
-      `"${geofence.name}"-г устгахдаа итгэлтэй байна уу?`,
+      t('geofence.deleteGeofence'),
+      t('geofence.deleteConfirm', { name: geofence.name }),
       [
-        { text: 'Цуцлах', style: 'cancel' },
-        { text: 'Устгах', style: 'destructive', onPress: () => { void doDelete(geofence); } },
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('common.delete'), style: 'destructive', onPress: () => { void doDelete(geofence); } },
       ],
     );
   };
@@ -178,7 +180,7 @@ export default function GeofenceScreen({ route }: Props) {
       const updated = await api.updateGeofence(geofence._id, { active: !geofence.active });
       setGeofences((prev) => prev.map((g) => (g._id === geofence._id ? updated : g)));
     } catch (err: any) {
-      Alert.alert('Алдаа', err.message || 'Геофенс шинэчлэхэд алдаа гарлаа.');
+      Alert.alert(t('common.error'), err.message || t('geofence.updateError'));
     }
   };
 
@@ -257,24 +259,24 @@ export default function GeofenceScreen({ route }: Props) {
         >
           <ScrollView>
             <Text className="text-xs font-bold text-gray-400 tracking-wide mb-2">
-              {editingId ? 'ГЕОФЕНС ЗАСАХ' : 'ШИНЭ ГЕОФЕНС'}
+              {editingId ? t('geofence.editGeofence') : t('geofence.newGeofence')}
             </Text>
             <Text className="text-sm font-display font-bold text-gray-900 mb-1">
-              {editingId ? 'Геофенс засах' : 'Шинэ геофенс'}
+              {editingId ? t('geofence.editGeofenceTitle') : t('geofence.newGeofenceTitle')}
             </Text>
             <Text className="text-xs text-gray-400 mb-4">
-              Байршил тохируулахын тулд газрын зурагт дарах эсвэл маркерийг чирэх
+              {t('geofence.mapInstruction')}
             </Text>
 
             <TextInput
               value={form.name}
               onChangeText={(text) => setForm((prev) => ({ ...prev, name: text }))}
-              placeholder="Жнь. Гэр, Сургууль"
+              placeholder={t('geofence.placeholder')}
               className="rounded-2xl bg-gray-50 border border-gray-200 mb-3 px-4 h-12 text-sm text-gray-900"
               placeholderTextColor={C.gray300}
             />
 
-            <Text className="text-xs font-bold text-gray-400 tracking-wide mb-2">РАДИУС (МЕТР)</Text>
+            <Text className="text-xs font-bold text-gray-400 tracking-wide mb-2">{t('geofence.radius')}</Text>
             <View className="flex-row gap-x-2 mb-3">
               {[100, 200, 500, 1000].map((r) => (
                 <TouchableOpacity
@@ -294,7 +296,7 @@ export default function GeofenceScreen({ route }: Props) {
             </View>
 
             <View className="flex-row justify-between items-center mt-2">
-              <Text className="text-sm text-gray-900">Орхоор мэдэгдэх</Text>
+              <Text className="text-sm text-gray-900">{t('geofence.alertOnEntry')}</Text>
               <Switch
                 value={form.alertOnEntry}
                 onValueChange={(val) => setForm((prev) => ({ ...prev, alertOnEntry: val }))}
@@ -304,7 +306,7 @@ export default function GeofenceScreen({ route }: Props) {
             </View>
 
             <View className="flex-row justify-between items-center mt-2">
-              <Text className="text-sm text-gray-900">Гарахад мэдэгдэх</Text>
+              <Text className="text-sm text-gray-900">{t('geofence.alertOnExit')}</Text>
               <Switch
                 value={form.alertOnExit}
                 onValueChange={(val) => setForm((prev) => ({ ...prev, alertOnExit: val }))}
@@ -318,7 +320,7 @@ export default function GeofenceScreen({ route }: Props) {
                 onPress={resetForm}
                 className="flex-1 border border-gray-200 rounded-2xl items-center justify-center h-[52px]"
               >
-                <Text className="text-sm font-semibold text-gray-500">Цуцлах</Text>
+                <Text className="text-sm font-semibold text-gray-500">{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleSave}
@@ -329,7 +331,7 @@ export default function GeofenceScreen({ route }: Props) {
                   <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
                   <Text className="text-sm font-display font-bold text-white tracking-wide">
-                    {editingId ? 'Шинэчлэх' : 'Үүсгэх'}
+                    {editingId ? t('common.update') : t('common.create')}
                   </Text>
                 )}
               </TouchableOpacity>
@@ -350,9 +352,9 @@ export default function GeofenceScreen({ route }: Props) {
           >
             <View className="flex-row justify-between items-center mb-4">
               <View>
-                <Text className="text-xs font-bold text-gray-400 tracking-wide mb-1">ГЕОФЕНС</Text>
+                <Text className="text-xs font-bold text-gray-400 tracking-wide mb-1">{t('geofence.title')}</Text>
                 <Text className="text-sm font-display font-bold text-gray-900">
-                  Геофенсүүд ({geofences.length})
+                  {t('geofence.geofences')} ({geofences.length})
                 </Text>
               </View>
               <TouchableOpacity
@@ -360,7 +362,7 @@ export default function GeofenceScreen({ route }: Props) {
                 className="bg-nest-500 rounded-full flex-row items-center gap-1 px-4 shadow-lg h-9"
               >
                 <Ionicons name="add" size={18} color="#FFFFFF" />
-                <Text className="text-white font-display font-bold text-sm">Нэмэх</Text>
+                <Text className="text-white font-display font-bold text-sm">{t('common.add')}</Text>
               </TouchableOpacity>
             </View>
 
@@ -370,10 +372,10 @@ export default function GeofenceScreen({ route }: Props) {
                   <Ionicons name="navigate-outline" size={28} color={C.gray300} />
                 </View>
                 <Text className="text-sm font-semibold text-gray-500 mt-1">
-                  Геофенс байхгүй
+                  {t('geofence.noGeofences')}
                 </Text>
                 <Text className="text-xs text-gray-400 text-center mt-1.5 px-5 leading-[18px]">
-                  Хүүхдийн тодорхой газруудад орж, гарахад мэдэгдэл авахын тулд геофенс үүсгэнэ үү.
+                  {t('geofence.noGeofencesDesc')}
                 </Text>
               </View>
             ) : (
@@ -395,9 +397,9 @@ export default function GeofenceScreen({ route }: Props) {
                         {geofence.name}
                       </Text>
                       <Text className="text-[11px] text-gray-400 mt-0.5">
-                        {geofence.radiusMeters}м радиус
-                        {geofence.alertOnEntry ? ' · Орох' : ''}
-                        {geofence.alertOnExit ? ' · Гарах' : ''}
+                        {geofence.radiusMeters}{t('geofence.radiusUnit')}
+                        {geofence.alertOnEntry ? ` · ${t('geofence.entry')}` : ''}
+                        {geofence.alertOnExit ? ` · ${t('geofence.exit')}` : ''}
                       </Text>
                     </View>
                     <Switch

@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { formatTime } from '../../utils/formatters';
 import * as api from '../../services/api';
 import { onSocketEvent } from '../../services/socket';
@@ -37,6 +38,7 @@ type Props = {
 
 export default function LocationScreen({ route }: Props) {
   const { childId, childName } = route.params;
+  const { t } = useTranslation();
   const [locations, setLocations] = useState<LocationEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +50,7 @@ export default function LocationScreen({ route }: Props) {
       const data = await api.getLocationHistory(childId);
       setLocations(data);
     } catch (err: any) {
-      const msg = err?.message || 'Байршлын мэдээлэл ачаалахад алдаа гарлаа';
+      const msg = err?.message || t('location.loadError');
       console.error('LocationScreen: Failed to load locations:', msg);
       setError(msg);
     } finally {
@@ -121,7 +123,7 @@ export default function LocationScreen({ route }: Props) {
           <Ionicons name="alert-circle-outline" size={32} color={C.danger500} />
         </View>
         <Text className="text-sm font-bold text-gray-900 mt-2">
-          Байршил ачаалахад алдаа гарлаа
+          {t('location.errorTitle')}
         </Text>
         <Text className="text-[13px] text-gray-400 text-center mt-1.5 leading-5">
           {error}
@@ -131,7 +133,7 @@ export default function LocationScreen({ route }: Props) {
           className="bg-nest-500 rounded-2xl items-center justify-center mt-5 px-8 shadow-lg h-[52px]"
         >
           <Text className="text-sm font-display font-bold text-white tracking-wide">
-            Дахин оролдох
+            {t('common.retry')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -144,17 +146,16 @@ export default function LocationScreen({ route }: Props) {
         <View className="w-16 h-16 rounded-full bg-gray-100 items-center justify-center mb-4">
           <Ionicons name="location-outline" size={32} color={C.gray300} />
         </View>
-        <Text className="text-sm font-semibold text-gray-500">Байршлын мэдээлэл байхгүй</Text>
+        <Text className="text-sm font-semibold text-gray-500">{t('location.noLocation')}</Text>
         <Text className="text-[13px] text-gray-400 text-center mt-1.5 leading-5">
-          {childName}-ийн төхөөрөмжөөс байршлын шинэчлэлтүүд энд харагдана.
-          Төхөөрөмжийн хэсгээс Байршлыг олох командыг илгээнэ үү.
+          {t('location.noLocationDesc', { childName })}
         </Text>
         <TouchableOpacity
           onPress={loadLocations}
           className="bg-nest-500 rounded-2xl items-center justify-center mt-5 px-8 shadow-lg h-[52px]"
         >
           <Text className="text-sm font-display font-bold text-white tracking-wide">
-            Шинэчлэх
+            {t('location.refresh')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -196,7 +197,7 @@ export default function LocationScreen({ route }: Props) {
               longitude: latestLocation.lng,
             }}
             title={childName}
-            description={`Сүүлд шинэчлэгдсэн: ${formatTime(latestLocation.timestamp)}`}
+            description={t('location.lastUpdated', { time: formatTime(latestLocation.timestamp) })}
           />
 
           {/* History markers */}
@@ -222,7 +223,7 @@ export default function LocationScreen({ route }: Props) {
               <Ionicons name="map-outline" size={28} color={C.gray400} />
             </View>
             <Text className="text-sm text-gray-500">
-              Газрын зураг ашиглах боломжгүй
+              {t('location.mapUnavailable')}
             </Text>
             <TouchableOpacity
               onPress={() => openInExternalMap(latestLocation.lat, latestLocation.lng)}
@@ -230,7 +231,7 @@ export default function LocationScreen({ route }: Props) {
             >
               <Ionicons name="open-outline" size={18} color="#FFFFFF" />
               <Text className="text-sm font-display font-bold text-white tracking-wide">
-                Газрын зурагт нээх
+                {t('location.openInMap')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -274,7 +275,7 @@ export default function LocationScreen({ route }: Props) {
         <View className="flex-row items-center gap-x-2 mb-2">
           <Ionicons name="location" size={20} color={C.nest500} />
           <Text className="text-sm font-bold text-gray-900">
-            Сүүлд мэдэгдсэн байршил
+            {t('location.lastKnown')}
           </Text>
         </View>
         {address ? (
@@ -282,7 +283,7 @@ export default function LocationScreen({ route }: Props) {
         ) : (
           <TouchableOpacity onPress={loadAddress} disabled={addressLoading}>
             <Text className="text-xs text-nest-500 underline mb-1">
-              {addressLoading ? 'Хаяг ачааллаж байна...' : 'Хаяг харах'}
+              {addressLoading ? t('location.loadingAddress') : t('location.viewAddress')}
             </Text>
           </TouchableOpacity>
         )}
@@ -294,10 +295,10 @@ export default function LocationScreen({ route }: Props) {
           </Text>
         </TouchableOpacity>
         <Text className="text-xs text-gray-400 mt-1">
-          Шинэчлэгдсэн: {formatTime(latestLocation.timestamp)}
+          {t('location.updated')}: {formatTime(latestLocation.timestamp)}
         </Text>
         <Text className="text-[11px] text-gray-400 mt-1">
-          Өнөөдөр {locations.length} байршлын цэг
+          {t('location.locationPoints', { count: locations.length })}
         </Text>
       </View>
 

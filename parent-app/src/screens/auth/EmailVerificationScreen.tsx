@@ -4,9 +4,11 @@ import {
   KeyboardAvoidingView, Platform, Alert, ScrollView, ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../store/AuthContext';
 
 export default function EmailVerificationScreen() {
+  const { t } = useTranslation();
   const { verifyEmail, resendVerification, logout, user } = useAuth();
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
@@ -14,14 +16,14 @@ export default function EmailVerificationScreen() {
 
   const handleVerify = async () => {
     if (code.trim().length !== 6) {
-      Alert.alert('Алдаа', '6 оронтой баталгаажуулах кодыг оруулна уу.');
+      Alert.alert(t('common.error'), t('emailVerification.invalidCode'));
       return;
     }
     setLoading(true);
     try {
       await verifyEmail(code.trim());
     } catch (error: any) {
-      Alert.alert('Алдаа', error.message || 'Баталгаажуулахад алдаа гарлаа.');
+      Alert.alert(t('common.error'), error.message || t('emailVerification.verifyError'));
     } finally {
       setLoading(false);
     }
@@ -31,9 +33,9 @@ export default function EmailVerificationScreen() {
     setResending(true);
     try {
       await resendVerification();
-      Alert.alert('Амжилттай', 'Шинэ баталгаажуулах код имэйлээр илгээгдлээ.');
+      Alert.alert(t('common.success'), t('emailVerification.resendSuccess'));
     } catch (error: any) {
-      Alert.alert('Алдаа', error.message || 'Код дахин илгээхэд алдаа гарлаа.');
+      Alert.alert(t('common.error'), error.message || t('emailVerification.resendError'));
     } finally {
       setResending(false);
     }
@@ -55,19 +57,17 @@ export default function EmailVerificationScreen() {
             <Ionicons name="mail-outline" size={32} color="#16a34a" />
           </View>
           <Text className="font-display font-extrabold text-xl text-gray-900 tracking-tight text-center">
-            Имэйл баталгаажуулалт
+            {t('emailVerification.title')}
           </Text>
           <Text className="text-xs text-gray-400 font-medium mt-2 text-center leading-5 px-4">
-            Бид{' '}
-            <Text className="font-bold text-gray-600">{user?.email}</Text>
-            {' '}руу 6 оронтой код илгээлээ. Кодыг оруулна уу.
+            {t('emailVerification.codeSent', { email: user?.email })}
           </Text>
         </View>
 
         {/* Form card */}
         <View className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
           <View className="mb-6">
-            <Text className="font-display font-bold text-gray-900 mb-2 text-center">Баталгаажуулах код</Text>
+            <Text className="font-display font-bold text-gray-900 mb-2 text-center">{t('emailVerification.verificationCode')}</Text>
             <View className="flex-row items-center px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200">
               <Ionicons name="key-outline" size={17} color="#9ca3af" />
               <TextInput
@@ -93,7 +93,7 @@ export default function EmailVerificationScreen() {
           >
             {loading
               ? <ActivityIndicator color="#fff" />
-              : <Text className="font-display font-bold text-sm text-white">Баталгаажуулах</Text>
+              : <Text className="font-display font-bold text-sm text-white">{t('emailVerification.verify')}</Text>
             }
           </TouchableOpacity>
 
@@ -104,13 +104,13 @@ export default function EmailVerificationScreen() {
           >
             {resending
               ? <ActivityIndicator size="small" color="#16a34a" />
-              : <Text className="text-sm font-bold text-nest-500">Код дахин илгээх</Text>
+              : <Text className="text-sm font-bold text-nest-500">{t('emailVerification.resend')}</Text>
             }
           </TouchableOpacity>
         </View>
 
         <TouchableOpacity className="items-center mt-6 py-2" onPress={logout}>
-          <Text className="text-sm text-gray-400">Гарах</Text>
+          <Text className="text-sm text-gray-400">{t('auth.logout')}</Text>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>

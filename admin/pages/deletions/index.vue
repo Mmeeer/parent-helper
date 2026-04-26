@@ -1,11 +1,11 @@
 <template>
   <div>
-    <PageHeader title="Account Deletions" subtitle="Accounts pending permanent deletion (30-day grace period)" :breadcrumbs="[{ label: 'Deletions' }]">
+    <PageHeader :title="$t('deletions.title')" :subtitle="$t('deletions.subtitle')" :breadcrumbs="[{ label: $t('deletions.title') }]">
       <template #actions>
         <button @click="handlePurge" :disabled="purging"
           class="px-3 py-2 text-xs font-medium rounded-lg transition"
           :class="purging ? 'bg-ink-100 text-ink-400' : 'bg-danger-50 text-danger-600 hover:bg-danger-100'">
-          {{ purging ? 'Purging...' : 'Purge Expired' }}
+          {{ purging ? $t('deletions.purging') : $t('deletions.purgeExpired') }}
         </button>
       </template>
     </PageHeader>

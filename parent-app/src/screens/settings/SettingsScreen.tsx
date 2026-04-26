@@ -8,6 +8,8 @@ import * as api from '../../services/api';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { RootStackParamList } from '../../types';
 import { C } from '../../theme';
+import { useTranslation } from 'react-i18next';
+import { changeLanguage } from '../../i18n';
 
 type SettingsItem = {
   title: string;
@@ -23,6 +25,7 @@ type SettingsItem = {
 export default function SettingsScreen() {
   const { top } = useSafeAreaInsets();
   const { user, logout } = useAuth();
+  const { t, i18n } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [subInfo, setSubInfo] = useState<api.SubscriptionInfo | null>(null);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
@@ -36,7 +39,7 @@ export default function SettingsScreen() {
 
   const handleDeleteAccount = useCallback(async () => {
     if (!deletePassword) {
-      Alert.alert('Алдаа', 'Нууц үгээ оруулна уу.');
+      Alert.alert(t('common.error'), t('settings.enterPasswordError'));
       return;
     }
     setDeleteLoading(true);
@@ -46,35 +49,35 @@ export default function SettingsScreen() {
       setDeletePassword('');
       setDeleteReason('');
       Alert.alert(
-        'Бүртгэл устгах хүсэлт илгээгдлээ',
-        'Таны бүртгэл 30 хоногийн дараа бүрмөсөн устгагдана. Цуцлахыг хүсвэл тусламжтай холбогдоно уу.',
-        [{ text: 'Ойлголоо', onPress: () => void logout() }],
+        t('settings.deleteAccountSent'),
+        t('settings.deleteAccountSentDesc'),
+        [{ text: t('common.understood'), onPress: () => void logout() }],
       );
     } catch (err: any) {
-      Alert.alert('Алдаа', err.message || 'Бүртгэл устгахад алдаа гарлаа.');
+      Alert.alert(t('common.error'), err.message || t('settings.deleteAccountError'));
     } finally {
       setDeleteLoading(false);
     }
   }, [deletePassword, deleteReason, logout]);
 
   const handleLogout = () => {
-    Alert.alert('Гарах', 'Гарахдаа итгэлтэй байна уу?', [
-      { text: 'Цуцлах', style: 'cancel' },
-      { text: 'Гарах', style: 'destructive', onPress: () => { void logout(); } },
+    Alert.alert(t('auth.logout'), t('auth.confirmLogout'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('auth.logout'), style: 'destructive', onPress: () => { void logout(); } },
     ]);
   };
 
   const profileItems: SettingsItem[] = [
     {
-      title: 'Профайл засах',
+      title: t('settings.editProfile'),
       icon: 'person-outline',
       iconBg: 'bg-nest-50',
       iconColor: C.nest500,
-      subtitle: 'Нэр өөрчлөх',
+      subtitle: t('settings.editProfileSub'),
       onPress: () => navigation.navigate('EditProfile'),
     },
     {
-      title: 'Нууц үг солих',
+      title: t('settings.changePassword'),
       icon: 'lock-closed-outline',
       iconBg: 'bg-warm-50',
       iconColor: C.warm500,
@@ -84,24 +87,24 @@ export default function SettingsScreen() {
 
   const notificationItems: SettingsItem[] = [
     {
-      title: 'Мэдэгдлийн тохиргоо',
+      title: t('settings.notificationSettings'),
       icon: 'notifications-outline',
       iconBg: 'bg-warm-50',
       iconColor: C.warm500,
-      subtitle: 'Төрөл, чимээгүй цаг',
+      subtitle: t('settings.notificationSettingsSub'),
       onPress: () => navigation.navigate('NotificationSettings'),
     },
   ];
 
   const accountItems: SettingsItem[] = [
     {
-      title: 'Захиалга',
+      title: t('settings.subscription'),
       icon: 'key-outline',
       iconBg: 'bg-purple-50',
       iconColor: '#8b5cf6',
       value: subInfo?.active
-        ? `Идэвхтэй — ${subInfo.subscription?.maxKids} хүүхэд`
-        : 'Идэвхтэй захиалга байхгүй',
+        ? t('settings.subscriptionActive', { count: subInfo.subscription?.maxKids })
+        : t('settings.subscriptionInactive'),
       valueColor: subInfo?.active ? 'text-safe-600' : 'text-gray-400',
       onPress: () => navigation.navigate('ActivateSubscription'),
     },
@@ -109,11 +112,26 @@ export default function SettingsScreen() {
 
   const supportItems: SettingsItem[] = [
     {
-      title: 'Нууцлалын бодлого & Нөхцөл',
+      title: t('settings.privacy'),
       icon: 'document-text-outline',
       iconBg: 'bg-gray-100',
       iconColor: C.gray500,
       onPress: () => navigation.navigate('PrivacyPolicy'),
+    },
+  ];
+
+  const generalItems: SettingsItem[] = [
+    {
+      title: t('settings.language'),
+      icon: 'language-outline',
+      iconBg: 'bg-blue-50',
+      iconColor: '#3b82f6',
+      subtitle: t('settings.languageSub'),
+      value: i18n.language === 'mn' ? 'Монгол' : 'English',
+      onPress: () => {
+        const newLang = i18n.language === 'mn' ? 'en' : 'mn';
+        changeLanguage(newLang);
+      },
     },
   ];
 
@@ -157,7 +175,7 @@ export default function SettingsScreen() {
 
         {/* Header */}
         <View className="mt-4 mb-6">
-          <Text className="font-display font-extrabold text-xl text-gray-900">Тохиргоо</Text>
+          <Text className="font-display font-extrabold text-xl text-gray-900">{t('settings.title')}</Text>
         </View>
 
         {/* Profile card */}
@@ -181,7 +199,7 @@ export default function SettingsScreen() {
                   <View className="flex-row items-center mt-1.5">
                     <View className={`w-2 h-2 rounded-full mr-1.5 ${subInfo?.active ? 'bg-safe-400' : 'bg-gray-300'}`} />
                     <Text className={`text-xs font-bold ${subInfo?.active ? 'text-safe-600' : 'text-gray-400'}`}>
-                      {subInfo?.active ? 'Premium идэвхтэй' : 'Захиалга байхгүй'}
+                      {subInfo?.active ? t('settings.premiumActive') : t('settings.noPlan')}
                     </Text>
                   </View>
                 </View>
@@ -192,10 +210,11 @@ export default function SettingsScreen() {
         </Pressable>
 
         {/* Settings sections */}
-        {renderSection('ПРОФАЙЛ', profileItems)}
-        {renderSection('МЭДЭГДЭЛ', notificationItems)}
-        {renderSection('ЗАХИАЛГА', accountItems)}
-        {renderSection('ТУСЛАМЖ', supportItems)}
+        {renderSection(t('settings.profileSection'), profileItems)}
+        {renderSection(t('settings.notificationSection'), notificationItems)}
+        {renderSection(t('settings.subscriptionSection'), accountItems)}
+        {renderSection(t('settings.helpSection'), supportItems)}
+        {renderSection(t('settings.generalSection'), generalItems)}
 
         {/* Logout button */}
         <TouchableOpacity
@@ -204,7 +223,7 @@ export default function SettingsScreen() {
           activeOpacity={0.7}
         >
           <Text className="font-display font-bold text-sm text-danger-500">
-            Гарах
+            {t('auth.logout')}
           </Text>
         </TouchableOpacity>
 
@@ -212,11 +231,11 @@ export default function SettingsScreen() {
         <TouchableOpacity
           onPress={() => {
             Alert.alert(
-              'Бүртгэл устгах',
-              'Бүртгэлээ устгахыг хүсэж байна уу? Таны бүх мэдээлэл 30 хоногийн дараа бүрмөсөн устгагдана.',
+              t('settings.deleteAccount'),
+              t('settings.deleteAccountConfirm'),
               [
-                { text: 'Цуцлах', style: 'cancel' },
-                { text: 'Үргэлжлүүлэх', style: 'destructive', onPress: () => setDeleteModalVisible(true) },
+                { text: t('common.cancel'), style: 'cancel' },
+                { text: t('common.continue'), style: 'destructive', onPress: () => setDeleteModalVisible(true) },
               ],
             );
           }}
@@ -224,7 +243,7 @@ export default function SettingsScreen() {
           activeOpacity={0.7}
         >
           <Text className="font-display font-semibold text-xs text-danger-400">
-            Бүртгэл устгах
+            {t('settings.deleteAccount')}
           </Text>
         </TouchableOpacity>
 
@@ -236,14 +255,14 @@ export default function SettingsScreen() {
                 <Ionicons name="warning-outline" size={24} color={C.danger500} />
               </View>
               <Text className="font-display font-bold text-lg text-gray-900 text-center mb-2">
-                Бүртгэл устгах
+                {t('settings.deleteAccount')}
               </Text>
               <Text className="text-sm text-gray-500 text-center mb-5">
-                Баталгаажуулахын тулд нууц үгээ оруулна уу. Таны бүх мэдээлэл 30 хоногийн дараа бүрмөсөн устгагдана.
+                {t('settings.deleteAccountModal')}
               </Text>
               <View className="bg-gray-50 rounded-2xl px-4 py-3 border border-gray-200 mb-3">
                 <TextInput
-                  placeholder="Нууц үг"
+                  placeholder={t('auth.password')}
                   placeholderTextColor="#9ca3af"
                   secureTextEntry
                   value={deletePassword}
@@ -254,7 +273,7 @@ export default function SettingsScreen() {
               </View>
               <View className="bg-gray-50 rounded-2xl px-4 py-3 border border-gray-200 mb-4">
                 <TextInput
-                  placeholder="Шалтгаан (заавал биш)"
+                  placeholder={t('settings.deleteAccountReason')}
                   placeholderTextColor="#9ca3af"
                   value={deleteReason}
                   onChangeText={setDeleteReason}
@@ -276,7 +295,7 @@ export default function SettingsScreen() {
                   <ActivityIndicator color="#fff" size="small" />
                 ) : (
                   <Text className="font-display font-bold text-sm text-white">
-                    Бүртгэл устгах
+                    {t('settings.deleteAccount')}
                   </Text>
                 )}
               </TouchableOpacity>
@@ -287,7 +306,7 @@ export default function SettingsScreen() {
                 disabled={deleteLoading}
               >
                 <Text className="font-display font-bold text-sm text-gray-500">
-                  Цуцлах
+                  {t('common.cancel')}
                 </Text>
               </TouchableOpacity>
             </View>

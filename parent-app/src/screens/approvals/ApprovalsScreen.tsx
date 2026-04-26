@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { View, FlatList, RefreshControl, Alert, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { formatTimeAgo } from '../../utils/formatters';
 import * as api from '../../services/api';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,6 +16,7 @@ const AGE_RATINGS: Record<string, string> = {
 export default function ApprovalsScreen() {
   const { top } = useSafeAreaInsets();
   const navigation = useNavigation();
+  const { t } = useTranslation();
   const [approvals, setApprovals] = useState<AlertType[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -43,9 +45,9 @@ export default function ApprovalsScreen() {
     try {
       await api.decideApproval(approvalId, action);
       setApprovals((prev) => prev.filter((a) => a._id !== approvalId));
-      Alert.alert('Дууссан', action === 'approve' ? 'Апп зөвшөөрөгдлөө.' : 'Апп хаагдлаа.');
+      Alert.alert(t('approvals.done'), action === 'approve' ? t('approvals.appApproved') : t('approvals.appBlocked'));
     } catch (error: any) {
-      Alert.alert('Алдаа', error.message || 'Зөвшөөрлийг боловсруулахад алдаа гарлаа.');
+      Alert.alert(t('common.error'), error.message || t('approvals.processError'));
     } finally {
       setProcessingId(null);
     }
@@ -105,7 +107,7 @@ export default function ApprovalsScreen() {
           >
             {isProcessing
               ? <ActivityIndicator size="small" color="#fff" />
-              : <Text className="text-sm font-display font-bold text-white">Зөвшөөрөх</Text>
+              : <Text className="text-sm font-display font-bold text-white">{t('approvals.approve')}</Text>
             }
           </TouchableOpacity>
 
@@ -114,7 +116,7 @@ export default function ApprovalsScreen() {
             disabled={isProcessing}
             className={`flex-1 bg-gray-100 rounded-2xl items-center justify-center py-[13px] ${isProcessing ? 'opacity-50' : 'opacity-100'}`}
           >
-            <Text className="text-sm font-display font-bold text-gray-600">Хаах</Text>
+            <Text className="text-sm font-display font-bold text-gray-600">{t('approvals.block')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -145,11 +147,11 @@ export default function ApprovalsScreen() {
         }
         ListHeaderComponent={
           <View className="mt-6 mb-7">
-            <Text className="font-display font-extrabold text-xl text-gray-900">Зөвшөөрлүүд</Text>
-            <Text className="text-sm text-gray-400 mt-1">App install requests from your children</Text>
+            <Text className="font-display font-extrabold text-xl text-gray-900">{t('approvals.title')}</Text>
+            <Text className="text-sm text-gray-400 mt-1">{t('approvals.subtitle')}</Text>
             {approvals.length > 0 && (
               <Text className="text-xs text-gray-400 font-bold mt-5 tracking-wide">
-                PENDING ({approvals.length})
+                {t('approvals.pending')} ({approvals.length})
               </Text>
             )}
           </View>
@@ -159,9 +161,9 @@ export default function ApprovalsScreen() {
             <View className="w-16 h-16 rounded-full bg-safe-50 items-center justify-center mb-4">
               <Ionicons name="checkmark-circle-outline" size={32} color={C.safe500} />
             </View>
-            <Text className="text-sm font-bold text-gray-600">Цэвэр</Text>
+            <Text className="text-sm font-bold text-gray-600">{t('approvals.allClear')}</Text>
             <Text className="text-sm text-gray-400 text-center mt-1.5 leading-5">
-              Хүлээгдэж буй апп зөвшөөрөл байхгүй.
+              {t('approvals.noPending')}
             </Text>
           </View>
         }

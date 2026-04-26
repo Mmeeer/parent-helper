@@ -1,18 +1,18 @@
 <template>
   <div>
-    <PageHeader title="Dashboard" subtitle="Platform overview at a glance" />
+    <PageHeader :title="$t('dashboard.title')" :subtitle="$t('dashboard.subtitle')" />
 
     <LoadingSkeleton v-if="loading" type="cards" :count="4" wrapper-class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6" />
 
     <template v-else>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard label="Total Users" :value="data?.stats.totalUsers ?? 0" :subtitle="`+${data?.stats.recentRegistrations ?? 0} this week`" color="blue"
+        <StatCard :label="$t('dashboard.totalUsers')" :value="data?.stats.totalUsers ?? 0" :subtitle="$t('dashboard.thisWeek', { count: data?.stats.recentRegistrations ?? 0 })" color="blue"
           icon='<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>' />
-        <StatCard label="Active Users (30d)" :value="data?.stats.activeUsers ?? 0" color="green"
+        <StatCard :label="$t('dashboard.activeUsers')" :value="data?.stats.activeUsers ?? 0" color="green"
           icon='<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>' />
-        <StatCard label="Devices Online" :value="`${data?.stats.onlineDevices ?? 0} / ${data?.stats.totalDevices ?? 0}`" color="purple"
+        <StatCard :label="$t('dashboard.devicesOnline')" :value="`${data?.stats.onlineDevices ?? 0} / ${data?.stats.totalDevices ?? 0}`" color="purple"
           icon='<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>' />
-        <StatCard label="Alerts Today" :value="data?.stats.alertsToday ?? 0" :color="(data?.stats.alertsToday ?? 0) > 10 ? 'red' : 'yellow'"
+        <StatCard :label="$t('dashboard.alertsToday')" :value="data?.stats.alertsToday ?? 0" :color="(data?.stats.alertsToday ?? 0) > 10 ? 'red' : 'yellow'"
           icon='<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>' />
       </div>
 
@@ -20,8 +20,8 @@
         <!-- Recent Alerts Feed -->
         <div class="lg:col-span-2 bg-white rounded-xl border border-ink-100 p-5">
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-sm font-semibold text-ink-800">Recent Alerts</h2>
-            <NuxtLink to="/alerts" class="text-xs text-nest-500 hover:text-nest-600 font-medium">View all</NuxtLink>
+            <h2 class="text-sm font-semibold text-ink-800">{{ $t('dashboard.recentAlerts') }}</h2>
+            <NuxtLink to="/alerts" class="text-xs text-nest-500 hover:text-nest-600 font-medium">{{ $t('common.viewAll') }}</NuxtLink>
           </div>
           <div v-if="data?.recentAlerts?.length" class="space-y-1 max-h-80 overflow-y-auto">
             <div v-for="alert in data.recentAlerts.slice(0, 10)" :key="alert._id"
@@ -37,14 +37,14 @@
               <span class="text-[11px] text-ink-400 flex-shrink-0">{{ fmt.formatDate(alert.createdAt, 'relative') }}</span>
             </div>
           </div>
-          <EmptyState v-else title="No recent alerts" message="Alerts from the past 7 days will appear here" />
+          <EmptyState v-else :title="$t('dashboard.noRecentAlerts')" :message="$t('dashboard.alertsAppearHere')" />
         </div>
 
         <!-- System Status -->
         <div class="bg-white rounded-xl border border-ink-100 p-5">
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-sm font-semibold text-ink-800">System Status</h2>
-            <NuxtLink to="/health" class="text-xs text-nest-500 hover:text-nest-600 font-medium">Details</NuxtLink>
+            <h2 class="text-sm font-semibold text-ink-800">{{ $t('dashboard.systemStatus') }}</h2>
+            <NuxtLink to="/health" class="text-xs text-nest-500 hover:text-nest-600 font-medium">{{ $t('common.details') }}</NuxtLink>
           </div>
 
           <div class="flex items-center justify-center mb-4">
@@ -56,16 +56,16 @@
               </svg>
               <div class="absolute inset-0 flex flex-col items-center justify-center">
                 <span class="font-display font-bold text-base text-ink-800">{{ onlinePct }}%</span>
-                <span class="text-[10px] text-ink-400">online</span>
+                <span class="text-[10px] text-ink-400">{{ $t('dashboard.online') }}</span>
               </div>
             </div>
           </div>
 
           <div class="space-y-2 text-xs">
-            <div class="flex justify-between"><span class="text-ink-400">Children</span><span class="font-medium text-ink-700">{{ data?.stats.totalChildren ?? 0 }}</span></div>
-            <div class="flex justify-between"><span class="text-ink-400">Devices Online</span><span class="font-medium text-green-600">{{ data?.stats.onlineDevices ?? 0 }}</span></div>
-            <div class="flex justify-between"><span class="text-ink-400">Devices Offline</span><span class="font-medium text-ink-400">{{ (data?.stats.totalDevices ?? 0) - (data?.stats.onlineDevices ?? 0) }}</span></div>
-            <div class="flex justify-between"><span class="text-ink-400">Uptime</span><span class="font-medium text-ink-700">{{ fmt.formatUptime(data?.uptime ?? 0) }}</span></div>
+            <div class="flex justify-between"><span class="text-ink-400">{{ $t('dashboard.children') }}</span><span class="font-medium text-ink-700">{{ data?.stats.totalChildren ?? 0 }}</span></div>
+            <div class="flex justify-between"><span class="text-ink-400">{{ $t('dashboard.devicesOnline') }}</span><span class="font-medium text-green-600">{{ data?.stats.onlineDevices ?? 0 }}</span></div>
+            <div class="flex justify-between"><span class="text-ink-400">{{ $t('dashboard.devicesOffline') }}</span><span class="font-medium text-ink-400">{{ (data?.stats.totalDevices ?? 0) - (data?.stats.onlineDevices ?? 0) }}</span></div>
+            <div class="flex justify-between"><span class="text-ink-400">{{ $t('dashboard.uptime') }}</span><span class="font-medium text-ink-700">{{ fmt.formatUptime(data?.uptime ?? 0) }}</span></div>
           </div>
         </div>
       </div>
@@ -73,12 +73,12 @@
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Plan Distribution -->
         <div class="bg-white rounded-xl border border-ink-100 p-5">
-          <h2 class="text-sm font-semibold text-ink-800 mb-4">Plan Distribution</h2>
+          <h2 class="text-sm font-semibold text-ink-800 mb-4">{{ $t('dashboard.planDistribution') }}</h2>
           <div class="space-y-3">
             <div>
               <div class="flex justify-between text-xs mb-1">
-                <span class="font-medium text-ink-700">Free</span>
-                <span class="text-ink-400">{{ data?.planDistribution.free ?? 0 }} users</span>
+                <span class="font-medium text-ink-700">{{ $t('dashboard.free') }}</span>
+                <span class="text-ink-400">{{ data?.planDistribution.free ?? 0 }} {{ $t('dashboard.users') }}</span>
               </div>
               <div class="w-full bg-ink-100 rounded-full h-1.5">
                 <div class="h-1.5 rounded-full bg-ink-300" :style="{ width: planPct('free') + '%' }"></div>
@@ -86,8 +86,8 @@
             </div>
             <div>
               <div class="flex justify-between text-xs mb-1">
-                <span class="font-medium text-ink-700">Subscribed</span>
-                <span class="text-ink-400">{{ data?.planDistribution.subscribed ?? 0 }} users</span>
+                <span class="font-medium text-ink-700">{{ $t('dashboard.subscribed') }}</span>
+                <span class="text-ink-400">{{ data?.planDistribution.subscribed ?? 0 }} {{ $t('dashboard.users') }}</span>
               </div>
               <div class="w-full bg-ink-100 rounded-full h-1.5">
                 <div class="h-1.5 rounded-full bg-nest-500" :style="{ width: planPct('subscribed') + '%' }"></div>
@@ -95,16 +95,16 @@
             </div>
           </div>
           <div class="mt-4 pt-3 border-t border-ink-100 grid grid-cols-2 gap-3 text-xs">
-            <div><span class="text-ink-400">Total Keys</span><div class="font-semibold text-ink-800">{{ data?.planDistribution.totalKeys ?? 0 }}</div></div>
-            <div><span class="text-ink-400">Active Keys</span><div class="font-semibold text-green-600">{{ data?.planDistribution.activeKeys ?? 0 }}</div></div>
+            <div><span class="text-ink-400">{{ $t('dashboard.totalKeys') }}</span><div class="font-semibold text-ink-800">{{ data?.planDistribution.totalKeys ?? 0 }}</div></div>
+            <div><span class="text-ink-400">{{ $t('dashboard.activeKeys') }}</span><div class="font-semibold text-green-600">{{ data?.planDistribution.activeKeys ?? 0 }}</div></div>
           </div>
         </div>
 
         <!-- Alerts by Type -->
         <div class="bg-white rounded-xl border border-ink-100 p-5">
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-sm font-semibold text-ink-800">Alerts by Type (Today)</h2>
-            <NuxtLink to="/alerts" class="text-xs text-nest-500 hover:text-nest-600 font-medium">View all</NuxtLink>
+            <h2 class="text-sm font-semibold text-ink-800">{{ $t('dashboard.alertsByType') }}</h2>
+            <NuxtLink to="/alerts" class="text-xs text-nest-500 hover:text-nest-600 font-medium">{{ $t('common.viewAll') }}</NuxtLink>
           </div>
           <div v-if="Object.keys(data?.alertsByType ?? {}).length" class="space-y-2.5">
             <div v-for="(count, type) in data.alertsByType" :key="type">
@@ -117,7 +117,7 @@
               </div>
             </div>
           </div>
-          <EmptyState v-else title="No alerts today" message="All quiet on the platform" />
+          <EmptyState v-else :title="$t('dashboard.noAlertsToday')" :message="$t('dashboard.allQuiet')" />
         </div>
       </div>
     </template>
@@ -125,6 +125,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n();
 const { getDashboard } = useApi();
 const fmt = useFormatters();
 
@@ -174,7 +175,7 @@ async function load() {
   try {
     data.value = await getDashboard();
   } catch (e: any) {
-    error.value = e.message || 'Failed to load dashboard';
+    error.value = e.message || t('dashboard.failedToLoad');
   } finally {
     loading.value = false;
   }

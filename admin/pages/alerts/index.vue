@@ -1,15 +1,15 @@
 <template>
   <div>
-    <PageHeader title="Alerts" subtitle="Platform-wide alert monitoring" :breadcrumbs="[{ label: 'Alerts' }]">
+    <PageHeader :title="$t('alerts.title')" :subtitle="$t('alerts.subtitle')" :breadcrumbs="[{ label: $t('alerts.title') }]">
       <template #actions>
         <select v-model="typeFilter" @change="alertPage = 1; loadAlerts()" class="px-3 py-2 border border-ink-200 rounded-lg text-xs bg-white focus:ring-1 focus:ring-nest-500 outline-none text-ink-700">
-          <option value="">All Types</option>
+          <option value="">{{ $t('common.allTypes') }}</option>
           <option v-for="t in alertTypes" :key="t" :value="t">{{ fmt.formatAlertType(t) }}</option>
         </select>
         <select v-model="readFilter" @change="alertPage = 1; loadAlerts()" class="px-3 py-2 border border-ink-200 rounded-lg text-xs bg-white focus:ring-1 focus:ring-nest-500 outline-none text-ink-700">
-          <option value="">All</option>
-          <option value="false">Unread</option>
-          <option value="true">Read</option>
+          <option value="">{{ $t('common.all') }}</option>
+          <option value="false">{{ $t('common.unread') }}</option>
+          <option value="true">{{ $t('common.read') }}</option>
         </select>
       </template>
     </PageHeader>
@@ -18,20 +18,20 @@
 
     <template v-else>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard label="Alerts Today" :value="summary?.totalToday ?? 0" color="yellow"
+        <StatCard :label="$t('alerts.alertsToday')" :value="summary?.totalToday ?? 0" color="yellow"
           icon='<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>' />
-        <StatCard label="Unread" :value="summary?.totalUnread ?? 0" color="red"
+        <StatCard :label="$t('alerts.unread')" :value="summary?.totalUnread ?? 0" color="red"
           icon='<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>' />
-        <StatCard label="Most Common" :value="mostCommonType" color="blue"
+        <StatCard :label="$t('alerts.mostCommon')" :value="mostCommonType" color="blue"
           icon='<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>' />
-        <StatCard label="Top User" :value="summary?.topUsers?.[0]?.name || '-'" :subtitle="summary?.topUsers?.[0] ? `${summary.topUsers[0].alertCount} alerts` : ''" color="purple"
+        <StatCard :label="$t('alerts.topUser')" :value="summary?.topUsers?.[0]?.name || '-'" :subtitle="summary?.topUsers?.[0] ? $t('alerts.alertsCount', { count: summary.topUsers[0].alertCount }) : ''" color="purple"
           icon='<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>' />
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <!-- Trend -->
         <div class="lg:col-span-2 bg-white rounded-xl border border-ink-100 p-5">
-          <h2 class="text-sm font-semibold text-ink-800 mb-4">Alert Trend (14 days)</h2>
+          <h2 class="text-sm font-semibold text-ink-800 mb-4">{{ $t('alerts.trend') }}</h2>
           <div v-if="summary?.trend?.length" class="flex items-end gap-1 h-32">
             <div v-for="day in summary.trend" :key="day.date" class="flex-1 flex flex-col items-center gap-1">
               <span class="text-[10px] text-ink-400">{{ day.count }}</span>
@@ -39,12 +39,12 @@
               <span class="text-[9px] text-ink-400 -rotate-45 origin-left whitespace-nowrap">{{ day.date.slice(5) }}</span>
             </div>
           </div>
-          <EmptyState v-else title="No trend data" message="Not enough data for the trend chart" />
+          <EmptyState v-else :title="$t('alerts.noTrendData')" :message="$t('alerts.notEnoughData')" />
         </div>
 
         <!-- By Type -->
         <div class="bg-white rounded-xl border border-ink-100 p-5">
-          <h2 class="text-sm font-semibold text-ink-800 mb-4">By Type (14 days)</h2>
+          <h2 class="text-sm font-semibold text-ink-800 mb-4">{{ $t('alerts.byType') }}</h2>
           <div v-if="Object.keys(summary?.byType ?? {}).length" class="space-y-2.5">
             <div v-for="(count, type) in summary.byType" :key="type">
               <div class="flex justify-between text-xs mb-1">
@@ -56,7 +56,7 @@
               </div>
             </div>
           </div>
-          <EmptyState v-else title="No alerts" message="No alerts in the past 14 days" />
+          <EmptyState v-else :title="$t('alerts.noAlerts')" :message="$t('alerts.noAlerts14Days')" />
         </div>
       </div>
 
@@ -66,12 +66,12 @@
         <table v-else-if="alerts.length" class="w-full">
           <thead>
             <tr class="bg-ink-50/60 border-b border-ink-100">
-              <th class="px-4 py-2.5 text-left text-[10px] font-semibold text-ink-400 uppercase tracking-widest">Time</th>
-              <th class="px-4 py-2.5 text-left text-[10px] font-semibold text-ink-400 uppercase tracking-widest">Type</th>
-              <th class="px-4 py-2.5 text-left text-[10px] font-semibold text-ink-400 uppercase tracking-widest">Child</th>
-              <th class="px-4 py-2.5 text-left text-[10px] font-semibold text-ink-400 uppercase tracking-widest">Parent</th>
-              <th class="px-4 py-2.5 text-left text-[10px] font-semibold text-ink-400 uppercase tracking-widest">Message</th>
-              <th class="px-4 py-2.5 text-left text-[10px] font-semibold text-ink-400 uppercase tracking-widest">Read</th>
+              <th class="px-4 py-2.5 text-left text-[10px] font-semibold text-ink-400 uppercase tracking-widest">{{ $t('alerts.time') }}</th>
+              <th class="px-4 py-2.5 text-left text-[10px] font-semibold text-ink-400 uppercase tracking-widest">{{ $t('alerts.type') }}</th>
+              <th class="px-4 py-2.5 text-left text-[10px] font-semibold text-ink-400 uppercase tracking-widest">{{ $t('alerts.child') }}</th>
+              <th class="px-4 py-2.5 text-left text-[10px] font-semibold text-ink-400 uppercase tracking-widest">{{ $t('alerts.parent') }}</th>
+              <th class="px-4 py-2.5 text-left text-[10px] font-semibold text-ink-400 uppercase tracking-widest">{{ $t('alerts.message') }}</th>
+              <th class="px-4 py-2.5 text-left text-[10px] font-semibold text-ink-400 uppercase tracking-widest">{{ $t('alerts.readStatus') }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-ink-50">
@@ -87,15 +87,15 @@
             </tr>
           </tbody>
         </table>
-        <EmptyState v-else title="No alerts" message="No alerts match your filters" />
+        <EmptyState v-else :title="$t('alerts.noAlerts')" :message="$t('alerts.noAlertsMatch')" />
 
         <div v-if="alertTotalPages > 1" class="flex items-center justify-between px-5 py-3 border-t border-ink-100 bg-ink-50/40">
           <p class="text-xs text-ink-400">Page {{ alertPage }} of {{ alertTotalPages }} ({{ alertTotal }} total)</p>
           <div class="flex gap-1.5">
             <button :disabled="alertPage <= 1" @click="alertPage--; loadAlerts()"
-              class="px-3 py-1.5 text-xs border border-ink-200 rounded-lg disabled:opacity-30 hover:bg-white transition text-ink-600">Prev</button>
+              class="px-3 py-1.5 text-xs border border-ink-200 rounded-lg disabled:opacity-30 hover:bg-white transition text-ink-600">{{ $t('common.prev') }}</button>
             <button :disabled="alertPage >= alertTotalPages" @click="alertPage++; loadAlerts()"
-              class="px-3 py-1.5 text-xs border border-ink-200 rounded-lg disabled:opacity-30 hover:bg-white transition text-ink-600">Next</button>
+              class="px-3 py-1.5 text-xs border border-ink-200 rounded-lg disabled:opacity-30 hover:bg-white transition text-ink-600">{{ $t('common.next') }}</button>
           </div>
         </div>
       </div>

@@ -10,6 +10,7 @@ import * as api from '../../services/api';
 import { onSocketEvent } from '../../services/socket';
 import { useAuth } from '../../store/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { C } from '../../theme';
 import type { Child, Alert as AlertType, RootStackParamList } from '../../types';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -20,6 +21,7 @@ type Props = {
 
 export default function HomeScreen({ navigation }: Props) {
   const { top } = useSafeAreaInsets();
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [children, setChildren] = useState<Child[]>([]);
   const [alerts, setAlerts] = useState<AlertType[]>([]);
@@ -59,7 +61,7 @@ export default function HomeScreen({ navigation }: Props) {
 
   const handleActivate = async () => {
     if (!subKey.trim()) {
-      Alert.alert('Алдаа', 'Захиалгын түлхүүрийг оруулна уу.');
+      Alert.alert(t('common.error'), t('dashboard.enterKeyError'));
       return;
     }
     setSubLoading(true);
@@ -68,7 +70,7 @@ export default function HomeScreen({ navigation }: Props) {
       setSubKey('');
       await loadData();
     } catch (error: any) {
-      Alert.alert('Идэвхжүүлэлт амжилтгүй', error.message || 'Буруу эсвэл хугацаа дууссан түлхүүр.');
+      Alert.alert(t('dashboard.activationFailed'), error.message || t('dashboard.invalidKey'));
     } finally {
       setSubLoading(false);
     }
@@ -122,8 +124,8 @@ export default function HomeScreen({ navigation }: Props) {
         {isActive ? (
           <View className="mt-6 mb-8 flex-row items-start justify-between">
             <View className="flex-1">
-              <Text className="text-xs text-gray-400 font-bold uppercase tracking-wide mb-1.5">Хяналт</Text>
-              <Text className="font-display text-[32px] font-extrabold text-gray-900 leading-9">Өнөөдөр</Text>
+              <Text className="text-xs text-gray-400 font-bold uppercase tracking-wide mb-1.5">{t('dashboard.monitoring')}</Text>
+              <Text className="font-display text-[32px] font-extrabold text-gray-900 leading-9">{t('dashboard.today')}</Text>
             </View>
             <View className="w-10 h-10 rounded-full items-center justify-center bg-nest-500">
               <Text className="font-display text-lg font-extrabold text-white leading-[22px]">
@@ -133,12 +135,12 @@ export default function HomeScreen({ navigation }: Props) {
           </View>
         ) : (
           <View className="mt-6 mb-8">
-            <Text className="text-xs text-gray-400 font-bold uppercase tracking-wide mb-2">Тавтай морил</Text>
+            <Text className="text-xs text-gray-400 font-bold uppercase tracking-wide mb-2">{t('dashboard.welcome')}</Text>
             <Text className="font-display text-[34px] font-extrabold text-gray-900 leading-[38px]">
               Prime Kids: Parent Helper
             </Text>
             <Text className="text-sm text-gray-400 mt-2 leading-5">
-              Бүлийн аюулгүй хамгаалалт.
+              {t('dashboard.familySafety')}
             </Text>
           </View>
         )}
@@ -146,12 +148,12 @@ export default function HomeScreen({ navigation }: Props) {
         {/* ── Plan Card (active) / Activate Card (inactive) ── */}
         {isActive && sub ? (
           <View className="rounded-3xl p-6 mb-6 bg-nest-600">
-            <Text className="text-xs font-bold uppercase tracking-wide mb-3 text-nest-200">Төлөвлөгөө</Text>
+            <Text className="text-xs font-bold uppercase tracking-wide mb-3 text-nest-200">{t('dashboard.plan')}</Text>
             <View className="flex-row items-end gap-2 mb-4">
               <Text className="font-display text-white font-extrabold text-[52px] leading-[56px]">
                 {getDaysLeft()}
               </Text>
-              <Text className="text-sm mb-1.5 text-nest-200">өдөр үлдлээ</Text>
+              <Text className="text-sm mb-1.5 text-nest-200">{t('dashboard.daysLeft')}</Text>
             </View>
             <View className="rounded h-1.5 overflow-hidden mb-2 bg-nest-500">
               <View style={{ backgroundColor: C.safe400, height: '100%', width: `${getUsedPct() * 100}%`, borderRadius: 4 }} />
@@ -162,12 +164,12 @@ export default function HomeScreen({ navigation }: Props) {
           </View>
         ) : (
           <View className="bg-white rounded-3xl border border-gray-100 p-6 mb-6">
-            <Text className="text-xs text-gray-400 font-bold uppercase tracking-wide mb-1.5">Идэвхжүүлэлт</Text>
+            <Text className="text-xs text-gray-400 font-bold uppercase tracking-wide mb-1.5">{t('dashboard.activation')}</Text>
             <Text className="font-display text-[28px] font-extrabold text-gray-900 mb-5 leading-8">
-              Түлхүүр оруулах
+              {t('dashboard.enterKey')}
             </Text>
             <Text className="text-sm text-gray-400 mb-5 leading-5">
-              Администраторын өгсөн захиалгын түлхүүрийг оруулна уу.
+              {t('dashboard.enterKeyDesc')}
             </Text>
             <TextInput
               className="bg-surface rounded-2xl border border-gray-100 px-4 py-3.5 text-base text-gray-900 text-center tracking-widest mb-4"
@@ -186,7 +188,7 @@ export default function HomeScreen({ navigation }: Props) {
             >
               {subLoading
                 ? <ActivityIndicator color="#fff" />
-                : <Text className="text-sm font-bold text-white tracking-wide">Түлхүүр идэвхжүүлэх</Text>
+                : <Text className="text-sm font-bold text-white tracking-wide">{t('dashboard.activateKey')}</Text>
               }
             </TouchableOpacity>
           </View>
@@ -195,7 +197,7 @@ export default function HomeScreen({ navigation }: Props) {
         {/* ── Tutorial video + steps + messenger (inactive) ─ */}
         {!isActive && (
           <>
-            <Text className="text-xs text-gray-400 font-bold uppercase tracking-wide mb-4">Заавартилга</Text>
+            <Text className="text-xs text-gray-400 font-bold uppercase tracking-wide mb-4">{t('dashboard.tutorial')}</Text>
 
             {/* Video thumbnail */}
             <TouchableOpacity onPress={openTutorialVideo} activeOpacity={0.8} className="mb-5">
@@ -209,9 +211,9 @@ export default function HomeScreen({ navigation }: Props) {
             {/* Steps */}
             <View className="bg-white rounded-3xl border border-gray-100 p-5 mb-4">
               {[
-                { n: '01', title: 'Хүүхдийн төхөөрөмжид суулгах', sub: 'Android-д боломжтой' },
-                { n: '02', title: 'Хялбар идэвхжүүлэлт', sub: 'Холболтын код оруулах' },
-                { n: '03', title: 'Хяналт эхлэх', sub: 'Цаг бодит тайлан' },
+                { n: '01', title: t('dashboard.step01'), sub: t('dashboard.step01Sub') },
+                { n: '02', title: t('dashboard.step02'), sub: t('dashboard.step02Sub') },
+                { n: '03', title: t('dashboard.step03'), sub: t('dashboard.step03Sub') },
               ].map((item, i) => (
                 <React.Fragment key={item.n}>
                   {i > 0 && <View className="h-px bg-gray-100 mb-3.5 ml-8 mt-3.5" />}
@@ -233,8 +235,8 @@ export default function HomeScreen({ navigation }: Props) {
                   <Ionicons name="chatbubble-ellipses-outline" size={20} color={C.nest500} />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-sm font-semibold text-gray-900">Тусламж</Text>
-                  <Text className="text-xs text-gray-400 mt-0.5">Messenger-ээр холбогдоо</Text>
+                  <Text className="text-sm font-semibold text-gray-900">{t('dashboard.help')}</Text>
+                  <Text className="text-xs text-gray-400 mt-0.5">{t('dashboard.messengerHelp')}</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={16} color={C.gray300} />
               </View>
@@ -245,23 +247,23 @@ export default function HomeScreen({ navigation }: Props) {
         {/* ── Empty children (active, no kids) ────────── */}
         {isActive && children.length === 0 && (
           <>
-            <Text className="text-xs text-gray-400 font-bold uppercase tracking-wide mb-4">Хүүхэд</Text>
+            <Text className="text-xs text-gray-400 font-bold uppercase tracking-wide mb-4">{t('dashboard.children')}</Text>
             <View className="bg-white rounded-3xl border border-gray-100 p-8 items-center">
               <View className="w-14 h-14 rounded-full items-center justify-center mb-4 bg-nest-50">
                 <Ionicons name="people-outline" size={28} color={C.nest500} />
               </View>
               <Text className="text-sm font-semibold text-gray-500 mb-1.5">
-                Хүүхэд нэмэгдээгүй байна
+                {t('dashboard.noChildren')}
               </Text>
               <Text className="text-[13px] text-gray-400 text-center mb-5 leading-5">
-                Хяналт эхлэхийн тулд хүүхдийн профайл нэмнэ үү.
+                {t('dashboard.noChildrenDesc')}
               </Text>
               <TouchableOpacity
                 className="rounded-2xl px-6 flex-row items-center gap-2 py-3 bg-nest-500"
                 onPress={() => navigation.navigate('AddChild')}
               >
                 <Ionicons name="add" size={16} color="#fff" />
-                <Text className="text-sm font-semibold text-white">Хүүхэд нэмэх</Text>
+                <Text className="text-sm font-semibold text-white">{t('dashboard.addChild')}</Text>
               </TouchableOpacity>
             </View>
           </>
@@ -270,7 +272,7 @@ export default function HomeScreen({ navigation }: Props) {
         {/* ── Children list (active, has kids) ────────── */}
         {isActive && children.length > 0 && (
           <>
-            <Text className="text-xs text-gray-400 font-bold uppercase tracking-wide mb-4">Хүүхдүүд</Text>
+            <Text className="text-xs text-gray-400 font-bold uppercase tracking-wide mb-4">{t('dashboard.childrenList')}</Text>
 
             {children.map((child, idx) => (
               <Pressable
@@ -290,7 +292,7 @@ export default function HomeScreen({ navigation }: Props) {
                       </View>
                       <View className="flex-1">
                         <Text className="text-sm font-semibold text-gray-900">{child.name}</Text>
-                        <Text className="text-xs text-gray-400 mt-1">{child.age} нас</Text>
+                        <Text className="text-xs text-gray-400 mt-1">{child.age} {t('common.age')}</Text>
                       </View>
                       <View className="flex-row items-center gap-3">
                         <View className="bg-gray-100 px-2.5 py-1 rounded-full flex-row items-center gap-1.5">
@@ -316,7 +318,7 @@ export default function HomeScreen({ navigation }: Props) {
                       <Ionicons name="notifications-outline" size={16} color={C.danger500} />
                     </View>
                     <Text className="font-display text-[28px] font-extrabold text-gray-900 leading-8">{alerts.length}</Text>
-                    <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-wide mt-1">Мэдэгдэл</Text>
+                    <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-wide mt-1">{t('dashboard.alerts')}</Text>
                   </View>
                 )}
               </Pressable>
@@ -330,7 +332,7 @@ export default function HomeScreen({ navigation }: Props) {
                       <Ionicons name="checkmark-circle-outline" size={16} color={C.warm500} />
                     </View>
                     <Text className="font-display text-[28px] font-extrabold text-gray-900 leading-8">{pendingCount}</Text>
-                    <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-wide mt-1">Хүлээгдэж буй</Text>
+                    <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-wide mt-1">{t('dashboard.pending')}</Text>
                   </View>
                 )}
               </Pressable>
@@ -342,7 +344,7 @@ export default function HomeScreen({ navigation }: Props) {
                 onPress={() => navigation.navigate('AddChild')}
               >
                 <Ionicons name="add" size={16} color={C.nest500} />
-                <Text className="text-[13px] font-medium text-nest-500">Хүүхэд нэмэх</Text>
+                <Text className="text-[13px] font-medium text-nest-500">{t('dashboard.addChild')}</Text>
               </TouchableOpacity>
             )}
           </>

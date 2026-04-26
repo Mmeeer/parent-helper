@@ -8,6 +8,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { formatDuration, formatTime } from '../../utils/formatters';
 import { showError } from '../../utils/showError';
 import * as api from '../../services/api';
+import { useTranslation } from 'react-i18next';
 import { C } from '../../theme';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
@@ -19,20 +20,22 @@ type Props = {
 };
 
 const PERIODS = ['day', 'week', 'month'] as const;
-const PERIOD_LABELS: Record<string, string> = { day: 'Өдөр', week: '7 хоног', month: 'Сар' };
-
-const ACTION_ITEMS = [
-  { key: 'rules',      label: 'Дүрэм',          icon: 'settings-outline' as const,        route: 'RulesOverview' as const,   color: C.nest500 },
-  { key: 'screentime', label: 'Дэлгэцийн цаг',  icon: 'time-outline' as const,             route: 'ScreenTimeRules' as const, color: C.warm500 },
-  { key: 'location',   label: 'Байршил',         icon: 'location-outline' as const,         route: 'LocationMap' as const,     color: C.danger500 },
-  { key: 'devices',    label: 'Төхөөрөмж',       icon: 'phone-portrait-outline' as const,   route: 'DevicesList' as const,     color: C.nest400 },
-  { key: 'reports',    label: 'Тайлан',          icon: 'bar-chart-outline' as const,        route: 'Reports' as const,         color: C.safe500 },
-  { key: 'geofences',  label: 'Геофенс',         icon: 'navigate-outline' as const,         route: 'Geofences' as const,       color: C.warm400 },
-];
 
 const APP_COLORS = [C.nest500, C.warm500, C.safe500, C.danger400, C.nest400, C.warm400];
 
 export default function ChildDetailScreen({ navigation, route }: Props) {
+  const { t } = useTranslation();
+
+  const PERIOD_LABELS: Record<string, string> = { day: t('childDetail.day'), week: t('childDetail.week'), month: t('childDetail.month') };
+
+  const ACTION_ITEMS = [
+    { key: 'rules',      label: t('childDetail.rules'),      icon: 'settings-outline' as const,        route: 'RulesOverview' as const,   color: C.nest500 },
+    { key: 'screentime', label: t('childDetail.screenTime'),  icon: 'time-outline' as const,             route: 'ScreenTimeRules' as const, color: C.warm500 },
+    { key: 'location',   label: t('childDetail.location'),    icon: 'location-outline' as const,         route: 'LocationMap' as const,     color: C.danger500 },
+    { key: 'devices',    label: t('childDetail.devices'),     icon: 'phone-portrait-outline' as const,   route: 'DevicesList' as const,     color: C.nest400 },
+    { key: 'reports',    label: t('childDetail.reports'),     icon: 'bar-chart-outline' as const,        route: 'Reports' as const,         color: C.safe500 },
+    { key: 'geofences',  label: t('childDetail.geofences'),   icon: 'navigate-outline' as const,         route: 'Geofences' as const,       color: C.warm400 },
+  ];
   const { childId, childName } = route.params;
   const [summary, setSummary] = useState<ActivitySummary | null>(null);
   const [period, setPeriod] = useState<'day' | 'week' | 'month'>('day');
@@ -66,29 +69,29 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
       await Promise.all(devices.map((d) => api.sendDeviceCommand(d.id, 'sync').catch(() => null)));
       setTimeout(() => loadData(), 2000);
     } catch (err) {
-      showError(err, 'Төхөөрөмжүүдийг синхрончлоход алдаа гарлаа.');
+      showError(err, t('childDetail.syncError'));
       loadData();
     }
   }, [childId, loadData]);
 
   const handleBlockDomain = useCallback((domain: string) => {
-    Alert.alert('Домайн хаах', `"${domain}"-г ${childName}-ийн төхөөрөмжид хаах уу?`, [
-      { text: 'Цуцлах', style: 'cancel' },
+    Alert.alert(t('childDetail.blockDomain'), t('childDetail.blockDomainConfirm', { domain, childName }), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Хаах',
+        text: t('common.block'),
         style: 'destructive',
         onPress: () => { void (async () => {
           try {
             const rules = await api.getRules(childId);
             const current = rules.webFilter?.customBlock || [];
             if (current.includes(domain)) {
-              Alert.alert('Аль хэдийн хаагдсан', `${domain} аль хэдийн хаагдсан байна.`);
+              Alert.alert(t('childDetail.alreadyBlocked'), t('childDetail.alreadyBlockedDesc', { target: domain }));
             } else {
               await api.updateWebFilter(childId, { customBlock: [...current, domain] });
-              Alert.alert('Хаагдлаа', `${domain} хаагдлаа.`);
+              Alert.alert(t('childDetail.domainBlocked'), t('childDetail.domainBlockedDesc', { target: domain }));
             }
           } catch {
-            Alert.alert('Алдаа', 'Домайн хаах боломжгүй байна.');
+            Alert.alert(t('common.error'), t('childDetail.domainBlockError'));
           }
         })(); },
       },
@@ -96,23 +99,23 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
   }, [childId, childName]);
 
   const handleBlockApp = useCallback((packageName: string, appName: string) => {
-    Alert.alert('Апп хаах', `"${appName}"-г ${childName}-ийн төхөөрөмжид хаах уу?`, [
-      { text: 'Цуцлах', style: 'cancel' },
+    Alert.alert(t('childDetail.blockApp'), t('childDetail.blockAppConfirm', { appName, childName }), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Хаах',
+        text: t('common.block'),
         style: 'destructive',
         onPress: () => { void (async () => {
           try {
             const rules = await api.getRules(childId);
             const current = rules.blockedApps || [];
             if (current.includes(packageName)) {
-              Alert.alert('Аль хэдийн хаагдсан', `${appName} аль хэдийн хаагдсан байна.`);
+              Alert.alert(t('childDetail.alreadyBlocked'), t('childDetail.alreadyBlockedDesc', { target: appName }));
             } else {
               await api.updateBlockedApps(childId, [...current, packageName]);
-              Alert.alert('Хаагдлаа', `${appName} хаагдлаа.`);
+              Alert.alert(t('childDetail.domainBlocked'), t('childDetail.domainBlockedDesc', { target: appName }));
             }
           } catch {
-            Alert.alert('Алдаа', 'Апп хаах боломжгүй байна.');
+            Alert.alert(t('common.error'), t('childDetail.appBlockError'));
           }
         })(); },
       },
@@ -162,7 +165,7 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
           {/* Child name & info */}
           <View className="flex-1 ml-3">
             <Text className="font-extrabold text-lg text-gray-900">{childName}</Text>
-            <Text className="text-xs text-gray-400">Онлайн</Text>
+            <Text className="text-xs text-gray-400">{t('common.online')}</Text>
           </View>
 
           {/* SOS button */}
@@ -189,9 +192,9 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
               </View>
               <View className="p-4">
                 <Text className="text-sm font-bold text-gray-800">
-                  {'\uD83D\uDCCD'} Байршил харах
+                  {'\uD83D\uDCCD'} {t('childDetail.viewLocation')}
                 </Text>
-                <Text className="text-xs text-gray-400 mt-0.5">Сүүлийн мэдэгдэж буй байршил</Text>
+                <Text className="text-xs text-gray-400 mt-0.5">{t('childDetail.lastKnownLocation')}</Text>
               </View>
             </View>
           )}
@@ -218,9 +221,9 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
             className="bg-white rounded-3xl p-4 mb-4 border border-gray-100 shadow-sm"
           >
             <View className="flex-row items-center justify-between mb-3">
-              <Text className="font-bold text-gray-900 text-sm">Дэлгэцийн цаг</Text>
+              <Text className="font-bold text-gray-900 text-sm">{t('childDetail.screenTime')}</Text>
               <Text className="text-xs text-gray-400 font-semibold">
-                {formatDuration(summary.totalScreenTimeMin)} өнөөдөр
+                {formatDuration(summary.totalScreenTimeMin)} {t('childDetail.screenTimeToday')}
               </Text>
             </View>
 
@@ -238,9 +241,9 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
             {/* Stats row */}
             <View className="flex-row border-t border-gray-100 pt-4">
               {[
-                { value: String(summary.totalBlocked), label: 'Хаагдсан' },
-                { value: String(summary.totalWebVisits), label: 'Вэб зочилсон' },
-                { value: String(summary.topApps.length), label: 'Апп' },
+                { value: String(summary.totalBlocked), label: t('alerts.blocked') },
+                { value: String(summary.totalWebVisits), label: t('childDetail.webVisits') },
+                { value: String(summary.topApps.length), label: t('alerts.app') },
               ].map((stat, i) => (
                 <React.Fragment key={stat.label}>
                   {i > 0 && <View className="w-px bg-gray-100" />}
@@ -256,17 +259,17 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
           <View
             className="bg-white rounded-3xl p-5 items-center mb-4 border border-gray-100 shadow-sm"
           >
-            <Text className="text-xs text-gray-400">Энэ хугацаанд мэдээлэл байхгүй</Text>
+            <Text className="text-xs text-gray-400">{t('childDetail.noDataPeriod')}</Text>
           </View>
         )}
 
         {/* ── App usage card ── */}
-        <Text className="text-xs font-semibold text-gray-400 tracking-wide mb-3 mt-2">Апп хэрэглээ</Text>
+        <Text className="text-xs font-semibold text-gray-400 tracking-wide mb-3 mt-2">{t('childDetail.appUsage')}</Text>
         {apps.length === 0 ? (
           <View
             className="bg-white rounded-3xl p-5 items-center border border-gray-100 shadow-sm"
           >
-            <Text className="text-xs text-gray-400">Өнөөдөр апп хэрэглээний мэдээлэл байхгүй</Text>
+            <Text className="text-xs text-gray-400">{t('childDetail.noAppUsage')}</Text>
           </View>
         ) : (
           <View
@@ -298,12 +301,12 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
         )}
 
         {/* ── Website access card ── */}
-        <Text className="text-xs font-semibold text-gray-400 tracking-wide mb-3 mt-6">Вэб үйл ажиллагаа</Text>
+        <Text className="text-xs font-semibold text-gray-400 tracking-wide mb-3 mt-6">{t('childDetail.webActivity')}</Text>
         {webHistory.length === 0 ? (
           <View
             className="bg-white rounded-3xl p-5 items-center border border-gray-100 shadow-sm"
           >
-            <Text className="text-xs text-gray-400">Өнөөдөр вэб үйл ажиллагаа бүртгэгдээгүй</Text>
+            <Text className="text-xs text-gray-400">{t('childDetail.noWebActivity')}</Text>
           </View>
         ) : (
           <View
@@ -336,11 +339,11 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
                   </View>
                   {entry.blocked ? (
                     <View className="px-2 py-1 rounded-lg bg-danger-100">
-                      <Text className="text-[10px] font-semibold text-danger-600">Хаагдсан</Text>
+                      <Text className="text-[10px] font-semibold text-danger-600">{t('common.blocked')}</Text>
                     </View>
                   ) : (
                     <View className="px-2 py-1 rounded-lg bg-safe-100">
-                      <Text className="text-[10px] font-semibold text-safe-600">Зөвшөөрсөн</Text>
+                      <Text className="text-[10px] font-semibold text-safe-600">{t('common.allowed')}</Text>
                     </View>
                   )}
                 </View>
@@ -348,7 +351,7 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
             ))}
             {webHistory.length > 20 && (
               <View className="items-center py-3 border-t border-gray-100">
-                <Text className="text-xs text-gray-400">+{webHistory.length - 20} бусад</Text>
+                <Text className="text-xs text-gray-400">{t('childDetail.others', { count: webHistory.length - 20 })}</Text>
               </View>
             )}
           </View>
@@ -357,12 +360,12 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
         {/* ── Device info grid ── */}
         {summary && (
           <>
-            <Text className="text-xs font-semibold text-gray-400 tracking-wide mb-3 mt-6">Төхөөрөмжийн мэдээлэл</Text>
+            <Text className="text-xs font-semibold text-gray-400 tracking-wide mb-3 mt-6">{t('childDetail.deviceInfo')}</Text>
             <View className="flex-row gap-2 mb-4">
               {[
-                { value: String(summary.totalBlocked), label: 'Хаагдсан', color: C.gray900 },
-                { value: String(summary.totalWebVisits), label: 'Вэб', color: C.gray900 },
-                { value: 'ON', label: 'Статус', color: C.safe600 },
+                { value: String(summary.totalBlocked), label: t('alerts.blocked'), color: C.gray900 },
+                { value: String(summary.totalWebVisits), label: t('alerts.web'), color: C.gray900 },
+                { value: 'ON', label: t('childDetail.status'), color: C.safe600 },
               ].map((cell) => (
                 <View key={cell.label} className="flex-1 bg-gray-50 rounded-2xl p-3 items-center">
                   <Text className={`text-lg font-extrabold ${cell.color === C.safe600 ? 'text-safe-600' : 'text-gray-900'}`}>{cell.value}</Text>
@@ -374,7 +377,7 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
         )}
 
         {/* ── Quick actions ── */}
-        <Text className="text-xs font-semibold text-gray-400 tracking-wide mb-3 mt-2">Удирдах</Text>
+        <Text className="text-xs font-semibold text-gray-400 tracking-wide mb-3 mt-2">{t('childDetail.manage')}</Text>
         <View className="flex-row flex-wrap gap-3 mb-2">
           {ACTION_ITEMS.map((action) => (
             <Pressable

@@ -4,9 +4,11 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import * as api from '../../services/api';
 import { C } from '../../theme';
+import { useTranslation } from 'react-i18next';
 
 export default function ChangePasswordScreen() {
   const navigation = useNavigation();
+  const { t } = useTranslation();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -18,30 +20,30 @@ export default function ChangePasswordScreen() {
 
   const handleSave = async () => {
     if (!currentPassword) {
-      Alert.alert('Алдаа', 'Одоогийн нууц үгээ оруулна уу.');
+      Alert.alert(t('common.error'), t('changePassword.enterCurrent'));
       return;
     }
     if (newPassword.length < 8) {
-      Alert.alert('Алдаа', 'Шинэ нууц үг хамгийн багадаа 8 тэмдэгт байх ёстой.');
+      Alert.alert(t('common.error'), t('changePassword.min8Error'));
       return;
     }
     if (!/[a-zA-Z]/.test(newPassword) || !/\d/.test(newPassword)) {
-      Alert.alert('Алдаа', 'Нууц үг дор хаяж нэг үсэг, нэг тоо агуулсан байх ёстой.');
+      Alert.alert(t('common.error'), t('changePassword.letterAndNumber'));
       return;
     }
     if (newPassword !== confirmPassword) {
-      Alert.alert('Алдаа', 'Шинэ нууц үг таарахгүй байна.');
+      Alert.alert(t('common.error'), t('changePassword.mismatch'));
       return;
     }
 
     setLoading(true);
     try {
       await api.changePassword(currentPassword, newPassword);
-      Alert.alert('Амжилттай', 'Нууц үг амжилттай солигдлоо.', [
+      Alert.alert(t('common.success'), t('changePassword.success'), [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
     } catch (err: any) {
-      Alert.alert('Алдаа', err.message || 'Нууц үг солиход алдаа гарлаа.');
+      Alert.alert(t('common.error'), err.message || t('changePassword.error'));
     } finally {
       setLoading(false);
     }
@@ -84,13 +86,13 @@ export default function ChangePasswordScreen() {
       className="flex-1 bg-surface"
     >
       <View className="flex-1 px-6 pt-6">
-        {renderField('ОДООГИЙН НУУЦ ҮГ', currentPassword, setCurrentPassword, 'Одоогийн нууц үг', !showCurrent, true, () => setShowCurrent((v) => !v))}
-        {renderField('ШИНЭ НУУЦ ҮГ', newPassword, setNewPassword, 'Хамгийн багадаа 8 тэмдэгт', !showNew, true, () => setShowNew((v) => !v))}
-        {renderField('ШИНЭ НУУЦ ҮГ ДАВТАХ', confirmPassword, setConfirmPassword, 'Шинэ нууц үг давтах', true)}
+        {renderField(t('changePassword.currentPassword'), currentPassword, setCurrentPassword, t('changePassword.currentPasswordPlaceholder'), !showCurrent, true, () => setShowCurrent((v) => !v))}
+        {renderField(t('changePassword.newPassword'), newPassword, setNewPassword, t('changePassword.newPasswordPlaceholder'), !showNew, true, () => setShowNew((v) => !v))}
+        {renderField(t('changePassword.confirmPassword'), confirmPassword, setConfirmPassword, t('changePassword.confirmPasswordPlaceholder'), true)}
 
         {newPassword.length > 0 && newPassword.length < 8 && (
           <Text className="text-xs text-danger-400 font-semibold px-1 -mt-2 mb-4">
-            Хамгийн багадаа 8 тэмдэгт байх ёстой
+            {t('changePassword.min8Warning')}
           </Text>
         )}
 
@@ -104,7 +106,7 @@ export default function ChangePasswordScreen() {
           {loading ? (
             <ActivityIndicator color="#fff" size="small" />
           ) : (
-            <Text className="font-display font-bold text-sm text-white">Нууц үг солих</Text>
+            <Text className="font-display font-bold text-sm text-white">{t('changePassword.changePasswordBtn')}</Text>
           )}
         </TouchableOpacity>
       </View>

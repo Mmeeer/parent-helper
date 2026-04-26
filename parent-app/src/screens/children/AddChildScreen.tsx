@@ -13,6 +13,7 @@ import {
 import * as api from '../../services/api';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../types';
+import { useTranslation } from 'react-i18next';
 import { C } from '../../theme';
 
 type Props = {
@@ -20,6 +21,7 @@ type Props = {
 };
 
 export default function AddChildScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
   const [loading, setLoading] = useState(false);
@@ -27,11 +29,11 @@ export default function AddChildScreen({ navigation }: Props) {
   const handleCreate = async () => {
     const ageNum = Number.parseInt(age, 10);
     if (!name.trim()) {
-      Alert.alert('Алдаа', 'Хүүхдийн нэрийг оруулна уу.');
+      Alert.alert(t('common.error'), t('children.nameError'));
       return;
     }
     if (!age || Number.isNaN(ageNum) || ageNum < 1 || ageNum > 18) {
-      Alert.alert('Алдаа', 'Зөв нас оруулна уу (1-18).');
+      Alert.alert(t('common.error'), t('children.ageError'));
       return;
     }
 
@@ -40,7 +42,7 @@ export default function AddChildScreen({ navigation }: Props) {
       await api.createChild(name.trim(), ageNum);
       navigation.goBack();
     } catch (error: any) {
-      Alert.alert('Алдаа', error.message || 'Хүүхдийн профайл үүсгэхэд алдаа гарлаа.');
+      Alert.alert(t('common.error'), error.message || t('children.createError'));
     } finally {
       setLoading(false);
     }
@@ -54,18 +56,18 @@ export default function AddChildScreen({ navigation }: Props) {
       <ScrollView contentContainerClassName="px-5 pb-10">
         {/* Page header */}
         <View className="mt-6 mb-7">
-          <Text className="text-xs font-bold text-gray-400 tracking-wide mb-1.5">ПРОФАЙЛ</Text>
+          <Text className="text-xs font-bold text-gray-400 tracking-wide mb-1.5">{t('children.profile')}</Text>
           <Text className="font-display font-bold text-[32px] text-gray-900 leading-9">
-            Хүүхэд нэмэх
+            {t('children.addChild')}
           </Text>
         </View>
 
         {/* Form card */}
         <View className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
           <View className="mb-5">
-            <Text className="text-xs font-bold text-gray-400 tracking-wide mb-1.5">ХҮҮХДИЙН НЭР</Text>
+            <Text className="text-xs font-bold text-gray-400 tracking-wide mb-1.5">{t('children.childName')}</Text>
             <TextInput
-              placeholder="Нэр оруулах"
+              placeholder={t('children.enterName')}
               value={name}
               onChangeText={setName}
               autoFocus
@@ -75,9 +77,9 @@ export default function AddChildScreen({ navigation }: Props) {
           </View>
 
           <View>
-            <Text className="text-xs font-bold text-gray-400 tracking-wide mb-1.5">НАС</Text>
+            <Text className="text-xs font-bold text-gray-400 tracking-wide mb-1.5">{t('children.ageLabel')}</Text>
             <TextInput
-              placeholder="Нас оруулах (1-18)"
+              placeholder={t('children.enterAge')}
               value={age}
               onChangeText={setAge}
               keyboardType="number-pad"
@@ -98,7 +100,7 @@ export default function AddChildScreen({ navigation }: Props) {
             <ActivityIndicator color="#FFFFFF" />
           ) : (
             <Text className="font-display font-bold text-sm text-white tracking-tight">
-              Хүүхэд нэмэх
+              {t('children.addChild')}
             </Text>
           )}
         </TouchableOpacity>

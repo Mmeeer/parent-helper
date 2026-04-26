@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { DAYS_OF_WEEK } from '../../utils/constants';
 import { formatDuration } from '../../utils/formatters';
 import * as api from '../../services/api';
@@ -27,6 +28,7 @@ type Props = {
 
 export default function ScreenTimeRulesScreen({ route }: Props) {
   const { childId } = route.params;
+  const { t } = useTranslation();
   const [dailyLimit, setDailyLimit] = useState('120');
   const [perAppLimits, setPerAppLimits] = useState<PerAppLimit[]>([]);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
@@ -74,7 +76,7 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
   const handleSave = async () => {
     const limitMin = Number.parseInt(dailyLimit, 10);
     if (Number.isNaN(limitMin) || limitMin < 0) {
-      Alert.alert('Алдаа', 'Өдрийн хязгаарыг минутаар оруулна уу.');
+      Alert.alert(t('common.error'), t('screenTimeRules.dailyLimitError'));
       return;
     }
 
@@ -85,9 +87,9 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
         perApp: perAppLimits,
         schedule: schedules,
       });
-      Alert.alert('Хадгалагдлаа', 'Дэлгэцийн цагийн дүрэм шинэчлэгдлээ.');
+      Alert.alert(t('screenTimeRules.saved'), t('screenTimeRules.savedDesc'));
     } catch (error: any) {
-      Alert.alert('Алдаа', error.message || 'Дүрмийг шинэчлэхэд алдаа гарлаа.');
+      Alert.alert(t('common.error'), error.message || t('screenTimeRules.updateError'));
     } finally {
       setSaving(false);
     }
@@ -109,16 +111,16 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
 
   const addPerAppLimit = () => {
     if (!selectedApp) {
-      Alert.alert('Алдаа', 'Эхлээд апп сонгоно уу.');
+      Alert.alert(t('common.error'), t('screenTimeRules.selectAppFirst'));
       return;
     }
     const limit = Number.parseInt(newAppLimit, 10);
     if (Number.isNaN(limit) || limit <= 0) {
-      Alert.alert('Алдаа', 'Хугацааны хязгаар оруулна уу.');
+      Alert.alert(t('common.error'), t('screenTimeRules.timeLimitError'));
       return;
     }
     if (perAppLimits.some((a) => a.appId === selectedApp.packageName)) {
-      Alert.alert('Давхар', 'Энэ апп аль хэдийн хязгаартай байна.');
+      Alert.alert(t('screenTimeRules.duplicate'), t('screenTimeRules.duplicateDesc'));
       return;
     }
     setPerAppLimits([...perAppLimits, { appId: selectedApp.packageName, appName: selectedApp.appName, limitMin: limit }]);
@@ -179,17 +181,17 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
     <ScrollView className="flex-1 bg-surface">
       {/* Page header */}
       <View className="mx-5 mt-6 mb-7">
-        <Text className="text-xs text-gray-400 font-bold uppercase mb-1.5">ХЯНАЛТ</Text>
+        <Text className="text-xs text-gray-400 font-bold uppercase mb-1.5">{t('screenTimeRules.control')}</Text>
         <Text className="font-display text-[32px] font-bold text-gray-900 leading-9">
-          Дэлгэцийн цаг
+          {t('screenTimeRules.screenTime')}
         </Text>
       </View>
 
       {/* Daily Limit */}
       <View className="bg-white rounded-3xl p-5 mx-4 mb-3 border border-gray-100 shadow-sm">
-        <Text className="text-xs text-gray-400 font-bold uppercase mb-3">ӨДРИЙН ХЯЗГААР</Text>
+        <Text className="text-xs text-gray-400 font-bold uppercase mb-3">{t('screenTimeRules.dailyLimit')}</Text>
         <Text className="text-sm font-display font-bold text-gray-900 mb-3">
-          Өдрийн дэлгэцийн цагийн хязгаар
+          {t('screenTimeRules.dailyScreenTimeLimit')}
         </Text>
         <View className="flex-row items-center gap-2">
           <TextInput
@@ -200,7 +202,7 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
             maxLength={4}
             placeholderTextColor={C.gray300}
           />
-          <Text className="text-sm text-gray-500">минут</Text>
+          <Text className="text-sm text-gray-500">{t('common.minutes')}</Text>
           <Text className="text-xs text-gray-400 font-medium">
             ({formatDuration(parsedLimit || 0)})
           </Text>
@@ -226,10 +228,10 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
 
       {/* Per-App Limits */}
       <View className="bg-white rounded-3xl p-5 mx-4 mb-3 border border-gray-100 shadow-sm">
-        <Text className="text-xs text-gray-400 font-bold uppercase mb-3">АППЫН ХЯЗГААР</Text>
-        <Text className="text-sm font-display font-bold text-gray-900 mb-1">Аппын хязгаар</Text>
+        <Text className="text-xs text-gray-400 font-bold uppercase mb-3">{t('screenTimeRules.appLimit')}</Text>
+        <Text className="text-sm font-display font-bold text-gray-900 mb-1">{t('screenTimeRules.appLimitTitle')}</Text>
         <Text className="text-xs text-gray-400 mb-4">
-          Тодорхой аппуудад хугацааны хязгаар тохируулах.
+          {t('screenTimeRules.appLimitDesc')}
         </Text>
 
         {/* Add per-app form */}
@@ -242,7 +244,7 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
             <Text
               className={`flex-1 text-sm ${selectedApp ? 'text-gray-900' : 'text-gray-300'}`}
             >
-              {selectedApp ? selectedApp.appName : 'Апп сонгох...'}
+              {selectedApp ? selectedApp.appName : t('screenTimeRules.selectApp')}
             </Text>
             <Ionicons name="chevron-down" size={18} color={C.gray400} />
           </Pressable>
@@ -256,7 +258,7 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
               maxLength={4}
               placeholderTextColor={C.gray300}
             />
-            <Text className="text-sm text-gray-500">мин/өдөр</Text>
+            <Text className="text-sm text-gray-500">{t('screenTimeRules.minPerDay')}</Text>
             <TouchableOpacity
               className="w-10 h-10 rounded-2xl bg-nest-500 items-center justify-center"
               onPress={addPerAppLimit}
@@ -269,7 +271,7 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
         {/* Per-app list */}
         {perAppLimits.length === 0 ? (
           <Text className="text-xs text-gray-400 text-center py-4">
-            Аппын хязгаар тохируулаагүй.
+            {t('screenTimeRules.noAppLimits')}
           </Text>
         ) : (
           perAppLimits.map((app, index) => (
@@ -299,14 +301,14 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
       {/* Schedules */}
       <View className="bg-white rounded-3xl p-5 mx-4 mb-3 border border-gray-100 shadow-sm">
         <View className="flex-row justify-between items-center mb-1">
-          <Text className="text-xs text-gray-400 font-bold uppercase">ХААГДСАН ХУВААРЬ</Text>
+          <Text className="text-xs text-gray-400 font-bold uppercase">{t('screenTimeRules.blockedSchedule')}</Text>
           <TouchableOpacity onPress={addSchedule} className="p-1">
             <Ionicons name="add-circle" size={26} color={C.nest500} />
           </TouchableOpacity>
         </View>
-        <Text className="text-sm font-display font-bold text-gray-900 mb-1">Хаагдсан хуваарь</Text>
+        <Text className="text-sm font-display font-bold text-gray-900 mb-1">{t('screenTimeRules.blockedScheduleTitle')}</Text>
         <Text className="text-xs text-gray-400 mb-3">
-          Тодорхой цагуудад төхөөрөмжийн хэрэглээг хаах.
+          {t('screenTimeRules.blockedScheduleDesc')}
         </Text>
 
         {schedules.map((schedule, index) => (
@@ -316,7 +318,7 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
           >
             <View className="flex-row justify-between items-center mb-2.5">
               <Text className="text-sm font-display font-bold text-gray-900">
-                {index + 1}-р хуваарь
+                {t('screenTimeRules.scheduleNum', { num: index + 1 })}
               </Text>
               <TouchableOpacity onPress={() => removeSchedule(index)} className="p-1">
                 <Ionicons name="trash-outline" size={20} color={C.danger500} />
@@ -343,7 +345,7 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
             {/* Time Range */}
             <View className="flex-row items-end mt-3 gap-2">
               <View className="flex-1">
-                <Text className="text-[11px] text-gray-400 mb-1">Эхлэх</Text>
+                <Text className="text-[11px] text-gray-400 mb-1">{t('screenTimeRules.start')}</Text>
                 <TextInput
                   className="rounded-2xl bg-white border border-gray-200 px-4 py-3 text-sm text-gray-900 text-center"
                   value={schedule.startTime}
@@ -354,7 +356,7 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
               </View>
               <Text className="text-sm text-gray-400 pb-2">—</Text>
               <View className="flex-1">
-                <Text className="text-[11px] text-gray-400 mb-1">Дуусах</Text>
+                <Text className="text-[11px] text-gray-400 mb-1">{t('screenTimeRules.end')}</Text>
                 <TextInput
                   className="rounded-2xl bg-white border border-gray-200 px-4 py-3 text-sm text-gray-900 text-center"
                   value={schedule.endTime}
@@ -369,7 +371,7 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
 
         {schedules.length === 0 && (
           <Text className="text-xs text-gray-400 text-center py-4">
-            Хаагдсан хуваарь байхгүй. + дарж нэмнэ үү.
+            {t('screenTimeRules.noSchedules')}
           </Text>
         )}
       </View>
@@ -384,7 +386,7 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
           <ActivityIndicator size="small" color="#FFFFFF" />
         ) : (
           <Text className="text-sm font-display font-bold text-white tracking-tight">
-            Өөрчлөлт хадгалах
+            {t('screenTimeRules.saveChanges')}
           </Text>
         )}
       </TouchableOpacity>
@@ -396,7 +398,7 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
     <Modal visible={pickerVisible} animationType="slide" presentationStyle="pageSheet">
       <View className="flex-1 bg-surface">
         <View className="flex-row justify-between items-center px-5 pt-5 pb-3">
-          <Text className="font-display text-[24px] font-bold text-gray-900">Апп сонгох</Text>
+          <Text className="font-display text-[24px] font-bold text-gray-900">{t('screenTimeRules.selectAppTitle')}</Text>
           <TouchableOpacity
             onPress={() => { setPickerVisible(false); setSearchQuery(''); }}
             className="p-1"
@@ -412,7 +414,7 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
             className="flex-1 h-12 text-sm text-gray-900"
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholder="Апп хайх..."
+            placeholder={t('screenTimeRules.searchApp')}
             placeholderTextColor={C.gray300}
             autoFocus
           />
@@ -440,7 +442,7 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
           )}
           ListEmptyComponent={
             <Text className="text-xs text-gray-400 text-center py-4">
-              {installedApps.length === 0 ? 'Хүүхдийн аппын жагсаалт синхрончлогдоогүй байна.' : 'Тохирох апп олдсонгүй.'}
+              {installedApps.length === 0 ? t('screenTimeRules.noAppsSynced') : t('screenTimeRules.noMatchingApps')}
             </Text>
           }
         />

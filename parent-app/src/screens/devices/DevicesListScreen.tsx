@@ -15,6 +15,7 @@ import * as api from '../../services/api';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import type { RootStackParamList, DeviceStatus } from '../../types';
+import { useTranslation } from 'react-i18next';
 import { C } from '../../theme';
 
 type Props = {
@@ -23,6 +24,7 @@ type Props = {
 };
 
 export default function DevicesListScreen({ navigation, route }: Props) {
+  const { t } = useTranslation();
   const { childId, childName } = route.params;
   const [devices, setDevices] = useState<DeviceStatus[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,12 +53,12 @@ export default function DevicesListScreen({ navigation, route }: Props) {
     setCommandingId(deviceId);
     try {
       const result = await api.sendDeviceCommand(deviceId, command);
-      Alert.alert('Команд илгээгдлээ', result.message);
+      Alert.alert(t('devices.commandSent'), result.message);
       if (command === 'locate') {
         setTimeout(loadDevices, 3000);
       }
     } catch (error: any) {
-      Alert.alert('Алдаа', error.message || 'Команд илгээхэд алдаа гарлаа.');
+      Alert.alert(t('common.error'), error.message || t('devices.commandError'));
     } finally {
       setCommandingId(null);
     }
@@ -66,19 +68,19 @@ export default function DevicesListScreen({ navigation, route }: Props) {
     try {
       await api.unpairDevice(deviceId);
       setDevices((prev) => prev.filter((d) => d.id !== deviceId));
-      Alert.alert('Дууссан', 'Төхөөрөмжийн холболт тасдагдлаа.');
+      Alert.alert(t('common.done'), t('devices.unpairSuccess'));
     } catch (error: any) {
-      Alert.alert('Алдаа', error.message || 'Төхөөрөмжийн холболтыг тасдаж чадсангүй.');
+      Alert.alert(t('common.error'), error.message || t('devices.unpairError'));
     }
   };
 
   const handleUnpair = (deviceId: string) => {
     Alert.alert(
-      'Холболт тасдах',
-      'Энэ төхөөрөмжийг устгахдаа итгэлтэй байна уу? Хүүхдийн апп дахин холбогдох шаардлагатай болно.',
+      t('devices.unpair'),
+      t('devices.unpairConfirm'),
       [
-        { text: 'Цуцлах', style: 'cancel' },
-        { text: 'Тасдах', style: 'destructive', onPress: () => { void doUnpair(deviceId); } },
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('devices.unpairBtn'), style: 'destructive', onPress: () => { void doUnpair(deviceId); } },
       ],
     );
   };
@@ -98,9 +100,9 @@ export default function DevicesListScreen({ navigation, route }: Props) {
     >
       {/* Page header */}
       <View className="mx-5 mt-6 mb-7">
-        <Text className="text-xs font-bold text-gray-400 tracking-wide mb-1.5">ТӨХӨӨРӨМЖҮҮД</Text>
+        <Text className="text-xs font-bold text-gray-400 tracking-wide mb-1.5">{t('devices.title')}</Text>
         <Text className="font-display text-[32px] font-extrabold text-gray-900 leading-9">
-          {childName}-ийн төхөөрөмжүүд
+          {t('devices.childDevices', { childName })}
         </Text>
       </View>
 
@@ -109,9 +111,9 @@ export default function DevicesListScreen({ navigation, route }: Props) {
           <View className="w-16 h-16 rounded-full bg-gray-100 items-center justify-center mb-4">
             <Ionicons name="phone-portrait-outline" size={32} color={C.gray300} />
           </View>
-          <Text className="text-sm font-semibold text-gray-500">Холбогдсон төхөөрөмж байхгүй</Text>
+          <Text className="text-sm font-semibold text-gray-500">{t('devices.noDevices')}</Text>
           <Text className="text-[13px] text-gray-400 text-center mt-1.5 leading-5">
-            Хяналт эхлэхийн тулд төхөөрөмж холбоно уу.
+            {t('devices.noDevicesDesc')}
           </Text>
         </View>
       ) : (
@@ -176,14 +178,14 @@ export default function DevicesListScreen({ navigation, route }: Props) {
 
             {/* Remote Commands */}
             <Text className="text-xs font-bold text-gray-400 uppercase mt-4 mb-2">
-              Алсын удирдлага
+              {t('devices.remoteControl')}
             </Text>
             <View className="flex-row gap-x-2">
               {[
-                { cmd: 'lock' as const, icon: 'lock-closed-outline' as const, label: 'Түгжих', color: C.danger500, bg: C.danger50 },
-                { cmd: 'unlock' as const, icon: 'lock-open-outline' as const, label: 'Нээх', color: C.safe500, bg: C.safe50 },
-                { cmd: 'locate' as const, icon: 'locate-outline' as const, label: 'Байршлыг олох', color: C.nest500, bg: C.nest50 },
-                { cmd: 'sync' as const, icon: 'sync-outline' as const, label: 'Синхрончлох', color: C.warm500, bg: C.warm50 },
+                { cmd: 'lock' as const, icon: 'lock-closed-outline' as const, label: t('devices.lock'), color: C.danger500, bg: C.danger50 },
+                { cmd: 'unlock' as const, icon: 'lock-open-outline' as const, label: t('devices.unlock'), color: C.safe500, bg: C.safe50 },
+                { cmd: 'locate' as const, icon: 'locate-outline' as const, label: t('devices.findLocation'), color: C.nest500, bg: C.nest50 },
+                { cmd: 'sync' as const, icon: 'sync-outline' as const, label: t('devices.sync'), color: C.warm500, bg: C.warm50 },
               ].map(({ cmd, icon, label, color, bg }) => (
                 <View key={cmd} className="flex-1 items-center py-3 rounded-2xl" style={{ backgroundColor: bg }}>
                   <TouchableOpacity
@@ -208,7 +210,7 @@ export default function DevicesListScreen({ navigation, route }: Props) {
               className="mt-3 py-2 flex-row items-center justify-center gap-x-1 bg-danger-50 rounded-2xl"
             >
               <Ionicons name="unlink-outline" size={16} color={C.danger500} />
-              <Text className="text-sm font-medium text-danger-500">Холболт тасдах</Text>
+              <Text className="text-sm font-medium text-danger-500">{t('devices.unpair')}</Text>
             </TouchableOpacity>
           </View>
         ))
@@ -221,7 +223,7 @@ export default function DevicesListScreen({ navigation, route }: Props) {
       >
         <Ionicons name="add-circle-outline" size={20} color="#FFFFFF" />
         <Text className="text-sm font-display font-bold text-white tracking-wide">
-          Шинэ төхөөрөмж холбох
+          {t('devices.pairNew')}
         </Text>
       </TouchableOpacity>
 

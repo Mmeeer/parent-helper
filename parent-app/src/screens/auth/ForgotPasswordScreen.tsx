@@ -4,6 +4,7 @@ import {
   KeyboardAvoidingView, Platform, Alert, ScrollView, ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import * as api from '../../services/api';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../types';
@@ -15,6 +16,7 @@ type Props = {
 type Step = 'email' | 'code' | 'done';
 
 export default function ForgotPasswordScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
@@ -29,16 +31,16 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
 
   const handleRequestCode = async () => {
     if (!email.trim()) {
-      Alert.alert('Error', 'Please enter your email address.');
+      Alert.alert(t('common.error'), t('forgotPassword.enterEmailError'));
       return;
     }
     setLoading(true);
     try {
       await api.forgotPassword(email.trim());
       setStep('code');
-      Alert.alert('Имэйлээ шалгана уу', 'Бүртгэлтэй имэйл бол шинэчлэлийн код илгээгдлээ.');
+      Alert.alert(t('forgotPassword.checkEmail'), t('forgotPassword.codeSent'));
     } catch (error: any) {
-      Alert.alert('Алдаа', error.message || 'Шинэчлэлийн код илгээхэд алдаа гарлаа.');
+      Alert.alert(t('common.error'), error.message || t('forgotPassword.sendCodeError'));
     } finally {
       setLoading(false);
     }
@@ -46,15 +48,15 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
 
   const handleResetPassword = async () => {
     if (!code.trim()) {
-      Alert.alert('Алдаа', 'Шинэчлэлийн кодыг оруулна уу.');
+      Alert.alert(t('common.error'), t('forgotPassword.enterResetCode'));
       return;
     }
     if (newPassword.length < 8) {
-      Alert.alert('Алдаа', 'Нууц үг хамгийн багадаа 8 тэмдэгт байх ёстой.');
+      Alert.alert(t('common.error'), t('auth.passwordMin8'));
       return;
     }
     if (newPassword !== confirmPassword) {
-      Alert.alert('Алдаа', 'Нууц үг таарахгүй байна.');
+      Alert.alert(t('common.error'), t('auth.passwordMismatch'));
       return;
     }
     setLoading(true);
@@ -62,7 +64,7 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
       await api.resetPassword(email.trim(), code.trim(), newPassword);
       setStep('done');
     } catch (error: any) {
-      Alert.alert('Алдаа', error.message || 'Нууц үг шинэчлэхэд алдаа гарлаа.');
+      Alert.alert(t('common.error'), error.message || t('forgotPassword.resetError'));
     } finally {
       setLoading(false);
     }
@@ -76,17 +78,17 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
           <Ionicons name="checkmark" size={32} color="#fff" />
         </View>
         <Text className="font-display font-extrabold text-xl text-gray-900 mb-3 text-center">
-          Нууц үг шинэчлэгдлээ
+          {t('forgotPassword.resetSuccess')}
         </Text>
         <Text className="text-sm text-gray-500 text-center mb-8 leading-relaxed">
-          Нууц үг амжилттай шинэчлэгдлээ. Шинэ нууц үгээрээ нэвтэрнэ үү.
+          {t('forgotPassword.resetSuccessDesc')}
         </Text>
         <TouchableOpacity
           className="bg-nest-500 rounded-2xl items-center justify-center w-full py-3.5 shadow-lg"
           onPress={() => navigation.navigate('Login')}
           activeOpacity={0.85}
         >
-          <Text className="font-display font-bold text-sm text-white">Нэвтрэх хуудас руу</Text>
+          <Text className="font-display font-bold text-sm text-white">{t('forgotPassword.goToLogin')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -112,15 +114,15 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
 
         {/* Header */}
         <Text className="text-xs text-gray-400 font-medium mb-2">
-          {step === 'email' ? 'Хандалт сэргээх' : 'Нууц үг шинэчлэх'}
+          {step === 'email' ? t('forgotPassword.recoverAccess') : t('forgotPassword.resetPassword')}
         </Text>
         <Text className="font-display font-extrabold text-xl text-gray-900 mb-2">
-          {step === 'email' ? 'Нууц үг мартсан уу?' : 'Код оруулах'}
+          {step === 'email' ? t('forgotPassword.forgotTitle') : t('forgotPassword.enterCode')}
         </Text>
         <Text className="text-sm text-gray-500 mb-7 leading-5">
           {step === 'email'
-            ? 'Имэйл оруулна уу, бид шинэчлэлийн код илгээнэ.'
-            : 'Имэйлийн кодыг оруулаад шинэ нууц үг тохируулна уу.'}
+            ? t('forgotPassword.enterEmailDesc')
+            : t('forgotPassword.enterCodeDesc')}
         </Text>
 
         {/* Form card */}
@@ -128,7 +130,7 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
           {step === 'email' ? (
             <>
               <View className="mb-6">
-                <Text className="font-display font-bold text-gray-900 mb-2">Имэйл</Text>
+                <Text className="font-display font-bold text-gray-900 mb-2">{t('auth.email')}</Text>
                 <View className="flex-row items-center px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200">
                   <Ionicons name="mail-outline" size={17} color="#9ca3af" />
                   <TextInput
@@ -153,7 +155,7 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
               >
                 {loading
                   ? <ActivityIndicator color="#fff" />
-                  : <Text className="font-display font-bold text-sm text-white">Шинэчлэлийн код илгээх</Text>
+                  : <Text className="font-display font-bold text-sm text-white">{t('forgotPassword.sendCode')}</Text>
                 }
               </TouchableOpacity>
             </>
@@ -161,7 +163,7 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
             <>
               {/* Reset code */}
               <View className="mb-5">
-                <Text className="font-display font-bold text-gray-900 mb-2">Шинэчлэлийн код</Text>
+                <Text className="font-display font-bold text-gray-900 mb-2">{t('forgotPassword.resetCode')}</Text>
                 <View className="flex-row items-center px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200">
                   <Ionicons name="key-outline" size={17} color="#9ca3af" />
                   <TextInput
@@ -180,13 +182,13 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
 
               {/* New password */}
               <View className="mb-5">
-                <Text className="font-display font-bold text-gray-900 mb-2">Шинэ нууц үг</Text>
+                <Text className="font-display font-bold text-gray-900 mb-2">{t('forgotPassword.newPassword')}</Text>
                 <View className="flex-row items-center px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200">
                   <Ionicons name="lock-closed-outline" size={17} color="#9ca3af" />
                   <TextInput
                     ref={newPasswordRef}
                     className="flex-1 text-sm font-semibold text-gray-700 ml-3"
-                    placeholder="Хамгийн багадаа 8 тэмдэгт"
+                    placeholder={t('auth.min8Chars')}
                     placeholderTextColor="#d1d5db"
                     value={newPassword}
                     onChangeText={setNewPassword}
@@ -202,13 +204,13 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
 
               {/* Confirm password */}
               <View className="mb-7">
-                <Text className="font-display font-bold text-gray-900 mb-2">Нууц үг баталгаажуулах</Text>
+                <Text className="font-display font-bold text-gray-900 mb-2">{t('auth.confirmPassword')}</Text>
                 <View className="flex-row items-center px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200">
                   <Ionicons name="lock-closed-outline" size={17} color="#9ca3af" />
                   <TextInput
                     ref={confirmRef}
                     className="flex-1 text-sm font-semibold text-gray-700 ml-3"
-                    placeholder="Нууц үгийг дахин оруулах"
+                    placeholder={t('auth.reenterPassword')}
                     placeholderTextColor="#d1d5db"
                     value={confirmPassword}
                     onChangeText={setConfirmPassword}
@@ -230,12 +232,12 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
               >
                 {loading
                   ? <ActivityIndicator color="#fff" />
-                  : <Text className="font-display font-bold text-sm text-white">Нууц үг шинэчлэх</Text>
+                  : <Text className="font-display font-bold text-sm text-white">{t('forgotPassword.resetPasswordBtn')}</Text>
                 }
               </TouchableOpacity>
 
               <TouchableOpacity className="items-center mt-4 py-2" onPress={() => setStep('email')}>
-                <Text className="text-sm font-bold text-nest-500">Код хүлээж аваагүй юу? Дахин оролдоно уу</Text>
+                <Text className="text-sm font-bold text-nest-500">{t('forgotPassword.noCode')}</Text>
               </TouchableOpacity>
             </>
           )}

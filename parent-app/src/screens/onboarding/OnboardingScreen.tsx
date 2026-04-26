@@ -10,6 +10,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { C } from '../../theme';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../types';
@@ -25,33 +26,31 @@ interface Slide {
   icon: keyof typeof Ionicons.glyphMap;
   iconBg: string;
   iconColor: string;
-  title: string;
-  subtitle: string;
-  bullets?: { icon: keyof typeof Ionicons.glyphMap; text: string }[];
+  titleKey: string;
+  subtitleKey: string;
+  bullets?: { icon: keyof typeof Ionicons.glyphMap; textKey: string }[];
 }
 
-const slides: Slide[] = [
+const slideDefinitions: Slide[] = [
   {
     id: 'welcome',
     icon: 'shield-checkmark',
     iconBg: C.nest50,
     iconColor: C.nest500,
-    title: 'Тавтай морилно уу!',
-    subtitle:
-      'Prime Kids нь таны хүүхдийн дижитал аюулгүй байдлыг хамгаалахад тусална. Энгийн 3 алхамаар эхлүүлцгээе.',
+    titleKey: 'onboarding.welcomeTitle',
+    subtitleKey: 'onboarding.welcomeSubtitle',
   },
   {
     id: 'add-child',
     icon: 'people',
     iconBg: C.warm50,
     iconColor: C.warm500,
-    title: 'Хүүхэд нэмэх',
-    subtitle:
-      'Хүүхдийнхээ нэр, насыг оруулж профайл үүсгэнэ. Хүүхэд бүрт тусдаа дүрэм, хяналт тохируулах боломжтой.',
+    titleKey: 'onboarding.addChildTitle',
+    subtitleKey: 'onboarding.addChildSubtitle',
     bullets: [
-      { icon: 'person-add-outline', text: 'Хүүхдийн профайл нэмэх' },
-      { icon: 'settings-outline', text: 'Тус бүрт тусдаа тохиргоо' },
-      { icon: 'people-outline', text: 'Олон хүүхэд удирдах' },
+      { icon: 'person-add-outline', textKey: 'onboarding.addChildBullet1' },
+      { icon: 'settings-outline', textKey: 'onboarding.addChildBullet2' },
+      { icon: 'people-outline', textKey: 'onboarding.addChildBullet3' },
     ],
   },
   {
@@ -59,13 +58,12 @@ const slides: Slide[] = [
     icon: 'phone-portrait',
     iconBg: C.safe50,
     iconColor: C.safe500,
-    title: 'Төхөөрөмж холбох',
-    subtitle:
-      'Хүүхдийн утсанд Prime Kids апп суулгаад, холболтын код оруулж холбоно.',
+    titleKey: 'onboarding.pairDeviceTitle',
+    subtitleKey: 'onboarding.pairDeviceSubtitle',
     bullets: [
-      { icon: 'download-outline', text: 'Хүүхдийн утсанд апп суулгах' },
-      { icon: 'key-outline', text: 'Холболтын код үүсгэх' },
-      { icon: 'qr-code-outline', text: 'Код оруулж холбох' },
+      { icon: 'download-outline', textKey: 'onboarding.pairDeviceBullet1' },
+      { icon: 'key-outline', textKey: 'onboarding.pairDeviceBullet2' },
+      { icon: 'qr-code-outline', textKey: 'onboarding.pairDeviceBullet3' },
     ],
   },
   {
@@ -73,13 +71,13 @@ const slides: Slide[] = [
     icon: 'sparkles',
     iconBg: '#fef3f2',
     iconColor: C.danger500,
-    title: 'Юу хийж чадах вэ?',
-    subtitle: 'Таны гар дээр бүх хяналтын боломжууд.',
+    titleKey: 'onboarding.featuresTitle',
+    subtitleKey: 'onboarding.featuresSubtitle',
     bullets: [
-      { icon: 'time-outline', text: 'Дэлгэц ашиглах хугацааг хязгаарлах' },
-      { icon: 'navigate-outline', text: 'Байршлын хяналт & геофенс' },
-      { icon: 'notifications-outline', text: 'Аюулын дохио & мэдэгдэл' },
-      { icon: 'ban-outline', text: 'Апп, вэб контент хаах' },
+      { icon: 'time-outline', textKey: 'onboarding.featuresBullet1' },
+      { icon: 'navigate-outline', textKey: 'onboarding.featuresBullet2' },
+      { icon: 'notifications-outline', textKey: 'onboarding.featuresBullet3' },
+      { icon: 'ban-outline', textKey: 'onboarding.featuresBullet4' },
     ],
   },
 ];
@@ -88,10 +86,11 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function OnboardingScreen({ navigation }: Props) {
   const { top, bottom } = useSafeAreaInsets();
+  const { t } = useTranslation();
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
 
-  const isLast = activeIndex === slides.length - 1;
+  const isLast = activeIndex === slideDefinitions.length - 1;
 
   const finishOnboarding = async () => {
     await AsyncStorage.setItem(ONBOARDING_COMPLETE_KEY, 'true');
@@ -143,7 +142,7 @@ export default function OnboardingScreen({ navigation }: Props) {
           marginBottom: 14,
         }}
       >
-        {item.title}
+        {t(item.titleKey)}
       </Text>
 
       {/* Subtitle */}
@@ -155,13 +154,13 @@ export default function OnboardingScreen({ navigation }: Props) {
           marginBottom: 24,
         }}
       >
-        {item.subtitle}
+        {t(item.subtitleKey)}
       </Text>
 
       {/* Bullets */}
       {item.bullets?.map((b) => (
         <View
-          key={b.text}
+          key={b.textKey}
           style={{
             flexDirection: 'row',
             alignItems: 'center',
@@ -181,7 +180,7 @@ export default function OnboardingScreen({ navigation }: Props) {
           >
             <Ionicons name={b.icon} size={20} color={C.gray600} />
           </View>
-          <Text style={{ fontSize: 14, color: C.gray700, flex: 1 }}>{b.text}</Text>
+          <Text style={{ fontSize: 14, color: C.gray700, flex: 1 }}>{t(b.textKey)}</Text>
         </View>
       ))}
     </View>
@@ -193,7 +192,7 @@ export default function OnboardingScreen({ navigation }: Props) {
       <View style={{ alignItems: 'flex-end', paddingHorizontal: 20, paddingTop: 12 }}>
         <TouchableOpacity onPress={finishOnboarding} hitSlop={12}>
           <Text style={{ fontSize: 14, fontWeight: '600', color: C.gray400 }}>
-            Алгасах
+            {t('onboarding.skip')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -201,7 +200,7 @@ export default function OnboardingScreen({ navigation }: Props) {
       {/* Slides */}
       <FlatList
         ref={flatListRef}
-        data={slides}
+        data={slideDefinitions}
         keyExtractor={(item) => item.id}
         horizontal
         pagingEnabled
@@ -229,7 +228,7 @@ export default function OnboardingScreen({ navigation }: Props) {
             marginBottom: 24,
           }}
         >
-          {slides.map((s, i) => (
+          {slideDefinitions.map((s, i) => (
             <View
               key={s.id}
               style={{
@@ -257,7 +256,7 @@ export default function OnboardingScreen({ navigation }: Props) {
           }}
         >
           <Text style={{ fontSize: 15, fontWeight: '700', color: '#fff' }}>
-            {isLast ? 'Эхлүүлэх' : 'Дараах'}
+            {isLast ? t('onboarding.getStarted') : t('onboarding.next')}
           </Text>
           <Ionicons
             name={isLast ? 'checkmark' : 'arrow-forward'}

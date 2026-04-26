@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import * as api from '../../services/api';
 import type { RouteProp } from '@react-navigation/native';
 import type { RootStackParamList } from '../../types';
@@ -25,6 +26,7 @@ type Props = {
 
 export default function AppRulesScreen({ route }: Props) {
   const { childId } = route.params;
+  const { t } = useTranslation();
   const [blockedApps, setBlockedApps] = useState<{ packageName: string; appName: string }[]>([]);
   const [installedApps, setInstalledApps] = useState<InstalledApp[]>([]);
   const [saving, setSaving] = useState(false);
@@ -96,9 +98,9 @@ export default function AppRulesScreen({ route }: Props) {
     setSaving(true);
     try {
       await api.updateBlockedApps(childId, blockedApps.map(a => a.packageName));
-      Alert.alert('Хадгалагдлаа', 'Аппын хаалтын дүрэм шинэчлэгдлээ.');
+      Alert.alert(t('appRules.saved'), t('appRules.savedDesc'));
     } catch (error: any) {
-      Alert.alert('Алдаа', error.message || 'Дүрмийг шинэчлэхэд алдаа гарлаа.');
+      Alert.alert(t('common.error'), error.message || t('appRules.updateError'));
     } finally {
       setSaving(false);
     }
@@ -117,17 +119,17 @@ export default function AppRulesScreen({ route }: Props) {
       <ScrollView>
         {/* Page header */}
         <View className="mx-5 mt-6 mb-7">
-          <Text className="text-xs text-gray-400 font-bold uppercase mb-1.5">ХЯНАЛТ</Text>
+          <Text className="text-xs text-gray-400 font-bold uppercase mb-1.5">{t('appRules.control')}</Text>
           <Text className="font-display text-[32px] font-bold text-gray-900 leading-9">
-            Аппын удирдлага
+            {t('appRules.appManagement')}
           </Text>
         </View>
 
         <View className="bg-white rounded-3xl p-5 mx-4 mb-3 border border-gray-100 shadow-sm">
-          <Text className="text-xs text-gray-400 font-bold uppercase mb-3">ХААГДСАН АППУУД</Text>
-          <Text className="text-sm font-display font-bold text-gray-900 mb-1">Хаагдсан аппууд</Text>
+          <Text className="text-xs text-gray-400 font-bold uppercase mb-3">{t('appRules.blockedApps')}</Text>
+          <Text className="text-sm font-display font-bold text-gray-900 mb-1">{t('appRules.blockedAppsTitle')}</Text>
           <Text className="text-xs text-gray-400 mb-4">
-            Хүүхдийн төхөөрөмжийн аппуудаас хаах аппаа + дарж сонгоно уу.
+            {t('appRules.blockedAppsDesc')}
           </Text>
 
           <TouchableOpacity
@@ -136,7 +138,7 @@ export default function AppRulesScreen({ route }: Props) {
           >
             <Ionicons name="add-circle" size={20} color="#FFFFFF" />
             <Text className="text-sm font-display font-bold text-white tracking-tight">
-              Апп хаах
+              {t('appRules.blockApp')}
             </Text>
           </TouchableOpacity>
 
@@ -145,7 +147,7 @@ export default function AppRulesScreen({ route }: Props) {
               <View className="w-12 h-12 rounded-full bg-gray-100 items-center justify-center mb-3">
                 <Ionicons name="ban-outline" size={24} color={C.gray300} />
               </View>
-              <Text className="text-xs text-gray-400 text-center">Хаагдсан апп байхгүй.</Text>
+              <Text className="text-xs text-gray-400 text-center">{t('appRules.noBlockedApps')}</Text>
             </View>
           ) : (
             blockedApps.map((app, index) => (
@@ -183,7 +185,7 @@ export default function AppRulesScreen({ route }: Props) {
             <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
             <Text className="text-sm font-display font-bold text-white tracking-tight">
-              Өөрчлөлт хадгалах
+              {t('appRules.saveChanges')}
             </Text>
           )}
         </TouchableOpacity>
@@ -195,7 +197,7 @@ export default function AppRulesScreen({ route }: Props) {
       <Modal visible={pickerVisible} animationType="slide" presentationStyle="pageSheet">
         <View className="flex-1 bg-surface">
           <View className="flex-row justify-between items-center px-5 pt-5 pb-3">
-            <Text className="font-display text-[24px] font-bold text-gray-900">Хаах апп сонгох</Text>
+            <Text className="font-display text-[24px] font-bold text-gray-900">{t('appRules.selectAppToBlock')}</Text>
             <TouchableOpacity
               onPress={() => { setPickerVisible(false); setSearchQuery(''); }}
               className="p-1"
@@ -212,7 +214,7 @@ export default function AppRulesScreen({ route }: Props) {
               className="flex-1 h-12 text-sm text-gray-900"
               value={searchQuery}
               onChangeText={setSearchQuery}
-              placeholder="Апп хайх..."
+              placeholder={t('appRules.searchApp')}
               placeholderTextColor={C.gray300}
               autoFocus
             />
@@ -223,9 +225,9 @@ export default function AppRulesScreen({ route }: Props) {
               <View className="w-16 h-16 rounded-full bg-gray-100 items-center justify-center mb-4">
                 <Ionicons name="phone-portrait-outline" size={32} color={C.gray300} />
               </View>
-              <Text className="text-sm font-semibold text-gray-500">Апп синхрончлогдоогүй байна</Text>
+              <Text className="text-sm font-semibold text-gray-500">{t('appRules.appsNotSynced')}</Text>
               <Text className="text-[13px] text-gray-400 text-center mt-1.5 leading-5">
-                Хүүхдийн төхөөрөмж аппын жагсаалтыг синхрончлоогүй байна. Prime Kids апп ажиллаж байгаа эсэхийг шалгана уу.
+                {t('appRules.appsNotSyncedDesc')}
               </Text>
             </View>
           ) : (
@@ -253,7 +255,7 @@ export default function AppRulesScreen({ route }: Props) {
               )}
               ListEmptyComponent={
                 <Text className="text-xs text-gray-400 text-center py-5">
-                  {searchQuery ? 'Тохирох апп олдсонгүй.' : 'Бүх аппууд хаагдсан байна.'}
+                  {searchQuery ? t('appRules.noMatchingApps') : t('appRules.allAppsBlocked')}
                 </Text>
               }
             />

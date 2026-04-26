@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { C } from '../../theme';
 import { formatDuration } from '../../utils/formatters';
 import * as api from '../../services/api';
@@ -22,6 +23,7 @@ type Props = {
 
 export default function ReportsScreen({ route }: Props) {
   const { childId, childName } = route.params;
+  const { t } = useTranslation();
   const [period, setPeriod] = useState<'week' | 'month'>('week');
   const [summary, setSummary] = useState<ActivitySummary | null>(null);
   const [breakdown, setBreakdown] = useState<DailyBreakdownEntry[]>([]);
@@ -81,9 +83,9 @@ export default function ReportsScreen({ route }: Props) {
     >
       {/* Page header */}
       <View className="mx-5 mt-6 mb-7">
-        <Text className="text-xs font-bold text-gray-400 tracking-wide mb-1.5">ТАЙЛАН</Text>
+        <Text className="text-xs font-bold text-gray-400 tracking-wide mb-1.5">{t('reports.title')}</Text>
         <Text className="font-display font-bold text-[32px] text-gray-900 leading-9">
-          {childName}-ийн тайлан
+          {t('reports.childReports', { childName })}
         </Text>
       </View>
 
@@ -104,7 +106,7 @@ export default function ReportsScreen({ route }: Props) {
                 period === p ? 'text-white' : 'text-gray-600'
               }`}
             >
-              {p === 'week' ? 'Энэ долоо хоног' : 'Энэ сар'}
+              {p === 'week' ? t('reports.thisWeek') : t('reports.thisMonth')}
             </Text>
           </TouchableOpacity>
         ))}
@@ -119,7 +121,7 @@ export default function ReportsScreen({ route }: Props) {
               {formatDuration(summary.totalScreenTimeMin)}
             </Text>
             <Text className="text-xs text-gray-400 font-semibold text-center mt-1">
-              Нийт дэлгэцийн цаг
+              {t('reports.totalScreenTime')}
             </Text>
           </View>
           <View className="flex-1 bg-white rounded-2xl p-4 items-center mx-1 border border-gray-100">
@@ -128,7 +130,7 @@ export default function ReportsScreen({ route }: Props) {
               {summary.totalBlocked}
             </Text>
             <Text className="text-xs text-gray-400 font-semibold text-center mt-1">
-              Хаагдсан
+              {t('reports.blocked')}
             </Text>
           </View>
           <View className="flex-1 bg-white rounded-2xl p-4 items-center mx-1 border border-gray-100">
@@ -137,7 +139,7 @@ export default function ReportsScreen({ route }: Props) {
               {summary.totalWebVisits}
             </Text>
             <Text className="text-xs text-gray-400 font-semibold text-center mt-1">
-              Вэб зочилсон
+              {t('reports.webVisits')}
             </Text>
           </View>
         </View>
@@ -145,8 +147,8 @@ export default function ReportsScreen({ route }: Props) {
 
       {/* Daily Screen Time Chart */}
       <View className="bg-white rounded-3xl p-4 mx-4 mb-3 shadow-sm border border-gray-100">
-        <Text className="text-xs font-bold text-gray-400 tracking-wide mb-3">ӨДРИЙН ДЭЛГЭЦИЙН ЦАГ</Text>
-        <Text className="text-sm font-bold text-gray-900 mb-4">Өдрийн дэлгэцийн цаг</Text>
+        <Text className="text-xs font-bold text-gray-400 tracking-wide mb-3">{t('reports.dailyScreenTime')}</Text>
+        <Text className="text-sm font-bold text-gray-900 mb-4">{t('reports.dailyScreenTimeTitle')}</Text>
         <View className="flex-row items-end gap-x-1">
           {breakdown.map((day) => (
             <View key={day.date} className="flex-1 items-center">
@@ -174,11 +176,11 @@ export default function ReportsScreen({ route }: Props) {
 
       {/* Blocked Attempts */}
       <View className="bg-white rounded-3xl p-4 mx-4 mb-3 shadow-sm border border-gray-100">
-        <Text className="text-xs font-bold text-gray-400 tracking-wide mb-3">ХААЛТЫН ОРОЛДЛОГО</Text>
-        <Text className="text-sm font-bold text-gray-900 mb-4">Хаалтын оролдлого</Text>
+        <Text className="text-xs font-bold text-gray-400 tracking-wide mb-3">{t('reports.blockAttempts')}</Text>
+        <Text className="text-sm font-bold text-gray-900 mb-4">{t('reports.blockAttemptsTitle')}</Text>
         {breakdown.filter((d) => d.blocked > 0).length === 0 ? (
           <Text className="text-sm text-gray-400 text-center py-5">
-            Энэ хугацаанд хаалтын оролдлого байхгүй
+            {t('reports.noBlockAttempts')}
           </Text>
         ) : (
           <View className="gap-y-2">
@@ -200,11 +202,11 @@ export default function ReportsScreen({ route }: Props) {
 
       {/* Top Apps */}
       <View className="bg-white rounded-3xl p-4 mx-4 mb-3 shadow-sm border border-gray-100">
-        <Text className="text-xs font-bold text-gray-400 tracking-wide mb-3">ХАМГИЙН ИХ ХЭРЭГЛЭСЭН АППУУД</Text>
-        <Text className="text-sm font-bold text-gray-900 mb-4">Хамгийн их хэрэглэсэн аппууд</Text>
+        <Text className="text-xs font-bold text-gray-400 tracking-wide mb-3">{t('reports.topApps')}</Text>
+        <Text className="text-sm font-bold text-gray-900 mb-4">{t('reports.topAppsTitle')}</Text>
         {topApps.length === 0 ? (
           <Text className="text-sm text-gray-400 text-center py-5">
-            Аппын хэрэглээний мэдээлэл байхгүй
+            {t('reports.noApps')}
           </Text>
         ) : (
           topApps.map((app, i) => {

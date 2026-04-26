@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, ScrollView, Alert, TextInput, Switch, TouchableOpacity, Text, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { WEB_FILTER_CATEGORIES } from '../../utils/constants';
 import * as api from '../../services/api';
 import type { RouteProp } from '@react-navigation/native';
@@ -13,6 +14,7 @@ type Props = {
 
 export default function WebFilterScreen({ route }: Props) {
   const { childId } = route.params;
+  const { t } = useTranslation();
   const [categories, setCategories] = useState<string[]>(['adult', 'gambling', 'violence']);
   const [customBlock, setCustomBlock] = useState<string[]>([]);
   const [customAllow, setCustomAllow] = useState<string[]>([]);
@@ -54,9 +56,9 @@ export default function WebFilterScreen({ route }: Props) {
     setSaving(true);
     try {
       await api.updateWebFilter(childId, { categories, customBlock, customAllow });
-      Alert.alert('Хадгалагдлаа', 'Вэб шүүлтийн дүрэм шинэчлэгдлээ.');
+      Alert.alert(t('webFilter.saved'), t('webFilter.savedDesc'));
     } catch (error: any) {
-      Alert.alert('Алдаа', error.message || 'Дүрмийг шинэчлэхэд алдаа гарлаа.');
+      Alert.alert(t('common.error'), error.message || t('webFilter.updateError'));
     } finally {
       setSaving(false);
     }
@@ -69,18 +71,18 @@ export default function WebFilterScreen({ route }: Props) {
     <ScrollView className="flex-1 bg-surface">
       {/* Page header */}
       <View className="mx-5 mt-6 mb-7">
-        <Text className="text-xs text-gray-400 font-bold uppercase mb-1.5">ХЯНАЛТ</Text>
+        <Text className="text-xs text-gray-400 font-bold uppercase mb-1.5">{t('webFilter.control')}</Text>
         <Text className="font-display text-[32px] font-bold text-gray-900 leading-9">
-          Вэб шүүлт
+          {t('webFilter.webFilter')}
         </Text>
       </View>
 
       {/* Category Filters */}
       <View className="bg-white rounded-3xl p-5 mx-4 mb-3 border border-gray-100 shadow-sm">
-        <Text className="text-xs text-gray-400 font-bold uppercase mb-3">АГУУЛГЫН АНГИЛАЛ</Text>
-        <Text className="text-sm font-display font-bold text-gray-900 mb-1">Агуулгын ангилал</Text>
+        <Text className="text-xs text-gray-400 font-bold uppercase mb-3">{t('webFilter.contentCategory')}</Text>
+        <Text className="text-sm font-display font-bold text-gray-900 mb-1">{t('webFilter.contentCategoryTitle')}</Text>
         <Text className="text-xs text-gray-400 mb-4">
-          Эдгээр ангиллын вэбсайтыг хаах.
+          {t('webFilter.contentCategoryDesc')}
         </Text>
 
         {WEB_FILTER_CATEGORIES.map((cat, index) => (
@@ -105,8 +107,8 @@ export default function WebFilterScreen({ route }: Props) {
 
       {/* Custom Block List */}
       <View className="bg-white rounded-3xl p-5 mx-4 mb-3 border border-gray-100 shadow-sm">
-        <Text className="text-xs text-gray-400 font-bold uppercase mb-3">ХААГДСАН ДОМАЙНУУД</Text>
-        <Text className="text-sm font-display font-bold text-gray-900 mb-3">Хаагдсан домайнууд</Text>
+        <Text className="text-xs text-gray-400 font-bold uppercase mb-3">{t('webFilter.blockedDomains')}</Text>
+        <Text className="text-sm font-display font-bold text-gray-900 mb-3">{t('webFilter.blockedDomainsTitle')}</Text>
         <View className="flex-row gap-2 mb-3">
           <TextInput
             value={newBlockDomain}
@@ -140,10 +142,10 @@ export default function WebFilterScreen({ route }: Props) {
 
       {/* Custom Allow List */}
       <View className="bg-white rounded-3xl p-5 mx-4 mb-3 border border-gray-100 shadow-sm">
-        <Text className="text-xs text-gray-400 font-bold uppercase mb-3">ЗӨВШӨӨРӨГДСӨН ДОМАЙНУУД</Text>
-        <Text className="text-sm font-display font-bold text-gray-900 mb-1">Зөвшөөрөгдсөн домайнууд</Text>
+        <Text className="text-xs text-gray-400 font-bold uppercase mb-3">{t('webFilter.allowedDomains')}</Text>
+        <Text className="text-sm font-display font-bold text-gray-900 mb-1">{t('webFilter.allowedDomainsTitle')}</Text>
         <Text className="text-xs text-gray-400 mb-3">
-          Эдгээр домайнууд тухайн ангилал хаагдсан байсан ч нээлттэй байна.
+          {t('webFilter.allowedDomainsDesc')}
         </Text>
         <View className="flex-row gap-2 mb-3">
           <TextInput
@@ -186,7 +188,7 @@ export default function WebFilterScreen({ route }: Props) {
           <ActivityIndicator color="#FFFFFF" />
         ) : (
           <Text className="text-sm font-display font-bold text-white tracking-tight">
-            Өөрчлөлт хадгалах
+            {t('webFilter.saveChanges')}
           </Text>
         )}
       </TouchableOpacity>

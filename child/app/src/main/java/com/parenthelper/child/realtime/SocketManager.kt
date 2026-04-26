@@ -39,16 +39,28 @@ object SocketManager {
 
             Log.d(TAG, "Connecting to: $baseUrl with token: ${deviceToken.take(8)}...")
 
+            // Socket.io defaults its path to "/socket.io" at the URL host root.
+            // When baseUrl has a prefix (reverse-proxy at "/parent-helper"), we
+            // strip that prefix off the URI and feed it to `path` explicitly.
+            val parsed = URI.create(baseUrl)
+            val prefixPath = parsed.rawPath?.trimEnd('/') ?: ""
+            val origin = if (prefixPath.isEmpty()) {
+                baseUrl
+            } else {
+                "${parsed.scheme}://${parsed.authority}"
+            }
+
             val options = IO.Options().apply {
                 reconnection = true
                 reconnectionAttempts = Int.MAX_VALUE
                 reconnectionDelay = 1000
                 reconnectionDelayMax = 30000
                 timeout = 20000
-                transports = arrayOf("websocket")
+                transports = arrayOf("websocket", "polling")
+                path = if (prefixPath.isEmpty()) "/socket.io" else "$prefixPath/socket.io"
             }
 
-            socket = IO.socket(URI.create(baseUrl), options)
+            socket = IO.socket(URI.create(origin), options)
 
             socket?.on(Socket.EVENT_CONNECT) {
                 Log.d(TAG, "Connected to server, joining device room...")

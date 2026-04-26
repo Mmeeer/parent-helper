@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { View, ScrollView, Text, Pressable, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { showError } from '../../utils/showError';
 import * as api from '../../services/api';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -16,6 +17,7 @@ type Props = {
 
 export default function RulesOverviewScreen({ navigation, route }: Props) {
   const { childId, childName } = route.params;
+  const { t } = useTranslation();
   const [rules, setRules] = useState<Rules | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -24,7 +26,7 @@ export default function RulesOverviewScreen({ navigation, route }: Props) {
       setLoading(true);
       api.getRules(childId)
         .then(setRules)
-        .catch((err: unknown) => showError(err, 'Дүрмийг ачаалахад алдаа гарлаа.'))
+        .catch((err: unknown) => showError(err, t('rules.loadError')))
         .finally(() => setLoading(false));
     }, [childId]),
   );
@@ -37,18 +39,18 @@ export default function RulesOverviewScreen({ navigation, route }: Props) {
   const customBlocked = rules?.webFilter?.customBlock?.length || 0;
 
   const screenTimeSummary = (() => {
-    if (!dailyLimit) return 'Тохируулаагүй';
+    if (!dailyLimit) return t('rules.notConfigured');
     const hours = Math.floor(dailyLimit / 60);
     const mins = dailyLimit % 60;
-    const minsPart = mins > 0 ? ` ${mins}м` : '';
-    return `${hours}ц${minsPart} өдөрт · ${perAppCount} аппын хязгаар · ${scheduleCount} хуваарь`;
+    const minsPart = mins > 0 ? ` ${mins}${t('rules.minuteShort')}` : '';
+    return `${hours}${t('rules.hourShort')}${minsPart} ${t('rules.perDay')} · ${perAppCount} ${t('rules.appLimits')} · ${scheduleCount} ${t('rules.schedules')}`;
   })();
 
   const ruleCategories = [
     {
       key: 'screen-time',
-      title: 'Дэлгэцийн цагийн хязгаар',
-      description: 'Өдрийн хязгаар, аппын хязгаар болон хуваарь тохируулах',
+      title: t('rules.screenTimeLimit'),
+      description: t('rules.screenTimeLimitDesc'),
       icon: 'time-outline' as const,
       color: C.warm500,
       bgColor: C.warm50,
@@ -57,26 +59,26 @@ export default function RulesOverviewScreen({ navigation, route }: Props) {
     },
     {
       key: 'app-rules',
-      title: 'Аппын удирдлага',
-      description: 'Тодорхой аппыг хаах эсвэл зөвшөөрөх',
+      title: t('rules.appManagement'),
+      description: t('rules.appManagementDesc'),
       icon: 'apps-outline' as const,
       color: C.nest500,
       bgColor: C.nest50,
       summary: blockedAppsCount > 0
-        ? `${blockedAppsCount} апп хаагдсан`
-        : 'Хаагдсан апп байхгүй',
+        ? t('rules.appsBlocked', { count: blockedAppsCount })
+        : t('rules.noAppsBlocked'),
       onPress: () => navigation.navigate('AppRules', { childId, childName }),
     },
     {
       key: 'web-filter',
-      title: 'Вэб шүүлт',
-      description: 'Агуулгын ангилал болон домайны дүрмийг тохируулах',
+      title: t('rules.webFilter'),
+      description: t('rules.webFilterDesc'),
       icon: 'globe-outline' as const,
       color: C.safe500,
       bgColor: C.safe50,
       summary: webCategories > 0 || customBlocked > 0
-        ? `${webCategories} ангилал · ${customBlocked} домайн`
-        : 'Идэвхтэй шүүлт байхгүй',
+        ? `${webCategories} ${t('rules.categories')} · ${customBlocked} ${t('rules.domains')}`
+        : t('rules.noActiveFilters'),
       onPress: () => navigation.navigate('WebFilter', { childId, childName }),
     },
   ];
@@ -85,12 +87,12 @@ export default function RulesOverviewScreen({ navigation, route }: Props) {
     <ScrollView className="flex-1 bg-surface">
       {/* Page header */}
       <View className="mx-5 mt-6 mb-7">
-        <Text className="text-xs text-gray-400 font-bold uppercase mb-1.5">ДҮРМҮҮД</Text>
+        <Text className="text-xs text-gray-400 font-bold uppercase mb-1.5">{t('rules.title')}</Text>
         <Text className="font-display text-[32px] font-bold text-gray-900 leading-9">
-          {childName}-ийн дүрмүүд
+          {t('rules.childRules', { childName })}
         </Text>
         <Text className="text-sm text-gray-500 mt-2">
-          Эцэг эхийн хяналт болон хязгаарлалтуудыг тохируулах.
+          {t('rules.rulesDesc')}
         </Text>
       </View>
 

@@ -4,17 +4,19 @@ import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../store/AuthContext';
 import * as api from '../../services/api';
 import { C } from '../../theme';
+import { useTranslation } from 'react-i18next';
 
 export default function EditProfileScreen() {
   const navigation = useNavigation();
   const { user, refreshUser } = useAuth();
+  const { t } = useTranslation();
   const [name, setName] = useState(user?.name || '');
   const [loading, setLoading] = useState(false);
 
   const handleSave = async () => {
     const trimmed = name.trim();
     if (!trimmed) {
-      Alert.alert('Алдаа', 'Нэрээ оруулна уу.');
+      Alert.alert(t('common.error'), t('editProfile.nameError'));
       return;
     }
     if (trimmed === user?.name) {
@@ -25,11 +27,11 @@ export default function EditProfileScreen() {
     try {
       await api.updateProfile(trimmed);
       await refreshUser();
-      Alert.alert('Амжилттай', 'Профайл шинэчлэгдлээ.', [
+      Alert.alert(t('common.success'), t('editProfile.profileUpdated'), [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
     } catch (err: any) {
-      Alert.alert('Алдаа', err.message || 'Профайл шинэчлэхэд алдаа гарлаа.');
+      Alert.alert(t('common.error'), err.message || t('editProfile.updateError'));
     } finally {
       setLoading(false);
     }
@@ -54,12 +56,12 @@ export default function EditProfileScreen() {
         </View>
 
         {/* Name field */}
-        <Text className="text-xs text-gray-400 font-bold px-1 mb-2">НЭР</Text>
+        <Text className="text-xs text-gray-400 font-bold px-1 mb-2">{t('editProfile.name')}</Text>
         <View className="bg-white rounded-2xl px-4 py-3.5 border border-gray-100 mb-4">
           <TextInput
             value={name}
             onChangeText={setName}
-            placeholder="Нэрээ оруулна уу"
+            placeholder={t('editProfile.enterName')}
             placeholderTextColor={C.gray400}
             className="text-sm text-gray-900 font-semibold"
             autoFocus
@@ -69,7 +71,7 @@ export default function EditProfileScreen() {
         </View>
 
         {/* Email (read-only) */}
-        <Text className="text-xs text-gray-400 font-bold px-1 mb-2">И-МЭЙЛ</Text>
+        <Text className="text-xs text-gray-400 font-bold px-1 mb-2">{t('editProfile.emailLabel')}</Text>
         <View className="bg-gray-50 rounded-2xl px-4 py-3.5 border border-gray-100 mb-8">
           <Text className="text-sm text-gray-400 font-semibold">{user?.email}</Text>
         </View>
@@ -85,7 +87,7 @@ export default function EditProfileScreen() {
           {loading ? (
             <ActivityIndicator color="#fff" size="small" />
           ) : (
-            <Text className="font-display font-bold text-sm text-white">Хадгалах</Text>
+            <Text className="font-display font-bold text-sm text-white">{t('common.save')}</Text>
           )}
         </TouchableOpacity>
       </View>

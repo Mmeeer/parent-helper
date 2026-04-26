@@ -4,6 +4,7 @@ import {
   KeyboardAvoidingView, Platform, Alert, ScrollView, ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../store/AuthContext';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../types';
@@ -13,6 +14,7 @@ type Props = {
 };
 
 export default function LoginScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,14 +24,14 @@ export default function LoginScreen({ navigation }: Props) {
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Алдаа', 'Имэйл болон нууц үгийг оруулна уу.');
+      Alert.alert(t('common.error'), t('auth.enterEmail'));
       return;
     }
     setLoading(true);
     try {
       await login(email.trim(), password);
     } catch (error: any) {
-      Alert.alert('Нэвтрэх амжилтгүй', error.message || 'Буруу нэвтрэх мэдээлэл.');
+      Alert.alert(t('auth.loginFailed'), error.message || t('auth.invalidCredentials'));
     } finally {
       setLoading(false);
     }
@@ -54,7 +56,7 @@ export default function LoginScreen({ navigation }: Props) {
             Prime Kids: Parent Helper
           </Text>
           <Text className="text-xs text-gray-400 font-medium mt-1">
-            Таны гэр бүлийг хамгаалж байна.
+            {t('auth.familyProtection')}
           </Text>
         </View>
 
@@ -62,7 +64,7 @@ export default function LoginScreen({ navigation }: Props) {
         <View className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
           {/* Email */}
           <View className="mb-5">
-            <Text className="font-display font-bold text-gray-900 mb-2">Имэйл</Text>
+            <Text className="font-display font-bold text-gray-900 mb-2">{t('auth.email')}</Text>
             <View className="flex-row items-center px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200">
               <Ionicons name="mail-outline" size={17} color="#9ca3af" />
               <TextInput
@@ -82,13 +84,13 @@ export default function LoginScreen({ navigation }: Props) {
 
           {/* Password */}
           <View className="mb-3">
-            <Text className="font-display font-bold text-gray-900 mb-2">Нууц үг</Text>
+            <Text className="font-display font-bold text-gray-900 mb-2">{t('auth.password')}</Text>
             <View className="flex-row items-center px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200">
               <Ionicons name="lock-closed-outline" size={17} color="#9ca3af" />
               <TextInput
                 ref={passwordRef}
                 className="flex-1 text-sm font-semibold text-gray-700 ml-3"
-                placeholder="Нууц үгээ оруулна уу"
+                placeholder={t('auth.enterPassword')}
                 placeholderTextColor="#d1d5db"
                 value={password}
                 onChangeText={setPassword}
@@ -108,7 +110,7 @@ export default function LoginScreen({ navigation }: Props) {
             className="self-end mb-6"
             onPress={() => navigation.navigate('ForgotPassword')}
           >
-            <Text className="text-sm font-bold text-nest-500">Нууц үг мартсан уу?</Text>
+            <Text className="text-sm font-bold text-nest-500">{t('auth.forgotPassword')}</Text>
           </TouchableOpacity>
 
           {/* Sign in button */}
@@ -120,16 +122,16 @@ export default function LoginScreen({ navigation }: Props) {
           >
             {loading
               ? <ActivityIndicator color="#fff" />
-              : <Text className="font-display font-bold text-sm text-white">Нэвтрэх</Text>
+              : <Text className="font-display font-bold text-sm text-white">{t('auth.login')}</Text>
             }
           </TouchableOpacity>
         </View>
 
         {/* Sign up */}
         <View className="flex-row justify-center mt-6">
-          <Text className="text-sm text-gray-500">Бүртгэл байхгүй юу? </Text>
+          <Text className="text-sm text-gray-500">{t('auth.noAccount')} </Text>
           <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-            <Text className="text-sm font-bold text-nest-500">Бүртгүүлэх</Text>
+            <Text className="text-sm font-bold text-nest-500">{t('auth.register')}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

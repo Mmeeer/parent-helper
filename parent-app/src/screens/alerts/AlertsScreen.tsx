@@ -11,17 +11,10 @@ import * as api from '../../services/api';
 import { onSocketEvent } from '../../services/socket';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Alert as AlertType } from '../../types';
+import { useTranslation } from 'react-i18next';
 import { C } from '../../theme';
 
 type AlertCategory = 'all' | 'location' | 'app' | 'web' | 'sos';
-
-const FILTERS: { key: AlertCategory; label: string }[] = [
-  { key: 'all', label: 'Бүгд' },
-  { key: 'location', label: 'Байршил' },
-  { key: 'app', label: 'Апп' },
-  { key: 'web', label: 'Вэб' },
-  { key: 'sos', label: 'SOS' },
-];
 
 const CATEGORY_MAP: Record<string, AlertCategory> = {
   geofence_trigger: 'location',
@@ -32,17 +25,6 @@ const CATEGORY_MAP: Record<string, AlertCategory> = {
   device_offline: 'app',
   unusual_pattern: 'app',
   sos: 'sos',
-};
-
-const TYPE_LABEL: Record<string, string> = {
-  screen_time_limit: 'Дэлгэцийн цаг',
-  new_app_installed: 'Апп',
-  blocked_content: 'Хаагдсан',
-  geofence_trigger: 'Байршил',
-  device_offline: 'Төхөөрөмж',
-  unusual_pattern: 'Үйл ажиллагаа',
-  uninstall_attempt: 'Устгалт',
-  sos: 'SOS',
 };
 
 const ICON_CONFIG: Record<string, { name: string; bgClass: string; iconColor: string }> = {
@@ -113,7 +95,27 @@ function isToday(dateStr: string): boolean {
 
 export default function AlertsScreen() {
   const { top } = useSafeAreaInsets();
+  const { t } = useTranslation();
   const navigation = useNavigation();
+
+  const FILTERS: { key: AlertCategory; label: string }[] = [
+    { key: 'all', label: t('alerts.all') },
+    { key: 'location', label: t('alerts.location') },
+    { key: 'app', label: t('alerts.app') },
+    { key: 'web', label: t('alerts.web') },
+    { key: 'sos', label: 'SOS' },
+  ];
+
+  const TYPE_LABEL: Record<string, string> = {
+    screen_time_limit: t('alerts.screenTime'),
+    new_app_installed: t('alerts.app'),
+    blocked_content: t('alerts.blocked'),
+    geofence_trigger: t('alerts.location'),
+    device_offline: t('alerts.device'),
+    unusual_pattern: t('alerts.activity'),
+    uninstall_attempt: t('alerts.uninstall'),
+    sos: 'SOS',
+  };
   const [alerts, setAlerts] = useState<AlertType[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -129,7 +131,7 @@ export default function AlertsScreen() {
       setPage(data.page);
       setTotalPages(data.totalPages);
     } catch (err) {
-      if (!append) showError(err, 'Мэдэгдэл ачаалахад алдаа гарлаа.');
+      if (!append) showError(err, t('alerts.loadError'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -149,7 +151,7 @@ export default function AlertsScreen() {
       await api.markAlertRead(alertId);
       setAlerts((prev) => prev.map((a) => a._id === alertId ? { ...a, read: true } : a));
     } catch (err) {
-      showError(err, 'Мэдэгдлийг уншсан болгоход алдаа гарлаа.');
+      showError(err, t('alerts.markReadError'));
     }
   };
 
@@ -158,7 +160,7 @@ export default function AlertsScreen() {
       await api.markAllAlertsRead();
       setAlerts((prev) => prev.map((a) => ({ ...a, read: true })));
     } catch (err) {
-      showError(err, 'Мэдэгдлүүдийг уншсан болгоход алдаа гарлаа.');
+      showError(err, t('alerts.markAllReadError'));
     }
   };
 
@@ -187,7 +189,7 @@ export default function AlertsScreen() {
     return (
       <View className={isOlderItem ? 'opacity-60' : ''}>
         {showYesterdayHeader && (
-          <Text className="text-xs text-gray-400 font-bold mb-3 mt-2">Өчигдөр</Text>
+          <Text className="text-xs text-gray-400 font-bold mb-3 mt-2">{t('common.yesterday')}</Text>
         )}
         <Pressable onPress={() => handleMarkRead(item._id)} className="mb-3">
           {({ pressed }) => (
@@ -286,14 +288,14 @@ export default function AlertsScreen() {
             {/* Page header */}
             <View className="flex-row items-end justify-between mb-4">
               <View>
-                <Text className="font-display font-extrabold text-xl text-gray-900">Мэдэгдлүүд</Text>
+                <Text className="font-display font-extrabold text-xl text-gray-900">{t('alerts.title')}</Text>
                 <Text className="text-sm text-gray-400">
-                  {unreadCount > 0 ? `${unreadCount} уншаагүй` : 'Бүгдийг уншсан'}
+                  {unreadCount > 0 ? t('alerts.unread', { count: unreadCount }) : t('alerts.allRead')}
                 </Text>
               </View>
               {unreadCount > 0 && (
                 <TouchableOpacity onPress={handleMarkAllRead} className="py-1">
-                  <Text className="text-xs text-nest-500 font-bold">Бүгдийг уншсан болгох</Text>
+                  <Text className="text-xs text-nest-500 font-bold">{t('alerts.markAllRead')}</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -333,9 +335,9 @@ export default function AlertsScreen() {
             <View className="w-16 h-16 rounded-2xl bg-nest-50 items-center justify-center mb-4">
               <Ionicons name="notifications-outline" size={32} color={C.nest500} />
             </View>
-            <Text className="text-sm font-bold text-gray-900">Мэдэгдэл байхгүй</Text>
+            <Text className="text-sm font-bold text-gray-900">{t('alerts.noAlerts')}</Text>
             <Text className="text-xs text-gray-500 text-center mt-1.5 leading-5">
-              Чухал үйл явдлын талаар энд мэдэгдэнэ.
+              {t('alerts.noAlertsDesc')}
             </Text>
           </View>
         }
