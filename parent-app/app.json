@@ -58,7 +58,13 @@
         }
       ],
       "./plugins/pin-androidx-core",
-      "expo-localization"
+      "expo-localization",
+      [
+        "expo-font",
+        {
+          "fonts": ["./assets/fonts/ionicons.ttf"]
+        }
+      ]
     ],
     "extra": {
       "eas": {
