@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ override: true });
 const Sentry = require('@sentry/node');
 const express = require('express');
 const http = require('http');

@@ -3,6 +3,12 @@
     "version": ">= 15.0.0"
   },
   "build": {
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      }
+    },
     "production": {
       "android": {
         "buildType": "apk",
@@ -11,13 +17,10 @@
           "disabled": false,
           "key": "v2-clean-native"
         }
-      },
-    },
-    "preview": {
-      "android": {
-        "buildType": "apk"
-      },
-      "distribution": "internal"
+      }
     }
+  },
+  "submit": {
+    "production": {}
   }
 }

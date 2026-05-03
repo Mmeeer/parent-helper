@@ -30,11 +30,6 @@
         }
       }
     },
-    "extra": {
-      "eas": {
-        "projectId": "parent-helper"
-      }
-    },
     "plugins": [
       "expo-secure-store",
       [
@@ -64,6 +59,12 @@
       ],
       "./plugins/pin-androidx-core",
       "expo-localization"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "bf23b024-f537-4624-9b26-727a2e7f5728"
+      }
+    },
+    "owner": "mergenganbat"
   }
 }
