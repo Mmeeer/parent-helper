@@ -5,12 +5,14 @@ import android.os.Build
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
@@ -130,9 +132,12 @@ class PairingActivity : AppCompatActivity() {
         setLoading(true)
 
         lifecycleScope.launch {
+            val serverUrl = BuildConfig.SERVER_URL
+            val url = if (serverUrl.endsWith("/")) serverUrl else "$serverUrl/"
+            val fullEndpoint = "${url}devices/complete-pairing"
+            Log.d(TAG, "Pairing attempt: code=$code, endpoint=$fullEndpoint")
+
             try {
-                val serverUrl = BuildConfig.SERVER_URL
-                val url = if (serverUrl.endsWith("/")) serverUrl else "$serverUrl/"
                 (application as ParentHelperApp).prefsManager.saveBaseUrl(url)
                 ApiClient.init(url, (application as ParentHelperApp).prefsManager)
 
@@ -143,8 +148,10 @@ class PairingActivity : AppCompatActivity() {
                     osVersion = Build.VERSION.RELEASE,
                     appVersion = BuildConfig.VERSION_NAME,
                 )
+                Log.d(TAG, "Sending PairingRequest: $request")
 
                 val response = ApiClient.service.completePairing(request)
+                Log.d(TAG, "Pairing succeeded: deviceId=${response.deviceId}")
 
                 (application as ParentHelperApp).prefsManager.savePairingData(
                     deviceToken = response.deviceToken,
@@ -163,23 +170,55 @@ class PairingActivity : AppCompatActivity() {
                 startActivity(Intent(this@PairingActivity, PairingSuccessActivity::class.java))
                 finish()
             } catch (e: HttpException) {
-                val errorMsg = try {
-                    val body = e.response()?.errorBody()?.string()
-                    body?.let { JSONObject(it).optString("error") }
-                } catch (_: Exception) { null }
-                showError(errorMsg ?: getString(R.string.pairing_error_failed))
+                val body = try { e.response()?.errorBody()?.string() } catch (_: Exception) { null }
+                val parsedError = try { body?.let { JSONObject(it).optString("error") } } catch (_: Exception) { null }
+                Log.e(TAG, "HttpException ${e.code()}: body=$body", e)
+                showErrorDialog(
+                    title = "Server returned error ${e.code()}",
+                    detail = "Endpoint: $fullEndpoint\nResponse: ${parsedError ?: body ?: "(empty body)"}",
+                )
             } catch (e: ConnectException) {
-                showError("Cannot connect to server. Please check your network connection.")
+                Log.e(TAG, "ConnectException to $fullEndpoint", e)
+                showErrorDialog(
+                    title = "Cannot connect to server",
+                    detail = "Endpoint: $fullEndpoint\n${e.javaClass.simpleName}: ${e.message ?: "(no message)"}\nCheck phone has internet and the URL is reachable.",
+                )
             } catch (e: UnknownHostException) {
-                showError("Server not reachable. Please check your network connection.")
+                Log.e(TAG, "UnknownHostException for $fullEndpoint", e)
+                showErrorDialog(
+                    title = "DNS lookup failed",
+                    detail = "Endpoint: $fullEndpoint\n${e.javaClass.simpleName}: ${e.message ?: "(no message)"}",
+                )
             } catch (e: SocketTimeoutException) {
-                showError("Connection timed out. Please try again.")
+                Log.e(TAG, "SocketTimeoutException for $fullEndpoint", e)
+                showErrorDialog(
+                    title = "Connection timed out",
+                    detail = "Endpoint: $fullEndpoint\nServer didn't respond within 30 seconds.",
+                )
             } catch (e: Exception) {
-                showError(e.message ?: getString(R.string.pairing_error_failed))
+                Log.e(TAG, "Unexpected pairing error", e)
+                showErrorDialog(
+                    title = "Pairing failed",
+                    detail = "Endpoint: $fullEndpoint\n${e.javaClass.simpleName}: ${e.message ?: "(no message)"}",
+                )
             } finally {
                 setLoading(false)
             }
         }
+    }
+
+    private fun showErrorDialog(title: String, detail: String) {
+        if (isFinishing || isDestroyed) return
+        AlertDialog.Builder(this)
+            .setTitle(title)
+            .setMessage(detail)
+            .setPositiveButton("OK", null)
+            .show()
+        // Also keep the inline error visible for context
+        tvError.text = title
+        tvError.visibility = View.VISIBLE
+        boxes.forEach { it.text.clear() }
+        boxes[0].requestFocus()
     }
 
     private fun setLoading(loading: Boolean) {
@@ -198,5 +237,6 @@ class PairingActivity : AppCompatActivity() {
 
     companion object {
         private const val PAIRING_CODE_LENGTH = 8
+        private const val TAG = "PairingActivity"
     }
 }
