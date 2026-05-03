@@ -98,9 +98,12 @@ exports.completePairing = async (req, res, next) => {
     device.status = 'online';
     device.lastSeen = new Date();
     device.deviceToken = crypto.randomBytes(32).toString('hex');
-    // Clear pairing code after successful pairing to free up the unique index slot
-    device.pairingCode = null;
-    device.pairingExpiresAt = null;
+    // Remove the pairing code so the sparse unique index ignores this doc.
+    // NOTE: must use `undefined` (which Mongoose translates to `$unset`), not
+    // `null`. Sparse indexes still include null-valued documents, so setting
+    // these to null would cause E11000 collisions on the next successful pair.
+    device.pairingCode = undefined;
+    device.pairingExpiresAt = undefined;
 
     console.log('[COMPLETE-PAIRING] Saving paired device...');
     await device.save();

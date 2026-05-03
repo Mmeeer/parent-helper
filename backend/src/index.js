@@ -243,6 +243,19 @@ let offlineDetectorId = null;
 
 const start = async () => {
   await connectDB();
+
+  // One-time migration: paired devices may have `pairingCode: null` from a
+  // legacy bug where the controller set the field to null instead of $unset.
+  // Sparse unique indexes treat null as a real value, so two such docs would
+  // collide on the next pairing attempt. Strip the field everywhere it's null.
+  const pairingCleanup = await Device.updateMany(
+    { paired: true, $or: [{ pairingCode: null }, { pairingExpiresAt: null }] },
+    { $unset: { pairingCode: '', pairingExpiresAt: '' } },
+  );
+  if (pairingCleanup.modifiedCount > 0) {
+    console.log(`[Startup] Cleaned up ${pairingCleanup.modifiedCount} paired device(s) with null pairingCode`);
+  }
+
   initFirebase();
   initEmail();
   offlineDetectorId = startOfflineDetector(io);
