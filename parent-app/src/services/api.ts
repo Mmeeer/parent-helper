@@ -278,6 +278,9 @@ export interface InstalledApp {
   packageName: string;
   appName: string;
   installedAt: string;
+  // Optional small base64 PNG (no data: prefix), 64x64 from the child device.
+  // Older devices/backends may not include it.
+  iconBase64?: string | null;
 }
 
 export async function getInstalledApps(deviceId: string): Promise<InstalledApp[]> {

@@ -31,6 +31,9 @@ import com.parenthelper.child.enforcement.WebFilterVpnService
 import com.parenthelper.child.realtime.SocketManager
 import com.parenthelper.child.ui.main.MainActivity
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import java.text.SimpleDateFormat
 import java.util.*
@@ -45,6 +48,7 @@ class MonitoringService : Service() {
     private var appInstallReceiver: AppInstallReceiver? = null
     private var overlayPermissionCheckJob: Job? = null
     private var wasOverlayGranted = true
+    private var initialized = false
 
     override fun onCreate() {
         super.onCreate()
@@ -54,10 +58,25 @@ class MonitoringService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (initialized) return START_STICKY
+
         serviceScope.launch {
             val prefs = (application as ParentHelperApp).prefsManager
-            val childId = prefs.childId.first() ?: return@launch
-            val deviceToken = prefs.deviceToken.first() ?: return@launch
+
+            // Wait for pairing to complete. Service may start before the user
+            // has paired (boot, restore-from-kill); without this, we'd return
+            // early and never re-init even after pairing succeeds, leaving
+            // blocking & monitoring permanently disabled until the next boot.
+            val pair: Pair<String, String> = combine(
+                prefs.childId.filterNotNull(),
+                prefs.deviceToken.filterNotNull(),
+            ) { c, t -> c to t }
+                .distinctUntilChanged()
+                .first()
+            val childId = pair.first
+            val deviceToken = pair.second
+            initialized = true
+            Log.d(TAG, "Pairing detected, initializing monitoring (childId=$childId)")
 
             // Restore persisted remote lock state (survives reboot / process kill)
             restoreEnforcementState(prefs)
@@ -307,7 +326,7 @@ class MonitoringService : Service() {
             try {
                 val apps = InstalledAppsCollector.getInstalledApps(this@MonitoringService)
                 val request = com.parenthelper.child.data.models.InstalledAppsSyncRequest(
-                    apps = apps.map { com.parenthelper.child.data.models.InstalledAppEntry(it.packageName, it.appName) }
+                    apps = apps.map { com.parenthelper.child.data.models.InstalledAppEntry(it.packageName, it.appName, it.iconBase64) }
                 )
                 ApiClient.service.syncInstalledApps(request)
                 Log.d(TAG, "Synced ${apps.size} installed apps")

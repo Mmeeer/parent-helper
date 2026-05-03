@@ -54,11 +54,20 @@ const geofenceUpdate = [
 const screenTimeRules = [
   body('dailyLimitMin').optional().isInt({ min: 0, max: 1440 }).withMessage('Daily limit must be 0-1440 minutes'),
   body('perApp').optional().isArray({ max: 100 }).withMessage('Too many per-app rules'),
-  body('perApp.*.packageName').optional().trim().notEmpty().isLength({ max: 200 }),
-  body('perApp.*.limitMin').optional().isInt({ min: 0, max: 1440 }),
-  body('schedule').optional().isObject(),
-  body('schedule.enabled').optional().isBoolean(),
-  body('schedule.restrictedPeriods').optional().isArray({ max: 20 }),
+  // The parent app sends per-app entries as { appId, appName, limitMin }.
+  // (`packageName` was the old shape — keep validating both for safety.)
+  body('perApp.*.appId').optional().trim().isLength({ max: 200 }).withMessage('Invalid app id'),
+  body('perApp.*.appName').optional().trim().isLength({ max: 200 }).withMessage('Invalid app name'),
+  body('perApp.*.packageName').optional().trim().isLength({ max: 200 }).withMessage('Invalid package name'),
+  body('perApp.*.limitMin').optional().isInt({ min: 0, max: 1440 }).withMessage('Per-app limit must be 0-1440 minutes'),
+  // Schedule is an array of blocked time ranges, NOT an object. Each entry
+  // is { days: int[0-6], startTime: "HH:mm", endTime: "HH:mm", blocked: bool }.
+  body('schedule').optional().isArray({ max: 50 }).withMessage('schedule must be an array'),
+  body('schedule.*.days').optional().isArray().withMessage('schedule.days must be an array of 0-6'),
+  body('schedule.*.days.*').optional().isInt({ min: 0, max: 6 }).withMessage('schedule.days values must be 0-6'),
+  body('schedule.*.startTime').optional().matches(/^([01]\d|2[0-3]):[0-5]\d$/).withMessage('startTime must be HH:mm'),
+  body('schedule.*.endTime').optional().matches(/^([01]\d|2[0-3]):[0-5]\d$/).withMessage('endTime must be HH:mm'),
+  body('schedule.*.blocked').optional().isBoolean().withMessage('schedule.blocked must be boolean'),
   checkValidation,
 ];
 

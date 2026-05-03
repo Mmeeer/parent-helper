@@ -63,6 +63,11 @@ const deviceSchema = new mongoose.Schema({
   installedApps: [{
     packageName: { type: String, required: true },
     appName: { type: String, required: true },
+    // Optional small base64-encoded PNG (no data: prefix), 64x64 from the
+    // child app. Used by the parent app to render real icons in the
+    // block-app picker. Stored alongside the app entry so the parent
+    // doesn't need to fetch icons separately.
+    iconBase64: { type: String, default: null },
     installedAt: { type: Date, default: Date.now },
   }],
 }, { timestamps: true });

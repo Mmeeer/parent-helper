@@ -13,7 +13,7 @@
     <string name="monitoring_notification_text">Төхөөрөмжийн хяналт ажиллаж байна</string>
     <string name="channel_monitoring">Хяналтын үйлчилгээ</string>
     <string name="channel_alerts">Мэдэгдэл</string>
-    <string name="sos_hold_hint">Дарж барина уу</string>
+    <string name="sos_hold_hint">Дарж илгээнэ үү</string>
     <string name="sos_sending">Мэдэгдэл илгээж байна&#8230;</string>
     <string name="sos_sent">Эцэг эхэд мэдэгдэл илгээгдлээ!</string>
     <string name="sos_failed">Мэдэгдэл илгээж чадсангүй. Дахин оролдоно уу.</string>
@@ -82,6 +82,7 @@
     <string name="perm_accessibility_title">Хүртээмжийн үйлчилгээ</string>
     <string name="perm_accessibility_why">Вэб агуулгыг шүүж, хориглосон апп руу нэвтрэхийг хязгаарлана. Энэ нь хүүхдийг хортой агуулгаас хамгаалахад чухал үүрэгтэй.</string>
     <string name="perm_accessibility_instruction">Тохиргоо нээгдэх үед \"Prime Kids\"-ийг олж, идэвхжүүлнэ үү. Дараа нь \"Allow\" / \"OK\" дарж энэ апп руу буцна уу.</string>
+    <string name="perm_required_cannot_skip">Энэ зөвшөөрөл заавал шаардлагатай. Үүнгүйгээр апп блоклох ажиллахгүй.</string>
     <string name="accessibility_service_description">Prime Kids нь хүүхдийн төхөөрөмж дээрх хориглосон апп нээх оролдлогыг таслан зогсоож, веб хөтчүүдээс хийгдэж буй хайлтын хаягийг шүүхэд энэ зөвшөөрлийг ашиглана. Хувийн нууцлагдсан мэдээллийг хадгалахгүй.</string>
     <string name="accessibility_service_summary">Хориглосон апп ба хүсээгүй веб хуудсыг блоклоно</string>
 

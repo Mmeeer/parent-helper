@@ -10,11 +10,12 @@ import {
   TouchableOpacity,
   Pressable,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import { DAYS_OF_WEEK } from '../../utils/constants';
+import { DAYS_OF_WEEK, DAY_NAME_TO_NUM, DAY_NUM_TO_NAME } from '../../utils/constants';
 import { formatDuration } from '../../utils/formatters';
 import * as api from '../../services/api';
 import type { RouteProp } from '@react-navigation/native';
@@ -29,7 +30,10 @@ type Props = {
 export default function ScreenTimeRulesScreen({ route }: Props) {
   const { childId } = route.params;
   const { t } = useTranslation();
-  const [dailyLimit, setDailyLimit] = useState('120');
+  // Daily limit is shown in HOURS (more natural for a daily cap) but the
+  // backend stores it as `dailyLimitMin` so we convert at the API boundary.
+  // Strings allow partial input like "2." while typing.
+  const [dailyLimitHours, setDailyLimitHours] = useState('2');
   const [perAppLimits, setPerAppLimits] = useState<PerAppLimit[]>([]);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,9 +56,19 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
     try {
       const rules = await api.getRules(childId);
       if (rules.screenTime) {
-        setDailyLimit(String(rules.screenTime.dailyLimitMin ?? 120));
+        const mins = rules.screenTime.dailyLimitMin ?? 120;
+        // Show as hours, drop trailing zeros (2.0 → "2", 2.5 → "2.5")
+        setDailyLimitHours(String(Number.parseFloat((mins / 60).toFixed(2))));
         setPerAppLimits(rules.screenTime.perApp ?? []);
-        setSchedules(rules.screenTime.schedule ?? []);
+        // Backend stores days as ints 0-6; UI works with day name strings.
+        setSchedules(
+          (rules.screenTime.schedule ?? []).map((s: any) => ({
+            ...s,
+            days: (s.days ?? []).map((d: any) =>
+              typeof d === 'number' ? DAY_NUM_TO_NAME[d] : d,
+            ).filter(Boolean),
+          })),
+        );
       }
 
       const devices = await api.getChildDevices(childId);
@@ -74,18 +88,25 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
   };
 
   const handleSave = async () => {
-    const limitMin = Number.parseInt(dailyLimit, 10);
-    if (Number.isNaN(limitMin) || limitMin < 0) {
+    const hours = Number.parseFloat(dailyLimitHours.replace(',', '.'));
+    if (Number.isNaN(hours) || hours <= 0 || hours > 24) {
       Alert.alert(t('common.error'), t('screenTimeRules.dailyLimitError'));
       return;
     }
+    // Backend expects minutes; round to the nearest minute.
+    const limitMin = Math.round(hours * 60);
 
     setSaving(true);
     try {
+      // Convert day names back to ints 0-6 for the backend / child app.
+      const scheduleForApi = schedules.map((s) => ({
+        ...s,
+        days: s.days.map((d) => DAY_NAME_TO_NUM[d]).filter((n) => n !== undefined),
+      }));
       await api.updateScreenTime(childId, {
         dailyLimitMin: limitMin,
         perApp: perAppLimits,
-        schedule: schedules,
+        schedule: scheduleForApi as any,
       });
       Alert.alert(t('screenTimeRules.saved'), t('screenTimeRules.savedDesc'));
     } catch (error: any) {
@@ -174,7 +195,10 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
     );
   }
 
-  const parsedLimit = Number.parseInt(dailyLimit, 10);
+  // For helper text + preset highlighting (in minutes).
+  const parsedLimit = Math.round(
+    (Number.parseFloat(dailyLimitHours.replace(',', '.')) || 0) * 60,
+  );
 
   return (
     <>
@@ -196,33 +220,43 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
         <View className="flex-row items-center gap-2">
           <TextInput
             className="rounded-2xl bg-gray-50 border border-gray-200 px-4 py-3 text-sm text-gray-900 w-24 text-center"
-            value={dailyLimit}
-            onChangeText={setDailyLimit}
-            keyboardType="number-pad"
-            maxLength={4}
+            value={dailyLimitHours}
+            onChangeText={(v) => {
+              // Only digits + a single decimal separator. Strip everything
+              // else so a stray "h" or "min" never produces NaN at save.
+              const cleaned = v.replace(/[^0-9.,]/g, '').replaceAll(',', '.');
+              const dots = cleaned.split('.');
+              setDailyLimitHours(dots.length > 1 ? `${dots[0]}.${dots.slice(1).join('')}` : cleaned);
+            }}
+            keyboardType="decimal-pad"
+            maxLength={5}
+            placeholder="2"
             placeholderTextColor={C.gray300}
           />
-          <Text className="text-sm text-gray-500">{t('common.minutes')}</Text>
+          <Text className="text-sm text-gray-500">{t('common.hours', 'hours')}</Text>
           <Text className="text-xs text-gray-400 font-medium">
-            ({formatDuration(parsedLimit || 0)})
+            ({formatDuration(parsedLimit)})
           </Text>
         </View>
 
-        {/* Quick presets */}
+        {/* Quick presets — values stored in hours (allows half-hour) */}
         <View className="flex-row mt-3 gap-2 flex-wrap">
-          {[30, 60, 120, 180, 240].map((mins) => (
-            <TouchableOpacity
-              key={mins}
-              onPress={() => setDailyLimit(String(mins))}
-              className={`px-3 py-1.5 rounded-full ${parsedLimit === mins ? 'bg-nest-500' : 'bg-gray-100'}`}
-            >
-              <Text
-                className={`text-xs font-medium ${parsedLimit === mins ? 'text-white' : 'text-gray-500'}`}
+          {[0.5, 1, 2, 3, 4].map((hrs) => {
+            const mins = Math.round(hrs * 60);
+            return (
+              <TouchableOpacity
+                key={hrs}
+                onPress={() => setDailyLimitHours(String(hrs))}
+                className={`px-3 py-1.5 rounded-full ${parsedLimit === mins ? 'bg-nest-500' : 'bg-gray-100'}`}
               >
-                {formatDuration(mins)}
-              </Text>
-            </TouchableOpacity>
-          ))}
+                <Text
+                  className={`text-xs font-medium ${parsedLimit === mins ? 'text-white' : 'text-gray-500'}`}
+                >
+                  {formatDuration(mins)}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </View>
 
@@ -427,9 +461,16 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
               className="bg-white rounded-3xl mx-4 mb-1 flex-row items-center py-3 px-4 gap-3 border border-gray-100"
               onPress={() => pickAppForLimit(item)}
             >
-              <View className="w-10 h-10 rounded-xl bg-nest-50 justify-center items-center">
-                <Ionicons name="cube-outline" size={22} color={C.nest500} />
-              </View>
+              {item.iconBase64 ? (
+                <Image
+                  source={{ uri: `data:image/png;base64,${item.iconBase64}` }}
+                  style={{ width: 40, height: 40, borderRadius: 12 }}
+                />
+              ) : (
+                <View className="w-10 h-10 rounded-xl bg-nest-50 justify-center items-center">
+                  <Ionicons name="cube-outline" size={22} color={C.nest500} />
+                </View>
+              )}
               <View className="flex-1">
                 <Text className="text-sm font-medium text-gray-900">
                   {item.appName}

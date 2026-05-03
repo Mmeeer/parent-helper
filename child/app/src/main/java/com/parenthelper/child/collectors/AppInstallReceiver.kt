@@ -96,7 +96,7 @@ class AppInstallReceiver : BroadcastReceiver() {
                 // Re-sync installed apps list so backend has the full picture
                 val allApps = InstalledAppsCollector.getInstalledApps(context)
                 val syncRequest = com.parenthelper.child.data.models.InstalledAppsSyncRequest(
-                    apps = allApps.map { com.parenthelper.child.data.models.InstalledAppEntry(it.packageName, it.appName) }
+                    apps = allApps.map { com.parenthelper.child.data.models.InstalledAppEntry(it.packageName, it.appName, it.iconBase64) }
                 )
                 ApiClient.service.syncInstalledApps(syncRequest)
             } catch (e: Exception) {
@@ -119,7 +119,7 @@ class AppInstallReceiver : BroadcastReceiver() {
                 // Re-sync installed apps list so backend stays up-to-date
                 val allApps = InstalledAppsCollector.getInstalledApps(context)
                 val syncRequest = com.parenthelper.child.data.models.InstalledAppsSyncRequest(
-                    apps = allApps.map { com.parenthelper.child.data.models.InstalledAppEntry(it.packageName, it.appName) }
+                    apps = allApps.map { com.parenthelper.child.data.models.InstalledAppEntry(it.packageName, it.appName, it.iconBase64) }
                 )
                 ApiClient.service.syncInstalledApps(syncRequest)
                 Log.d(TAG, "Re-synced installed apps after uninstall")

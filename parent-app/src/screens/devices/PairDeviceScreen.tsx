@@ -8,7 +8,10 @@ import {
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as api from '../../services/api';
+import { onSocketEvent } from '../../services/socket';
 import type { RouteProp } from '@react-navigation/native';
 import type { RootStackParamList, PairDeviceResponse } from '../../types';
 import { useTranslation } from 'react-i18next';
@@ -20,6 +23,7 @@ type Props = {
 
 export default function PairDeviceScreen({ route }: Props) {
   const { t } = useTranslation();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { childId, childName } = route.params;
   const [pairingData, setPairingData] = useState<PairDeviceResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -29,6 +33,22 @@ export default function PairDeviceScreen({ route }: Props) {
   useEffect(() => {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, []);
+
+  // Listen for the backend's `device:paired` socket event so the parent
+  // automatically jumps to the child detail page the moment the child
+  // completes pairing — no manual refresh needed.
+  useEffect(() => {
+    const unsub = onSocketEvent('device:paired', (data: any) => {
+      if (data?.childId !== childId) return;
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      // Replace this screen so back button doesn't return here.
+      navigation.replace('ChildDetail', { childId, childName });
+    });
+    return unsub;
+  }, [childId, childName, navigation]);
 
   const startCountdown = (expiresAt: string) => {
     if (timerRef.current) clearInterval(timerRef.current);

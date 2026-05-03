@@ -46,3 +46,27 @@ export const DAYS_OF_WEEK = [
   'Saturday',
   'Sunday',
 ];
+
+// Backend stores schedule.days as ints 0-6 (Sunday=0) to match the
+// Android child app's `Calendar.DAY_OF_WEEK - 1` indexing in
+// ScheduleEnforcer. The UI uses string labels for legibility, so we
+// convert at the API boundary.
+export const DAY_NAME_TO_NUM: Record<string, number> = {
+  Sunday: 0,
+  Monday: 1,
+  Tuesday: 2,
+  Wednesday: 3,
+  Thursday: 4,
+  Friday: 5,
+  Saturday: 6,
+};
+
+export const DAY_NUM_TO_NAME: Record<number, string> = {
+  0: 'Sunday',
+  1: 'Monday',
+  2: 'Tuesday',
+  3: 'Wednesday',
+  4: 'Thursday',
+  5: 'Friday',
+  6: 'Saturday',
+};

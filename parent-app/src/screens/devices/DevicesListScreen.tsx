@@ -216,14 +216,44 @@ export default function DevicesListScreen({ navigation, route }: Props) {
         ))
       )}
 
-      {/* Pair New Device */}
+      {/* Pair New / Replace Device — one child can have only one device */}
       <TouchableOpacity
-        onPress={() => navigation.navigate('PairDevice', { childId, childName })}
+        onPress={() => {
+          if (devices.length === 0) {
+            navigation.navigate('PairDevice', { childId, childName });
+            return;
+          }
+          // Replace flow: confirm, unpair existing, then go to pairing
+          Alert.alert(
+            t('devices.replaceTitle', 'Replace device?'),
+            t('devices.replaceConfirm', 'Each child can have only one device. The current device will be unpaired before you can pair a new one.'),
+            [
+              { text: t('common.cancel'), style: 'cancel' },
+              {
+                text: t('devices.replaceBtn', 'Replace'),
+                style: 'destructive',
+                onPress: () => { void (async () => {
+                  try {
+                    await api.unpairDevice(devices[0].id);
+                    setDevices([]);
+                    navigation.navigate('PairDevice', { childId, childName });
+                  } catch (error: any) {
+                    Alert.alert(t('common.error'), error.message || t('devices.unpairError'));
+                  }
+                })(); },
+              },
+            ],
+          );
+        }}
         className="bg-nest-500 rounded-2xl items-center justify-center mx-4 mt-2 flex-row gap-x-2 shadow-lg h-[52px]"
       >
-        <Ionicons name="add-circle-outline" size={20} color="#FFFFFF" />
+        <Ionicons
+          name={devices.length === 0 ? 'add-circle-outline' : 'swap-horizontal-outline'}
+          size={20}
+          color="#FFFFFF"
+        />
         <Text className="text-sm font-display font-bold text-white tracking-wide">
-          {t('devices.pairNew')}
+          {devices.length === 0 ? t('devices.pairNew') : t('devices.replaceDevice', 'Replace Device')}
         </Text>
       </TouchableOpacity>
 

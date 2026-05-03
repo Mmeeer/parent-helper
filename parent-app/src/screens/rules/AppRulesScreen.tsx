@@ -10,6 +10,7 @@ import {
   TextInput,
   TouchableOpacity,
   Pressable,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -239,9 +240,16 @@ export default function AppRulesScreen({ route }: Props) {
                   className="bg-white rounded-3xl mx-4 mb-1 flex-row items-center py-3 px-4 gap-x-3 border border-gray-100"
                   onPress={() => addApp(item)}
                 >
-                  <View className="w-10 h-10 rounded-xl bg-nest-50 justify-center items-center">
-                    <Ionicons name="cube-outline" size={22} color={C.nest500} />
-                  </View>
+                  {item.iconBase64 ? (
+                    <Image
+                      source={{ uri: `data:image/png;base64,${item.iconBase64}` }}
+                      style={{ width: 40, height: 40, borderRadius: 12 }}
+                    />
+                  ) : (
+                    <View className="w-10 h-10 rounded-xl bg-nest-50 justify-center items-center">
+                      <Ionicons name="cube-outline" size={22} color={C.nest500} />
+                    </View>
+                  )}
                   <View className="flex-1">
                     <Text className="text-sm font-medium text-gray-900">
                       {item.appName}

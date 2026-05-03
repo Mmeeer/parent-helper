@@ -51,6 +51,7 @@ export function connectSocket(): void {
   });
   forward('location:update');
   forward('rules:updated');
+  forward('device:paired');
 }
 
 export function disconnectSocket(): void {

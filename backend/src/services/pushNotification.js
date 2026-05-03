@@ -74,6 +74,9 @@ async function sendAlertNotification(parentId, alert) {
         alertId: String(alert._id),
         type: alert.type,
         childId: String(alert.childId),
+        // Include childName so the parent app can deep-link to LocationMap
+        // (which expects a name in route.params) without an extra API round-trip.
+        ...(alert.data?.childName ? { childName: String(alert.data.childName) } : {}),
         ...(alert.data?.lat ? { lat: String(alert.data.lat) } : {}),
         ...(alert.data?.lng ? { lng: String(alert.data.lng) } : {}),
       },

@@ -43,9 +43,19 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
   const [webHistory, setWebHistory] = useState<WebEntry[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
+  // NOSONAR: SonarLint S1854 false-positive on useState destructuring
+  const [deviceCount, setDeviceCount] = useState(0);
 
   const loadData = useCallback(async () => {
     try {
+      // Devices first — if none, the rest of the dashboard is meaningless.
+      const deviceList = await api.getChildDevices(childId).catch(() => []);
+      setDeviceCount(deviceList.length);
+      if (deviceList.length === 0) {
+        setLoading(false);
+        setRefreshing(false);
+        return;
+      }
       const [summaryData, appsData, webData] = await Promise.all([
         api.getActivitySummary(childId, period),
         api.getAppUsage(childId),
@@ -133,9 +143,59 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
     );
   }
 
+  const initial = childName.charAt(0).toUpperCase();
+
+  // No device paired yet — show only the Connect Device flow. Everything else
+  // (screen time, location, app usage) is meaningless until a device is paired.
+  if (deviceCount === 0) {
+    return (
+      <ScrollView className="flex-1 bg-surface" showsVerticalScrollIndicator={false}>
+        <View className="px-5 pb-10">
+          {/* Header */}
+          <View className="flex-row items-center mt-14 mb-5">
+            <Pressable
+              className="w-9 h-9 rounded-2xl bg-white border border-gray-200 items-center justify-center"
+              onPress={() => navigation.goBack()}
+            >
+              <Ionicons name="chevron-back" size={18} color={C.gray600} />
+            </Pressable>
+            <View className="w-11 h-11 rounded-2xl items-center justify-center ml-3 bg-nest-500">
+              <Text className="text-white font-bold text-base">{initial}</Text>
+            </View>
+            <View className="flex-1 ml-3">
+              <Text className="font-extrabold text-lg text-gray-900">{childName}</Text>
+              <Text className="text-xs text-gray-400">{t('common.notConnected', 'Not connected')}</Text>
+            </View>
+          </View>
+
+          {/* Connect-device hero */}
+          <View className="bg-white rounded-3xl p-8 mt-4 items-center border border-gray-100 shadow-sm">
+            <View className="w-20 h-20 rounded-full bg-nest-50 items-center justify-center mb-5">
+              <Ionicons name="phone-portrait-outline" size={40} color={C.nest500} />
+            </View>
+            <Text className="text-lg font-display font-extrabold text-gray-900 text-center mb-2">
+              {t('childDetail.connectDeviceTitle', 'Connect a device')}
+            </Text>
+            <Text className="text-sm text-gray-500 text-center leading-5 mb-6">
+              {t('childDetail.connectDeviceDesc', { childName, defaultValue: `Pair {{childName}}'s phone to start monitoring screen time, location, and app usage.` })}
+            </Text>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('PairDevice', { childId, childName })}
+              className="bg-nest-500 rounded-2xl items-center justify-center flex-row gap-x-2 shadow-lg h-[52px] w-full"
+            >
+              <Ionicons name="add-circle-outline" size={20} color="#FFFFFF" />
+              <Text className="text-sm font-display font-bold text-white tracking-wide">
+                {t('childDetail.connectDevice', 'Connect Device')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    );
+  }
+
   // Approximate progress against a 4-hour (240 min) soft cap for the bar
   const screenTimePct = summary ? Math.min(summary.totalScreenTimeMin / 240, 1) : 0;
-  const initial = childName.charAt(0).toUpperCase();
 
   return (
     <ScrollView

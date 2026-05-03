@@ -37,12 +37,26 @@ type Props = {
 };
 
 export default function LocationScreen({ route }: Props) {
-  const { childId, childName } = route.params;
+  const { childId } = route.params;
   const { t } = useTranslation();
+  const [childName, setChildName] = useState<string>(route.params.childName ?? '');
   const [locations, setLocations] = useState<LocationEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mapError] = useState(false);
+
+  // SOS push notifications can deep-link here without a name in route params.
+  // Fetch it once if missing.
+  useEffect(() => {
+    if (childName) return;
+    let cancelled = false;
+    api.getChildren().then((list) => {
+      if (cancelled) return;
+      const found = list.find((c) => c.id === childId);
+      if (found) setChildName(found.name);
+    }).catch(() => { /* tolerate */ });
+    return () => { cancelled = true; };
+  }, [childId, childName]);
 
   const loadLocations = useCallback(async () => {
     try {

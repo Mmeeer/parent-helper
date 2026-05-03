@@ -43,6 +43,7 @@ class OnboardingPermissionsActivity : AppCompatActivity() {
         val whyRes: Int,
         val checkGranted: () -> Boolean,
         val requestPermission: () -> Unit,
+        val required: Boolean = false,
     )
 
     private lateinit var steps: List<PermissionStep>
@@ -149,13 +150,14 @@ class OnboardingPermissionsActivity : AppCompatActivity() {
                     batteryOptLauncher.launch(intent)
                 },
             ),
-            // 5. Accessibility
+            // 5. Accessibility — required for app blocking to function at all
             PermissionStep(
                 iconRes = R.drawable.ic_accessibility,
                 titleRes = R.string.perm_accessibility_title,
                 whyRes = R.string.perm_accessibility_why,
                 checkGranted = { isAccessibilityServiceEnabled() },
                 requestPermission = { launchAccessibilitySettings() },
+                required = true,
             ),
             // 6. Overlay (Display over other apps)
             PermissionStep(
@@ -178,7 +180,19 @@ class OnboardingPermissionsActivity : AppCompatActivity() {
             }
         }
 
-        btnSkip.setOnClickListener { goToNextStep() }
+        btnSkip.setOnClickListener {
+            val step = steps[currentStep]
+            if (step.required && !step.checkGranted()) {
+                AlertDialog.Builder(this)
+                    .setTitle(getString(step.titleRes))
+                    .setMessage(R.string.perm_required_cannot_skip)
+                    .setPositiveButton(R.string.onboarding_grant_button) { _, _ -> step.requestPermission() }
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show()
+            } else {
+                goToNextStep()
+            }
+        }
 
         buildStepDots()
         showStep(0)
@@ -245,6 +259,7 @@ class OnboardingPermissionsActivity : AppCompatActivity() {
     }
 
     private fun updateGrantedStatus(granted: Boolean) {
+        val step = steps.getOrNull(currentStep)
         if (granted) {
             tvPermissionStatus.visibility = View.VISIBLE
             tvPermissionStatus.text = getString(R.string.permission_granted)
@@ -254,6 +269,8 @@ class OnboardingPermissionsActivity : AppCompatActivity() {
             tvPermissionStatus.visibility = View.GONE
             btnGrant.text = getString(R.string.onboarding_grant_button)
         }
+        // Hide the Skip button on required steps so the user can't bypass them
+        btnSkip.visibility = if (step?.required == true && !granted) View.GONE else View.VISIBLE
     }
 
     private fun goToNextStep() {

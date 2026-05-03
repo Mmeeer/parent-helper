@@ -15,7 +15,6 @@ import android.os.PowerManager
 import android.provider.Settings
 import android.util.Log
 import android.view.HapticFeedbackConstants
-import android.view.MotionEvent
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.FrameLayout
@@ -51,7 +50,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnSos: FrameLayout
     private lateinit var sosPulseRing: View
 
-    private var sosHoldJob: Job? = null
     private var isSosSending = false
     private var pulseAnimator: AnimatorSet? = null
 
@@ -121,47 +119,11 @@ class MainActivity : AppCompatActivity() {
     // ── SOS Button ──────────────────────────────────────────────────────
 
     private fun setupSosButton() {
-        btnSos.setOnTouchListener { v, event ->
-            when (event.action) {
-                MotionEvent.ACTION_DOWN -> {
-                    if (!isSosSending) {
-                        v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-                        startSosHoldCountdown()
-                        animateSosPress(true)
-                    }
-                    true
-                }
-                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    cancelSosHold()
-                    animateSosPress(false)
-                    true
-                }
-                else -> false
-            }
-        }
-    }
-
-    private fun startSosHoldCountdown() {
-        sosHoldJob?.cancel()
-        tvSosHint.text = getString(R.string.sos_hold_countdown)
-        startPulseAnimation()
-
-        sosHoldJob = lifecycleScope.launch {
-            delay(SOS_HOLD_DURATION_MS)
-            // Hold completed — trigger SOS
-            btnSos.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+        btnSos.setOnClickListener { v ->
+            if (isSosSending) return@setOnClickListener
+            v.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
             sendSos()
         }
-    }
-
-    private fun cancelSosHold() {
-        sosHoldJob?.cancel()
-        sosHoldJob = null
-        if (!isSosSending) {
-            tvSosHint.text = getString(R.string.sos_hold_hint)
-            tvSosStatus.text = getString(R.string.sos_description)
-        }
-        stopPulseAnimation()
     }
 
     private fun sendSos() {
@@ -170,6 +132,7 @@ class MainActivity : AppCompatActivity() {
 
         tvSosHint.text = getString(R.string.sos_sending)
         tvSosStatus.text = getString(R.string.sos_sending)
+        startPulseAnimation()
 
         lifecycleScope.launch {
             try {
@@ -209,16 +172,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun animateSosPress(pressed: Boolean) {
-        val scale = if (pressed) 0.92f else 1.0f
-        btnSos.animate()
-            .scaleX(scale)
-            .scaleY(scale)
-            .setDuration(150)
-            .setInterpolator(AccelerateDecelerateInterpolator())
-            .start()
-    }
-
     private fun startPulseAnimation() {
         pulseAnimator?.cancel()
 
@@ -232,7 +185,7 @@ class MainActivity : AppCompatActivity() {
             interpolator = AccelerateDecelerateInterpolator()
             addListener(object : android.animation.AnimatorListenerAdapter() {
                 override fun onAnimationEnd(animation: android.animation.Animator) {
-                    if (sosHoldJob?.isActive == true || isSosSending) {
+                    if (isSosSending) {
                         start()
                     }
                 }
@@ -371,6 +324,5 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "MainActivity"
-        private const val SOS_HOLD_DURATION_MS = 1500L // Hold for 1.5 seconds to trigger
     }
 }

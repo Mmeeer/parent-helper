@@ -109,6 +109,18 @@ exports.completePairing = async (req, res, next) => {
     await device.save();
     console.log('[COMPLETE-PAIRING] SUCCESS: Device paired!', { deviceId: device._id, childId: device.childId, parentId: device.parentId });
 
+    // Notify the parent in real-time so the PairDevice screen can pop the
+    // child detail page automatically — without this the parent has to
+    // refresh manually to know pairing succeeded.
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`parent:${device.parentId}`).emit('device:paired', {
+        deviceId: String(device._id),
+        childId: String(device.childId),
+        model: device.model || null,
+      });
+    }
+
     res.json({
       deviceId: device._id,
       childId: device.childId,
@@ -225,6 +237,18 @@ exports.unpair = async (req, res, next) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
+    // Tell the child app it's been unpaired BEFORE we delete the record so
+    // the child can wipe its local state and return to the pairing screen.
+    // Without this the child keeps using a now-invalid deviceToken and looks
+    // "still paired" on its end. Fire-and-forget; the device may be offline.
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`device:${device._id}`).emit('device:unpaired', {
+        deviceId: String(device._id),
+        reason: 'unpaired_by_parent',
+      });
+    }
+
     const ActivityLog = require('../models/ActivityLog');
     await Promise.all([
       Device.findByIdAndDelete(req.params.id),
@@ -247,6 +271,7 @@ exports.syncInstalledApps = async (req, res, next) => {
     req.device.installedApps = apps.map(a => ({
       packageName: a.packageName,
       appName: a.appName,
+      iconBase64: a.iconBase64 || null,
       installedAt: a.installedAt || new Date(),
     }));
     await req.device.save();
@@ -290,6 +315,7 @@ exports.sos = async (req, res, next) => {
       type: 'sos',
       message: message || `SOS alert from ${childName}!`,
       data: {
+        childName,
         deviceId: device._id,
         model: device.model,
         lat: lat || null,

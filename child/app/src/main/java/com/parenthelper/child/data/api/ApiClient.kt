@@ -35,7 +35,17 @@ object ApiClient {
             } else {
                 chain.request()
             }
-            chain.proceed(request)
+            val response = chain.proceed(request)
+
+            // If we sent a deviceToken and the server still rejected us with
+            // 401, the device has been unpaired on the backend (typical after
+            // the parent taps "Replace Device" while we were offline). Wipe
+            // local state and bounce to the pairing screen — same as the
+            // realtime device:unpaired event.
+            if (response.code == 401 && token != null) {
+                com.parenthelper.child.realtime.SocketManager.handleForcedUnpair()
+            }
+            response
         }
 
         val client = OkHttpClient.Builder()

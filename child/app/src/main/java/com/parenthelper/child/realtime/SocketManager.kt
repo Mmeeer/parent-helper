@@ -1,11 +1,15 @@
 package com.parenthelper.child.realtime
 
+import android.content.Intent
 import android.util.Log
 import com.google.gson.Gson
 import com.parenthelper.child.ParentHelperApp
 import com.parenthelper.child.data.models.Command
 import com.parenthelper.child.enforcement.AppBlocker
+import com.parenthelper.child.enforcement.LockScreenOverlay
 import com.parenthelper.child.enforcement.RuleManager
+import com.parenthelper.child.services.MonitoringService
+import com.parenthelper.child.ui.pairing.PairingActivity
 import io.socket.client.IO
 import io.socket.client.Socket
 import kotlinx.coroutines.CoroutineScope
@@ -113,6 +117,13 @@ object SocketManager {
                 }
             }
 
+            // Parent unpaired this device — wipe local state and bounce back
+            // to the pairing screen so the same device can re-pair fresh.
+            socket?.on("device:unpaired") { args ->
+                Log.d(TAG, "Server: device:unpaired received, resetting…")
+                handleForcedUnpair()
+            }
+
             // Listen for errors
             socket?.on("error") { args ->
                 Log.e(TAG, "Server error: ${args.firstOrNull()}")
@@ -128,6 +139,37 @@ object SocketManager {
         socket?.disconnect()
         socket?.off()
         socket = null
+    }
+
+    /**
+     * Wipe all pairing state, stop monitoring, dismiss any overlay and bring
+     * the user back to the pairing screen. Triggered by the server's
+     * `device:unpaired` event, so the user doesn't have to relaunch the app
+     * after the parent removes them.
+     */
+    fun handleForcedUnpair() {
+        val context = ParentHelperApp.instance.applicationContext
+        try { LockScreenOverlay.dismiss() } catch (_: Exception) {}
+        try { context.stopService(Intent(context, MonitoringService::class.java)) } catch (_: Exception) {}
+        disconnect()
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                ParentHelperApp.instance.prefsManager.clear()
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to clear prefs", e)
+            }
+            try {
+                val intent = Intent(context, PairingActivity::class.java).apply {
+                    addFlags(
+                        Intent.FLAG_ACTIVITY_NEW_TASK or
+                            Intent.FLAG_ACTIVITY_CLEAR_TASK,
+                    )
+                }
+                context.startActivity(intent)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to launch PairingActivity", e)
+            }
+        }
     }
 
     fun isConnected(): Boolean {

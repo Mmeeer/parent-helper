@@ -1,8 +1,10 @@
 package com.parenthelper.child.services
 
 import android.accessibilityservice.AccessibilityService
+import android.content.Intent
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
+import androidx.core.content.ContextCompat
 import com.parenthelper.child.collectors.WebActivityCollector
 import com.parenthelper.child.enforcement.RuleManager
 
@@ -10,6 +12,22 @@ class ParentHelperAccessibilityService : AccessibilityService() {
 
     private var lastForegroundPackage: String? = null
     private var lastUrl: String? = null
+
+    override fun onServiceConnected() {
+        super.onServiceConnected()
+        // Whenever this service comes online (boot, app reinstall, OS restart),
+        // make sure MonitoringService is running too. MainActivity also starts
+        // it, but only when the user opens the launcher icon — without this
+        // hook the AppInstallReceiver and rule sync stay dormant after a fresh
+        // install or a process kill until the user manually opens the app.
+        try {
+            val intent = Intent(this, MonitoringService::class.java)
+            ContextCompat.startForegroundService(this, intent)
+            Log.d(TAG, "Started MonitoringService from onServiceConnected")
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to start MonitoringService", e)
+        }
+    }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         event ?: return

@@ -52,7 +52,14 @@ export default function App() {
 
       if (navigationRef.current?.isReady()) {
         if (data?.type === 'sos' && data?.childId) {
-          navigationRef.current.navigate('ChildDetail', { childId: data.childId });
+          // SOS goes straight to the live map so parent can see the child's
+          // last location immediately. childName comes from the push data
+          // when the backend is fresh; fall back to empty (LocationMap fetches
+          // the name itself).
+          navigationRef.current.navigate('LocationMap', {
+            childId: data.childId,
+            childName: data.childName ?? '',
+          });
         } else {
           navigationRef.current.navigate('MainTabs', { screen: 'Alerts' });
         }
