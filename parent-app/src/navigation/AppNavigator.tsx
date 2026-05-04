@@ -9,6 +9,7 @@ import { useAuth } from '../store/AuthContext';
 import type { RootStackParamList } from '../types';
 import { C } from '../theme';
 import { ONBOARDING_COMPLETE_KEY } from '../screens/onboarding/OnboardingScreen';
+import ConnectionBanner from '../components/ConnectionBanner';
 
 // Auth Screens
 import LoginScreen from '../screens/auth/LoginScreen';
@@ -46,7 +47,9 @@ const Tab = createBottomTabNavigator();
 
 function MainTabs() {
   return (
-    <Tab.Navigator
+    <View style={{ flex: 1 }}>
+      <ConnectionBanner />
+      <Tab.Navigator
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: C.nest500,
@@ -115,6 +118,7 @@ function MainTabs() {
         }}
       />
     </Tab.Navigator>
+    </View>
   );
 }
 
@@ -134,7 +138,7 @@ const AppNavigator = React.forwardRef<any>((_, ref) => {
     );
   }
 
-  const needsOnboarding = isAuthenticated && user?.emailVerified && !onboardingDone;
+  const needsOnboarding = isAuthenticated && !onboardingDone;
 
   return (
     <NavigationContainer ref={ref}>
@@ -146,13 +150,7 @@ const AppNavigator = React.forwardRef<any>((_, ref) => {
           headerBackButtonDisplayMode: 'minimal',
         }}
       >
-        {isAuthenticated && !user?.emailVerified ? (
-          <Stack.Screen
-            name="VerifyEmail"
-            component={EmailVerificationScreen}
-            options={{ headerShown: false }}
-          />
-        ) : isAuthenticated ? (
+        {isAuthenticated ? (
           <>
             {needsOnboarding && (
               <Stack.Screen
@@ -245,6 +243,11 @@ const AppNavigator = React.forwardRef<any>((_, ref) => {
               name="PrivacyPolicy"
               component={PrivacyPolicyScreen}
               options={{ title: 'Нууцлалын бодлого' }}
+            />
+            <Stack.Screen
+              name="VerifyEmail"
+              component={EmailVerificationScreen}
+              options={{ headerShown: false }}
             />
           </>
         ) : (

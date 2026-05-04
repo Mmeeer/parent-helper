@@ -37,7 +37,7 @@ export default function SettingsScreen() {
   const [pushHealthy, setPushHealthy] = useState(() => isPushRegistrationHealthy());
 
   useEffect(() => {
-    api.getSubscription().then((data) => { setSubInfo(data); }).catch(() => {});
+    api.getSubscription().then((data) => { setSubInfo(data); }).catch(() => { setSubInfo(null); });
   }, []);
 
   useEffect(() => {

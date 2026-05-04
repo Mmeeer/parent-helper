@@ -55,8 +55,11 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
       setSummary(summaryData);
       setApps(appsData);
       setWebHistory(webData);
-    } catch {
-      // 404 expected when child has no activity yet
+    } catch (err: any) {
+      // 404 expected when child has no activity yet — only show real errors
+      if (err?.status && err.status !== 404) {
+        showError(err, t('childDetail.loadError'));
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);

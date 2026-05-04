@@ -185,7 +185,8 @@
     "domainBlockError": "Unable to block domain.",
     "blockApp": "Block App",
     "blockAppConfirm": "Block \"{{appName}}\" on {{childName}}'s device?",
-    "appBlockError": "Unable to block app."
+    "appBlockError": "Unable to block app.",
+    "loadError": "Failed to load activity data."
   },
   "devices": {
     "title": "DEVICES",
@@ -468,7 +469,8 @@
     "quietHoursTitle": "Quiet Hours",
     "quietHoursDesc": "No notifications except SOS during quiet hours.",
     "saving": "Saving...",
-    "saveError": "Failed to save settings."
+    "saveError": "Failed to save settings.",
+    "loadError": "Failed to load notification settings."
   },
   "privacy": {
     "title": "Privacy Policy",
