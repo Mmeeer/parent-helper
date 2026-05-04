@@ -310,7 +310,11 @@ exports.sos = async (req, res, next) => {
     });
 
     // Send push notification (SOS is high priority)
-    sendAlertNotification(device.parentId, alert);
+    try {
+      await sendAlertNotification(device.parentId, alert);
+    } catch (err) {
+      console.error('[SOS] Push notification error:', err.message);
+    }
 
     console.log(`[SOS] Alert sent from device ${device._id} for child ${childName}`);
     res.json({ status: 'sent', alertId: alert._id });
@@ -376,7 +380,11 @@ exports.reportPermission = async (req, res, next) => {
       createdAt: alert.createdAt,
     });
 
-    sendAlertNotification(device.parentId, alert);
+    try {
+      await sendAlertNotification(device.parentId, alert);
+    } catch (err) {
+      console.error('[PERMISSION] Push notification error:', err.message);
+    }
 
     console.log(`[PERMISSION] Overlay permission revoked on device ${device._id} for child ${childName}`);
     res.json({ status: 'reported', alertId: alert._id });

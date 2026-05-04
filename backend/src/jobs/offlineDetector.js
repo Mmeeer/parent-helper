@@ -20,6 +20,16 @@ function startOfflineDetector(io) {
         device.status = 'offline';
         await device.save();
 
+        // Skip if an unread offline alert already exists for this device
+        const existingAlert = await Alert.findOne({
+          parentId: device.parentId,
+          childId: device.childId?._id || device.childId,
+          type: 'device_offline',
+          'data.deviceId': device._id,
+          read: false,
+        });
+        if (existingAlert) continue;
+
         const alert = await Alert.create({
           parentId: device.parentId,
           childId: device.childId?._id || device.childId,
@@ -32,7 +42,11 @@ function startOfflineDetector(io) {
         });
 
         io.to(`parent:${device.parentId}`).emit('alert:new', alert);
-        sendAlertNotification(device.parentId, alert);
+        try {
+          await sendAlertNotification(device.parentId, alert);
+        } catch (err) {
+          console.error(`[OfflineDetector] Push notification error for device ${device._id}:`, err.message);
+        }
       }
 
       if (staleDevices.length > 0) {

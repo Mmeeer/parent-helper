@@ -158,7 +158,11 @@ exports.checkLocations = async (childId, locations, io) => {
               },
             });
             if (io) io.to(`parent:${fence.parentId}`).emit('alert:new', alert);
-            sendAlertNotification(fence.parentId, alert);
+            try {
+              await sendAlertNotification(fence.parentId, alert);
+            } catch (err) {
+              console.error('[Geofence] Push notification error:', err.message);
+            }
           }
           wasInside = true;
         } else if (!isInside && wasInside) {
@@ -183,7 +187,11 @@ exports.checkLocations = async (childId, locations, io) => {
               },
             });
             if (io) io.to(`parent:${fence.parentId}`).emit('alert:new', alert);
-            sendAlertNotification(fence.parentId, alert);
+            try {
+              await sendAlertNotification(fence.parentId, alert);
+            } catch (err) {
+              console.error('[Geofence] Push notification error:', err.message);
+            }
           }
           wasInside = false;
         }
