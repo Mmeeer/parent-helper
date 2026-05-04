@@ -58,6 +58,15 @@ const geofenceSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Child',
   }],
+  // Timestamps of last entry/exit crossing — used to debounce rapid boundary crossings
+  lastEnteredAt: {
+    type: Date,
+    default: null,
+  },
+  lastExitedAt: {
+    type: Date,
+    default: null,
+  },
 }, { timestamps: true });
 
 geofenceSchema.index({ childId: 1, parentId: 1 });

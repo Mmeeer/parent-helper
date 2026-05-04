@@ -7,6 +7,12 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.util.Log
+import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.parenthelper.child.data.api.ApiClient
+import com.parenthelper.child.data.models.PermissionReportRequest
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
  * Monitors the foreground app and blocks it using system-level suspension
@@ -64,6 +70,8 @@ class AppBlocker(private val context: Context) {
     fun syncSuspendedApps(blockedApps: List<String>) {
         if (!isDeviceAdminActive()) {
             Log.w(TAG, "Device admin inactive — falling back to foreground monitoring for ${blockedApps.size} apps")
+            FirebaseCrashlytics.getInstance().log("DeviceAdmin not active — enforcement disabled")
+            reportDeviceAdminDisabled()
             fallbackBlockedApps = blockedApps.filter { pkg ->
                 pkg != context.packageName && !pkg.startsWith("com.android.")
             }
@@ -129,6 +137,21 @@ class AppBlocker(private val context: Context) {
         val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)
         intent?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         context.startActivity(intent)
+    }
+
+    private fun reportDeviceAdminDisabled() {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                ApiClient.service.reportPermission(
+                    PermissionReportRequest(
+                        permission = "device_admin",
+                        granted = false,
+                    )
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to report device admin disabled to backend", e)
+            }
+        }
     }
 
     companion object {

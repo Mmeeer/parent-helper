@@ -126,9 +126,14 @@ exports.checkLocations = async (childId, locations, io) => {
         (id) => id.toString() === childId.toString(),
       );
 
+      // Track last crossing timestamps in memory (seeded from DB) to debounce within this batch
+      let lastEnteredAt = fence.lastEnteredAt ? fence.lastEnteredAt.getTime() : 0;
+      let lastExitedAt = fence.lastExitedAt ? fence.lastExitedAt.getTime() : 0;
+
       // Process each location point to detect all transitions
       for (const loc of sortedLocations) {
         const distance = getDistanceMeters(loc.lat, loc.lng, fence.lat, fence.lng);
+        const locTime = loc.timestamp ? new Date(loc.timestamp).getTime() : Date.now();
 
         // Hysteresis: use radius for entry threshold, radius + buffer for exit threshold.
         // This prevents rapid toggling when GPS drifts near the boundary.
@@ -138,11 +143,19 @@ exports.checkLocations = async (childId, locations, io) => {
 
         if (isInside && !wasInside) {
           // --- ENTRY ---
+          wasInside = true;
+
+          // Debounce: skip if re-entering within cooldown of last entry
+          if (lastEnteredAt && (locTime - lastEnteredAt) < cooldownMs) continue;
+
+          lastEnteredAt = locTime;
+
           await Geofence.findByIdAndUpdate(fence._id, {
             $addToSet: { childrenInside: childId },
+            $set: { lastEnteredAt: new Date(locTime) },
           });
 
-          if (fence.alertOnEntry && !(await isInCooldown(Alert, fence, childId, 'entry', cooldownMs))) {
+          if (fence.alertOnEntry) {
             const alert = await Alert.create({
               parentId: fence.parentId,
               childId,
@@ -164,14 +177,21 @@ exports.checkLocations = async (childId, locations, io) => {
               console.error('[Geofence] Push notification error:', err.message);
             }
           }
-          wasInside = true;
         } else if (!isInside && wasInside) {
           // --- EXIT ---
+          wasInside = false;
+
+          // Debounce: skip if re-exiting within cooldown of last exit
+          if (lastExitedAt && (locTime - lastExitedAt) < cooldownMs) continue;
+
+          lastExitedAt = locTime;
+
           await Geofence.findByIdAndUpdate(fence._id, {
             $pull: { childrenInside: childId },
+            $set: { lastExitedAt: new Date(locTime) },
           });
 
-          if (fence.alertOnExit && !(await isInCooldown(Alert, fence, childId, 'exit', cooldownMs))) {
+          if (fence.alertOnExit) {
             const alert = await Alert.create({
               parentId: fence.parentId,
               childId,
@@ -193,7 +213,6 @@ exports.checkLocations = async (childId, locations, io) => {
               console.error('[Geofence] Push notification error:', err.message);
             }
           }
-          wasInside = false;
         }
       }
 
@@ -210,23 +229,6 @@ exports.checkLocation = async (childId, lat, lng, io) => {
   return exports.checkLocations(childId, [{ lat, lng, timestamp: new Date().toISOString() }], io);
 };
 
-/**
- * Check if a geofence alert of the same event type was created within the cooldown window.
- */
-async function isInCooldown(Alert, fence, childId, event, cooldownMs) {
-  if (cooldownMs <= 0) return false;
-
-  const cutoff = new Date(Date.now() - cooldownMs);
-  const recentAlert = await Alert.findOne({
-    childId,
-    type: 'geofence_trigger',
-    'data.geofenceId': fence._id,
-    'data.event': event,
-    createdAt: { $gte: cutoff },
-  }).lean();
-
-  return !!recentAlert;
-}
 
 function getDistanceMeters(lat1, lng1, lat2, lng2) {
   const R = 6371000; // Earth radius in meters
