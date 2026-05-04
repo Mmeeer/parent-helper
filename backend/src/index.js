@@ -51,6 +51,7 @@ const adminRoutes = require('./routes/admin');
 const subscriptionRoutes = require('./routes/subscription');
 
 const { startOfflineDetector } = require('./jobs/offlineDetector');
+const { startSubscriptionChecker } = require('./jobs/subscriptionChecker');
 const { initFirebase } = require('./services/pushNotification');
 const { initEmail } = require('./services/email');
 
@@ -236,6 +237,7 @@ io.on('connection', (socket) => {
 const PORT = process.env.PORT || 3000;
 
 let offlineDetectorId = null;
+let subscriptionCheckerId = null;
 
 const start = async () => {
   await connectDB();
@@ -255,6 +257,7 @@ const start = async () => {
   initFirebase();
   initEmail();
   offlineDetectorId = startOfflineDetector(io);
+  subscriptionCheckerId = startSubscriptionChecker(io);
   server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
@@ -271,6 +274,7 @@ const shutdown = async (signal) => {
 
   // Stop background jobs
   if (offlineDetectorId) clearInterval(offlineDetectorId);
+  if (subscriptionCheckerId) clearInterval(subscriptionCheckerId);
 
   // Close Socket.io connections
   io.close(() => {
