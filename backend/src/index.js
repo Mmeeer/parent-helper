@@ -152,10 +152,6 @@ app.get('/health', async (_req, res) => {
   });
 });
 
-// Sentry test endpoint (only in non-production or for admin verification)
-app.get('/debug-sentry', (_req, _res) => {
-  throw new Error('Sentry test crash from parent-helper backend');
-});
 
 // Sentry error handler — must be before custom errorHandler
 if (process.env.SENTRY_DSN) {
