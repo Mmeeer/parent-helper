@@ -31,7 +31,7 @@ function startOfflineDetector(io) {
           },
         });
 
-        io.to(`parent:${device.parentId}`).emit('alert', alert);
+        io.to(`parent:${device.parentId}`).emit('alert:new', alert);
         sendAlertNotification(device.parentId, alert);
       }
 
