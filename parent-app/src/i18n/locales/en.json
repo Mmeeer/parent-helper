@@ -52,6 +52,7 @@
     "confirmPassword": "Confirm Password",
     "reenterPassword": "Re-enter password",
     "min8Chars": "At least 8 characters",
+    "phone": "Phone Number",
     "confirmLogout": "Are you sure you want to sign out?"
   },
   "forgotPassword": {
@@ -421,8 +422,11 @@
     "deleteAccountSentDesc": "Your account will be permanently deleted after 30 days. Contact support to cancel.",
     "deleteAccountError": "Failed to delete account.",
     "enterPasswordError": "Please enter your password.",
+    "verifyEmail": "Verify Email",
+    "verifyEmailSub": "Confirm your email address",
     "language": "Language",
-    "languageSub": "Change app language"
+    "languageSub": "Change app language",
+    "pushRegistrationFailed": "Push notifications may not work"
   },
   "editProfile": {
     "name": "NAME",

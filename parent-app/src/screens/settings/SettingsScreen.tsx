@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, ScrollView, Alert, Text, Pressable, TouchableOpacity, Modal, TextInput, ActivityIndicator } from 'react-native';
+import { View, ScrollView, Alert, Text, Pressable, TouchableOpacity, Modal, TextInput, ActivityIndicator, AppState } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../store/AuthContext';
 import { useNavigation } from '@react-navigation/native';
@@ -10,6 +10,7 @@ import type { RootStackParamList } from '../../types';
 import { C } from '../../theme';
 import { useTranslation } from 'react-i18next';
 import { changeLanguage } from '../../i18n';
+import { isPushRegistrationHealthy } from '../../services/notifications';
 
 type SettingsItem = {
   title: string;
@@ -19,6 +20,7 @@ type SettingsItem = {
   subtitle?: string;
   value?: string;
   valueColor?: string;
+  badge?: string;
   onPress: () => void;
 };
 
@@ -32,9 +34,17 @@ export default function SettingsScreen() {
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteReason, setDeleteReason] = useState('');
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [pushHealthy, setPushHealthy] = useState(() => isPushRegistrationHealthy());
 
   useEffect(() => {
     api.getSubscription().then((data) => { setSubInfo(data); }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') setPushHealthy(isPushRegistrationHealthy());
+    });
+    return () => sub.remove();
   }, []);
 
   const handleDeleteAccount = useCallback(async () => {
@@ -83,6 +93,14 @@ export default function SettingsScreen() {
       iconColor: C.warm500,
       onPress: () => navigation.navigate('ChangePassword'),
     },
+    ...(!user?.emailVerified ? [{
+      title: t('settings.verifyEmail'),
+      icon: 'mail-outline' as keyof typeof Ionicons.glyphMap,
+      iconBg: 'bg-blue-50',
+      iconColor: '#3b82f6',
+      subtitle: t('settings.verifyEmailSub'),
+      onPress: () => navigation.navigate('VerifyEmail'),
+    }] : []),
   ];
 
   const notificationItems: SettingsItem[] = [
@@ -91,7 +109,8 @@ export default function SettingsScreen() {
       icon: 'notifications-outline',
       iconBg: 'bg-warm-50',
       iconColor: C.warm500,
-      subtitle: t('settings.notificationSettingsSub'),
+      subtitle: pushHealthy ? t('settings.notificationSettingsSub') : t('settings.pushRegistrationFailed'),
+      badge: pushHealthy ? undefined : '!',
       onPress: () => navigation.navigate('NotificationSettings'),
     },
   ];
@@ -155,6 +174,11 @@ export default function SettingsScreen() {
                     <Text className="text-xs text-gray-400 font-semibold mt-0.5">{item.subtitle}</Text>
                   )}
                 </View>
+                {item.badge && (
+                  <View className="w-5 h-5 rounded-full bg-danger-500 items-center justify-center mr-2">
+                    <Text className="text-white text-xs font-bold">{item.badge}</Text>
+                  </View>
+                )}
                 {item.value && (
                   <Text className={`text-xs ${subInfo?.active ? 'font-bold' : 'font-semibold'} ${item.valueColor ?? 'text-gray-400'} mr-2`}>
                     {item.value}

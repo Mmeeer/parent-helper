@@ -52,6 +52,7 @@
     "confirmPassword": "Нууц үг баталгаажуулах",
     "reenterPassword": "Нууц үгийг дахин оруулах",
     "min8Chars": "Хамгийн багадаа 8 тэмдэгт",
+    "phone": "Утасны дугаар",
     "confirmLogout": "Гарахдаа итгэлтэй байна уу?"
   },
   "forgotPassword": {
@@ -421,8 +422,11 @@
     "deleteAccountSentDesc": "Таны бүртгэл 30 хоногийн дараа бүрмөсөн устгагдана. Цуцлахыг хүсвэл тусламжтай холбогдоно уу.",
     "deleteAccountError": "Бүртгэл устгахад алдаа гарлаа.",
     "enterPasswordError": "Нууц үгээ оруулна уу.",
+    "verifyEmail": "Имэйл баталгаажуулах",
+    "verifyEmailSub": "Имэйл хаягаа баталгаажуулах",
     "language": "Хэл",
-    "languageSub": "Аппын хэлийг солих"
+    "languageSub": "Аппын хэлийг солих",
+    "pushRegistrationFailed": "Push мэдэгдэл ажиллахгүй байж магадгүй"
   },
   "editProfile": {
     "name": "НЭР",
