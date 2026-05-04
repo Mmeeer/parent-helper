@@ -36,6 +36,7 @@ object LockScreenOverlay {
         APP_LIMIT,
         SCHEDULE_BLOCKED,
         REMOTE_LOCK,
+        VPN_FILTER_DOWN,
     }
 
     @Volatile
@@ -221,6 +222,7 @@ object LockScreenOverlay {
         Reason.APP_LIMIT -> "\u23F3" // hourglass
         Reason.SCHEDULE_BLOCKED -> "\uD83C\uDF19" // moon
         Reason.REMOTE_LOCK -> "\uD83D\uDD12" // lock
+        Reason.VPN_FILTER_DOWN -> "\u26A0\uFE0F" // warning
     }
 
     private fun getTitleText(reason: Reason): String = when (reason) {
@@ -228,6 +230,7 @@ object LockScreenOverlay {
         Reason.APP_LIMIT -> "App Time Limit Reached"
         Reason.SCHEDULE_BLOCKED -> "Device Time is Over"
         Reason.REMOTE_LOCK -> "Device Locked"
+        Reason.VPN_FILTER_DOWN -> "Web Filter Unavailable"
     }
 
     private fun getMessageText(reason: Reason): String = when (reason) {
@@ -235,5 +238,6 @@ object LockScreenOverlay {
         Reason.APP_LIMIT -> "You've reached the time limit for this app."
         Reason.SCHEDULE_BLOCKED -> "It's time to take a break.\nThis device is blocked right now."
         Reason.REMOTE_LOCK -> "Your parent has locked this device."
+        Reason.VPN_FILTER_DOWN -> "The web filter could not start.\nInternet is blocked until it recovers."
     }
 }

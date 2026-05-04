@@ -18,6 +18,10 @@ class AppBlocker(private val context: Context) {
     private val devicePolicyManager = context.getSystemService(DevicePolicyManager::class.java)
     private val adminComponent = ParentHelperDeviceAdmin.getComponentName(context)
 
+    /** Apps that should be blocked via foreground monitoring when DPM suspension is unavailable. */
+    @Volatile
+    var fallbackBlockedApps: List<String> = emptyList()
+
     fun getCurrentForegroundPackage(): String? {
         val endTime = System.currentTimeMillis()
         val startTime = endTime - 5000 // Last 5 seconds
@@ -43,7 +47,8 @@ class AppBlocker(private val context: Context) {
         if (foregroundPackage == context.packageName) return false
         if (foregroundPackage.startsWith("com.android.")) return false
 
-        if (RuleManager.isAppBlocked(foregroundPackage)) {
+        // Check both rule-based blocking and fallback list (for when DPM is unavailable)
+        if (RuleManager.isAppBlocked(foregroundPackage) || foregroundPackage in fallbackBlockedApps) {
             bringToFront()
             return true
         }
@@ -54,9 +59,19 @@ class AppBlocker(private val context: Context) {
     /**
      * Suspend blocked apps at the system level using DevicePolicyManager.
      * This prevents them from being launched entirely (greyed out in launcher).
+     * Falls back to foreground-monitoring-based blocking if device admin is inactive.
      */
     fun syncSuspendedApps(blockedApps: List<String>) {
-        if (!isDeviceAdminActive()) return
+        if (!isDeviceAdminActive()) {
+            Log.w(TAG, "Device admin inactive — falling back to foreground monitoring for ${blockedApps.size} apps")
+            fallbackBlockedApps = blockedApps.filter { pkg ->
+                pkg != context.packageName && !pkg.startsWith("com.android.")
+            }
+            return
+        }
+
+        // Device admin is active — clear fallback list, use system suspension
+        fallbackBlockedApps = emptyList()
 
         try {
             val packagesToSuspend = blockedApps.filter { pkg ->
@@ -72,7 +87,10 @@ class AppBlocker(private val context: Context) {
                 Log.d(TAG, "Suspended ${packagesToSuspend.size} apps")
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to suspend apps via DPM", e)
+            Log.e(TAG, "Failed to suspend apps via DPM — falling back to foreground monitoring", e)
+            fallbackBlockedApps = blockedApps.filter { pkg ->
+                pkg != context.packageName && !pkg.startsWith("com.android.")
+            }
         }
     }
 
@@ -80,6 +98,11 @@ class AppBlocker(private val context: Context) {
      * Unsuspend apps that are no longer on the blocked list.
      */
     fun unsuspendApps(appsToUnsuspend: List<String>) {
+        // Remove from fallback list regardless of admin status
+        if (fallbackBlockedApps.isNotEmpty()) {
+            fallbackBlockedApps = fallbackBlockedApps.filter { it !in appsToUnsuspend }
+        }
+
         if (!isDeviceAdminActive()) return
 
         try {
