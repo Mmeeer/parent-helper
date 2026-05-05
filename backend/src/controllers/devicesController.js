@@ -1,6 +1,8 @@
 const crypto = require('crypto');
 const Device = require('../models/Device');
 const Child = require('../models/Child');
+const User = require('../models/User');
+const SubscriptionKey = require('../models/SubscriptionKey');
 const { sendAlertNotification } = require('../services/pushNotification');
 
 exports.pair = async (req, res, next) => {
@@ -20,6 +22,21 @@ exports.pair = async (req, res, next) => {
       return res.status(404).json({ error: 'Child not found' });
     }
     console.log('[PAIR] Child verified:', child.name);
+
+    // Subscription device cap: total paired devices per parent must not exceed maxKids
+    const user = await User.findById(req.user._id).populate('subscriptionKey');
+    const sub = user && user.subscriptionKey;
+    if (!sub || sub.status !== 'active') {
+      return res.status(402).json({ error: 'Active subscription required to pair devices.' });
+    }
+    if (sub.expiresAt && new Date(sub.expiresAt) < new Date()) {
+      await SubscriptionKey.findByIdAndUpdate(sub._id, { status: 'expired' });
+      return res.status(402).json({ error: 'Your subscription has expired. Please activate a new key.' });
+    }
+    const pairedDeviceCount = await Device.countDocuments({ parentId: req.user._id, paired: true });
+    if (pairedDeviceCount >= sub.maxKids) {
+      return res.status(402).json({ error: `Device limit reached. Your plan allows up to ${sub.maxKids} device(s).` });
+    }
 
     // One device per kid — check if child already has a paired device
     const existingDevice = await Device.findOne({ childId, paired: true });
