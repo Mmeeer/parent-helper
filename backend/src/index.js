@@ -86,7 +86,13 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 }));
 
-app.use(express.json({ limit: '10mb' }));
+// Use stricter body size limit for /activity/sync; global 10mb for everything else
+app.use((req, res, next) => {
+  if (req.method === 'POST' && req.path === '/activity/sync') {
+    return next(); // skip global parser; route-level 512kb parser handles it
+  }
+  express.json({ limit: '10mb' })(req, res, next);
+});
 
 // Serve legal/public pages without auth (privacy policy, terms, COPPA)
 app.use(express.static(path.join(__dirname, '..', 'public')));
