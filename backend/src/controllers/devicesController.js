@@ -357,12 +357,13 @@ exports.reportPermission = async (req, res, next) => {
       return res.json({ status: 'ok' });
     }
 
-    // Prevent alert spam: only create if no unread alert of same type exists for this child
+    // Prevent alert spam: only create if no alert of same type exists for this child within cooldown
+    const PERMISSION_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes
     const recentAlert = await Alert.findOne({
       parentId: device.parentId,
       childId: device.childId,
       type: 'overlay_permission_revoked',
-      read: false,
+      createdAt: { $gte: new Date(Date.now() - PERMISSION_COOLDOWN_MS) },
     });
 
     if (recentAlert) {

@@ -170,15 +170,38 @@ export default function AlertsScreen() {
     navigation.setOptions({ tabBarBadge: unreadCount > 0 ? unreadCount : undefined });
   }, [unreadCount, navigation]);
 
-  const filteredAlerts = activeFilter === 'all'
-    ? alerts
-    : alerts.filter((a) => CATEGORY_MAP[a.type] === activeFilter);
+  // Group repeated alerts of the same type + child within a 30-minute window
+  const groupAlerts = (list: AlertType[]): (AlertType & { groupCount?: number })[] => {
+    const GROUP_WINDOW_MS = 30 * 60 * 1000;
+    const result: (AlertType & { groupCount?: number })[] = [];
+    for (const alert of list) {
+      const prev = result[result.length - 1];
+      if (
+        prev &&
+        prev.type === alert.type &&
+        prev.childId === alert.childId &&
+        Math.abs(new Date(prev.createdAt).getTime() - new Date(alert.createdAt).getTime()) < GROUP_WINDOW_MS
+      ) {
+        prev.groupCount = (prev.groupCount || 1) + 1;
+      } else {
+        result.push({ ...alert, groupCount: 1 });
+      }
+    }
+    return result;
+  };
 
-  const renderAlert = ({ item, index }: { item: AlertType; index: number }) => {
+  const filteredAlerts = groupAlerts(
+    activeFilter === 'all'
+      ? alerts
+      : alerts.filter((a) => CATEGORY_MAP[a.type] === activeFilter),
+  );
+
+  const renderAlert = ({ item, index }: { item: AlertType & { groupCount?: number }; index: number }) => {
     const isSOS = item.type === 'sos';
     const typeLabel = TYPE_LABEL[item.type] || item.type;
     const icon = ICON_CONFIG[item.type] || ICON_CONFIG.device_offline;
     const badge = BADGE_STYLE[item.type] || BADGE_STYLE.device_offline;
+    const groupCount = item.groupCount || 1;
 
     // Determine if we need a "Yesterday" section header
     const isYesterdayItem = !isToday(item.createdAt) && isYesterday(item.createdAt);
@@ -211,6 +234,11 @@ export default function AlertsScreen() {
                       <Text className="text-[10px] text-white/60">{formatTimeAgo(item.createdAt)}</Text>
                     </View>
                     <Text className="text-sm font-bold text-white">{item.message}</Text>
+                    {groupCount > 1 && (
+                      <Text className="text-xs text-white/70 mt-1">
+                        ×{groupCount} {t('alerts.repeated')}
+                      </Text>
+                    )}
                     {Boolean(item.data?.childName) && (
                       <Text className="text-xs text-white/70 mt-1">
                         {item.data?.childName as string}
@@ -239,6 +267,11 @@ export default function AlertsScreen() {
                       )}
                     </View>
                     <Text className="text-sm font-bold text-gray-900">{item.message}</Text>
+                    {groupCount > 1 && (
+                      <Text className="text-xs text-gray-400 mt-1">
+                        ×{groupCount} {t('alerts.repeated')}
+                      </Text>
+                    )}
                     {Boolean(item.data?.childName) && (
                       <Text className="text-xs text-gray-500 mt-1">
                         {item.data?.childName as string}

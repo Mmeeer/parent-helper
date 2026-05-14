@@ -20,13 +20,14 @@ function startOfflineDetector(io) {
         device.status = 'offline';
         await device.save();
 
-        // Skip if an unread offline alert already exists for this device
+        // Skip if an offline alert was already created for this device within cooldown
+        const OFFLINE_ALERT_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes
         const existingAlert = await Alert.findOne({
           parentId: device.parentId,
           childId: device.childId?._id || device.childId,
           type: 'device_offline',
           'data.deviceId': device._id,
-          read: false,
+          createdAt: { $gte: new Date(Date.now() - OFFLINE_ALERT_COOLDOWN_MS) },
         });
         if (existingAlert) continue;
 

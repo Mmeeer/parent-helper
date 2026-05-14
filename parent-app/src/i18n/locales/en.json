@@ -139,7 +139,8 @@
     "allRead": "All read",
     "markAllRead": "Mark all as read",
     "noAlerts": "No alerts",
-    "noAlertsDesc": "Important events will appear here."
+    "noAlertsDesc": "Important events will appear here.",
+    "repeated": "repeated"
   },
   "children": {
     "addChild": "Add Child",
