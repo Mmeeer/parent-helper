@@ -34,6 +34,7 @@ class WebFilterVpnService : VpnService() {
     private val outputMutex = Mutex()
     @Volatile
     private var isRunning = false
+    private var retryCount = 0
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) {
@@ -61,16 +62,24 @@ class WebFilterVpnService : VpnService() {
             // Exclude our own app from the VPN to prevent loops
             try { builder.addDisallowedApplication(packageName) } catch (_: Exception) {}
 
-            vpnInterface = builder.establish() ?: run {
-                Log.e(TAG, "VPN interface establish() returned null")
+            vpnInterface = builder.establish()
+            if (vpnInterface == null) {
+                Log.e(TAG, "VPN interface establish() returned null — fail-closed: blocking all DNS")
                 isRunning = false
+                handleVpnFailure()
                 return
+            }
+            retryCount = 0
+            // VPN recovered — dismiss the fail-closed overlay if it was showing
+            if (LockScreenOverlay.currentReasonName == LockScreenOverlay.Reason.VPN_FILTER_DOWN.name) {
+                LockScreenOverlay.dismiss()
             }
             Log.i(TAG, "VPN tunnel established")
             startForeground(NOTIFICATION_ID, createVpnNotification())
         } catch (e: Exception) {
             Log.e(TAG, "Failed to establish VPN", e)
             isRunning = false
+            handleVpnFailure()
             return
         }
 
@@ -78,6 +87,26 @@ class WebFilterVpnService : VpnService() {
 
         serviceScope.launch {
             runVpnLoop()
+        }
+    }
+
+    /**
+     * Fail-closed: when VPN cannot be established, show a blocking overlay
+     * so unfiltered DNS traffic cannot bypass web filtering, and schedule a retry.
+     */
+    private fun handleVpnFailure() {
+        LockScreenOverlay.show(
+            this,
+            LockScreenOverlay.Reason.VPN_FILTER_DOWN,
+            "Web filter could not start. Retrying…",
+        )
+        // Schedule retry with exponential backoff (max ~2 minutes)
+        val delayMs = (VPN_RETRY_BASE_MS * (1 shl retryCount.coerceAtMost(5))).coerceAtMost(VPN_RETRY_MAX_MS)
+        retryCount++
+        serviceScope.launch {
+            delay(delayMs)
+            Log.d(TAG, "Retrying VPN establish (attempt $retryCount)")
+            startVpn()
         }
     }
 
@@ -172,6 +201,8 @@ class WebFilterVpnService : VpnService() {
     }
 
     private fun shouldBlockDomain(domain: String): Boolean {
+        // Fail-closed: if rules haven't loaded yet, block all domains
+        if (!RuleManager.rulesLoaded) return true
         if (RuleManager.currentRules.value?.webFilter == null) return false
         return DomainBlockList.isBlocked(domain)
     }
@@ -379,5 +410,7 @@ class WebFilterVpnService : VpnService() {
         private const val REAL_DNS = "8.8.8.8"
         private const val MTU_SIZE = 1500
         private val DNS_SERVERS = listOf("8.8.8.8", "8.8.4.4")
+        private const val VPN_RETRY_BASE_MS = 3_000L
+        private const val VPN_RETRY_MAX_MS = 120_000L
     }
 }

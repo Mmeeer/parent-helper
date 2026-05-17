@@ -7,6 +7,36 @@ let socket: Socket | null = null;
 type EventHandler = (...args: unknown[]) => void;
 const eventHandlers: Map<string, Set<EventHandler>> = new Map();
 
+// --- Connection state ---
+export type SocketConnectionStatus = 'connected' | 'connecting' | 'disconnected';
+
+type StatusListener = (status: SocketConnectionStatus) => void;
+const statusListeners = new Set<StatusListener>();
+let currentStatus: SocketConnectionStatus = 'disconnected';
+
+function setStatus(status: SocketConnectionStatus) {
+  if (status === currentStatus) return;
+  currentStatus = status;
+  statusListeners.forEach((listener) => listener(status));
+}
+
+export function getSocketStatus(): SocketConnectionStatus {
+  return currentStatus;
+}
+
+export function onSocketStatusChange(listener: StatusListener): () => void {
+  statusListeners.add(listener);
+  return () => { statusListeners.delete(listener); };
+}
+
+// --- Auth event callbacks ---
+let onAuthExpired: (() => void) | null = null;
+
+export function setOnAuthExpired(handler: (() => void) | null): void {
+  onAuthExpired = handler;
+}
+
+// --- Socket lifecycle ---
 export function connectSocket(): void {
   if (socket?.connected) return;
 
@@ -16,6 +46,8 @@ export function connectSocket(): void {
   // to the wrong upstream behind the reverse proxy.
   const url = new URL(API_BASE_URL);
   const basePath = url.pathname.replace(/\/+$/, '');
+
+  setStatus('connecting');
 
   socket = io(url.origin, {
     path: basePath ? `${basePath}/socket.io` : '/socket.io',
@@ -28,10 +60,40 @@ export function connectSocket(): void {
   });
 
   socket.on('connect', () => {
+    setStatus('connected');
     const token = getAccessToken();
     if (token) {
       socket?.emit('join:parent', token);
     }
+  });
+
+  socket.on('disconnect', (reason) => {
+    setStatus('disconnected');
+    // If the server forcefully closed the connection, it won't auto-reconnect
+    if (reason === 'io server disconnect') {
+      socket?.connect();
+    }
+  });
+
+  socket.on('connect_error', () => {
+    setStatus('disconnected');
+  });
+
+  // Auth expired/revoked — trigger token refresh or logout
+  socket.on('auth:expired', () => {
+    onAuthExpired?.();
+  });
+
+  socket.on('auth:revoked', () => {
+    onAuthExpired?.();
+  });
+
+  socket.io.on('reconnect_attempt', () => {
+    setStatus('connecting');
+  });
+
+  socket.io.on('reconnect', () => {
+    setStatus('connected');
   });
 
   // Re-emit stored handlers
@@ -57,6 +119,7 @@ export function connectSocket(): void {
 export function disconnectSocket(): void {
   socket?.disconnect();
   socket = null;
+  setStatus('disconnected');
 }
 
 export function onSocketEvent(event: string, handler: EventHandler): () => void {

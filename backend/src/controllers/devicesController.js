@@ -1,6 +1,8 @@
 const crypto = require('crypto');
 const Device = require('../models/Device');
 const Child = require('../models/Child');
+const User = require('../models/User');
+const SubscriptionKey = require('../models/SubscriptionKey');
 const { sendAlertNotification } = require('../services/pushNotification');
 
 exports.pair = async (req, res, next) => {
@@ -20,6 +22,21 @@ exports.pair = async (req, res, next) => {
       return res.status(404).json({ error: 'Child not found' });
     }
     console.log('[PAIR] Child verified:', child.name);
+
+    // Subscription device cap: total paired devices per parent must not exceed maxKids
+    const user = await User.findById(req.user._id).populate('subscriptionKey');
+    const sub = user && user.subscriptionKey;
+    if (!sub || sub.status !== 'active') {
+      return res.status(402).json({ error: 'Active subscription required to pair devices.' });
+    }
+    if (sub.expiresAt && new Date(sub.expiresAt) < new Date()) {
+      await SubscriptionKey.findByIdAndUpdate(sub._id, { status: 'expired' });
+      return res.status(402).json({ error: 'Your subscription has expired. Please activate a new key.' });
+    }
+    const pairedDeviceCount = await Device.countDocuments({ parentId: req.user._id, paired: true });
+    if (pairedDeviceCount >= sub.maxKids) {
+      return res.status(402).json({ error: `Device limit reached. Your plan allows up to ${sub.maxKids} device(s).` });
+    }
 
     // One device per kid — check if child already has a paired device
     const existingDevice = await Device.findOne({ childId, paired: true });
@@ -336,7 +353,11 @@ exports.sos = async (req, res, next) => {
     });
 
     // Send push notification (SOS is high priority)
-    sendAlertNotification(device.parentId, alert);
+    try {
+      await sendAlertNotification(device.parentId, alert);
+    } catch (err) {
+      console.error('[SOS] Push notification error:', err.message);
+    }
 
     console.log(`[SOS] Alert sent from device ${device._id} for child ${childName}`);
     res.json({ status: 'sent', alertId: alert._id });
@@ -362,12 +383,13 @@ exports.reportPermission = async (req, res, next) => {
       return res.json({ status: 'ok' });
     }
 
-    // Prevent alert spam: only create if no unread alert of same type exists for this child
+    // Prevent alert spam: only create if no alert of same type exists for this child within cooldown
+    const PERMISSION_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes
     const recentAlert = await Alert.findOne({
       parentId: device.parentId,
       childId: device.childId,
       type: 'overlay_permission_revoked',
-      read: false,
+      createdAt: { $gte: new Date(Date.now() - PERMISSION_COOLDOWN_MS) },
     });
 
     if (recentAlert) {
@@ -402,7 +424,11 @@ exports.reportPermission = async (req, res, next) => {
       createdAt: alert.createdAt,
     });
 
-    sendAlertNotification(device.parentId, alert);
+    try {
+      await sendAlertNotification(device.parentId, alert);
+    } catch (err) {
+      console.error('[PERMISSION] Push notification error:', err.message);
+    }
 
     console.log(`[PERMISSION] Overlay permission revoked on device ${device._id} for child ${childName}`);
     res.json({ status: 'reported', alertId: alert._id });

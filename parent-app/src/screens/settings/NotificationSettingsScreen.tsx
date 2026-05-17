@@ -47,7 +47,9 @@ export default function NotificationSettingsScreen() {
       .then(({ alertSettings }) => {
         if (alertSettings) setSettings(alertSettings);
       })
-      .catch(() => {})
+      .catch((err) => {
+        Alert.alert(t('common.error'), err?.message || t('notifications.loadError'));
+      })
       .finally(() => setLoading(false));
   }, []);
 

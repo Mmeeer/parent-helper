@@ -52,6 +52,7 @@
     "confirmPassword": "Confirm Password",
     "reenterPassword": "Re-enter password",
     "min8Chars": "At least 8 characters",
+    "phone": "Phone Number",
     "confirmLogout": "Are you sure you want to sign out?"
   },
   "forgotPassword": {
@@ -138,7 +139,8 @@
     "allRead": "All read",
     "markAllRead": "Mark all as read",
     "noAlerts": "No alerts",
-    "noAlertsDesc": "Important events will appear here."
+    "noAlertsDesc": "Important events will appear here.",
+    "repeated": "repeated"
   },
   "children": {
     "addChild": "Add Child",
@@ -184,7 +186,8 @@
     "domainBlockError": "Unable to block domain.",
     "blockApp": "Block App",
     "blockAppConfirm": "Block \"{{appName}}\" on {{childName}}'s device?",
-    "appBlockError": "Unable to block app."
+    "appBlockError": "Unable to block app.",
+    "loadError": "Failed to load activity data."
   },
   "devices": {
     "title": "DEVICES",
@@ -421,8 +424,11 @@
     "deleteAccountSentDesc": "Your account will be permanently deleted after 30 days. Contact support to cancel.",
     "deleteAccountError": "Failed to delete account.",
     "enterPasswordError": "Please enter your password.",
+    "verifyEmail": "Verify Email",
+    "verifyEmailSub": "Confirm your email address",
     "language": "Language",
-    "languageSub": "Change app language"
+    "languageSub": "Change app language",
+    "pushRegistrationFailed": "Push notifications may not work"
   },
   "editProfile": {
     "name": "NAME",
@@ -464,7 +470,8 @@
     "quietHoursTitle": "Quiet Hours",
     "quietHoursDesc": "No notifications except SOS during quiet hours.",
     "saving": "Saving...",
-    "saveError": "Failed to save settings."
+    "saveError": "Failed to save settings.",
+    "loadError": "Failed to load notification settings."
   },
   "privacy": {
     "title": "Privacy Policy",

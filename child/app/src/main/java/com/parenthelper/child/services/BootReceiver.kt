@@ -7,8 +7,10 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import com.parenthelper.child.ParentHelperApp
 import com.parenthelper.child.enforcement.LockScreenOverlay
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
 
 class BootReceiver : BroadcastReceiver() {
 
@@ -16,25 +18,30 @@ class BootReceiver : BroadcastReceiver() {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED ||
             intent.action == "android.intent.action.QUICKBOOT_POWERON"
         ) {
+            val pendingResult = goAsync()
             val app = context.applicationContext as ParentHelperApp
             val prefs = app.prefsManager
 
-            val isPaired = runBlocking { prefs.isPaired.first() }
-            if (!isPaired) return
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    val isPaired = prefs.isPaired.first()
+                    if (!isPaired) return@launch
 
-            Log.d(TAG, "Boot completed — starting MonitoringService")
+                    Log.d(TAG, "Boot completed — starting MonitoringService")
 
-            // Start the monitoring service immediately
-            val serviceIntent = Intent(context, MonitoringService::class.java)
-            ContextCompat.startForegroundService(context, serviceIntent)
+                    val serviceIntent = Intent(context, MonitoringService::class.java)
+                    ContextCompat.startForegroundService(context, serviceIntent)
 
-            // Restore remote lock overlay immediately (don't wait for service init)
-            val remoteLocked = runBlocking { prefs.isRemoteLocked.first() }
-            if (remoteLocked) {
-                val detail = runBlocking { prefs.overlayDetail.first() } ?: "Ask your parent to unlock"
-                LockScreenOverlay.show(context, LockScreenOverlay.Reason.REMOTE_LOCK, detail)
-                MonitoringService.isDeviceLocked = true
-                Log.d(TAG, "Restored remote lock overlay after boot")
+                    val remoteLocked = prefs.isRemoteLocked.first()
+                    if (remoteLocked) {
+                        val detail = prefs.overlayDetail.first() ?: "Ask your parent to unlock"
+                        LockScreenOverlay.show(context, LockScreenOverlay.Reason.REMOTE_LOCK, detail)
+                        MonitoringService.isDeviceLocked = true
+                        Log.d(TAG, "Restored remote lock overlay after boot")
+                    }
+                } finally {
+                    pendingResult.finish()
+                }
             }
         }
     }

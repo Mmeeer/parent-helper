@@ -55,6 +55,7 @@ exports.decide = async (req, res, next) => {
       for (const device of devices) {
         io.to(`device:${device._id}`).emit('rules:updated', rules);
       }
+      io.to(`parent:${req.user._id}`).emit('rules:updated', rules);
     } else if (action === 'approve' && alert.data.packageName) {
       // Unsuspend the app on the child's device
       for (const device of devices) {

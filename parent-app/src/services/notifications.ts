@@ -1,8 +1,35 @@
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
-import { Platform } from 'react-native';
+import { Platform, AppState } from 'react-native';
+import type { AppStateStatus } from 'react-native';
 import * as api from './api';
+
+// --- FCM registration health tracking ---
+let _pushHealthy = true;
+let _retryScheduled = false;
+let _appStateSubscription: { remove(): void } | null = null;
+
+export function isPushRegistrationHealthy(): boolean {
+  return _pushHealthy;
+}
+
+function scheduleRetryOnResume() {
+  if (_retryScheduled) return;
+  _retryScheduled = true;
+
+  const handleChange = (next: AppStateStatus) => {
+    if (next === 'active') {
+      _retryScheduled = false;
+      _appStateSubscription?.remove();
+      _appStateSubscription = null;
+      console.log('[Notifications] Retrying FCM registration on app resume');
+      registerForPushNotifications();
+    }
+  };
+
+  _appStateSubscription = AppState.addEventListener('change', handleChange);
+}
 
 // Configure how notifications appear when app is in foreground
 Notifications.setNotificationHandler({
@@ -67,10 +94,13 @@ export async function registerForPushNotifications(): Promise<string | null> {
     // Send to backend
     await api.registerFcmToken(fcmToken, Platform.OS as 'ios' | 'android');
 
+    _pushHealthy = true;
     console.log('[Notifications] Registered FCM token');
     return fcmToken;
   } catch (err) {
+    _pushHealthy = false;
     console.error('[Notifications] Registration failed:', err);
+    scheduleRetryOnResume();
     return null;
   }
 }

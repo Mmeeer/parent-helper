@@ -64,9 +64,15 @@ exports.update = async (req, res, next) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
+    const { name, age, avatar } = req.body;
+    const updates = {};
+    if (name !== undefined) updates.name = name;
+    if (age !== undefined) updates.age = age;
+    if (avatar !== undefined) updates.avatar = avatar;
+
     const child = await Child.findOneAndUpdate(
       { _id: req.params.id, parentId: req.user._id },
-      req.body,
+      updates,
       { new: true, runValidators: true },
     );
 

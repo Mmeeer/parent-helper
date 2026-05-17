@@ -133,7 +133,11 @@ exports.sync = async (req, res, next) => {
         }
 
         // Send push notification
-        sendBatchAlertNotifications(device.parentId, alerts);
+        try {
+          await sendBatchAlertNotifications(device.parentId, alerts);
+        } catch (err) {
+          console.error('[Activity] Push notification error:', err.message);
+        }
       }
     }
 

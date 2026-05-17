@@ -51,6 +51,7 @@ const adminRoutes = require('./routes/admin');
 const subscriptionRoutes = require('./routes/subscription');
 
 const { startOfflineDetector } = require('./jobs/offlineDetector');
+const { startSubscriptionChecker } = require('./jobs/subscriptionChecker');
 const { initFirebase } = require('./services/pushNotification');
 const { initEmail } = require('./services/email');
 
@@ -85,7 +86,13 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 }));
 
-app.use(express.json({ limit: '10mb' }));
+// Use stricter body size limit for /activity/sync; global 10mb for everything else
+app.use((req, res, next) => {
+  if (req.method === 'POST' && req.path === '/activity/sync') {
+    return next(); // skip global parser; route-level 512kb parser handles it
+  }
+  express.json({ limit: '10mb' })(req, res, next);
+});
 
 // Serve legal/public pages without auth (privacy policy, terms, COPPA)
 app.use(express.static(path.join(__dirname, '..', 'public')));
@@ -152,10 +159,6 @@ app.get('/health', async (_req, res) => {
   });
 });
 
-// Sentry test endpoint (only in non-production or for admin verification)
-app.get('/debug-sentry', (_req, _res) => {
-  throw new Error('Sentry test crash from parent-helper backend');
-});
 
 // Sentry error handler — must be before custom errorHandler
 if (process.env.SENTRY_DSN) {
@@ -240,6 +243,7 @@ io.on('connection', (socket) => {
 const PORT = process.env.PORT || 3000;
 
 let offlineDetectorId = null;
+let subscriptionCheckerId = null;
 
 const start = async () => {
   await connectDB();
@@ -259,6 +263,7 @@ const start = async () => {
   initFirebase();
   initEmail();
   offlineDetectorId = startOfflineDetector(io);
+  subscriptionCheckerId = startSubscriptionChecker(io);
   server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
@@ -275,6 +280,7 @@ const shutdown = async (signal) => {
 
   // Stop background jobs
   if (offlineDetectorId) clearInterval(offlineDetectorId);
+  if (subscriptionCheckerId) clearInterval(subscriptionCheckerId);
 
   // Close Socket.io connections
   io.close(() => {

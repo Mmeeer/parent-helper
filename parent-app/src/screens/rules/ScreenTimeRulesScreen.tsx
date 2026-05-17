@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   View,
   ScrollView,
@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { DAYS_OF_WEEK, DAY_NAME_TO_NUM, DAY_NUM_TO_NAME } from '../../utils/constants';
 import { formatDuration } from '../../utils/formatters';
 import * as api from '../../services/api';
+import { onSocketEvent } from '../../services/socket';
 import type { RouteProp } from '@react-navigation/native';
 import type { RootStackParamList, Schedule, PerAppLimit } from '../../types';
 import type { InstalledApp } from '../../services/api';
@@ -51,6 +52,11 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
       loadRules();
     }, [childId]),
   );
+
+  // Re-fetch when rules change via socket (e.g. another device or admin updates them)
+  useEffect(() => {
+    return onSocketEvent('rules:updated', () => { loadRules(); });
+  }, [childId]);
 
   const loadRules = async () => {
     try {

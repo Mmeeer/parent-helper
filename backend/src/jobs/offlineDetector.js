@@ -20,6 +20,17 @@ function startOfflineDetector(io) {
         device.status = 'offline';
         await device.save();
 
+        // Skip if an offline alert was already created for this device within cooldown
+        const OFFLINE_ALERT_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes
+        const existingAlert = await Alert.findOne({
+          parentId: device.parentId,
+          childId: device.childId?._id || device.childId,
+          type: 'device_offline',
+          'data.deviceId': device._id,
+          createdAt: { $gte: new Date(Date.now() - OFFLINE_ALERT_COOLDOWN_MS) },
+        });
+        if (existingAlert) continue;
+
         const alert = await Alert.create({
           parentId: device.parentId,
           childId: device.childId?._id || device.childId,
@@ -31,8 +42,12 @@ function startOfflineDetector(io) {
           },
         });
 
-        io.to(`parent:${device.parentId}`).emit('alert', alert);
-        sendAlertNotification(device.parentId, alert);
+        io.to(`parent:${device.parentId}`).emit('alert:new', alert);
+        try {
+          await sendAlertNotification(device.parentId, alert);
+        } catch (err) {
+          console.error(`[OfflineDetector] Push notification error for device ${device._id}:`, err.message);
+        }
       }
 
       if (staleDevices.length > 0) {

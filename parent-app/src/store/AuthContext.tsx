@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import type { User } from '../types';
 import * as api from '../services/api';
-import { connectSocket, disconnectSocket } from '../services/socket';
+import { connectSocket, disconnectSocket, setOnAuthExpired } from '../services/socket';
 import { registerForPushNotifications, unregisterPushNotifications } from '../services/notifications';
 
 interface AuthState {
@@ -12,7 +12,7 @@ interface AuthState {
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string) => Promise<void>;
+  register: (email: string, password: string, name: string, phone: string) => Promise<void>;
   logout: () => Promise<void>;
   verifyEmail: (code: string) => Promise<void>;
   resendVerification: () => Promise<{ message: string }>;
@@ -57,8 +57,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     registerForPushNotifications();
   }, []);
 
-  const register = useCallback(async (email: string, password: string, name: string) => {
-    const data = await api.register(email, password, name);
+  const register = useCallback(async (email: string, password: string, name: string, phone: string) => {
+    const data = await api.register(email, password, name, phone);
     setState({ user: data.user, isLoading: false, isAuthenticated: true });
     connectSocket();
     registerForPushNotifications();
@@ -70,6 +70,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await api.logout();
     setState({ user: null, isLoading: false, isAuthenticated: false });
   }, []);
+
+  // When server signals auth:expired or auth:revoked, force logout
+  useEffect(() => {
+    setOnAuthExpired(() => {
+      logout();
+    });
+    return () => { setOnAuthExpired(null); };
+  }, [logout]);
 
   const verifyEmail = useCallback(async (code: string) => {
     await api.verifyEmail(code);

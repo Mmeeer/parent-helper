@@ -58,6 +58,7 @@
         }
       ],
       "./plugins/pin-androidx-core",
+      "./plugins/gradle-memory",
       "expo-localization",
       [
         "expo-font",

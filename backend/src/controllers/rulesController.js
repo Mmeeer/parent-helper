@@ -14,6 +14,8 @@ const pushRulesToDevices = async (req, childId, rules) => {
   for (const device of devices) {
     io.to(`device:${device._id}`).emit('rules:updated', rules);
   }
+  // Also notify the parent app so screens showing rules refresh in real-time
+  io.to(`parent:${req.user._id}`).emit('rules:updated', rules);
 };
 
 exports.get = async (req, res, next) => {

@@ -4,10 +4,11 @@ import {
   Text, TouchableOpacity, ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { formatDuration, formatTime } from '../../utils/formatters';
 import { showError } from '../../utils/showError';
 import * as api from '../../services/api';
+import { onSocketEvent } from '../../services/socket';
 import { useTranslation } from 'react-i18next';
 import { C } from '../../theme';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -64,8 +65,11 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
       setSummary(summaryData);
       setApps(appsData);
       setWebHistory(webData);
-    } catch {
-      // 404 expected when child has no activity yet
+    } catch (err: any) {
+      // 404 expected when child has no activity yet — only show real errors
+      if (err?.status && err.status !== 404) {
+        showError(err, t('childDetail.loadError'));
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -134,6 +138,13 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
 
   useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
   useEffect(() => { navigation.setOptions({ headerShown: false }); }, [navigation]);
+
+  // Re-fetch when rules are updated via socket so the screen shows fresh data
+  const isFocused = useIsFocused();
+  useEffect(() => {
+    if (!isFocused) return;
+    return onSocketEvent('rules:updated', () => { loadData(); });
+  }, [isFocused, loadData]);
 
   if (loading) {
     return (

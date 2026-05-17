@@ -1,8 +1,10 @@
 package com.parenthelper.child.data.api
 
 import com.parenthelper.child.data.local.PrefsManager
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -16,18 +18,25 @@ object ApiClient {
     private var prefsManager: PrefsManager? = null
     private var _service: ApiService? = null
 
+    @Volatile
+    private var cachedToken: String? = null
+
     fun init(baseUrl: String, prefsManager: PrefsManager) {
         this.prefsManager = prefsManager
         this._service = null
+
+        CoroutineScope(Dispatchers.IO).launch {
+            prefsManager.deviceToken.collectLatest { token ->
+                cachedToken = token
+            }
+        }
 
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         }
 
         val authInterceptor = Interceptor { chain ->
-            val token = runBlocking {
-                prefsManager.deviceToken.first()
-            }
+            val token = cachedToken
             val request = if (token != null) {
                 chain.request().newBuilder()
                     .addHeader("X-Device-Token", token)

@@ -27,6 +27,17 @@ const syncLimiter = rateLimit({
   message: { error: 'Sync rate limit exceeded.' },
 });
 
+// Stricter throttle for repeat offenders: keyed by device ID (set by deviceAuth)
+const syncAbuseLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 minutes
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.device?._id?.toString() || 'unknown',
+  validate: { xForwardedForHeader: false, ip: false },
+  message: { error: 'Device sync throttled. Too many requests in a short period.' },
+});
+
 // Relaxed: general API reads
 const apiLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
@@ -45,4 +56,4 @@ const resetLimiter = rateLimit({
   message: { error: 'Too many reset attempts. Please try again later.' },
 });
 
-module.exports = { authLimiter, seedLimiter, syncLimiter, apiLimiter, resetLimiter };
+module.exports = { authLimiter, seedLimiter, syncLimiter, syncAbuseLimiter, apiLimiter, resetLimiter };
