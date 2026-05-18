@@ -7,6 +7,7 @@ import android.net.VpnService
 import android.os.ParcelFileDescriptor
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.parenthelper.child.ParentHelperApp
 import com.parenthelper.child.R
 import com.parenthelper.child.collectors.WebActivityCollector
@@ -139,8 +140,11 @@ class WebFilterVpnService : VpnService() {
                                 output.write(response)
                                 output.flush()
                             }
-                            continue
+                        } else {
+                            Log.w(TAG, "NXDOMAIN response build failed for blocked domain: $domain — dropping packet")
+                            FirebaseCrashlytics.getInstance().log("NXDOMAIN build failed for: $domain")
                         }
+                        continue
                     }
                     // Record allowed domain visit
                     if (domain != null) {
