@@ -116,10 +116,10 @@ export async function login(email: string, password: string): Promise<AuthRespon
   return data;
 }
 
-export async function register(email: string, password: string, name: string): Promise<AuthResponse> {
+export async function register(email: string, password: string, name: string, phone: string): Promise<AuthResponse> {
   const data = await request<AuthResponse>('/auth/register', {
     method: 'POST',
-    body: JSON.stringify({ email, password, name }),
+    body: JSON.stringify({ email, password, name, phone }),
   });
   await saveTokens({ accessToken: data.accessToken, refreshToken: data.refreshToken });
   return data;

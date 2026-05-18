@@ -33,6 +33,9 @@
               <Badge v-if="user.emailVerified" label="Verified" variant="green" />
               <Badge v-else label="Unverified" variant="yellow" />
             </div>
+            <div v-if="user.phone" class="flex items-center gap-1.5 mt-1">
+              <p class="text-xs text-ink-400">{{ user.phone }}</p>
+            </div>
           </div>
           <div class="hidden sm:flex items-center gap-6 text-xs">
             <div class="text-center"><div class="text-ink-400 mb-1">Plan</div><Badge :label="user.subscriptionKey ? 'Subscribed' : 'Free'" :variant="user.subscriptionKey ? 'blue' : 'gray'" /></div>

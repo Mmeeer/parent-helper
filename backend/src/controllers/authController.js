@@ -26,7 +26,7 @@ exports.register = async (req, res, next) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { email, password, name } = req.body;
+    const { email, password, name, phone } = req.body;
 
     const existing = await User.findOne({ email });
     if (existing) {
@@ -36,7 +36,7 @@ exports.register = async (req, res, next) => {
     const tokenFamily = crypto.randomUUID();
     const verificationCode = crypto.randomInt(100000, 999999).toString();
     const user = new User({
-      email, passwordHash: password, name, tokenFamily,
+      email, phone, passwordHash: password, name, tokenFamily,
       emailVerificationCode: verificationCode,
       emailVerificationCodeExpiresAt: new Date(Date.now() + 15 * 60 * 1000),
     });
@@ -53,7 +53,7 @@ exports.register = async (req, res, next) => {
     }
 
     const response = {
-      user: { id: user._id, email: user.email, name: user.name, emailVerified: false },
+      user: { id: user._id, email: user.email, phone: user.phone, name: user.name, emailVerified: false },
       ...tokens,
     };
     if (process.env.NODE_ENV !== 'production') {
@@ -119,7 +119,7 @@ exports.login = async (req, res, next) => {
     await user.save();
 
     res.json({
-      user: { id: user._id, email: user.email, name: user.name, role: user.role, emailVerified: user.emailVerified },
+      user: { id: user._id, email: user.email, phone: user.phone, name: user.name, role: user.role, emailVerified: user.emailVerified },
       ...tokens,
       deletionCancelled,
     });
@@ -145,6 +145,7 @@ exports.me = async (req, res, next) => {
     res.json({
       id: user._id,
       email: user.email,
+      phone: user.phone,
       name: user.name,
       role: user.role,
       emailVerified: user.emailVerified,
@@ -465,6 +466,7 @@ exports.updateProfile = async (req, res, next) => {
     res.json({
       id: user._id,
       email: user.email,
+      phone: user.phone,
       name: user.name,
       emailVerified: user.emailVerified,
     });
