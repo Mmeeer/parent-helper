@@ -4,6 +4,7 @@ const Child = require('../models/Child');
 const User = require('../models/User');
 const SubscriptionKey = require('../models/SubscriptionKey');
 const { sendAlertNotification } = require('../services/pushNotification');
+const { isReviewEmail, reviewEmail, reviewDemoCode } = require('../utils/reviewAccess');
 
 exports.pair = async (req, res, next) => {
   try {
@@ -23,19 +24,24 @@ exports.pair = async (req, res, next) => {
     }
     console.log('[PAIR] Child verified:', child.name);
 
-    // Subscription device cap: total paired devices per parent must not exceed maxKids
-    const user = await User.findById(req.user._id).populate('subscriptionKey');
-    const sub = user && user.subscriptionKey;
-    if (!sub || sub.status !== 'active') {
-      return res.status(402).json({ error: 'Active subscription required to pair devices.' });
-    }
-    if (sub.expiresAt && new Date(sub.expiresAt) < new Date()) {
-      await SubscriptionKey.findByIdAndUpdate(sub._id, { status: 'expired' });
-      return res.status(402).json({ error: 'Your subscription has expired. Please activate a new key.' });
-    }
-    const pairedDeviceCount = await Device.countDocuments({ parentId: req.user._id, paired: true });
-    if (pairedDeviceCount >= sub.maxKids) {
-      return res.status(402).json({ error: `Device limit reached. Your plan allows up to ${sub.maxKids} device(s).` });
+    // App-store review account: skip the subscription/expiry/device-cap 402s
+    // so a reviewer driving the parent app can always generate a pairing code.
+    // Inert unless REVIEW_ACCOUNT_EMAIL is set.
+    if (!isReviewEmail(req.user && req.user.email)) {
+      // Subscription device cap: total paired devices per parent must not exceed maxKids
+      const user = await User.findById(req.user._id).populate('subscriptionKey');
+      const sub = user && user.subscriptionKey;
+      if (!sub || sub.status !== 'active') {
+        return res.status(402).json({ error: 'Active subscription required to pair devices.' });
+      }
+      if (sub.expiresAt && new Date(sub.expiresAt) < new Date()) {
+        await SubscriptionKey.findByIdAndUpdate(sub._id, { status: 'expired' });
+        return res.status(402).json({ error: 'Your subscription has expired. Please activate a new key.' });
+      }
+      const pairedDeviceCount = await Device.countDocuments({ parentId: req.user._id, paired: true });
+      if (pairedDeviceCount >= sub.maxKids) {
+        return res.status(402).json({ error: `Device limit reached. Your plan allows up to ${sub.maxKids} device(s).` });
+      }
     }
 
     // One device per kid — check if child already has a paired device
@@ -85,6 +91,63 @@ exports.completePairing = async (req, res, next) => {
 
     const normalizedCode = pairingCode.trim().toUpperCase();
     console.log('[COMPLETE-PAIRING] Looking up code:', normalizedCode);
+
+    // ── App-store review demo code ──────────────────────────────────────────
+    // A fixed, REUSABLE pairing code that drops the single reviewer device
+    // straight into the review account's seeded demo child — no parent app, no
+    // second device, no subscription/expiry gate. The code is matched purely
+    // from env (never stored as a Device.pairingCode), so it is never consumed
+    // and works for every reviewer / every retry. It can ONLY ever target the
+    // review account's own demo child, so a leaked code cannot monitor a real
+    // family. Entirely inert unless REVIEW_DEMO_PAIRING_CODE + the review
+    // account exist (delete the env var post-approval to disable).
+    const demoCode = reviewDemoCode();
+    if (demoCode && normalizedCode === demoCode) {
+      const reviewer = await User.findOne({ email: reviewEmail() });
+      const demoChild = reviewer
+        ? await Child.findOne({ parentId: reviewer._id }).sort({ createdAt: 1 })
+        : null;
+      if (!reviewer || !demoChild) {
+        console.log('[COMPLETE-PAIRING] Demo code used but review account/child not seeded');
+        return res.status(404).json({ error: 'Invalid or expired pairing code' });
+      }
+
+      let device = await Device.findOne({
+        childId: demoChild._id, parentId: reviewer._id, paired: true,
+      });
+      if (!device) {
+        device = new Device({ childId: demoChild._id, parentId: reviewer._id, paired: true });
+      }
+      device.paired = true;
+      device.platform = platform || 'android';
+      device.model = model || 'Review Demo Device';
+      device.osVersion = osVersion || null;
+      device.appVersion = appVersion || null;
+      device.status = 'online';
+      device.lastSeen = new Date();
+      device.deviceToken = crypto.randomBytes(32).toString('hex');
+      device.pairingCode = undefined;
+      device.pairingExpiresAt = undefined;
+      await device.save();
+
+      console.log('[COMPLETE-PAIRING] SUCCESS via review demo code:', {
+        deviceId: device._id, childId: demoChild._id,
+      });
+      const io = req.app.get('io');
+      if (io) {
+        io.to(`parent:${device.parentId}`).emit('device:paired', {
+          deviceId: String(device._id),
+          childId: String(device.childId),
+          model: device.model || null,
+        });
+      }
+      return res.json({
+        deviceId: device._id,
+        childId: device.childId,
+        parentId: device.parentId,
+        deviceToken: device.deviceToken,
+      });
+    }
 
     // Debug: show all unpaired devices
     const allUnpaired = await Device.find({ paired: false }).select('pairingCode pairingExpiresAt');

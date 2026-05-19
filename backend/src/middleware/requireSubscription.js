@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const SubscriptionKey = require('../models/SubscriptionKey');
+const { isReviewEmail } = require('../utils/reviewAccess');
 
 /**
  * Middleware that blocks write operations when the parent's subscription is
@@ -11,6 +12,10 @@ const SubscriptionKey = require('../models/SubscriptionKey');
  */
 const requireSubscription = async (req, res, next) => {
   try {
+    // App-store review account: never gate the reviewer's parent app on
+    // subscription state (inert unless REVIEW_ACCOUNT_EMAIL is set).
+    if (isReviewEmail(req.user && req.user.email)) return next();
+
     const user = await User.findById(req.user._id).populate('subscriptionKey');
     const sub = user && user.subscriptionKey;
 
