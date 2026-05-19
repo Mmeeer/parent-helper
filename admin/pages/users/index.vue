@@ -38,6 +38,7 @@
             <td class="px-5 py-3.5">
               <p class="text-sm font-medium text-ink-800">{{ user.name || '-' }}</p>
               <p class="text-xs text-ink-400">{{ user.email }}</p>
+              <p v-if="user.phone" class="text-xs text-ink-300">{{ user.phone }}</p>
             </td>
             <td class="px-5 py-3.5">
               <Badge :label="user.subscriptionKey ? 'Subscribed' : 'Free'" :variant="user.subscriptionKey ? 'blue' : 'gray'" />

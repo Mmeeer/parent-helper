@@ -17,6 +17,7 @@ export default function RegisterScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const { register } = useAuth();
   const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -24,12 +25,13 @@ export default function RegisterScreen({ navigation }: Props) {
   const [secureText, setSecureText] = useState(true);
   const [secureConfirm, setSecureConfirm] = useState(true);
 
+  const phoneRef = useRef<TextInput>(null);
   const emailRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
   const confirmRef = useRef<TextInput>(null);
 
   const handleRegister = async () => {
-    if (!name.trim() || !email.trim() || !password.trim()) {
+    if (!name.trim() || !phone.trim() || !email.trim() || !password.trim()) {
       Alert.alert(t('common.error'), t('auth.fillAllFields'));
       return;
     }
@@ -43,7 +45,7 @@ export default function RegisterScreen({ navigation }: Props) {
     }
     setLoading(true);
     try {
-      await register(email.trim(), password, name.trim());
+      await register(email.trim(), password, name.trim(), phone.trim());
     } catch (error: any) {
       Alert.alert(t('auth.registerFailed'), error.message || t('auth.registerError'));
     } finally {
@@ -90,6 +92,26 @@ export default function RegisterScreen({ navigation }: Props) {
                 value={name}
                 onChangeText={setName}
                 autoComplete="name"
+                returnKeyType="next"
+                onSubmitEditing={() => phoneRef.current?.focus()}
+              />
+            </View>
+          </View>
+
+          {/* Phone */}
+          <View className="mb-5">
+            <Text className="font-display font-bold text-gray-900 mb-2">{t('auth.phone')}</Text>
+            <View className="flex-row items-center px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200">
+              <Ionicons name="call-outline" size={17} color="#9ca3af" />
+              <TextInput
+                ref={phoneRef}
+                className="flex-1 text-sm font-semibold text-gray-700 ml-3"
+                placeholder="+976 9911 2233"
+                placeholderTextColor="#d1d5db"
+                value={phone}
+                onChangeText={setPhone}
+                keyboardType="phone-pad"
+                autoComplete="tel"
                 returnKeyType="next"
                 onSubmitEditing={() => emailRef.current?.focus()}
               />
