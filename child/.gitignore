@@ -14,3 +14,9 @@
 .cxx
 local.properties
 .env
+
+# Release signing — NEVER commit key material or passwords
+keystore.properties
+*.jks
+*.keystore
+!app/debug.keystore
