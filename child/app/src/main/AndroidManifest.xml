@@ -32,10 +32,6 @@
     <!-- Notification -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
-    <!-- Camera (for QR code scanning) -->
-    <uses-permission android:name="android.permission.CAMERA" />
-    <uses-feature android:name="android.hardware.camera" android:required="false" />
-
     <application
         android:name=".ParentHelperApp"
         android:allowBackup="true"
