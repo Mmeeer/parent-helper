@@ -22,7 +22,6 @@ import com.google.android.material.button.MaterialButton
 import com.parenthelper.child.R
 import com.parenthelper.child.enforcement.OverlayPermissionHelper
 import com.parenthelper.child.enforcement.ParentHelperDeviceAdmin
-import com.parenthelper.child.services.ParentHelperAccessibilityService
 
 class OnboardingPermissionsActivity : AppCompatActivity() {
 
@@ -62,10 +61,6 @@ class OnboardingPermissionsActivity : AppCompatActivity() {
     ) { _ -> refreshCurrentStep() }
 
     private val batteryOptLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { _ -> refreshCurrentStep() }
-
-    private val accessibilityLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { _ -> refreshCurrentStep() }
 
@@ -150,16 +145,7 @@ class OnboardingPermissionsActivity : AppCompatActivity() {
                     batteryOptLauncher.launch(intent)
                 },
             ),
-            // 5. Accessibility — required for app blocking to function at all
-            PermissionStep(
-                iconRes = R.drawable.ic_accessibility,
-                titleRes = R.string.perm_accessibility_title,
-                whyRes = R.string.perm_accessibility_why,
-                checkGranted = { isAccessibilityServiceEnabled() },
-                requestPermission = { launchAccessibilitySettings() },
-                required = true,
-            ),
-            // 6. Overlay (Display over other apps)
+            // 5. Overlay (Display over other apps) — used to cover blocked apps / show lock screen
             PermissionStep(
                 iconRes = R.drawable.ic_overlay,
                 titleRes = R.string.perm_overlay_title,
@@ -309,39 +295,6 @@ class OnboardingPermissionsActivity : AppCompatActivity() {
     private fun isBatteryOptimizationExempt(): Boolean {
         val pm = getSystemService(PowerManager::class.java)
         return pm.isIgnoringBatteryOptimizations(packageName)
-    }
-
-    private fun isAccessibilityServiceEnabled(): Boolean {
-        val enabledServices = Settings.Secure.getString(
-            contentResolver,
-            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
-        ) ?: return false
-        val expectedComponent = ComponentName(this, ParentHelperAccessibilityService::class.java)
-        return enabledServices.contains(expectedComponent.flattenToString()) ||
-            enabledServices.contains("$packageName/")
-    }
-
-    private fun launchAccessibilitySettings() {
-        AlertDialog.Builder(this)
-            .setTitle(R.string.perm_accessibility_title)
-            .setMessage(R.string.perm_accessibility_instruction)
-            .setPositiveButton(R.string.onboarding_grant_button) { _, _ ->
-                // Try the per-service detail page first (Android 14+); fall back to the list.
-                val component = ComponentName(this, ParentHelperAccessibilityService::class.java)
-                val detailIntent = Intent("android.settings.ACCESSIBILITY_DETAILS_SETTINGS").apply {
-                    putExtra(":settings:fragment_args_key", component.flattenToString())
-                }
-                val launched = try {
-                    accessibilityLauncher.launch(detailIntent)
-                    true
-                } catch (_: Exception) { false }
-                if (!launched) {
-                    accessibilityLauncher.launch(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-                }
-                Toast.makeText(this, R.string.perm_accessibility_instruction, Toast.LENGTH_LONG).show()
-            }
-            .setCancelable(true)
-            .show()
     }
 
     private fun dpToPx(dp: Int): Int {

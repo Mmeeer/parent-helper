@@ -55,20 +55,6 @@
             </intent-filter>
         </activity>
 
-        <!-- Accessibility service for blocking apps and capturing browser URLs -->
-        <service
-            android:name=".services.ParentHelperAccessibilityService"
-            android:exported="true"
-            android:label="@string/app_name"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
-            <intent-filter>
-                <action android:name="android.accessibilityservice.AccessibilityService" />
-            </intent-filter>
-            <meta-data
-                android:name="android.accessibilityservice"
-                android:resource="@xml/accessibility_service_config" />
-        </service>
-
         <!-- Pairing (no longer the launcher) -->
         <activity android:name=".ui.pairing.PairingActivity" />
 
