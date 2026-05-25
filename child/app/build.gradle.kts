@@ -52,7 +52,7 @@ android {
         buildConfigField(
             "String",
             "SERVER_URL",
-            "\"${envProps.getProperty("SERVER_URL", "http://139.59.107.13/parent-helper/")}\""
+            "\"${envProps.getProperty("SERVER_URL", "https://primekids.masterclass.mn/parent-helper/")}\""
         )
     }
 

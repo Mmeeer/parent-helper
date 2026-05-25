@@ -1,7 +1,8 @@
-// Both dev and prod builds target the VPS-hosted staging backend.
-// `/parent-helper` prefix is stripped by nginx on :80 and proxied to
-// the backend on internal port 5003 (including Socket.io upgrades).
-export const API_BASE_URL = 'http://139.59.107.13/parent-helper';
+// Production backend on the HTTPS subdomain. nginx terminates TLS and proxies
+// the `/parent-helper` prefix to the backend on internal port 5003 (including
+// Socket.io/WSS upgrades). HTTPS is required for app-store submission — never
+// ship the raw-IP cleartext URL.
+export const API_BASE_URL = 'https://primekids.masterclass.mn/parent-helper';
 
 export const ALERT_TYPE_LABELS: Record<string, string> = {
   screen_time_limit: 'Screen Time Limit',
