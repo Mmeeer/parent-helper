@@ -1,145 +1,371 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Privacy Policy — Prime Kids: Parent Helper</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #333; line-height: 1.7; background: #f8f9fa; }
-    .container { max-width: 800px; margin: 0 auto; padding: 40px 20px; }
-    h1 { color: #023c69; margin-bottom: 8px; font-size: 28px; }
-    .updated { color: #666; font-size: 14px; margin-bottom: 32px; }
-    h2 { color: #4A90D9; margin-top: 32px; margin-bottom: 12px; font-size: 20px; }
-    p, li { margin-bottom: 10px; font-size: 15px; }
-    ul { padding-left: 24px; }
-    a { color: #4A90D9; }
-    .footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid #ddd; font-size: 13px; color: #888; }
-  </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy Policy — Prime Kids by Masterclass</title>
+  <meta name="description" content="The Prime Kids privacy policy: parent app, child app, what we collect on each, how we use it, who we share it with, and how to delete your data.">
+  <link rel="icon" href="/assets/img/favicon-32.png" sizes="32x32">
+  <link rel="icon" href="/assets/img/favicon-192.png" sizes="192x192">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: { brand: { 50:'#eaf3fc', 100:'#d5e7f9', 200:'#a8cef0', 500:'#4A90D9', 600:'#3b78bd', 700:'#2e5e94' } } } } }
+  </script>
 </head>
-<body>
-<div class="container">
+<body class="antialiased bg-white text-slate-900">
 
-<h1>Privacy Policy</h1>
-<p class="updated">Last updated: April 19, 2026</p>
+<header class="sticky top-0 z-50 bg-white/85 backdrop-blur-md border-b border-slate-200">
+  <div class="max-w-6xl mx-auto px-6 py-3.5 flex items-center gap-6">
+    <a href="/" class="flex items-center gap-2.5 font-bold text-lg text-slate-900">
+      <span class="inline-grid place-items-center w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-brand-600 text-white"><i data-lucide="graduation-cap" class="w-4 h-4"></i></span>
+      Masterclass
+    </a>
+    <nav class="ml-auto flex gap-1 flex-wrap">
+      <a href="/" class="px-3.5 py-2 rounded-lg text-slate-700 font-medium text-[15px] hover:bg-slate-100 hover:text-slate-900">Home</a>
+      <a href="/about" class="px-3.5 py-2 rounded-lg text-slate-700 font-medium text-[15px] hover:bg-slate-100 hover:text-slate-900">About</a>
+      <a href="/prime-kids" class="px-3.5 py-2 rounded-lg text-slate-700 font-medium text-[15px] hover:bg-slate-100 hover:text-slate-900">Prime Kids</a>
+      <a href="/support" class="px-3.5 py-2 rounded-lg text-slate-700 font-medium text-[15px] hover:bg-slate-100 hover:text-slate-900">Support</a>
+    </nav>
+  </div>
+</header>
 
-<p>Prime Kids ("we," "us," or "our") operates the <strong>Prime Kids: Parent Helper</strong> mobile application (the "Parent App") and the <strong>Prime Kids</strong> child companion application (the "Child App"), collectively referred to as the "Service." This Privacy Policy explains how we collect, use, disclose, and safeguard your information.</p>
+<main class="max-w-3xl mx-auto px-6 py-14">
 
-<h2>1. Information We Collect</h2>
+  <h1 class="text-3xl md:text-4xl font-bold -tracking-[0.02em] mb-2">Privacy Policy</h1>
+  <p class="text-slate-500 text-sm mb-8">For <strong class="text-slate-700">Prime Kids: Parent Helper</strong> and <strong class="text-slate-700">Prime Kids Child</strong>, operated by Masterclass. Last updated: 25 May 2026 · Effective: 25 May 2026.</p>
 
-<h3 style="margin-top:16px; margin-bottom:8px;">1.1 Account Information</h3>
-<ul>
-  <li>Parent/guardian name and email address</li>
-  <li>Password (stored as a salted hash; we never store plaintext passwords)</li>
-  <li>Child profiles: name and age</li>
-</ul>
+  <div class="bg-brand-50 border-l-4 border-brand-500 px-5 py-4 rounded-r-md mb-6 text-slate-700">
+    <strong class="text-slate-900 flex items-center gap-2 mb-1"><i data-lucide="info" class="w-4 h-4"></i> The short version.</strong>
+    Prime Kids is a parental-control system. To do what it does, the
+    Child App collects substantial information from the child's device
+    &mdash; we describe every category of that information honestly below.
+    We share the data with the parent who paired the device, and with no
+    one else. We never sell it, share it with advertisers, or train AI on
+    it. You can delete an account, and everything tied to it, at any time.
+  </div>
 
-<h3 style="margin-top:16px; margin-bottom:8px;">1.2 Device Information</h3>
-<ul>
-  <li>Device model, platform (Android/iOS), and operating system version</li>
-  <li>App version installed on the child's device</li>
-  <li>Battery level and online/offline status</li>
-  <li>List of installed applications (package name and app name)</li>
-  <li>Push notification tokens (Firebase Cloud Messaging)</li>
-</ul>
+  <!-- Apps covered -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+    <div class="bg-white border border-brand-200 rounded-xl p-5">
+      <div class="flex items-center gap-3">
+        <div class="inline-grid place-items-center w-10 h-10 rounded-lg bg-brand-50 text-brand-700 shrink-0"><i data-lucide="user-cog" class="w-5 h-5"></i></div>
+        <div>
+          <div class="font-semibold text-slate-900">Parent Helper</div>
+          <div class="text-xs text-slate-500 font-mono">com.parenthelper.parent</div>
+        </div>
+      </div>
+      <p class="text-sm text-slate-600 mt-3 leading-relaxed">Runs on the parent's phone. Collects only account data and what's needed to deliver alerts.</p>
+    </div>
+    <div class="bg-white border border-orange-200 rounded-xl p-5">
+      <div class="flex items-center gap-3">
+        <div class="inline-grid place-items-center w-10 h-10 rounded-lg bg-orange-50 text-orange-600 shrink-0"><i data-lucide="smartphone-charging" class="w-5 h-5"></i></div>
+        <div>
+          <div class="font-semibold text-slate-900">Prime Kids Child</div>
+          <div class="text-xs text-slate-500 font-mono">com.parenthelper.child</div>
+        </div>
+      </div>
+      <p class="text-sm text-slate-600 mt-3 leading-relaxed">Runs on the child's Android device. Collects screen-time, app, web, and location data needed for parental controls.</p>
+    </div>
+  </div>
 
-<h3 style="margin-top:16px; margin-bottom:8px;">1.3 Activity &amp; Usage Data</h3>
-<ul>
-  <li>App usage duration per application</li>
-  <li>Web browsing URLs visited on the child's device</li>
-  <li>Blocked access attempts (apps, websites, uninstall attempts)</li>
-  <li>Screen time totals</li>
-</ul>
+  <!-- TOC -->
+  <div class="bg-slate-50 rounded-lg px-5 py-4 mb-8 text-sm">
+    <strong class="block text-xs uppercase tracking-widest text-slate-700 mb-2">On this page</strong>
+    <ol class="pl-5 list-decimal space-y-1 text-slate-600">
+      <li><a href="#who" class="text-brand-700 hover:underline">Who runs Prime Kids</a></li>
+      <li><a href="#parent" class="text-brand-700 hover:underline">What the Parent App collects</a></li>
+      <li><a href="#child" class="text-brand-700 hover:underline">What the Child App collects</a></li>
+      <li><a href="#why" class="text-brand-700 hover:underline">Why we collect it</a></li>
+      <li><a href="#legal-basis" class="text-brand-700 hover:underline">Legal basis for processing</a></li>
+      <li><a href="#sharing" class="text-brand-700 hover:underline">Who we share it with</a></li>
+      <li><a href="#children" class="text-brand-700 hover:underline">Children's privacy</a></li>
+      <li><a href="#retention" class="text-brand-700 hover:underline">How long we keep it</a></li>
+      <li><a href="#security" class="text-brand-700 hover:underline">How we protect it</a></li>
+      <li><a href="#rights" class="text-brand-700 hover:underline">Your rights and choices</a></li>
+      <li><a href="#deletion" class="text-brand-700 hover:underline">Deleting your account and data</a></li>
+      <li><a href="#transfers" class="text-brand-700 hover:underline">International transfers</a></li>
+      <li><a href="#changes" class="text-brand-700 hover:underline">Changes to this policy</a></li>
+      <li><a href="#contact" class="text-brand-700 hover:underline">Contact us</a></li>
+    </ol>
+  </div>
 
-<h3 style="margin-top:16px; margin-bottom:8px;">1.4 Location Data</h3>
-<ul>
-  <li>GPS coordinates (latitude and longitude) from the child's device</li>
-  <li>Geofence entry and exit events</li>
-  <li>Reverse-geocoded address lookups (cached for up to 90 days)</li>
-</ul>
+  <!-- 1 -->
+  <h2 id="who" class="text-xl md:text-2xl font-semibold mt-10 mb-3">1. Who runs Prime Kids</h2>
+  <p class="text-slate-600 leading-relaxed mb-4">
+    Prime Kids is developed and operated by <strong class="text-slate-900">Masterclass</strong>,
+    an educational team based in Ulaanbaatar, Mongolia. We're the
+    &ldquo;data controller&rdquo; for the information described in this
+    policy. For privacy questions, requests to access your data, or to
+    delete your account, contact
+    <a href="mailto:mergenfromrabbit@gmail.com" class="text-brand-700 underline hover:no-underline">mergenfromrabbit@gmail.com</a>.
+  </p>
+  <p class="text-slate-600 leading-relaxed">
+    Masterclass also runs an educational program; the same team that
+    teaches that program operates Prime Kids. The two activities are
+    separate &mdash; nothing about your use of Prime Kids is shared with
+    students, in classroom materials, or in any teaching context.
+  </p>
 
-<h2>2. How We Use Your Information</h2>
-<ul>
-  <li><strong>Parental monitoring:</strong> to display child device activity, location, and screen time to the authorized parent/guardian</li>
-  <li><strong>Rule enforcement:</strong> to enforce screen time limits, app restrictions, web content filters, and geofence alerts on the child's device</li>
-  <li><strong>Alerts &amp; notifications:</strong> to send real-time alerts (e.g., new app installed, blocked content, geofence triggers, SOS, device offline)</li>
-  <li><strong>Service improvement:</strong> to maintain, troubleshoot, and improve the Service</li>
-  <li><strong>Safety:</strong> to respond to SOS signals and ensure child safety</li>
-</ul>
+  <!-- 2 Parent App -->
+  <h2 id="parent" class="text-xl md:text-2xl font-semibold mt-10 mb-3">2. What the Parent App collects</h2>
+  <p class="text-slate-600 leading-relaxed mb-4">
+    The Parent App (<code class="font-mono text-xs bg-slate-100 px-1.5 py-0.5 rounded">com.parenthelper.parent</code>)
+    is the dashboard installed on the parent's phone. It does not monitor
+    anything on the parent's own device. It collects only what's needed
+    to authenticate you and deliver alerts.
+  </p>
+  <div class="overflow-x-auto -mx-2 sm:mx-0">
+    <table class="w-full text-sm my-4 border-collapse min-w-[36rem]">
+      <thead><tr class="bg-slate-50"><th class="text-left px-3 py-2 border-b border-slate-200 font-semibold text-slate-900">Type</th><th class="text-left px-3 py-2 border-b border-slate-200 font-semibold text-slate-900">Used for</th><th class="text-left px-3 py-2 border-b border-slate-200 font-semibold text-slate-900">Required?</th></tr></thead>
+      <tbody class="text-slate-600">
+        <tr><td class="px-3 py-2 border-b border-slate-200 align-top">Email address</td><td class="px-3 py-2 border-b border-slate-200 align-top">Login, password reset, security notices</td><td class="px-3 py-2 border-b border-slate-200 align-top">Yes</td></tr>
+        <tr><td class="px-3 py-2 border-b border-slate-200 align-top">Password (hashed with bcrypt)</td><td class="px-3 py-2 border-b border-slate-200 align-top">Authentication</td><td class="px-3 py-2 border-b border-slate-200 align-top">Yes</td></tr>
+        <tr><td class="px-3 py-2 border-b border-slate-200 align-top">Display name</td><td class="px-3 py-2 border-b border-slate-200 align-top">How you appear in your account</td><td class="px-3 py-2 border-b border-slate-200 align-top">Yes</td></tr>
+        <tr><td class="px-3 py-2 border-b border-slate-200 align-top">Child profile info (name, age, optional avatar)</td><td class="px-3 py-2 border-b border-slate-200 align-top">You provide these when adding a child. We do not require a real legal name &mdash; "Anu" is enough.</td><td class="px-3 py-2 border-b border-slate-200 align-top">Required to set up a child</td></tr>
+        <tr><td class="px-3 py-2 border-b border-slate-200 align-top">Push token (FCM / APNS)</td><td class="px-3 py-2 border-b border-slate-200 align-top">Delivering alerts to the parent device</td><td class="px-3 py-2 border-b border-slate-200 align-top">Yes</td></tr>
+        <tr><td class="px-3 py-2 border-b border-slate-200 align-top">Device model, OS version, app version, language, time zone</td><td class="px-3 py-2 border-b border-slate-200 align-top">Compatibility, support, localising timestamps</td><td class="px-3 py-2 border-b border-slate-200 align-top">Yes</td></tr>
+        <tr><td class="px-3 py-2 align-top">Sign-in IP address &amp; security logs</td><td class="px-3 py-2 align-top">Detecting unauthorized access; retained 90 days</td><td class="px-3 py-2 align-top">Yes</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="text-slate-600 leading-relaxed">
+    The Parent App does <strong>not</strong> read your contacts, gallery,
+    microphone, camera (other than the optional avatar picker), browser
+    history, or anything from other apps on the parent's phone.
+  </p>
 
-<h2>3. Legal Basis for Processing (GDPR)</h2>
-<p>If you are located in the European Economic Area (EEA), our legal basis for collecting and using personal data depends on the data concerned and the context:</p>
-<ul>
-  <li><strong>Consent:</strong> You provide explicit consent when creating an account and setting up child monitoring</li>
-  <li><strong>Contract:</strong> Processing is necessary to provide the Service you have subscribed to</li>
-  <li><strong>Legitimate interest:</strong> To maintain security and improve the Service</li>
-</ul>
+  <!-- 3 Child App -->
+  <h2 id="child" class="text-xl md:text-2xl font-semibold mt-10 mb-3">3. What the Child App collects</h2>
+  <div class="bg-orange-50 border-l-4 border-orange-500 px-5 py-4 rounded-r-md my-4 text-slate-700">
+    <strong class="text-slate-900 flex items-center gap-2 mb-1"><i data-lucide="alert-triangle" class="w-4 h-4"></i> Be aware.</strong>
+    The Child App is a parental-control app. It collects information that
+    a typical app does not. We document each category below in plain
+    language. None of it is hidden; the child can open the Child App at
+    any time to see what's being shared, and the parent who installed
+    the app sees this list in the setup flow as well.
+  </div>
 
-<h2>4. Data Sharing &amp; Third-Party Services</h2>
-<p>We do not sell, rent, or trade your personal data. We share data only with the following third-party service providers, solely to operate the Service:</p>
-<ul>
-  <li><strong>Firebase (Google):</strong> Push notifications (FCM), crash reporting, and analytics. See <a href="https://firebase.google.com/support/privacy" rel="noopener">Firebase Privacy Policy</a>.</li>
-  <li><strong>Google Maps / Geocoding API:</strong> To convert GPS coordinates into human-readable addresses. See <a href="https://policies.google.com/privacy" rel="noopener">Google Privacy Policy</a>.</li>
-  <li><strong>Email service provider:</strong> To send account verification and password reset emails.</li>
-  <li><strong>MongoDB Atlas (if applicable):</strong> Cloud database hosting with encryption at rest.</li>
-</ul>
+  <h3 class="text-base font-semibold mt-6 mb-2 text-slate-900">3.1 Pairing &amp; device info</h3>
+  <p class="text-slate-600 leading-relaxed">When you pair the child device with a parent account, we collect: the one-time pairing code (so we can link the two), the device model, Android version, app version, language, time zone, and battery level.</p>
 
-<h2>5. Data Retention</h2>
-<ul>
-  <li>Account data is retained for as long as you maintain an active account.</li>
-  <li>Activity logs and location history are retained for up to <strong>12 months</strong>, after which they are automatically purged.</li>
-  <li>When you request account deletion, all personal data is permanently erased within <strong>30 days</strong>. During this grace period, you may contact us to cancel the deletion.</li>
-  <li>Geocoding cache entries expire automatically after 90 days.</li>
-</ul>
+  <h3 class="text-base font-semibold mt-6 mb-2 text-slate-900">3.2 App usage data</h3>
+  <p class="text-slate-600 leading-relaxed">Using Android's <code class="font-mono text-xs bg-slate-100 px-1.5 py-0.5 rounded">UsageStatsManager</code>, the Child App records which apps were used and for how long each day. This is what powers screen-time reports and per-app limits.</p>
+  <p class="text-slate-600 leading-relaxed mt-2">We store: the app's package name (e.g., <code class="font-mono text-xs bg-slate-100 px-1.5 py-0.5 rounded">com.instagram.android</code>), duration in minutes, the date, and whether a limit was reached. We do <strong>not</strong> read the contents of those apps &mdash; we only know they were open.</p>
 
-<h2>6. Data Security</h2>
-<ul>
-  <li>All data in transit is encrypted using TLS (HTTPS).</li>
-  <li>Passwords are hashed using bcrypt with salt rounds.</li>
-  <li>API access is protected by JWT authentication with short-lived access tokens and refresh tokens.</li>
-  <li>Rate limiting is applied to prevent brute-force attacks.</li>
-  <li>Device authentication uses unique device tokens.</li>
-</ul>
+  <h3 class="text-base font-semibold mt-6 mb-2 text-slate-900">3.3 Newly-installed apps</h3>
+  <p class="text-slate-600 leading-relaxed">When a new app is installed on the child device, the Child App notifies our backend so the parent can approve or block it. We record the new app's package name, name as shown on the device, and install timestamp.</p>
 
-<h2>7. Children's Privacy (COPPA)</h2>
-<p>Prime Kids is designed to be set up and controlled by a parent or legal guardian. We comply with the U.S. Children's Online Privacy Protection Act (COPPA). Please see our <a href="/legal/coppa.html">COPPA Compliance Statement</a> for full details.</p>
-<ul>
-  <li>We do not knowingly collect personal information directly from children under 13 without verifiable parental consent.</li>
-  <li>The Child App does not allow children to create accounts, enter personal information, or communicate with others.</li>
-  <li>All data collection on the child's device is initiated and controlled by the parent/guardian through the Parent App.</li>
-  <li>Parents may review, modify, or delete their child's data at any time through the Parent App or by contacting us.</li>
-</ul>
+  <h3 class="text-base font-semibold mt-6 mb-2 text-slate-900">3.4 Web content filtering (local VPN)</h3>
+  <p class="text-slate-600 leading-relaxed">If the parent enables web filtering, the Child App runs a <strong class="text-slate-900">local VPN service</strong> on the device. This VPN does <strong>not</strong> tunnel your traffic to our servers &mdash; it inspects DNS and request domains locally and decides whether to allow or block each request based on the rules the parent set. The actual content of the page is never read.</p>
+  <p class="text-slate-600 leading-relaxed mt-2">What we log to our backend: the domain that was visited or blocked (e.g., <code class="font-mono text-xs bg-slate-100 px-1.5 py-0.5 rounded">facebook.com</code>), a timestamp, and which filter category triggered the decision &mdash; never the full URL path, never query parameters, never the page body.</p>
 
-<h2>8. Your Rights</h2>
-<p>Depending on your jurisdiction, you may have the following rights:</p>
-<ul>
-  <li><strong>Access:</strong> Request a copy of the personal data we hold about you or your child</li>
-  <li><strong>Rectification:</strong> Request correction of inaccurate data</li>
-  <li><strong>Erasure:</strong> Request deletion of your data ("right to be forgotten")</li>
-  <li><strong>Data portability:</strong> Request your data in a structured, machine-readable format</li>
-  <li><strong>Withdraw consent:</strong> Withdraw consent at any time by deleting your account</li>
-  <li><strong>Restriction:</strong> Request that we limit the processing of your data</li>
-  <li><strong>Objection:</strong> Object to processing based on legitimate interests</li>
-</ul>
-<p>To exercise any of these rights, contact us at <a href="mailto:support@parenthelper.com">support@parenthelper.com</a>.</p>
+  <h3 class="text-base font-semibold mt-6 mb-2 text-slate-900">3.5 Location</h3>
+  <p class="text-slate-600 leading-relaxed">If the parent enables location features, the Child App collects the device's location periodically using Google's Fused Location Provider, plus entry/exit events for geofences the parent has set (e.g., &ldquo;School,&rdquo; &ldquo;Home&rdquo;).</p>
+  <p class="text-slate-600 leading-relaxed mt-2">Coordinates and timestamps are sent to our backend so the Parent App can show them on a map. Location works in the background by design &mdash; that's what makes it useful for safety. Frequency is adaptive (more often when the device is moving) and is disclosed in the in-app permission prompt.</p>
 
-<h2>9. International Data Transfers</h2>
-<p>Your data may be processed on servers located outside your country of residence. We ensure appropriate safeguards are in place, including encryption and compliance with applicable data protection laws.</p>
+  <h3 class="text-base font-semibold mt-6 mb-2 text-slate-900">3.6 Web filtering is domain-based</h3>
+  <p class="text-slate-600 leading-relaxed">Web filtering is enforced entirely by the on-device VPN, which checks the domain names the device requests (via DNS) against the parent's filter rules and blocks matching sites. The Child App does <strong class="text-slate-700">not</strong> read the contents of web pages, the text typed into a browser, or search queries &mdash; filtering is based on domain names only.</p>
 
-<h2>10. Changes to This Policy</h2>
-<p>We may update this Privacy Policy from time to time. We will notify you of material changes via email or an in-app notification. Continued use of the Service after changes constitutes acceptance of the updated policy.</p>
+  <h3 class="text-base font-semibold mt-6 mb-2 text-slate-900">3.7 Blocked-attempt events</h3>
+  <p class="text-slate-600 leading-relaxed">Whenever a rule kicks in (app limit hit, blocked app launched, blocked site visited, schedule active), we record the event so the parent can see it and so the child can be shown a clear in-app explanation.</p>
 
-<h2>11. Contact Us</h2>
-<p>If you have questions about this Privacy Policy or wish to exercise your data rights, please contact us:</p>
-<ul>
-  <li>Email: <a href="mailto:support@parenthelper.com">support@parenthelper.com</a></li>
-</ul>
+  <h3 class="text-base font-semibold mt-6 mb-2 text-slate-900">3.8 Anti-bypass signals</h3>
+  <p class="text-slate-600 leading-relaxed">To prevent a child from circumventing the controls, the Child App reports: whether Device Admin is still active, whether a third-party VPN has been installed, and whether the device has booted recently (so the Child App can restart itself). These signals are sent to the parent as alerts.</p>
 
-<div class="footer">
-  <p>&copy; 2026 Prime Kids. All rights reserved.</p>
-  <p><a href="/legal/terms-of-service.html">Terms of Service</a> · <a href="/legal/coppa.html">COPPA Compliance</a></p>
-</div>
+  <h3 class="text-base font-semibold mt-6 mb-2 text-slate-900">3.9 What the Child App does <em>not</em> collect</h3>
+  <ul class="space-y-1.5 text-slate-600 list-disc pl-5">
+    <li>Contents of the child's messages, emails, photos, or files.</li>
+    <li>Microphone or camera input.</li>
+    <li>Banking, payment, or government-ID information.</li>
+    <li>Health, fitness, biometric, or sensor data outside what the OS exposes for basic device state.</li>
+    <li>Keystrokes, typed text, or on-screen content from any app &mdash; including browsers and search boxes.</li>
+    <li>Data from apps not maintained by Masterclass (we read package names and durations &mdash; not the contents inside other apps).</li>
+  </ul>
 
-</div>
+  <!-- 4 Why -->
+  <h2 id="why" class="text-xl md:text-2xl font-semibold mt-10 mb-3">4. Why we collect it</h2>
+  <p class="text-slate-600 leading-relaxed mb-3">We use the data described above only for these purposes:</p>
+  <ul class="space-y-2 text-slate-600 list-disc pl-5">
+    <li><strong class="text-slate-900">Running the service.</strong> Authenticating you, syncing rules from the parent app to the child app, delivering alerts.</li>
+    <li><strong class="text-slate-900">Parental-control features.</strong> Enforcing screen-time, app blocks, web filters, geofences &mdash; the things the parent set up.</li>
+    <li><strong class="text-slate-900">Safety alerts.</strong> Notifying the parent of blocked content, geofence events, anti-bypass signals.</li>
+    <li><strong class="text-slate-900">Account security.</strong> Detecting suspicious sign-ins, rate-limiting abuse, recovering compromised accounts.</li>
+    <li><strong class="text-slate-900">Support.</strong> Helping you when you write to us, and reproducing problems you report.</li>
+    <li><strong class="text-slate-900">Quality.</strong> Aggregated, non-identifying statistics about feature usage so we can decide what to improve.</li>
+    <li><strong class="text-slate-900">Legal compliance.</strong> Responding to lawful requests and Play Store policy obligations.</li>
+  </ul>
+  <p class="text-slate-600 leading-relaxed mt-4">
+    We do <strong class="text-slate-900">not</strong> use your data for advertising,
+    profiling, marketing emails (other than transactional safety
+    notifications), or to train any machine-learning model.
+  </p>
+
+  <!-- 5 -->
+  <h2 id="legal-basis" class="text-xl md:text-2xl font-semibold mt-10 mb-3">5. Legal basis for processing</h2>
+  <p class="text-slate-600 leading-relaxed">If you live somewhere with comprehensive data-protection law (e.g. the EEA, UK), the legal bases on which we process your information are:</p>
+  <ul class="space-y-2 text-slate-600 list-disc pl-5 mt-2">
+    <li><strong class="text-slate-900">Contract.</strong> Processing necessary to provide the service the parent signed up for.</li>
+    <li><strong class="text-slate-900">Consent.</strong> For runtime permissions (location, usage access, device admin, VPN). Consent is granted in OS prompts and may be withdrawn at any time in device settings.</li>
+    <li><strong class="text-slate-900">Legitimate interest.</strong> Limited, security-related processing &mdash; e.g. logging sign-in IPs to detect account takeover.</li>
+    <li><strong class="text-slate-900">Legal obligation.</strong> Where we must respond to lawful requests from competent authorities.</li>
+  </ul>
+
+  <!-- 6 -->
+  <h2 id="sharing" class="text-xl md:text-2xl font-semibold mt-10 mb-3">6. Who we share it with</h2>
+  <p class="text-slate-600 leading-relaxed">Inside Prime Kids, the data we collect from the Child App is shared with the parent who paired the device. That is the entire point of the service. Outside of that, we use a small number of service providers (&ldquo;processors&rdquo;) to run the system:</p>
+  <div class="overflow-x-auto -mx-2 sm:mx-0">
+    <table class="w-full text-sm my-4 border-collapse min-w-[36rem]">
+      <thead><tr class="bg-slate-50"><th class="text-left px-3 py-2 border-b border-slate-200 font-semibold text-slate-900">Provider</th><th class="text-left px-3 py-2 border-b border-slate-200 font-semibold text-slate-900">What for</th><th class="text-left px-3 py-2 border-b border-slate-200 font-semibold text-slate-900">Where</th></tr></thead>
+      <tbody class="text-slate-600">
+        <tr><td class="px-3 py-2 border-b border-slate-200 align-top">Google &mdash; Firebase Cloud Messaging / APNS</td><td class="px-3 py-2 border-b border-slate-200 align-top">Delivering push notifications</td><td class="px-3 py-2 border-b border-slate-200 align-top">Global Google / Apple infrastructure</td></tr>
+        <tr><td class="px-3 py-2 border-b border-slate-200 align-top">Google &mdash; Fused Location Provider</td><td class="px-3 py-2 border-b border-slate-200 align-top">Resolving device location on Android</td><td class="px-3 py-2 border-b border-slate-200 align-top">On-device + Google location services</td></tr>
+        <tr><td class="px-3 py-2 border-b border-slate-200 align-top">Google Maps</td><td class="px-3 py-2 border-b border-slate-200 align-top">Rendering the map view in the Parent App</td><td class="px-3 py-2 border-b border-slate-200 align-top">Global Google infrastructure</td></tr>
+        <tr><td class="px-3 py-2 align-top">DigitalOcean</td><td class="px-3 py-2 align-top">Our application servers and database</td><td class="px-3 py-2 align-top">Singapore region</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="text-slate-600 leading-relaxed">
+    These processors have access only to the minimum data needed and are
+    bound by contract. They never see your password and never see message
+    contents in plain text on storage media.
+  </p>
+  <p class="text-slate-600 leading-relaxed mt-3">
+    We do <strong class="text-slate-900">not</strong> sell your data, rent
+    it, share it with advertisers, data brokers, marketing platforms, or
+    social networks. If our practices ever change, we will notify users
+    and update this policy before any new sharing begins.
+  </p>
+
+  <!-- 7 Children -->
+  <h2 id="children" class="text-xl md:text-2xl font-semibold mt-10 mb-3">7. Children's privacy</h2>
+  <p class="text-slate-600 leading-relaxed">Prime Kids is a parental-control app and is intentionally used by children. We take that seriously and our practices follow the spirit of COPPA (US), the UK Children's Code, and the Google Play Families policy.</p>
+  <ul class="space-y-2 text-slate-600 list-disc pl-5 mt-3">
+    <li><strong class="text-slate-900">No direct child sign-ups.</strong> Child profiles are created only inside the Parent App, after the parent has created their own account. The Child App on the child's device can only be activated using a pairing code generated by the parent &mdash; there is no path for a child to create an account on their own.</li>
+    <li><strong class="text-slate-900">Parental consent is the consent we rely on.</strong> The parent is the verifiable adult who agrees to the data the Child App will collect. The Parent App's setup flow shows the parent a plain-English list of what the Child App will collect and asks for explicit acknowledgment before pairing.</li>
+    <li><strong class="text-slate-900">No marketing to children.</strong> We do not show advertising, in-app purchases, or promotional content of any kind.</li>
+    <li><strong class="text-slate-900">Minimum data.</strong> We never ask a child for their phone number, school name, real birth date (we only record &ldquo;under 13 or not&rdquo; for legal classification), or any other piece of personal information beyond what is needed for the app to function.</li>
+    <li><strong class="text-slate-900">Parental access.</strong> A parent may, at any time, request a copy of every piece of data held about a child in their account, or request that the child's profile and all associated data be deleted. Email <a href="mailto:mergenfromrabbit@gmail.com" class="text-brand-700 underline hover:no-underline">mergenfromrabbit@gmail.com</a>.</li>
+    <li><strong class="text-slate-900">Child transparency.</strong> The Child App is always visible on the child's device &mdash; it is not hidden as a system process. The child can open the Child App and see, in their own UI, what is being shared with the parent. Hidden stalkerware is not what we built and not what we will ship.</li>
+  </ul>
+
+  <!-- 8 retention -->
+  <h2 id="retention" class="text-xl md:text-2xl font-semibold mt-10 mb-3">8. How long we keep it</h2>
+  <div class="overflow-x-auto -mx-2 sm:mx-0">
+    <table class="w-full text-sm my-4 border-collapse min-w-[28rem]">
+      <thead><tr class="bg-slate-50"><th class="text-left px-3 py-2 border-b border-slate-200 font-semibold text-slate-900">Data</th><th class="text-left px-3 py-2 border-b border-slate-200 font-semibold text-slate-900">Retention</th></tr></thead>
+      <tbody class="text-slate-600">
+        <tr><td class="px-3 py-2 border-b border-slate-200 align-top">Account records (parent &amp; child profile)</td><td class="px-3 py-2 border-b border-slate-200 align-top">Until you delete the account</td></tr>
+        <tr><td class="px-3 py-2 border-b border-slate-200 align-top">App-usage logs (per child)</td><td class="px-3 py-2 border-b border-slate-200 align-top">Last 180 days</td></tr>
+        <tr><td class="px-3 py-2 border-b border-slate-200 align-top">Location history</td><td class="px-3 py-2 border-b border-slate-200 align-top">Last 30 days</td></tr>
+        <tr><td class="px-3 py-2 border-b border-slate-200 align-top">Web-filter events (blocked / allowed)</td><td class="px-3 py-2 border-b border-slate-200 align-top">Last 90 days</td></tr>
+        <tr><td class="px-3 py-2 border-b border-slate-200 align-top">Geofence events (entry / exit)</td><td class="px-3 py-2 border-b border-slate-200 align-top">Last 90 days</td></tr>
+        <tr><td class="px-3 py-2 border-b border-slate-200 align-top">Alerts &amp; notifications</td><td class="px-3 py-2 border-b border-slate-200 align-top">Last 180 days</td></tr>
+        <tr><td class="px-3 py-2 border-b border-slate-200 align-top">Sign-in IP &amp; security logs</td><td class="px-3 py-2 border-b border-slate-200 align-top">90 days</td></tr>
+        <tr><td class="px-3 py-2 border-b border-slate-200 align-top">Crash reports</td><td class="px-3 py-2 border-b border-slate-200 align-top">180 days</td></tr>
+        <tr><td class="px-3 py-2 align-top">Push-notification tokens</td><td class="px-3 py-2 align-top">Refreshed automatically; stale tokens deleted within 30 days</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="text-slate-600 leading-relaxed">When you delete your account (see <a href="#deletion" class="text-brand-700 underline hover:no-underline">section 11</a>), we erase your record from our active databases within 7 days and from encrypted backups within 30 days. Anonymised, aggregated statistics that no longer identify you may be retained indefinitely.</p>
+
+  <!-- 9 -->
+  <h2 id="security" class="text-xl md:text-2xl font-semibold mt-10 mb-3">9. How we protect it</h2>
+  <ul class="space-y-2 text-slate-600 list-disc pl-5">
+    <li>All data is transmitted over HTTPS using current TLS versions.</li>
+    <li>Passwords are stored using bcrypt with a per-user salt; we cannot recover or read your password.</li>
+    <li>Location history, web-filter events, and app-usage logs are encrypted at rest on the database server.</li>
+    <li>Database access is limited to a small number of named engineers and audit-logged.</li>
+    <li>Push tokens, session tokens, and similar bearer credentials are rotated regularly.</li>
+    <li>We patch our hosting infrastructure within 7 days of a critical security advisory in any dependency we use.</li>
+  </ul>
+  <p class="text-slate-600 leading-relaxed mt-3">No system is impossible to compromise. If we ever discover a breach affecting your data, we will notify you by email and through an in-app notice within 72 hours of confirming the breach, and we will tell you what happened, what was affected, and what we are doing about it.</p>
+
+  <!-- 10 -->
+  <h2 id="rights" class="text-xl md:text-2xl font-semibold mt-10 mb-3">10. Your rights and choices</h2>
+  <p class="text-slate-600 leading-relaxed">Depending on where you live, you have some or all of the following rights. Regardless of where you live, Masterclass extends each of these rights to every Prime Kids user.</p>
+  <ul class="space-y-2 text-slate-600 list-disc pl-5 mt-3">
+    <li><strong class="text-slate-900">Access</strong> &mdash; ask us for a copy of the data we hold about you.</li>
+    <li><strong class="text-slate-900">Correction</strong> &mdash; ask us to fix data that's wrong.</li>
+    <li><strong class="text-slate-900">Deletion</strong> &mdash; ask us to delete your account and your data.</li>
+    <li><strong class="text-slate-900">Portability</strong> &mdash; ask for your data in a machine-readable format.</li>
+    <li><strong class="text-slate-900">Object</strong> &mdash; tell us to stop a particular use of your data.</li>
+    <li><strong class="text-slate-900">Withdraw consent</strong> &mdash; revoke any permission you granted. You can do this in device settings without contacting us.</li>
+    <li><strong class="text-slate-900">Complain</strong> &mdash; lodge a complaint with your local data-protection authority.</li>
+  </ul>
+  <p class="text-slate-600 leading-relaxed mt-3">To exercise any of these, email <a href="mailto:mergenfromrabbit@gmail.com" class="text-brand-700 underline hover:no-underline">mergenfromrabbit@gmail.com</a>. We aim to respond within 7 days and complete the request within 30 days.</p>
+
+  <!-- 11 -->
+  <h2 id="deletion" class="text-xl md:text-2xl font-semibold mt-10 mb-3">11. Deleting your account and data</h2>
+  <p class="text-slate-600 leading-relaxed">You can delete your account in two ways:</p>
+  <ol class="space-y-2 text-slate-600 list-decimal pl-5 mt-2">
+    <li>Inside the Parent App: Settings &raquo; Account &raquo; Delete account.</li>
+    <li>From the web: visit <a href="/delete-account" class="text-brand-700 underline hover:no-underline">our account-deletion page</a> and follow the instructions, or email <a href="mailto:mergenfromrabbit@gmail.com" class="text-brand-700 underline hover:no-underline">mergenfromrabbit@gmail.com</a> from the address tied to your account.</li>
+  </ol>
+  <p class="text-slate-600 leading-relaxed mt-3">Deletion removes the parent account, all child profiles linked to it, all device records, every activity log (apps, web, location, alerts), push tokens, and security logs. Removal from active databases happens within 7 days; removal from encrypted backups within 30 days.</p>
+
+  <!-- 12 -->
+  <h2 id="transfers" class="text-xl md:text-2xl font-semibold mt-10 mb-3">12. International transfers</h2>
+  <p class="text-slate-600 leading-relaxed">Our servers are operated by DigitalOcean in their Singapore region. If you are outside Singapore, your data is transferred there when you use Prime Kids. DigitalOcean maintains industry-standard contractual protections (Standard Contractual Clauses for EEA transfers). For push notifications we rely on Google's Firebase Cloud Messaging infrastructure (and Apple's APNS), which are global.</p>
+
+  <!-- 13 -->
+  <h2 id="changes" class="text-xl md:text-2xl font-semibold mt-10 mb-3">13. Changes to this policy</h2>
+  <p class="text-slate-600 leading-relaxed">We may update this policy when the app changes meaningfully or when the law requires it. When that happens we will post the new version on this page, update the &ldquo;Last updated&rdquo; date, and &mdash; if the change reduces your rights or expands data collection &mdash; give you at least 30 days' notice by email and an in-app notice before it takes effect.</p>
+
+  <!-- 14 -->
+  <h2 id="contact" class="text-xl md:text-2xl font-semibold mt-10 mb-3">14. Contact us</h2>
+  <ul class="space-y-2 text-slate-600 list-disc pl-5">
+    <li>Email: <a href="mailto:mergenfromrabbit@gmail.com" class="text-brand-700 underline hover:no-underline">mergenfromrabbit@gmail.com</a></li>
+    <li>Postal address: Masterclass, Ulaanbaatar, Mongolia (full address available on request)</li>
+    <li>Response time: within one business day for most requests, within 30 days for formal data-access or deletion requests as required by law.</li>
+  </ul>
+
+  <div class="bg-brand-50 border-l-4 border-brand-500 px-5 py-4 rounded-r-md mt-10 text-slate-700">
+    <strong class="text-slate-900 flex items-center gap-2 mb-1"><i data-lucide="check-circle-2" class="w-4 h-4"></i> Plain-language summary again.</strong>
+    Prime Kids exists so families can set healthy boundaries on a child's
+    device. We collect what's needed for that. We don't sell it, we don't
+    share it with advertisers, we don't train AI on it. You can delete it
+    any time. The Child App is always visible on the device; it isn't
+    hidden stalkerware. That's the policy &mdash; everything above is the detail.
+  </div>
+</main>
+
+<footer class="bg-slate-50 border-t border-slate-200 mt-16 pt-12 pb-8 px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr] gap-8">
+      <div>
+        <a href="/" class="flex items-center gap-2.5 font-bold text-lg text-slate-900">
+          <span class="inline-grid place-items-center w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-brand-600 text-white"><i data-lucide="graduation-cap" class="w-4 h-4"></i></span>
+          Masterclass
+        </a>
+        <p class="text-slate-500 text-sm mt-3 max-w-xs leading-relaxed">A Mongolia-based educational team teaching mobile app development through real, shipped projects.</p>
+      </div>
+      <div>
+        <h4 class="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-3">Masterclass</h4>
+        <a href="/about" class="block py-1 text-slate-700 text-sm hover:text-brand-700">About</a>
+        <a href="/support" class="block py-1 text-slate-700 text-sm hover:text-brand-700">Support</a>
+        <a href="/support#contact" class="block py-1 text-slate-700 text-sm hover:text-brand-700">Contact</a>
+      </div>
+      <div>
+        <h4 class="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-3">Prime Kids</h4>
+        <a href="/prime-kids" class="block py-1 text-slate-700 text-sm hover:text-brand-700">Overview</a>
+        <a href="/privacy-policy" class="block py-1 text-slate-700 text-sm hover:text-brand-700">Privacy policy</a>
+        <a href="/terms" class="block py-1 text-slate-700 text-sm hover:text-brand-700">Terms of service</a>
+        <a href="/delete-account" class="block py-1 text-slate-700 text-sm hover:text-brand-700">Delete account</a>
+      </div>
+      <div>
+        <h4 class="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-3">Get in touch</h4>
+        <a href="mailto:mergenfromrabbit@gmail.com" class="block py-1 text-slate-700 text-sm hover:text-brand-700 break-all">mergenfromrabbit@gmail.com</a>
+        <span class="block py-1 text-slate-500 text-sm">Ulaanbaatar, Mongolia</span>
+      </div>
+    </div>
+    <div class="mt-10 pt-5 border-t border-slate-200 flex flex-wrap gap-3 justify-between text-sm text-slate-500">
+      <span>© 2026 Masterclass. Built by students, shipped by the team.</span>
+      <span><a href="/privacy-policy" class="hover:text-brand-700">Privacy</a> · <a href="/terms" class="hover:text-brand-700">Terms</a></span>
+    </div>
+  </div>
+</footer>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>lucide.createIcons();</script>
 </body>
 </html>
