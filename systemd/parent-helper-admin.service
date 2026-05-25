@@ -1,0 +1,22 @@
+[Unit]
+Description=Prime Kids (parent-helper) Admin — Nuxt SSR (:5005 → https://primekids.masterclass.mn/parent-helper-admin/)
+After=network-online.target parent-helper-api.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=claude
+WorkingDirectory=/root/projects/parent-helper/admin
+# Nuxt has no .env loader here — these are authoritative. NUXT_PUBLIC_API_BASE_URL
+# overrides runtimeConfig.public.apiBaseUrl at runtime so the browser calls the
+# HTTPS API same-origin (avoids mixed-content blocking on the HTTPS subdomain).
+Environment=NITRO_PORT=5005
+Environment=NUXT_APP_BASE_URL=/parent-helper-admin/
+Environment=NUXT_PUBLIC_API_BASE_URL=https://primekids.masterclass.mn/parent-helper
+ExecStart=/usr/local/bin/node .output/server/index.mjs
+Restart=always
+RestartSec=3
+# Logs → journald (journalctl -u parent-helper-admin)
+
+[Install]
+WantedBy=multi-user.target

@@ -14,6 +14,7 @@ class ScreenTimeLimiter(
     private val screenTimeCollector = ScreenTimeCollector(context)
     private val appBlocker = AppBlocker(context)
     private var monitoringJob: Job? = null
+    private var blockJob: Job? = null
 
     fun startMonitoring() {
         monitoringJob = scope.launch {
@@ -22,10 +23,28 @@ class ScreenTimeLimiter(
                 delay(CHECK_INTERVAL_MS)
             }
         }
+        // Fast foreground-app block loop. Enforces the parent's always-blocked-apps
+        // list (RuleManager.isAppBlocked / fallbackBlockedApps) on every tick — not
+        // only while a time/schedule limit is active. This replaces the former
+        // AccessibilityService real-time blocker: getCurrentForegroundPackage() reads
+        // the foreground app via UsageStats and checkAndBlockIfNeeded() covers a
+        // blocked app by bringing our own activity to the front (the same path the
+        // app already used as the device-admin-unavailable fallback).
+        blockJob = scope.launch {
+            while (isActive) {
+                try {
+                    appBlocker.checkAndBlockIfNeeded()
+                } catch (e: Exception) {
+                    android.util.Log.w("ScreenTimeLimiter", "Foreground block check failed", e)
+                }
+                delay(BLOCK_CHECK_INTERVAL_MS)
+            }
+        }
     }
 
     fun stopMonitoring() {
         monitoringJob?.cancel()
+        blockJob?.cancel()
         scope.cancel()
     }
 
@@ -107,6 +126,7 @@ class ScreenTimeLimiter(
     }
 
     companion object {
-        private const val CHECK_INTERVAL_MS = 30_000L // Check every 30 seconds
+        private const val CHECK_INTERVAL_MS = 30_000L // Screen-time / limit re-evaluation
+        private const val BLOCK_CHECK_INTERVAL_MS = 1_500L // Foreground app-block poll
     }
 }
