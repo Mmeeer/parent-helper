@@ -37,11 +37,40 @@
       "Bash(grep -v \"^$\")",
       "Read(//c/Users/friday/AppData/Local/Temp/**)",
       "Bash(curl -s -X POST http://localhost:3000/auth/login -H \"Content-Type: application/json\" -d \"{\"\"email\"\":\"\"ub1o1genko@gmail.com\"\",\"\"password\"\":\"\"mergen1004\"\"}\")",
-      "Bash(curl -s -X POST http://localhost:3000/auth/login -H \"Content-Type: application/json\" -H \"Origin: http://localhost:3001\" -d \"{\"\"email\"\":\"\"ub1o1genko@gmail.com\"\",\"\"password\"\":\"\"mergen1004\"\"}\")"
+      "Bash(curl -s -X POST http://localhost:3000/auth/login -H \"Content-Type: application/json\" -H \"Origin: http://localhost:3001\" -d \"{\"\"email\"\":\"\"ub1o1genko@gmail.com\"\",\"\"password\"\":\"\"mergen1004\"\"}\")",
+      "Bash(find c:/Users/friday/OneDrive/Desktop/Coding/parent/admin/ -not -path */node_modules/* -not -path */.nuxt/* -not -path */3001/* -type f)",
+      "Bash(grep -E '\\\\.\\(vue|ts|js|css|json\\)$')",
+      "Bash(find /c/Users/friday/OneDrive/Desktop/Coding/parent/backend/src -type f \\\\\\(-name *.ts -o -name *.js \\\\\\))",
+      "Bash(find /c/Users/friday/OneDrive/Desktop/Coding/parent/child/app -type f \\\\\\(-name *.kt \\\\\\))",
+      "Bash(grep -r \"TODO\\\\|FIXME\\\\|BUG\\\\|HACK\" /c/Users/friday/OneDrive/Desktop/Coding/parent/child/app/src --include=*.kt)",
+      "Bash(grep -r \"TODO\\\\|FIXME\\\\|BUG\\\\|HACK\" /c/Users/friday/OneDrive/Desktop/Coding/parent/backend/src --include=*.js)",
+      "Bash(wc -l /c/Users/friday/OneDrive/Desktop/Coding/parent/child/app/src/main/java/com/parenthelper/child/enforcement/*.kt)",
+      "Bash(find /c/Users/friday/OneDrive/Desktop/Coding/parent/child-ios -name *.swift)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(find c:UsersfridayOneDriveDesktopCodingparentchild -type f -name *.xml -o -name *.kt -o -name *.png -o -name *.jpg -o -name *.drawable)",
+      "Bash(xargs sed:*)",
+      "Bash(/c/Users/friday/OneDrive/Desktop/Coding/parent/admin/layouts/auth.vue:*)",
+      "Bash(grep -rn \"ac-500\\\\|ac-600\\\\|font-serif italic\" --include=*.vue)",
+      "Bash(/dev/null echo:*)",
+      "Bash(grep -rn \"font-serif italic\\\\|ac-500\\\\|ac-600\" --include=*.vue)",
+      "Bash(grep -r \"TODO\\\\|FIXME\\\\|HACK\\\\|XXX\\\\|BUG\" --include=*.js --include=*.ts --include=*.kt --include=*.tsx /c/Users/friday/OneDrive/Desktop/Coding/parent/backend /c/Users/friday/OneDrive/Desktop/Coding/parent/parent-app/src)",
+      "Bash(git pull:*)",
+      "Read(//c/Users/friday/OneDrive/Desktop/Coding//**)",
+      "Bash(java -version)",
+      "Read(//c/Program Files/Java//**)",
+      "Read(//c/Program Files/**)",
+      "Read(//c/Program Files/Android/Android Studio/jbr//**)",
+      "Bash(\"/c/Program Files/Android/Android Studio/jbr/bin/java\" -version)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Android/Android Studio/jbr\" ./gradlew assembleDebug)",
+      "Read(//c/Users/friday/AppData/Local/Android/Sdk/platform-tools/**)",
+      "Bash(~/AppData/Local/Android/Sdk/platform-tools/adb devices:*)",
+      "Bash(~/AppData/Local/Android/Sdk/platform-tools/adb install:*)"
     ],
     "additionalDirectories": [
       "\\tmp",
-      "C:\\Users\\friday\\AppData\\Local\\Temp\\metro-cache"
+      "C:\\Users\\friday\\AppData\\Local\\Temp\\metro-cache",
+      "C:\\Users\\friday\\OneDrive\\Desktop\\Coding\\parent\\admin\\pages\\users"
     ]
   }
 }

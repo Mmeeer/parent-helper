@@ -1,1 +1,12 @@
 builds/
+
+# Local Claude settings (machine-specific)
+.claude/settings.local.json
+
+# Kotlin compiler session cache
+child/.kotlin/
+
+# Screenshot capture working dir: capture scripts, raw staging, and alternate
+# "extras" are kept local — not part of the app build or store upload.
+child/store-assets/screenshots/_src/
+parent-app/store-assets/screenshots/_src/
