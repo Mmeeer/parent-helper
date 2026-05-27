@@ -6,6 +6,11 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
+    <!-- This app does not use the Advertising ID (no ads/analytics). Strip the
+         AD_ID permission that Google Play Services libraries may merge in, so
+         the Play "advertising ID" declaration can stay "No". -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />
+
     <!-- Usage stats (screen time tracking) -->
     <uses-permission
         android:name="android.permission.PACKAGE_USAGE_STATS"

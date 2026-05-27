@@ -125,10 +125,10 @@ dependencies {
     // Socket.IO
     implementation(libs.socketio.client)
 
-    // Firebase Crashlytics
+    // Firebase Crashlytics (crash reporting only). Analytics removed so the app
+    // does not use the Advertising ID or collect analytics on a child's device.
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.crashlytics)
-    implementation(libs.firebase.analytics)
 
     // Testing
     testImplementation(libs.junit)

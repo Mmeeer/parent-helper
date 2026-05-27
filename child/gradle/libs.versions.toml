@@ -61,7 +61,6 @@ socketio-client = { group = "io.socket", name = "socket.io-client", version.ref 
 # Firebase
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics-ktx" }
-firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics-ktx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
