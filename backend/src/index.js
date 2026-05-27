@@ -66,6 +66,12 @@ if (!process.env.JWT_REFRESH_SECRET || process.env.JWT_REFRESH_SECRET === proces
 }
 
 const app = express();
+// Behind nginx (one proxy hop) — trust it so req.ip is the real client IP from
+// X-Forwarded-For. Without this, express-rate-limit throws
+// ERR_ERL_UNEXPECTED_X_FORWARDED_FOR and keys every client on the proxy IP,
+// so all clients share one rate-limit bucket (a reviewer could be 429-blocked
+// by unrelated traffic).
+app.set('trust proxy', 1);
 const server = http.createServer(app);
 
 const allowedOrigins = process.env.ALLOWED_ORIGINS
