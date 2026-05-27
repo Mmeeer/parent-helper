@@ -82,7 +82,7 @@ export default function PrivacyPolicyScreen() {
 
         {/* Contact */}
         <TouchableOpacity
-          onPress={() => Linking.openURL('mailto:support@primekids.mn')}
+          onPress={() => Linking.openURL('mailto:ub1o1genko@gmail.com')}
           className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 mb-4"
           activeOpacity={0.7}
         >
@@ -92,7 +92,7 @@ export default function PrivacyPolicyScreen() {
             </View>
             <View className="flex-1">
               <Text className="font-display font-bold text-sm text-gray-900">{t('privacy.contact')}</Text>
-              <Text className="text-xs text-gray-400 mt-0.5">support@primekids.mn</Text>
+              <Text className="text-xs text-gray-400 mt-0.5">ub1o1genko@gmail.com</Text>
             </View>
             <Ionicons name="chevron-forward" size={16} color={C.gray300} />
           </View>
