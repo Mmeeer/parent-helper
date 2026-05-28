@@ -51,8 +51,16 @@ const subscriptionKeySchema = new mongoose.Schema({
 }, { timestamps: true });
 
 subscriptionKeySchema.index({ status: 1 });
-// One key per parent — only one active key can reference a given user
-subscriptionKeySchema.index({ activatedBy: 1 }, { unique: true, sparse: true });
+// One key per parent — only one *activated* key can reference a given user.
+// MUST use partialFilterExpression (not sparse) because the schema defaults
+// activatedBy to null; sparse skips only missing fields, so null values still
+// collide on the unique index and every key creation after the first fails
+// with E11000. partialFilterExpression with $type:"objectId" indexes only rows
+// that actually have a user assigned.
+subscriptionKeySchema.index(
+  { activatedBy: 1 },
+  { unique: true, partialFilterExpression: { activatedBy: { $type: "objectId" } } },
+);
 
 // Generate a readable key like "PK-XXXX-XXXX" (or custom prefix)
 subscriptionKeySchema.statics.generateKey = function (prefix = 'PK') {

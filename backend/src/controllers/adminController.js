@@ -18,10 +18,12 @@ exports.seed = async (req, res, next) => {
 
     const adminEmail = process.env.ADMIN_EMAIL || 'admin@primekids.com';
     const adminPassword = process.env.ADMIN_PASSWORD || 'admin123456';
+    const adminPhone = process.env.ADMIN_PHONE || '+97600000000';
 
     const admin = new User({
       email: adminEmail,
       passwordHash: adminPassword,
+      phone: adminPhone,
       name: 'Admin',
       role: 'admin',
     });
