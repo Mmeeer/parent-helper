@@ -58,6 +58,12 @@ class OnboardingPermissionsActivity : AppCompatActivity() {
 
     private val locationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
+    ) { _ -> maybeRequestBackgroundLocation() }
+
+    // Background location ("Allow all the time") must be requested separately, after
+    // foreground location is granted (Android 10+ requirement).
+    private val backgroundLocationLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
     ) { _ -> refreshCurrentStep() }
 
     private val batteryOptLauncher = registerForActivityResult(
@@ -115,21 +121,28 @@ class OnboardingPermissionsActivity : AppCompatActivity() {
                     deviceAdminLauncher.launch(intent)
                 },
             ),
-            // 3. Location
+            // 3. Location — foreground + background ("Allow all the time"). A prominent
+            //    disclosure explaining background collection is shown first (Play policy).
             PermissionStep(
                 iconRes = R.drawable.ic_location,
                 titleRes = R.string.perm_location_title,
                 whyRes = R.string.perm_location_why,
-                checkGranted = { hasLocationPermission() },
+                checkGranted = { hasForegroundLocation() && hasBackgroundLocation() },
                 requestPermission = {
-                    val permissions = mutableListOf(
-                        android.Manifest.permission.ACCESS_FINE_LOCATION,
-                        android.Manifest.permission.ACCESS_COARSE_LOCATION,
-                    )
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        permissions.add(android.Manifest.permission.POST_NOTIFICATIONS)
+                    showLocationDisclosure {
+                        if (hasForegroundLocation()) {
+                            maybeRequestBackgroundLocation()
+                        } else {
+                            val permissions = mutableListOf(
+                                android.Manifest.permission.ACCESS_FINE_LOCATION,
+                                android.Manifest.permission.ACCESS_COARSE_LOCATION,
+                            )
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                permissions.add(android.Manifest.permission.POST_NOTIFICATIONS)
+                            }
+                            locationPermissionLauncher.launch(permissions.toTypedArray())
+                        }
                     }
-                    locationPermissionLauncher.launch(permissions.toTypedArray())
                 },
             ),
             // 4. Battery Optimization
@@ -286,10 +299,48 @@ class OnboardingPermissionsActivity : AppCompatActivity() {
         return dpm.isAdminActive(ParentHelperDeviceAdmin.getComponentName(this))
     }
 
-    private fun hasLocationPermission(): Boolean {
+    private fun hasForegroundLocation(): Boolean {
         return ContextCompat.checkSelfPermission(
             this, android.Manifest.permission.ACCESS_FINE_LOCATION,
         ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun hasBackgroundLocation(): Boolean {
+        // ACCESS_BACKGROUND_LOCATION exists on API 29+; it is implicitly granted below that.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return true
+        return ContextCompat.checkSelfPermission(
+            this, android.Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+    }
+
+    /** Once foreground location is granted, request background ("Allow all the time"). */
+    private fun maybeRequestBackgroundLocation() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+            hasForegroundLocation() && !hasBackgroundLocation()
+        ) {
+            backgroundLocationLauncher.launch(
+                android.Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+            )
+        } else {
+            refreshCurrentStep()
+        }
+    }
+
+    /**
+     * Prominent disclosure required by Google Play's background-location policy: shown
+     * before the runtime permission prompt, explicitly states that location is collected
+     * in the background (even when the app is closed), and requires affirmative consent.
+     */
+    private fun showLocationDisclosure(onContinue: () -> Unit) {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.location_disclosure_title)
+            .setMessage(R.string.location_disclosure_message)
+            .setCancelable(false)
+            .setPositiveButton(R.string.location_disclosure_continue) { d, _ ->
+                d.dismiss(); onContinue()
+            }
+            .setNegativeButton(R.string.location_disclosure_cancel) { d, _ -> d.dismiss() }
+            .show()
     }
 
     private fun isBatteryOptimizationExempt(): Boolean {

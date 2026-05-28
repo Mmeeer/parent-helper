@@ -72,7 +72,14 @@
 
     <!-- Permission: Location -->
     <string name="perm_location_title">Байршлын мэдээлэл</string>
-    <string name="perm_location_why">Эцэг эхэд хүүхдийн байршлыг мэдэх боломж олгоно. Аюулгүй бүс тогтоож, бүсээс гарсан тохиолдолд мэдэгдэл илгээнэ.</string>
+    <string name="perm_location_why">Эцэг эхэд хүүхдийн байршлыг (апп хаалттай эсвэл ашиглагдаагүй үед ч) мэдэх боломж олгоно. Аюулгүй бүс тогтоож, бүс рүү орох/гарах үед мэдэгдэл илгээнэ.</string>
+
+    <!-- Background-location prominent disclosure (shown BEFORE the runtime location prompt,
+         required by Google Play's background location policy). -->
+    <string name="location_disclosure_title">Байршлын зөвшөөрөл</string>
+    <string name="location_disclosure_message">Prime Kids нь энэ төхөөрөмжийн байршлыг ар талд — апп хаалттай эсвэл ашиглагдаагүй үед ч — цуглуулна. Ингэснээр эцэг эх тань таны байршлыг харж, аюулгүй бүс (гэр, сургууль) рүү ороход эсвэл гарахад мэдэгдэл хүлээн авна. Энэ аппыг эцэг эх тань таны аюулгүй байдлын төлөө суулгасан.\n\nДараагийн алхамд байршлын зөвшөөрлийг асууна. \"Байнга зөвшөөрөх\" (Allow all the time) сонголтыг сонгоно уу.</string>
+    <string name="location_disclosure_continue">Үргэлжлүүлэх</string>
+    <string name="location_disclosure_cancel">Болих</string>
 
     <!-- Permission: Battery Optimization -->
     <string name="perm_battery_title">Батарейн оновчлолоос хасах</string>
