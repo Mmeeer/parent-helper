@@ -1,6 +1,5 @@
 const router = require('express').Router();
 const auth = require('../middleware/auth');
-const emailVerified = require('../middleware/emailVerified');
 const deviceAuth = require('../middleware/deviceAuth');
 const requireSubscription = require('../middleware/requireSubscription');
 const devicesController = require('../controllers/devicesController');
@@ -15,7 +14,7 @@ router.post('/sos', deviceAuth, devicesController.sos);
 router.post('/report-permission', deviceAuth, devicesController.reportPermission);
 
 // Parent endpoints
-router.post('/pair', auth, emailVerified, requireSubscription, devicesController.pair);
+router.post('/pair', auth, requireSubscription, devicesController.pair);
 router.get('/child/:childId', auth, devicesController.listByChild);
 router.get('/:id/status', auth, devicesController.getStatus);
 router.get('/:id/installed-apps', auth, devicesController.getInstalledApps);
