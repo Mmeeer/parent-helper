@@ -17,3 +17,9 @@
 
 # Hide the original source file name in stack traces.
 -renamesourcefileattribute SourceFile
+
+# Keep API model field names so Gson can serialize/deserialize JSON correctly
+# after R8 minification. Without these rules, R8 renames `pairingCode` to `a`,
+# breaking every API request the app sends in release builds.
+-keep class com.parenthelper.child.data.models.** { *; }
+-keepclassmembers class com.parenthelper.child.data.models.** { *; }

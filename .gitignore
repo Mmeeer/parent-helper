@@ -10,3 +10,11 @@ child/.kotlin/
 # "extras" are kept local — not part of the app build or store upload.
 child/store-assets/screenshots/_src/
 parent-app/store-assets/screenshots/_src/
+
+# Local recording / debug artifacts in child/release/. Only the AAB itself
+# and the recording script doc are tracked; everything else (raw video,
+# diagnostic screenshots, uidump xml, helper apk copies) stays local.
+child/release/*.mp4
+child/release/*.png
+child/release/_uidump.xml
+child/release/app-release-fixed.apk
