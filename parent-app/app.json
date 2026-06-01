@@ -3,7 +3,7 @@
     "name": "Prime Kids: Parent Helper",
     "slug": "prime-kids-parent-helper",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/icon.png",
     "newArchEnabled": true,
     "userInterfaceStyle": "light",
@@ -24,6 +24,7 @@
       },
       "package": "com.parenthelper.parent",
       "googleServicesFile": "./google-services.json",
+      "edgeToEdgeEnabled": true,
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyDCTsWSROklg46X3sd4g7GDAg7ZISNRTj8"
@@ -48,7 +49,7 @@
           "android": {
             "compileSdkVersion": 35,
             "targetSdkVersion": 35,
-            "ndkVersion": "26.1.10909125",
+            "ndkVersion": "27.1.12297006",
             "ndkAbiFilters": [
               "arm64-v8a",
               "x86_64"

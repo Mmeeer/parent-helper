@@ -23,8 +23,10 @@
 # on those names, and our wire models carry NO @SerializedName fallbacks. In a
 # minified release this made the app send {"a":"PRIME888",...} instead of
 # {"pairingCode":"PRIME888",...}, so the backend rejected pairing with
-# 400 "Pairing code is required". Keeping the model field names intact fixes it.
--keep class com.parenthelper.child.data.models.** { <fields>; }
+# 400 "Pairing code is required" — and broke EVERY API call, not just pairing.
+# Verified end-to-end (logcat + emulator) with the review demo code PRIME888.
+-keep class com.parenthelper.child.data.models.** { *; }
+-keepclassmembers class com.parenthelper.child.data.models.** { *; }
 
 # Standard Gson consumer rules.
 -keepattributes Signature
