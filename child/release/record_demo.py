@@ -25,6 +25,7 @@ except AttributeError:
 ADB = r"C:\Users\friday\AppData\Local\Android\Sdk\platform-tools\adb.exe"
 TMP_DUMP_LOCAL = Path(__file__).parent / "_uidump.xml"
 TMP_VIDEO_LOCAL = Path(__file__).parent / "demo-scripted.mp4"
+DEVICE_VIDEO_PATH = "/sdcard/demo.mp4"
 
 
 def adb(*args, shell=False, check=True, timeout=15):
@@ -131,21 +132,33 @@ def main():
     print(f"Pairing code: {code}")
     print("=" * 60)
 
-    # Step 0: Reset app state + initial GPS
-    print("\n[0] Clearing app data, setting GPS, force-stopping any running instance")
+    # Step 0: Reset device + app state, initial GPS, disable Gboard.
+    # The previous run's notification-shade swipe leaves Quick Settings open
+    # on top of everything. Press HOME twice to collapse any stale system UI
+    # so the next launch lands cleanly. Also disable Gboard so its left-edge
+    # floating panel on Android 16 doesn't block taps to the leftmost box.
+    print("\n[0] Resetting device state, clearing app, GPS, disabling Gboard")
+    adb("shell", "input", "keyevent", "KEYCODE_HOME")
+    time.sleep(0.3)
+    adb("shell", "input", "keyevent", "KEYCODE_HOME")  # double-tap collapses QS
+    time.sleep(0.5)
     adb("shell", "pm", "clear", "com.parenthelper.child")
     adb("emu", "geo", "fix", "106.917693", "47.918873")
+    adb("shell", "ime", "disable",
+        "com.google.android.inputmethod.latin/com.android.inputmethod.latin.LatinIME")
+    adb("shell", "settings", "put", "secure", "default_input_method",
+        "com.google.android.tts/com.google.android.apps.speech.tts.googletts.settings.asr.voiceime.VoiceInputMethodService")
     time.sleep(1)
 
     # Remove any stale recording
-    adb("shell", "rm", "-f", "/sdcard/demo.mp4")
+    adb("shell", "rm", "-f", DEVICE_VIDEO_PATH)
 
     # Step 1: Start screen recording in background
     print("\n[1] Starting screen recording (max 120s)")
     # Use Popen so we can stop with SIGINT later
     recorder = subprocess.Popen(
         [ADB, "shell", "screenrecord", "--time-limit", "120",
-         "--bit-rate", "8000000", "/sdcard/demo.mp4"],
+         "--bit-rate", "8000000", DEVICE_VIDEO_PATH],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE,
     )
     time.sleep(1.5)  # give screenrecord time to start
@@ -156,19 +169,16 @@ def main():
         "com.parenthelper.child/.ui.onboarding.SplashActivity")
     time.sleep(3.5)  # splash animation + transition
 
-    # Step 3: Enter pairing code box-by-box
-    print("\n[3] Entering pairing code")
-    # From earlier UI dump, box positions are predictable
-    box_centers_y = 963
-    box_centers_x = [121, 233, 345, 457, 622, 734, 846, 958]
-    for i, ch in enumerate(code[:8]):
-        if i >= len(box_centers_x):
-            break
-        tap(box_centers_x[i], box_centers_y, label=f"box{i+1}")
-        time.sleep(0.15)
+    # Step 3: Enter pairing code character-by-character
+    # PairingActivity auto-focuses box 1 on launch (postDelayed 150ms) and the
+    # afterTextChanged listener advances focus to the next box after each char.
+    # So we never need to tap individual boxes — only type. This sidesteps
+    # collisions with Gboard's left-edge floating panel on Android 16.
+    print("\n[3] Entering pairing code (no per-box taps — relying on auto-advance)")
+    for ch in code[:8]:
         adb("shell", "input", "text", ch)
-        time.sleep(0.1)
-    time.sleep(0.8)
+        time.sleep(0.2)
+    time.sleep(1.0)
 
     # Step 4: Tap ХОЛБОХ (Connect) button
     print("\n[4] Tapping ХОЛБОХ")
@@ -218,22 +228,52 @@ def main():
         print("  [WARN] foreground permission button not found")
     time.sleep(3)
 
-    # Step 12: Background location settings page — pick "Allow all the time"
-    print("\n[12] Background location: Allow all the time")
-    time.sleep(1)  # let settings page settle
+    # Step 11b: POST_NOTIFICATIONS dialog (Android 13+) appears in the same
+    # multi-permission launcher. Tap Allow if it shows up.
+    print("\n[11b] POST_NOTIFICATIONS dialog (if present): Allow")
     xml = dump_ui()
+    notif_visible = (
+        find_by_text_contains(xml, "notifications") is not None
+        or find_by_text_contains(xml, "Prime Kids to send") is not None
+    )
+    if notif_visible:
+        # Find the "Allow" button specifically (not "Don't allow")
+        coords = find_by_text(xml, "Allow")
+        if coords:
+            tap(*coords, label="notifications: Allow")
+        else:
+            print("  [WARN] notifications Allow button not found")
+        time.sleep(2)
+    else:
+        print("  notifications dialog not shown — skipping")
+
+    # Step 12: Background location settings page — pick "Allow all the time"
+    # Background settings page takes longer to render than the inline dialog.
+    # Poll for the right label for up to 8 seconds.
+    print("\n[12] Background location: Allow all the time")
     bg_candidates = [
         "Allow all the time",
         "Always allow",
         "Бүх үед зөвшөөрөх",
     ]
-    for label in bg_candidates:
-        coords = find_by_text(xml, label) or find_by_text_contains(xml, label)
-        if coords:
-            tap(*coords, label=f"background: {label}")
+    bg_found = False
+    for _ in range(8):
+        time.sleep(1)
+        xml = dump_ui()
+        for label in bg_candidates:
+            coords = find_by_text(xml, label) or find_by_text_contains(xml, label)
+            if coords:
+                tap(*coords, label=f"background: {label}")
+                bg_found = True
+                break
+        if bg_found:
             break
-    else:
-        print("  [WARN] background 'all the time' option not found")
+    if not bg_found:
+        print("  [WARN] background 'all the time' option not found after 8s polling")
+        if xml:
+            import re as _re
+            texts = sorted(set(_re.findall(r'text="([^"]+)"', xml or "")))
+            print(f"  visible texts: {[t for t in texts if t.strip()][:25]}")
     time.sleep(3)
 
     # Step 13: Go back to app (if settings opened a separate page)
@@ -272,7 +312,7 @@ def main():
     print("\n[17] Pulling video file")
     if TMP_VIDEO_LOCAL.exists():
         TMP_VIDEO_LOCAL.unlink()
-    adb("pull", "/sdcard/demo.mp4", str(TMP_VIDEO_LOCAL))
+    adb("pull", DEVICE_VIDEO_PATH, str(TMP_VIDEO_LOCAL))
     if TMP_VIDEO_LOCAL.exists():
         size_mb = TMP_VIDEO_LOCAL.stat().st_size / 1024 / 1024
         print(f"\nDONE. Video at: {TMP_VIDEO_LOCAL} ({size_mb:.2f} MB)")
