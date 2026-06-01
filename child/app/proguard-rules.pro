@@ -18,8 +18,23 @@
 # Hide the original source file name in stack traces.
 -renamesourcefileattribute SourceFile
 
-# Keep API model field names so Gson can serialize/deserialize JSON correctly
-# after R8 minification. Without these rules, R8 renames `pairingCode` to `a`,
-# breaking every API request the app sends in release builds.
+# ── Gson + Retrofit JSON models ───────────────────────────────────────────────
+# R8 obfuscation renames data-class field names; Gson (de)serializes by reflecting
+# on those names, and our wire models carry NO @SerializedName fallbacks. In a
+# minified release this made the app send {"a":"PRIME888",...} instead of
+# {"pairingCode":"PRIME888",...}, so the backend rejected pairing with
+# 400 "Pairing code is required" — and broke EVERY API call, not just pairing.
+# Verified end-to-end (logcat + emulator) with the review demo code PRIME888.
 -keep class com.parenthelper.child.data.models.** { *; }
 -keepclassmembers class com.parenthelper.child.data.models.** { *; }
+
+# Standard Gson consumer rules.
+-keepattributes Signature
+-keepattributes *Annotation*
+-dontwarn sun.misc.**
+-keepclassmembers,allowobfuscation class * {
+  @com.google.gson.annotations.SerializedName <fields>;
+}
+# Keep generic TypeToken signatures (Gson reflective type resolution).
+-keep,allowobfuscation,allowshrinking class com.google.gson.reflect.TypeToken
+-keep,allowobfuscation,allowshrinking class * extends com.google.gson.reflect.TypeToken
