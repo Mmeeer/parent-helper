@@ -50,6 +50,11 @@
         android:networkSecurityConfig="@xml/network_security_config"
         android:theme="@style/Theme.MyApplication">
 
+        <!-- Declare as a parental-control monitoring tool (Google Play Stalkerware policy) -->
+        <meta-data
+            android:name="com.google.android.gms.isMonitoringTool"
+            android:value="parental_control" />
+
         <!-- Splash screen (new launcher) -->
         <activity
             android:name=".ui.onboarding.SplashActivity"
