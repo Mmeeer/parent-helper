@@ -76,8 +76,8 @@
 
     <!-- Background-location prominent disclosure (shown BEFORE the runtime location prompt,
          required by Google Play's background location policy). -->
-    <string name="location_disclosure_title">Байршлын зөвшөөрөл</string>
-    <string name="location_disclosure_message">Prime Kids нь энэ төхөөрөмжийн байршлыг ар талд — апп хаалттай эсвэл ашиглагдаагүй үед ч — цуглуулна. Ингэснээр эцэг эх тань таны байршлыг харж, аюулгүй бүс (гэр, сургууль) рүү ороход эсвэл гарахад мэдэгдэл хүлээн авна. Энэ аппыг эцэг эх тань таны аюулгүй байдлын төлөө суулгасан.\n\nДараагийн алхамд байршлын зөвшөөрлийг асууна. \"Байнга зөвшөөрөх\" (Allow all the time) сонголтыг сонгоно уу.</string>
+    <string name="location_disclosure_title">Байршлын зөвшөөрөл / Location Permission</string>
+    <string name="location_disclosure_message">Prime Kids нь энэ төхөөрөмжийн байршлыг ар талд — апп хаалттай эсвэл ашиглагдаагүй үед ч — цуглуулна. Ингэснээр эцэг эх тань таны байршлыг харж, аюулгүй бүс (гэр, сургууль) рүү ороход эсвэл гарахад мэдэгдэл хүлээн авна. Энэ аппыг эцэг эх тань таны аюулгүй байдлын төлөө суулгасан.\n\nДараагийн алхамд байршлын зөвшөөрлийг асууна. \"Байнга зөвшөөрөх\" (Allow all the time) сонголтыг сонгоно уу.\n\n— English —\n\nPrime Kids collects this device\'s location in the background — even when the app is closed or not in use. This allows the parent to see the child\'s location and receive alerts when the child enters or leaves a safe zone (home, school). This app was installed by a parent for child safety.\n\nIn the next step you will be asked for location permission. Please select \"Allow all the time\".</string>
     <string name="location_disclosure_continue">Үргэлжлүүлэх</string>
     <string name="location_disclosure_cancel">Болих</string>
 

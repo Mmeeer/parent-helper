@@ -13,6 +13,7 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.ScrollView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -332,9 +333,19 @@ class OnboardingPermissionsActivity : AppCompatActivity() {
      * in the background (even when the app is closed), and requires affirmative consent.
      */
     private fun showLocationDisclosure(onContinue: () -> Unit) {
+        val messageView = TextView(this).apply {
+            text = getString(R.string.location_disclosure_message)
+            setPadding(dpToPx(24), dpToPx(16), dpToPx(24), dpToPx(8))
+            textSize = 16f
+            setLineSpacing(0f, 1.3f)
+        }
+        val scrollView = ScrollView(this).apply {
+            addView(messageView)
+        }
+
         AlertDialog.Builder(this)
             .setTitle(R.string.location_disclosure_title)
-            .setMessage(R.string.location_disclosure_message)
+            .setView(scrollView)
             .setCancelable(false)
             .setPositiveButton(R.string.location_disclosure_continue) { d, _ ->
                 d.dismiss(); onContinue()
