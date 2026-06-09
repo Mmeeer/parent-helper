@@ -20,6 +20,7 @@ import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
@@ -296,7 +297,23 @@ class MainActivity : AppCompatActivity() {
     private fun requestVpnConsent() {
         val vpnIntent = VpnService.prepare(this)
         if (vpnIntent != null) {
-            vpnConsentRequest.launch(vpnIntent)
+            // Show prominent disclosure before requesting VPN permission (Google Play VpnService policy)
+            AlertDialog.Builder(this)
+                .setTitle("Web Content Filter")
+                .setMessage(
+                    "Prime Kids uses a local VPN to filter inappropriate websites on your child's device.\n\n" +
+                    "How it works:\n" +
+                    "• DNS queries are checked on-device against blocked categories (adult, gambling, violence, etc.)\n" +
+                    "• Blocked domains are rejected locally\n" +
+                    "• Allowed queries are forwarded to public DNS servers (Google 8.8.8.8)\n\n" +
+                    "No browsing data is sent to external servers. The VPN runs entirely on this device for content filtering only."
+                )
+                .setPositiveButton("I Understand") { _, _ ->
+                    vpnConsentRequest.launch(vpnIntent)
+                }
+                .setNegativeButton("Cancel", null)
+                .setCancelable(false)
+                .show()
         } else {
             startService(Intent(this, WebFilterVpnService::class.java))
         }

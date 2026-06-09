@@ -61,6 +61,40 @@ These are high-rejection-rate without proper handling. Before/at submission you 
 
 ---
 
+## Google Play Console — VpnService Declaration Form
+
+Navigate to **Policy and programs → App content → VpnService** (or Declarations → VpnService).
+
+Fill in all fields exactly:
+
+| Field | Answer |
+|-------|--------|
+| **Does your app use VpnService?** | Yes |
+| **What does your app use VpnService for?** | Content filtering / parental controls — DNS-level web filtering to block inappropriate content categories for child safety |
+| **Does your app tunnel device traffic through a VPN connection to a remote server?** | No |
+| **Detailed description of VpnService functionality** | Prime Kids Child is a parental control app. It uses Android's VpnService to create a local VPN tunnel on the child's device for DNS-based web content filtering. The VPN intercepts DNS queries (UDP port 53) and checks requested domains against parent-configured blocked categories (adult, gambling, violence, drugs, weapons, hate, malware, phishing). Blocked domains receive an NXDOMAIN response locally on the device. Allowed DNS queries are forwarded to Google's public DNS servers (8.8.8.8 / 8.8.4.4). No user browsing data, web page content, or DNS query logs are transmitted to any third-party server. The VPN operates entirely on-device for the sole purpose of protecting children from inappropriate web content. The parent controls which categories are blocked via the companion Parent Helper app. An in-app disclosure screen explains VPN usage to the parent before VpnService.prepare() is called. |
+| **Privacy policy URL** | https://primekids.masterclass.mn/parent-helper/legal/privacy-policy (see sections 3.4 and 3.6 for VPN details) |
+
+### Foreground Service Declaration (`specialUse`)
+
+Navigate to **Policy and programs → App content → Foreground service**.
+
+Declare both foreground services:
+
+| Service | `foregroundServiceType` | Justification |
+|---------|------------------------|---------------|
+| `MonitoringService` | `location\|specialUse` | Background location tracking for child safety (geofence alerts) + parental control enforcement (app blocking, screen-time limits) |
+| `WebFilterVpnService` | `specialUse` | On-device DNS-based web content filtering for child safety — blocks inappropriate domains locally using VpnService |
+
+### Target Audience & Content
+
+Ensure the **Target audience and content** section declares:
+- The app is designed for **parents** (not children directly) — the child app is installed by parents
+- App is used in a **parental control / family safety** context
+- VPN usage is consistent with the Families policy (child safety, not data collection)
+
+---
+
 ## Remaining manual steps
 
 ### A. child → Google Play
