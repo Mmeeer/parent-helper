@@ -1,6 +1,18 @@
 const Sentry = require('@sentry/node');
 
 const errorHandler = (err, req, res, _next) => {
+  // Client-caused body-parser errors (malformed JSON, oversized payload) are NOT
+  // server faults — internet scanners hit the API with junk constantly. Return the
+  // correct 4xx, log a one-liner (no stack), and don't page Sentry with the noise.
+  if (err.type === 'entity.parse.failed' || (err instanceof SyntaxError && err.status === 400 && 'body' in err)) {
+    console.warn(`[400] malformed JSON body on ${req.method} ${req.originalUrl} from ${req.ip}`);
+    return res.status(400).json({ error: 'Invalid JSON in request body' });
+  }
+  if (err.type === 'entity.too.large') {
+    console.warn(`[413] oversized body on ${req.method} ${req.originalUrl} from ${req.ip}`);
+    return res.status(413).json({ error: 'Request body too large' });
+  }
+
   console.error(err.stack);
 
   if (err.name === 'ValidationError') {

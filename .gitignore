@@ -18,3 +18,4 @@ child/release/*.mp4
 child/release/*.png
 child/release/_uidump.xml
 child/release/app-release-fixed.apk
+backend/.env
