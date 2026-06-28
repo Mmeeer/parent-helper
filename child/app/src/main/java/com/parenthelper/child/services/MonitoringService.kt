@@ -6,13 +6,17 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.content.pm.ServiceInfo
 import android.net.Uri
+import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
 import android.os.SystemClock
 import android.provider.Settings
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import androidx.work.*
 import com.parenthelper.child.ParentHelperApp
 import com.parenthelper.child.R
@@ -52,9 +56,36 @@ class MonitoringService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        startForeground(NOTIFICATION_ID, createNotification())
+        startForegroundWithGrantedTypes()
         acquireWakeLock()
         requestBatteryOptimizationExemption()
+    }
+
+    /**
+     * Android 14+ throws SecurityException if startForeground binds a type whose
+     * runtime permission isn't granted (e.g. type=location without
+     * ACCESS_FINE_LOCATION). The manifest declares location|specialUse, but if
+     * the service starts before the user has granted location (boot, deep link,
+     * permission revocation), we must omit the location type or the whole
+     * process crashes. Bind only the types we currently have permission for.
+     */
+    private fun startForegroundWithGrantedTypes() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            var type = ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+            if (hasLocationPermission()) {
+                type = type or ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+            }
+            startForeground(NOTIFICATION_ID, createNotification(), type)
+        } else {
+            @Suppress("DEPRECATION")
+            startForeground(NOTIFICATION_ID, createNotification())
+        }
+    }
+
+    private fun hasLocationPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            this, android.Manifest.permission.ACCESS_FINE_LOCATION,
+        ) == PackageManager.PERMISSION_GRANTED
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
