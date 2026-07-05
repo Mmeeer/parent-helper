@@ -22,11 +22,63 @@ object DomainBlockList {
     private val customAllowDomains = mutableSetOf<String>()
     private var activeCategories = listOf<String>()
 
+    /**
+     * Always-blocked DoH (DNS-over-HTTPS) bootstrap hostnames.
+     *
+     * Modern browsers (Chrome, Firefox) ship DoH on by default. Their "Automatic"
+     * upgrade mode resolves these hostnames via system DNS to find the DoH server,
+     * then sends every subsequent DNS lookup over HTTPS to it — totally bypassing
+     * our DNS-level filter.
+     *
+     * By NXDOMAIN'ing the bootstrap lookup itself, the browser fails to find the
+     * DoH server and falls back to plain UDP/53, which our VPN intercepts.
+     *
+     * This list does NOT need to be configurable — it's a hard-coded counter to
+     * the DoH bypass and applies to every paired device regardless of parent rules.
+     */
+    private val DOH_BOOTSTRAP_HOSTS = setOf(
+        // Google
+        "dns.google",
+        "dns.google.com",
+        // Cloudflare
+        "cloudflare-dns.com",
+        "chrome.cloudflare-dns.com",
+        "mozilla.cloudflare-dns.com",
+        "security.cloudflare-dns.com",
+        "family.cloudflare-dns.com",
+        "one.one.one.one",
+        // Quad9
+        "dns.quad9.net",
+        "dns9.quad9.net",
+        "dns10.quad9.net",
+        "dns11.quad9.net",
+        // OpenDNS
+        "doh.opendns.com",
+        "doh.familyshield.opendns.com",
+        // CleanBrowsing
+        "doh.cleanbrowsing.org",
+        "family-filter-dns.cleanbrowsing.org",
+        // AdGuard
+        "dns.adguard.com",
+        "dns-family.adguard.com",
+        "dns-unfiltered.adguard.com",
+        // NextDNS
+        "dns.nextdns.io",
+        // Mozilla DoH canary (used by Firefox auto-upgrade)
+        "use-application-dns.net",
+    )
+
     fun isBlocked(domain: String): Boolean {
         val lower = domain.lowercase()
 
         // Allow list takes priority
         if (matchesDomainSet(lower, customAllowDomains)) return false
+
+        // Always block DoH bootstrap hosts — these are not subject to allow-list,
+        // not configurable by parents, and not loggable as a "blocked domain"
+        // since they're an enforcement counter to DoH bypass, not a user-visible
+        // category violation. Check via suffix match so subdomains are caught too.
+        if (matchesDomainSet(lower, DOH_BOOTSTRAP_HOSTS)) return true
 
         // Check against blocked domains (supports subdomain matching)
         return matchesReversedSet(lower)

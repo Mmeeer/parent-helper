@@ -55,10 +55,17 @@ class WebFilterVpnService : VpnService() {
             val builder = Builder()
                 .setSession("Prime Kids WebFilter")
                 .addAddress(VPN_ADDRESS, 24)
-                .addRoute(REAL_DNS, 32)     // Route traffic to real DNS through VPN
                 .addDnsServer(REAL_DNS)      // Tell system to use real DNS (traffic will pass through TUN)
                 .setMtu(MTU_SIZE)
                 .setBlocking(true)
+
+            // Route DNS traffic + every well-known DoH provider IP through tun0.
+            // The packet loop only forwards UDP/53; everything else (TCP/443 to a
+            // DoH server, UDP/853 DoT, etc.) is dropped. That kills the DoH-bypass
+            // even when a browser ships a hardcoded DoH IP (Chrome, Firefox, etc).
+            for (route in ROUTED_IPS) {
+                builder.addRoute(route, 32)
+            }
 
             // Exclude our own app from the VPN to prevent loops
             try { builder.addDisallowedApplication(packageName) } catch (_: Exception) {}
@@ -134,6 +141,26 @@ class WebFilterVpnService : VpnService() {
                         Log.d(TAG, "Blocking domain: $domain")
                         BlockedAttemptLogger.logBlocked(domain)
                         WebActivityCollector.recordBlocked(domain)
+                        // Surface a brief "site blocked" overlay so the user
+                        // immediately sees WHY their page won't load, rather
+                        // than waiting ~30 s for Chrome to render its own
+                        // "site can't be reached" page after retrying NXDOMAIN.
+                        // Skip noisy DoH-bootstrap blocks — those are internal
+                        // counters, not user-visible website attempts.
+                        if (!domain.endsWith("dns.google") &&
+                            !domain.endsWith("cloudflare-dns.com") &&
+                            !domain.endsWith("one.one.one.one") &&
+                            !domain.endsWith("dns.quad9.net") &&
+                            !domain.endsWith("opendns.com") &&
+                            !domain.endsWith("cleanbrowsing.org") &&
+                            !domain.endsWith("adguard.com") &&
+                            !domain.endsWith("nextdns.io") &&
+                            domain != "use-application-dns.net"
+                        ) {
+                            try {
+                                LockScreenOverlay.showSiteBlocked(this, domain)
+                            } catch (_: Exception) { /* overlay perm may be revoked */ }
+                        }
                         val response = buildNxDomainResponse(packet.array(), length)
                         if (response != null) {
                             outputMutex.withLock {
@@ -414,6 +441,40 @@ class WebFilterVpnService : VpnService() {
         private const val REAL_DNS = "8.8.8.8"
         private const val MTU_SIZE = 1500
         private val DNS_SERVERS = listOf("8.8.8.8", "8.8.4.4")
+
+        /**
+         * IPv4 addresses routed through tun0. Includes the upstream DNS used for
+         * normal queries (8.8.8.8) plus every well-known DoH/DoT provider Chrome
+         * and Firefox will try as part of their auto-upgrade DNS-over-HTTPS path.
+         *
+         * Routing them through tun0 + dropping non-DNS packets in runVpnLoop()
+         * means any browser attempt to reach these IPs on TCP/443 (DoH) or
+         * UDP/853 (DoT) gets silently dropped, forcing fallback to plain UDP/53
+         * which our DNS filter actually inspects.
+         */
+        private val ROUTED_IPS = listOf(
+            // Google
+            "8.8.8.8", "8.8.4.4",
+            // Cloudflare (incl. 1.1.1.2/.3 family-filter variants)
+            "1.1.1.1", "1.0.0.1", "1.1.1.2", "1.0.0.2", "1.1.1.3", "1.0.0.3",
+            // Quad9
+            "9.9.9.9", "149.112.112.112", "9.9.9.10", "149.112.112.10",
+            "9.9.9.11", "149.112.112.11",
+            // OpenDNS
+            "208.67.222.222", "208.67.220.220",
+            "208.67.222.123", "208.67.220.123", // family shield
+            // AdGuard
+            "94.140.14.14", "94.140.15.15",
+            "94.140.14.15", "94.140.15.16", // family
+            // CleanBrowsing
+            "185.228.168.168", "185.228.169.168",
+            "185.228.168.10", "185.228.169.11", // family
+            // NextDNS anycast
+            "45.90.28.0", "45.90.30.0",
+            // Comodo Secure
+            "8.26.56.26", "8.20.247.20",
+        )
+
         private const val VPN_RETRY_BASE_MS = 3_000L
         private const val VPN_RETRY_MAX_MS = 120_000L
     }

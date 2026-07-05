@@ -37,6 +37,35 @@ object LockScreenOverlay {
         SCHEDULE_BLOCKED,
         REMOTE_LOCK,
         VPN_FILTER_DOWN,
+        SITE_BLOCKED,    // shown briefly when a blocked website was attempted
+    }
+
+    /** Domain → epoch-ms of last SITE_BLOCKED overlay. 30 s throttle per host. */
+    private val recentSiteBlocks = mutableMapOf<String, Long>()
+    private const val SITE_BLOCKED_THROTTLE_MS = 30_000L
+    private const val SITE_BLOCKED_AUTO_DISMISS_MS = 4_000L
+
+    /**
+     * Show a brief "site blocked" overlay over Chrome (or whatever browser).
+     * The overlay is full-screen and auto-dismisses after a few seconds, so the
+     * child can immediately see WHY the page failed to load instead of staring
+     * at Chrome's silent retry loop. Throttled per-domain to avoid flicker as
+     * Chrome retries the same domain rapidly.
+     */
+    fun showSiteBlocked(context: Context, domain: String) {
+        val now = System.currentTimeMillis()
+        val last = recentSiteBlocks[domain] ?: 0L
+        if (now - last < SITE_BLOCKED_THROTTLE_MS) return
+        recentSiteBlocks[domain] = now
+
+        // If a more important overlay (DAILY_LIMIT, SCHEDULE_BLOCKED, etc.) is
+        // already up, don't replace it with the briefer site-block message.
+        if (isShowing && currentReason != Reason.SITE_BLOCKED) return
+
+        show(context, Reason.SITE_BLOCKED, domain)
+        handler.postDelayed({
+            if (currentReason == Reason.SITE_BLOCKED) dismissImmediate()
+        }, SITE_BLOCKED_AUTO_DISMISS_MS)
     }
 
     @Volatile
@@ -223,6 +252,7 @@ object LockScreenOverlay {
         Reason.SCHEDULE_BLOCKED -> "\uD83C\uDF19" // moon
         Reason.REMOTE_LOCK -> "\uD83D\uDD12" // lock
         Reason.VPN_FILTER_DOWN -> "\u26A0\uFE0F" // warning
+        Reason.SITE_BLOCKED -> "\uD83D\uDEAB" // no-entry sign
     }
 
     private fun getTitleText(reason: Reason): String = when (reason) {
@@ -231,6 +261,7 @@ object LockScreenOverlay {
         Reason.SCHEDULE_BLOCKED -> "Device Time is Over"
         Reason.REMOTE_LOCK -> "Device Locked"
         Reason.VPN_FILTER_DOWN -> "Web Filter Unavailable"
+        Reason.SITE_BLOCKED -> "Site Blocked"
     }
 
     private fun getMessageText(reason: Reason): String = when (reason) {
@@ -239,5 +270,6 @@ object LockScreenOverlay {
         Reason.SCHEDULE_BLOCKED -> "It's time to take a break.\nThis device is blocked right now."
         Reason.REMOTE_LOCK -> "Your parent has locked this device."
         Reason.VPN_FILTER_DOWN -> "The web filter could not start.\nInternet is blocked until it recovers."
+        Reason.SITE_BLOCKED -> "This website is blocked by your parent's filter."
     }
 }
