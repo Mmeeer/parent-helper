@@ -2,11 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Google Play Stalkerware/Monitoring policy: this flag MUST be a direct
-         child of <manifest> (not <application>), named exactly "isMonitoringTool",
-         with one of the allowed values: child_monitoring | enterprise_management |
-         other. This is a parental-control child app, so: child_monitoring.
-         https://support.google.com/googleplay/android-developer/answer/12955211 -->
+    <!-- Google Play Stalkerware/Monitoring policy flag. Google's help doc
+         (answer/12955211) shows it as a child of <manifest>, but PackageManager
+         only exposes <application>-level meta-data and builds with ONLY the
+         manifest-level form kept getting rejected as "missing isMonitoringTool"
+         (Jul 13 2026). Declare it in BOTH places; value child_monitoring =
+         parental control. -->
     <meta-data android:name="isMonitoringTool" android:value="child_monitoring" />
 
     <!-- Network -->
@@ -56,6 +57,9 @@
         android:usesCleartextTraffic="false"
         android:networkSecurityConfig="@xml/network_security_config"
         android:theme="@style/Theme.MyApplication">
+
+        <!-- Stalkerware policy flag, <application>-level copy (see note above) -->
+        <meta-data android:name="isMonitoringTool" android:value="child_monitoring" />
 
         <!-- Splash screen (new launcher) -->
         <activity
