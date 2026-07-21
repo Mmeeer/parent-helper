@@ -306,7 +306,8 @@ class MainActivity : AppCompatActivity() {
                     "• DNS queries are checked on-device against blocked categories (adult, gambling, violence, etc.)\n" +
                     "• Blocked domains are rejected locally\n" +
                     "• Allowed queries are forwarded to public DNS servers (Google 8.8.8.8)\n\n" +
-                    "No browsing data is sent to external servers. The VPN runs entirely on this device for content filtering only."
+                    "Web activity (sites visited and sites blocked) is recorded and shared with your parent's Prime Kids account so they can review it. It is sent over an encrypted connection, is never sold, and is never shared with third parties.\n\n" +
+                    "The filter only reads domain names — it cannot read page contents, messages, or passwords."
                 )
                 .setPositiveButton("I Understand") { _, _ ->
                     vpnConsentRequest.launch(vpnIntent)
