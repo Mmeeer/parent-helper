@@ -9,6 +9,18 @@ User=claude
 WorkingDirectory=/root/projects/parent-helper/backend
 # PORT, MONGODB_URI, ALLOWED_ORIGINS, etc. come from backend/.env
 # (the app calls dotenv.config({override:true}), so .env is authoritative).
+#
+# SAFETY NET (added after the Jul 2026 outage): backend/.env lives INSIDE the
+# git working tree, so a deploy that pulls a commit which untracks/deletes it
+# removes the file from the server -> node throws on boot -> systemd restart
+# loop -> nginx 502 on every endpoint. That is exactly what happened.
+#
+# This EnvironmentFile is a copy of the same keys kept OUTSIDE the repo, where
+# no git operation can touch it. The leading "-" makes it optional, so the unit
+# still starts if the file is absent. Because dotenv runs with override:true,
+# backend/.env still wins whenever it exists — this only takes over when the
+# in-repo .env has gone missing, turning a hard outage into a no-op.
+EnvironmentFile=-/etc/parent-helper/api.env
 ExecStart=/usr/local/bin/node src/index.js
 Restart=always
 RestartSec=3
