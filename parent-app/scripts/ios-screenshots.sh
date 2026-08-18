@@ -22,7 +22,7 @@ cap() { # name screen
   (EXPO_PUBLIC_DEMO_LOGIN=1 EXPO_PUBLIC_DEMO_PASSWORD="$REVIEW_PASSWORD" EXPO_PUBLIC_DEMO_SCREEN="$2" npx expo start --dev-client --port 8081 > /tmp/metro-shots.log 2>&1 &)
   until curl -s -o /dev/null -w '%{http_code}' http://localhost:8081/status 2>/dev/null | grep -q 200; do sleep 2; done
   xcrun simctl terminate "$SIM" com.parenthelper.parent 2>/dev/null || true; sleep 1
-  xcrun simctl launch "$SIM" com.parenthelper.parent "${LARGS[@]}" >/dev/null; sleep 35
+  xcrun simctl launch "$SIM" com.parenthelper.parent ${LARGS[@]+"${LARGS[@]}"} >/dev/null; sleep 35
   xcrun simctl io "$SIM" screenshot "$OUT/$1.png" >/dev/null && echo "captured $OUT/$1.png"
 }
 cap 01-dashboard   "MainTabs:Dashboard"
