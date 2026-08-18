@@ -1,9 +1,10 @@
 const crypto = require('crypto');
 const Device = require('../models/Device');
+const DeviceCommand = require('../models/DeviceCommand');
 const Child = require('../models/Child');
 const User = require('../models/User');
 const SubscriptionKey = require('../models/SubscriptionKey');
-const { sendAlertNotification } = require('../services/pushNotification');
+const { sendAlertNotification, sendDeviceCommand } = require('../services/pushNotification');
 const { isReviewEmail, reviewEmail, reviewDemoCode } = require('../utils/reviewAccess');
 
 exports.pair = async (req, res, next) => {
@@ -270,7 +271,29 @@ exports.sendCommand = async (req, res, next) => {
 
     io.to(room).emit('command', { command, params });
 
-    res.json({ message: `Command '${command}' sent to device` });
+    // iOS (and any device that registered a push token): also deliver as a silent push so the
+    // command arrives while the app is suspended in background.
+    let pushed = false;
+    if (device.pushToken) {
+      pushed = await sendDeviceCommand(device, command, params);
+    }
+
+    // Persist to the command queue so a child that missed both the socket emit and the
+    // push (iOS suspended) still picks it up via GET /devices/commands. Non-fatal.
+    let queued = false;
+    try {
+      await DeviceCommand.create({ deviceId: device._id, command, params: params || {} });
+      queued = true;
+    } catch (queueErr) {
+      console.error('[COMMAND] Failed to queue command:', queueErr.message);
+    }
+
+    res.json({
+      message: `Command '${command}' sent to device`,
+      viaSocket: sockets.length > 0,
+      viaPush: pushed,
+      queued,
+    });
   } catch (err) {
     console.error('[COMMAND] ERROR:', err.message);
     next(err);
@@ -328,6 +351,9 @@ exports.unpair = async (req, res, next) => {
         reason: 'unpaired_by_parent',
       });
     }
+    if (device.pushToken) {
+      await sendDeviceCommand(device, 'unpair', { reason: 'unpaired_by_parent' });
+    }
 
     const ActivityLog = require('../models/ActivityLog');
     await Promise.all([
@@ -335,6 +361,72 @@ exports.unpair = async (req, res, next) => {
       ActivityLog.deleteMany({ deviceId: device._id }),
     ]);
     res.json({ message: 'Device unpaired and associated data removed' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// GET /devices/commands — child device fetches its pending (un-acked) commands, oldest first.
+// REST fallback for iOS when the socket emit / silent push was missed.
+exports.listCommands = async (req, res, next) => {
+  try {
+    const commands = await DeviceCommand.find({
+      deviceId: req.device._id,
+      status: 'pending',
+      expiresAt: { $gt: new Date() },
+    })
+      .sort({ createdAt: 1 })
+      .limit(20)
+      .lean();
+
+    res.json(commands.map((c) => ({
+      id: c._id,
+      command: c.command,
+      params: c.params || {},
+      createdAt: c.createdAt,
+    })));
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POST /devices/commands/:id/ack — child device marks a queued command as executed
+exports.ackCommand = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    if (!/^[a-fA-F0-9]{24}$/.test(id)) {
+      return res.status(400).json({ error: 'Invalid command id' });
+    }
+    const cmd = await DeviceCommand.findOneAndUpdate(
+      { _id: id, deviceId: req.device._id, status: 'pending' },
+      { $set: { status: 'acked', ackedAt: new Date() } },
+      { new: true },
+    );
+    if (!cmd) {
+      // Not found, already acked, or belongs to another device — all resolve to 404
+      // (idempotent for the client: nothing pending under that id).
+      return res.status(404).json({ error: 'Command not found' });
+    }
+    res.json({ status: 'ok', id: cmd._id, ackedAt: cmd.ackedAt });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POST /devices/push-token — child device registers its FCM registration token
+// Body: { token: string, platform?: 'ios'|'android' }
+exports.registerPushToken = async (req, res, next) => {
+  try {
+    const { token, platform } = req.body || {};
+    if (typeof token !== 'string' || token.length < 20 || token.length > 4096) {
+      return res.status(400).json({ error: 'Invalid push token' });
+    }
+    const update = { pushToken: token, pushTokenUpdatedAt: new Date() };
+    if (platform === 'ios' || platform === 'android') update.platform = platform;
+    // A token belongs to exactly one device: clear it from any other device first.
+    await Device.updateMany({ pushToken: token, _id: { $ne: req.device._id } }, { $set: { pushToken: null } });
+    await Device.updateOne({ _id: req.device._id }, { $set: update });
+    res.json({ status: 'ok' });
   } catch (err) {
     next(err);
   }

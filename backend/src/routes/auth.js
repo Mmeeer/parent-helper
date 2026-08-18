@@ -5,7 +5,7 @@ const { authLimiter, resetLimiter } = require('../middleware/rateLimiter');
 
 router.post('/register', authLimiter, [
   body('email').isEmail().normalizeEmail(),
-  body('phone').trim().notEmpty().withMessage('Phone number is required')
+  body('phone').optional({ values: 'falsy' }).trim()
     .isLength({ min: 6, max: 20 }).withMessage('Phone number must be 6-20 characters'),
   body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
     .matches(/[a-zA-Z]/).withMessage('Password must contain at least one letter')

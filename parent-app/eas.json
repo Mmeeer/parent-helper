@@ -9,6 +9,9 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk"
+      },
+      "ios": {
+        "simulator": false
       }
     },
     "production": {
@@ -20,6 +23,9 @@
           "disabled": false,
           "key": "v2-clean-native"
         }
+      },
+      "ios": {
+        "image": "latest"
       }
     }
   },
@@ -30,6 +36,13 @@
         "track": "production",
         "releaseStatus": "draft",
         "changesNotSentForReview": false
+      },
+      "ios": {
+        "appleTeamId": "2R68Z37544",
+        "ascAppId": "6802229006",
+        "ascApiKeyPath": "./asc-api-key.p8",
+        "ascApiKeyIssuerId": "70a1985a-c2f0-475c-a86c-5c2ee5bdc7e4",
+        "ascApiKeyId": "4RX2G9R256"
       }
     }
   }

@@ -1,0 +1,3 @@
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "Prime Kids shares this device's location with your parent so they can see where you are and get an alert if you leave a safe zone. Location is used in the background so it keeps working when the app is closed.";
+"NSLocationWhenInUseUsageDescription" = "Prime Kids shares this device's location with your parent so they can see where you are.";
+"CFBundleDisplayName" = "Prime Kids";

@@ -1,128 +1,69 @@
-# Prime Kids — App Store Metadata
+# Prime Kids: Child — App Store Metadata (com.parenthelper.child · ASC Apple ID 6802229430)
 
 ## App Information
 
-- **App Name:** Prime Kids
-- **Subtitle:** Child Safety & Parental Control
-- **Bundle ID:** com.primekids.child
-- **SKU:** PRIMEKIDS-CHILD-001
-- **Primary Category:** Utilities
-- **Secondary Category:** Lifestyle
+- **Name:** Prime Kids: Child
+- **Subtitle (30):** Child safety companion
+- **Bundle ID:** com.parenthelper.child · **SKU:** PRIMEKIDS-CHILD-001
+- **Primary Category:** Utilities · **Secondary:** Lifestyle
 - **Content Rights:** Does not contain third-party content
-- **Age Rating:** 4+ (No objectionable content)
-- **Price:** Free
+- **Age Rating:** answer the questionnaire truthfully → expected **4+**; "Parental controls" = Yes; no unrestricted web access (Safari filtering is via extension, app has no browser)
+- **Made for Kids / Kids Category:** No
+- **Price:** Free · **In-App Purchases:** None
+- **Copyright:** © 2026 Ulzii Uyalagt Systems LLC
+- **Company name shown on store:** Prime Kids
 
----
+## Version 1.0.0 (build 1) · iOS 16.0+ · iPhone only
 
-## Version Information
+### Promotional text (170)
+Keep your child safe with Prime Kids. Location sharing, safe-zone alerts, an SOS button, screen-time rules and Safari filtering — all managed by the parent app.
 
-- **Version:** 1.0.0
-- **Build:** 1
-- **Minimum OS:** iOS 16.0
-- **Devices:** iPhone
+### Description
+Prime Kids: Child is the companion app that a parent or guardian installs on their child's iPhone. It pairs with **Prime Kids: Parent Helper** on the parent's phone so the family can stay safe together.
 
----
+**How it works**
+1. Install Prime Kids: Parent Helper on the parent's phone and create an account.
+2. Install Prime Kids: Child on the child's iPhone.
+3. Enter the pairing code from the parent app, then grant the requested permissions.
 
-## App Store Description
+**What parents get**
+• Location sharing — see where the child's device is, with alerts when it enters or leaves a safe zone you define.
+• SOS button — the child holds the button to send an alert with their location.
+• Screen-time rules — pick which apps and categories are managed (right on the child's iPhone, protected by a parent PIN), set a daily limit and bedtime or school schedules. Rules are enforced with Apple's Screen Time framework and shown as a Prime Kids shield.
+• Pause the device — temporarily shield all apps from the parent app.
+• Safari filtering — block websites by category or by domain with the Prime Kids Safari extension.
+• Ask parent — the child can request more time from the shield; the parent gets a notification.
+• English and Mongolian.
 
-### Short Description (Promotional Text — 170 chars)
-Keep your child safe with Prime Kids. Real-time location tracking, screen time management, web filtering, and SOS alerts — all managed by the parent companion app.
+**Good to know (iPhone)**
+• Web filtering applies to Safari only. Other browsers are not filtered.
+• Screen-time enforcement uses Apple's Screen Time; a parent or guardian authorises it once on the child's device.
+• Remote "lock" is not possible on iPhone — Prime Kids offers "pause", which shields all apps.
+• The parent can unpair the device from the parent app at any time.
 
-### Full Description
-Prime Kids is a child safety companion app that works with the Prime Kids: Parent Helper app to keep children safe in the digital world.
+**Privacy**
+Location, device status and screen-time summaries are visible only to the paired parent account. No ads, no tracking, no data sales. Privacy policy: https://primekids.masterclass.mn/parent-helper/legal/privacy-policy.html
 
-**How It Works**
-This app is installed on your child's device and pairs with the Parent Helper app on the parent/guardian's phone. Once paired, parents can monitor and manage their child's device usage remotely.
+Support: https://primekids.masterclass.mn/parent-helper/support.html
 
-**Key Features**
+### Keywords (100)
+parental control,child safety,screen time,family,location,kids,safe zone,SOS,web filter,monitor
 
-• Real-Time Location Tracking — Parents can see their child's location at any time and receive alerts when they enter or leave designated safe zones (geofences).
+### URLs
+- Privacy Policy: https://primekids.masterclass.mn/parent-helper/legal/privacy-policy.html
+- Support: https://primekids.masterclass.mn/parent-helper/support.html
+- Marketing (optional): https://primekids.masterclass.mn/parent-helper/support.html
 
-• Screen Time Management — Set daily screen time limits and schedules. The app enforces these limits using Apple's built-in Screen Time framework (FamilyControls).
+### Screenshots (iPhone 6.9" 1320×2868 — 5 shots; ASC downscales for smaller sizes)
+1. Pairing — code entry
+2. Onboarding — "Share location with your parent" step
+3. Dashboard — Device Protected + SOS button
+4. Parent settings — Manage apps & categories (FamilyActivityPicker sheet)
+5. Prime Kids shield ("Bedtime") on a shielded app
 
-• Web Content Filtering — Block inappropriate websites through Safari Content Blocker. Parents define blocked URL patterns from the Parent Helper app.
+### App Review Information
+- Sign-in required: **Yes** (parent app) — see `APPLE_REVIEW_NOTES.md` §5 for the paste-ready notes, demo account `review@parenthelper.com / ReviewTest2026!`, pairing code `PRIME888`.
+- Contact: ub1o1genko@gmail.com + phone of the account holder.
+- Attachment (optional but recommended): 60–90 s screen recording of pairing → onboarding → shield.
 
-• SOS Emergency Button — Children can press and hold the SOS button to instantly alert their parent with their current GPS location.
-
-• Activity Reports — Parents receive daily and weekly summaries of their child's device usage, including app usage duration and web browsing activity.
-
-• Push Notifications — Real-time alerts for important events like SOS signals, geofence breaches, and device going offline.
-
-**Privacy & Safety**
-• All data is encrypted in transit and at rest
-• Only the paired parent/guardian can access the child's data
-• No advertising or third-party data sharing
-• Compliant with COPPA (Children's Online Privacy Protection Act)
-• The child cannot uninstall or disable the app without parent approval
-
-**Requirements**
-• iOS 16.0 or later
-• The parent/guardian must install the "Prime Kids: Parent Helper" companion app
-• An active internet connection on both devices
-• Location Services must be enabled
-
-**Setup**
-1. Install Prime Kids: Parent Helper on the parent's device
-2. Install Prime Kids on the child's device
-3. Create an account in the Parent Helper app
-4. Pair the child's device using the QR code or pairing code displayed in the child app
-
-For support, contact support@parenthelper.com
-
-### Keywords (100 chars max)
-parental control,child safety,screen time,location tracker,family,kids,web filter,SOS,monitor
-
----
-
-## Privacy Policy URL
-https://parenthelper.com/legal/privacy-policy.html
-
-## Support URL
-https://parenthelper.com/support
-
-## Marketing URL
-https://parenthelper.com
-
----
-
-## Screenshots Required
-
-### iPhone 6.7" (iPhone 15 Pro Max) — Required
-1. **Pairing Screen** — Shows QR code / pairing code entry with "Pair with Parent" heading
-2. **Dashboard** — Main dashboard showing connection status, location, and activity summary
-3. **SOS Button** — Emergency SOS hold-to-activate screen
-4. **Location Active** — Status screen showing location sharing is active
-5. **Content Blocked** — Safari blocked content notification example
-
-### iPhone 6.1" (iPhone 15 Pro) — Required
-Same 5 screenshots at 6.1" resolution
-
-### iPad 12.9" — Optional (if supporting tablet)
-Not required — app is iPhone only
-
-### Screenshot Specifications
-- Format: PNG or JPEG
-- 6.7" display: 1290 x 2796 pixels
-- 6.1" display: 1179 x 2556 pixels
-- No alpha channel, no rounded corners
-
----
-
-## App Review Information
-
-### Contact Information
-- First Name: [Developer First Name]
-- Last Name: [Developer Last Name]
-- Phone: [Developer Phone]
-- Email: support@parenthelper.com
-
-### Demo Account
-- Not applicable — the app uses device pairing, not user login
-
-### Notes for Review
-See APPLE_REVIEW_NOTES.md for detailed review notes explaining the app's parental control purpose, FamilyControls usage, and consent flows.
-
----
-
-## App Clip / In-App Purchases
-- None
+### App Privacy → see `PrivacyNutritionLabels.md`

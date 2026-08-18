@@ -7,15 +7,22 @@ struct DashboardView: View {
     @ObservedObject private var notificationManager = NotificationManager.shared
 
     @State private var showPermissions = false
+    @State private var safariEnabled = false
 
     var body: some View {
+        NavigationView { content }
+        .navigationViewStyle(.stack)
+    }
+
+    private var content: some View {
         ScrollView {
             VStack(spacing: 24) {
                 // Header
                 VStack(spacing: 8) {
-                    Image(systemName: "shield.checkered")
-                        .font(.system(size: 48))
-                        .foregroundColor(Color("Primary"))
+                    Image("LogoMark")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 64, height: 64)
 
                     Text("Device Protected")
                         .font(.headline)
@@ -35,6 +42,19 @@ struct DashboardView: View {
                     .cornerRadius(20)
                 }
                 .padding(.top, 20)
+
+                // Restriction banner (paused / bedtime / limit)
+                if let banner = restrictionBanner {
+                    HStack(spacing: 12) {
+                        Image(systemName: banner.icon).foregroundColor(.white)
+                        Text(banner.text).font(.subheadline.weight(.semibold)).foregroundColor(.white)
+                        Spacer()
+                    }
+                    .padding(16)
+                    .background(Color("Primary"))
+                    .cornerRadius(16)
+                    .padding(.horizontal, 16)
+                }
 
                 // SOS Button
                 SOSButton()
@@ -126,26 +146,21 @@ struct DashboardView: View {
 
                 // Status items
                 VStack(spacing: 0) {
-                    statusRow(
-                        icon: "location.fill",
-                        title: "Location",
-                        status: locationManager.isAuthorized ? "Active" : "Off",
-                        isActive: locationManager.isAuthorized
-                    )
+                    statusRow(icon: "location.fill", title: "Location",
+                              status: locationManager.isAuthorized ? LocalizedStringKey("Active") : LocalizedStringKey("Off"),
+                              isActive: locationManager.isAuthorized)
                     Divider().padding(.leading, 48)
-                    statusRow(
-                        icon: "bell.fill",
-                        title: "Notifications",
-                        status: notificationManager.isAuthorized ? "Active" : "Off",
-                        isActive: notificationManager.isAuthorized
-                    )
+                    statusRow(icon: "bell.fill", title: "Notifications",
+                              status: notificationManager.isAuthorized ? LocalizedStringKey("Active") : LocalizedStringKey("Off"),
+                              isActive: notificationManager.isAuthorized)
                     Divider().padding(.leading, 48)
-                    statusRow(
-                        icon: "hourglass",
-                        title: "Screen Time",
-                        status: screenTimeManager.isAuthorized ? "Active" : "Not Set Up",
-                        isActive: screenTimeManager.isAuthorized
-                    )
+                    statusRow(icon: "hourglass", title: "Screen Time",
+                              status: screenTimeManager.isAuthorized ? LocalizedStringKey("Active") : LocalizedStringKey("Not Set Up"),
+                              isActive: screenTimeManager.isAuthorized)
+                    Divider().padding(.leading, 48)
+                    statusRow(icon: "safari.fill", title: "Safari filtering",
+                              status: safariEnabled ? LocalizedStringKey("Active") : LocalizedStringKey("Off"),
+                              isActive: safariEnabled)
                 }
                 .background(Color(.systemBackground))
                 .cornerRadius(16)
@@ -156,14 +171,39 @@ struct DashboardView: View {
             }
         }
         .background(Color(.systemGroupedBackground))
-        .sheet(isPresented: $showPermissions) {
-            PermissionsSheet()
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Image("LogoMark").resizable().scaledToFit().frame(height: 24)
+            }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                NavigationLink(destination: SettingsView()) {
+                    Image(systemName: "gearshape").accessibilityLabel(Text("Settings"))
+                }
+            }
+        }
+        .fullScreenCover(isPresented: $showPermissions) {
+            OnboardingView { showPermissions = false }
         }
         .onAppear {
             Task {
                 await ruleManager.refreshRules()
+                safariEnabled = await ContentBlockerService.shared.isEnabled()
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+            Task { safariEnabled = await ContentBlockerService.shared.isEnabled() }
+        }
+    }
+
+    private struct Banner { let icon: String; let text: LocalizedStringKey }
+
+    private var restrictionBanner: Banner? {
+        let d = AppGroup.defaults
+        if d.bool(forKey: SharedKeys.devicePaused) { return Banner(icon: "pause.circle.fill", text: "Your parent paused this device") }
+        if d.string(forKey: SharedKeys.activeScheduleName) != nil || ruleManager.isCurrentlyBlocked { return Banner(icon: "moon.zzz.fill", text: "Quiet time — apps are limited right now") }
+        if d.bool(forKey: SharedKeys.dailyLimitReached) { return Banner(icon: "hourglass.bottomhalf.filled", text: "Daily screen time limit reached") }
+        return nil
     }
 
     private var progressColor: Color {
@@ -174,10 +214,10 @@ struct DashboardView: View {
     }
 
     private var needsPermissions: Bool {
-        !locationManager.isAuthorized || !notificationManager.isAuthorized
+        !locationManager.isAuthorized || !notificationManager.isAuthorized || !screenTimeManager.isAuthorized
     }
 
-    private func statusRow(icon: String, title: String, status: String, isActive: Bool) -> some View {
+    private func statusRow(icon: String, title: LocalizedStringKey, status: LocalizedStringKey, isActive: Bool) -> some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .frame(width: 24)
@@ -198,48 +238,5 @@ struct DashboardView: View {
         let m = min % 60
         if h > 0 { return "\(h)h \(m)m" }
         return "\(m)m"
-    }
-}
-
-// MARK: - Permissions Sheet
-
-struct PermissionsSheet: View {
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        NavigationView {
-            List {
-                Section {
-                    Button {
-                        LocationManager.shared.requestAlwaysAuthorization()
-                    } label: {
-                        Label("Location (Always)", systemImage: "location.fill")
-                    }
-
-                    Button {
-                        Task { await NotificationManager.shared.requestPermission() }
-                    } label: {
-                        Label("Notifications", systemImage: "bell.fill")
-                    }
-
-                    Button {
-                        Task { await ScreenTimeManager.shared.requestAuthorization() }
-                    } label: {
-                        Label("Screen Time", systemImage: "hourglass")
-                    }
-                } header: {
-                    Text("Required Permissions")
-                } footer: {
-                    Text("These permissions allow Prime Kids to monitor and protect this device.")
-                }
-            }
-            .navigationTitle("Permissions")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
-                }
-            }
-        }
     }
 }

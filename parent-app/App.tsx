@@ -20,8 +20,8 @@ import type { NavigationContainerRef } from '@react-navigation/native';
 export const navigationRef = React.createRef<NavigationContainerRef<any>>();
 
 export default function App() {
-  const notificationListener = useRef<any>();
-  const responseListener = useRef<any>();
+  const notificationListener = useRef<any>(null);
+  const responseListener = useRef<any>(null);
 
   const [fontsLoaded, setFontsLoaded] = React.useState(false);
   const [i18nReady, setI18nReady] = React.useState(false);

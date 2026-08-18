@@ -29,7 +29,6 @@
 | Multi-child support | ✅ | ✅ |
 | Push notifications | ✅ | ✅ |
 | Device pairing | ✅ | ✅ |
-| Sign in with Apple | ❌ | ✅ iOS exclusive |
 
 ---
 
@@ -106,7 +105,6 @@ On Android, parents can see a full log of websites the child visited and which w
 
 These features are exclusive to the iOS version:
 
-- **Sign in with Apple** — Required by Apple when social login is offered. Provides a fast, private sign-in option.
 - **Apple Push Notification service (APNs)** — Reliable push notifications through Apple's native notification system.
 - **Native Apple Family Sharing integration** — Works with Apple's built-in family management system for parental authorization.
 

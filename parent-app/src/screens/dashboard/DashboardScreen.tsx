@@ -1,18 +1,19 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, ScrollView, RefreshControl, Pressable,
-  Text, TouchableOpacity, ActivityIndicator, TextInput, Alert, Linking,
+  Text, TouchableOpacity, ActivityIndicator, TextInput, Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { showError } from '../../utils/showError';
+import { isIosOnly } from '../../utils/platform';
 import * as api from '../../services/api';
 import { onSocketEvent } from '../../services/socket';
 import { useAuth } from '../../store/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { C } from '../../theme';
-import type { Child, Alert as AlertType, RootStackParamList } from '../../types';
+import type { Child, Alert as AlertType, DeviceStatus, RootStackParamList } from '../../types';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 type Props = {
@@ -21,7 +22,7 @@ type Props = {
 
 export default function HomeScreen({ navigation }: Props) {
   const { top } = useSafeAreaInsets();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const [children, setChildren] = useState<Child[]>([]);
   const [alerts, setAlerts] = useState<AlertType[]>([]);
@@ -31,6 +32,10 @@ export default function HomeScreen({ navigation }: Props) {
   const [subKey, setSubKey] = useState('');
   const [subLoading, setSubLoading] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
+  // "New app installed" approvals are Android-only; hide the card when every device is an iPhone.
+  const [iosOnly, setIosOnly] = useState(false);
+  // Per-child device list (used for the online/offline pill on each child card).
+  const [devicesByChild, setDevicesByChild] = useState<Record<string, DeviceStatus[]>>({});
 
   const loadData = useCallback(async () => {
     try {
@@ -44,6 +49,13 @@ export default function HomeScreen({ navigation }: Props) {
       setAlerts(alertsData.alerts);
       setSubscription(subData);
       setPendingCount(approvalsData.length);
+      const perChild = await Promise.all(
+        childrenData.map((c) => api.getChildDevices(c._id).catch(() => [] as DeviceStatus[])),
+      );
+      const byChild: Record<string, DeviceStatus[]> = {};
+      childrenData.forEach((c, i) => { byChild[c._id] = perChild[i]; });
+      setDevicesByChild(byChild);
+      setIosOnly(isIosOnly(perChild.flat()));
     } catch (err) {
       showError(err, 'Failed to load data.');
     } finally {
@@ -76,16 +88,6 @@ export default function HomeScreen({ navigation }: Props) {
     }
   };
 
-  const openTutorialVideo = () => {
-    Linking.openURL('https://www.youtube.com').catch(() => {});
-  };
-
-  const openMessenger = () => {
-    Linking.openURL('https://m.me/').catch(() => {
-      Linking.openURL('https://www.messenger.com').catch(() => {});
-    });
-  };
-
   const isActive = subscription?.active ?? false;
   const sub = subscription?.subscription;
   const canAddChild = isActive && (sub ? sub.currentKids < sub.maxKids : true);
@@ -102,7 +104,19 @@ export default function HomeScreen({ navigation }: Props) {
   };
 
   const formatExpiry = (d: string) =>
-    new Date(d).toLocaleDateString('mn-MN', { month: 'short', day: 'numeric', year: 'numeric' });
+    new Date(d).toLocaleDateString(i18n.language === 'mn' ? 'mn-MN' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+  /** Connection pill for a child card: online / offline / not connected. */
+  const getChildConnection = (childId: string): { label: string; dotClass: string; textClass: string } => {
+    const devices = devicesByChild[childId] ?? [];
+    if (devices.length === 0) {
+      return { label: t('common.notConnected'), dotClass: 'bg-gray-300', textClass: 'text-gray-400' };
+    }
+    const online = devices.some((d) => d.status === 'online');
+    return online
+      ? { label: t('common.online'), dotClass: 'bg-safe-500', textClass: 'text-safe-600' }
+      : { label: t('common.offline'), dotClass: 'bg-gray-300', textClass: 'text-gray-400' };
+  };
 
   if (loading) {
     return (
@@ -159,7 +173,7 @@ export default function HomeScreen({ navigation }: Props) {
               <View style={{ backgroundColor: C.safe400, height: '100%', width: `${getUsedPct() * 100}%`, borderRadius: 4 }} />
             </View>
             <Text className="text-[10px] mt-0.5 text-nest-200">
-              Премиум · {formatExpiry(sub.expiresAt)}
+              {t('dashboard.premium')} · {formatExpiry(sub.expiresAt)}
             </Text>
           </View>
         ) : (
@@ -194,19 +208,10 @@ export default function HomeScreen({ navigation }: Props) {
           </View>
         )}
 
-        {/* ── Tutorial video + steps + messenger (inactive) ─ */}
+        {/* ── Setup steps (inactive) ──────────────────── */}
         {!isActive && (
           <>
             <Text className="text-xs text-gray-400 font-bold uppercase tracking-wide mb-4">{t('dashboard.tutorial')}</Text>
-
-            {/* Video thumbnail */}
-            <TouchableOpacity onPress={openTutorialVideo} activeOpacity={0.8} className="mb-5">
-              <View className="bg-white rounded-3xl border border-gray-100 overflow-hidden items-center justify-center aspect-video">
-                <View className="w-12 h-12 rounded-full border border-gray-200 items-center justify-center">
-                  <Ionicons name="play" size={22} color={C.gray400} style={{ marginLeft: 3 }} />
-                </View>
-              </View>
-            </TouchableOpacity>
 
             {/* Steps */}
             <View className="bg-white rounded-3xl border border-gray-100 p-5 mb-4">
@@ -227,20 +232,6 @@ export default function HomeScreen({ navigation }: Props) {
                 </React.Fragment>
               ))}
             </View>
-
-            {/* Messenger / Support card */}
-            <TouchableOpacity onPress={openMessenger} activeOpacity={0.85}>
-              <View className="rounded-3xl border border-gray-100 p-5 flex-row items-center gap-4 bg-nest-50">
-                <View className="w-10 h-10 rounded-full items-center justify-center shrink-0 bg-nest-100">
-                  <Ionicons name="chatbubble-ellipses-outline" size={20} color={C.nest500} />
-                </View>
-                <View className="flex-1">
-                  <Text className="text-sm font-semibold text-gray-900">{t('dashboard.help')}</Text>
-                  <Text className="text-xs text-gray-400 mt-0.5">{t('dashboard.messengerHelp')}</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={C.gray300} />
-              </View>
-            </TouchableOpacity>
           </>
         )}
 
@@ -295,10 +286,15 @@ export default function HomeScreen({ navigation }: Props) {
                         <Text className="text-xs text-gray-400 mt-1">{child.age} {t('common.age')}</Text>
                       </View>
                       <View className="flex-row items-center gap-3">
-                        <View className="bg-gray-100 px-2.5 py-1 rounded-full flex-row items-center gap-1.5">
-                          <View className="w-2 h-2 rounded-full bg-gray-300" />
-                          <Text className="text-[10px] text-gray-400 font-semibold">Offline</Text>
-                        </View>
+                        {(() => {
+                          const conn = getChildConnection(child._id);
+                          return (
+                            <View className="bg-gray-100 px-2.5 py-1 rounded-full flex-row items-center gap-1.5">
+                              <View className={`w-2 h-2 rounded-full ${conn.dotClass}`} />
+                              <Text className={`text-[10px] font-semibold ${conn.textClass}`}>{conn.label}</Text>
+                            </View>
+                          );
+                        })()}
                         <Ionicons name="chevron-forward" size={16} color={C.gray300} />
                       </View>
                     </View>
@@ -322,6 +318,7 @@ export default function HomeScreen({ navigation }: Props) {
                   </View>
                 )}
               </Pressable>
+              {!iosOnly && (
               <Pressable
                 className="flex-1"
                 onPress={() => navigation.getParent()?.navigate('Approvals')}
@@ -336,6 +333,7 @@ export default function HomeScreen({ navigation }: Props) {
                   </View>
                 )}
               </Pressable>
+              )}
             </View>
 
             {canAddChild && (

@@ -8,9 +8,11 @@
  *     account unlocked, no pending deletion.
  *   • An ACTIVE 12-month SubscriptionKey (maxKids 5) linked to that user, with
  *     its expiry pushed 12 months out on every run so it never lapses mid-review.
- *   • Two demo children + default Rules, one already-paired demo Device, and
- *     demo Geofences / ActivityLogs / Alerts so the parent dashboard looks like
- *     a real, populated account the moment the reviewer logs in.
+ *   • Two demo children + default Rules, two already-paired demo Devices (an
+ *     Android phone on the first child, an iPhone on the second so the parent
+ *     app's iOS-gated UI is visible to reviewers), and demo Geofences /
+ *     ActivityLogs / Alerts so the parent dashboard looks like a real,
+ *     populated account the moment the reviewer logs in.
  *
  * The reusable demo pairing code itself is NOT seeded as a Device — it is
  * matched from env (REVIEW_DEMO_PAIRING_CODE) in devicesController so it is
@@ -137,6 +139,49 @@ const ymd = (d) => d.toISOString().slice(0, 10);
   await device.save();
   console.log('[seed] paired demo device:', String(device._id));
 
+  // ── 4b. Paired iOS demo device for the second child ─────────────────────
+  // Lets reviewers see the iOS-gated parent UI (Screen Time selection, no
+  // installed-apps picker, etc.). One paired device per kid, so this only
+  // happens when a second demo child exists.
+  const iosChild = kids[1] || null;
+  let iosDevice = null;
+  if (!iosChild) {
+    console.log('[seed] only one demo child — skipping iOS demo device');
+  } else {
+    iosDevice = await Device.findOne({ childId: iosChild._id, parentId: user._id, paired: true });
+    if (!iosDevice) {
+      iosDevice = new Device({ childId: iosChild._id, parentId: user._id, paired: true });
+    }
+    iosDevice.paired = true;
+    iosDevice.platform = 'ios';
+    iosDevice.model = 'iPhone 15';
+    iosDevice.osVersion = '17.5';
+    iosDevice.appVersion = '1.0.0';
+    iosDevice.status = 'online';
+    iosDevice.lastSeen = new Date();
+    if (!iosDevice.deviceToken) iosDevice.deviceToken = crypto.randomBytes(32).toString('hex');
+    iosDevice.pairingCode = undefined;
+    iosDevice.pairingExpiresAt = undefined;
+    iosDevice.installedApps = []; // iOS cannot enumerate installed apps
+    await iosDevice.save();
+
+    // iOS-shaped rule fields so the parent app has something to render.
+    await Rule.findOneAndUpdate(
+      { childId: iosChild._id },
+      {
+        $set: {
+          iosBlockSelected: true,
+          'iosSelection.appCount': 3,
+          'iosSelection.categoryCount': 1,
+          'iosSelection.webDomainCount': 2,
+          'iosSelection.updatedAt': new Date(),
+        },
+      },
+      { upsert: true, setDefaultsOnInsert: true },
+    );
+    console.log('[seed] paired iOS demo device:', String(iosDevice._id), 'on', iosChild.name);
+  }
+
   // ── 5. Demo dashboard data (rebuilt fresh each run) ─────────────────────
   await Promise.all([
     Geofence.deleteMany({ parentId: user._id }),
@@ -177,6 +222,21 @@ const ymd = (d) => d.toISOString().slice(0, 10);
         { type: 'app', target: 'com.example.casino', timestamp: day },
       ],
     });
+  }
+  if (iosDevice) {
+    for (let d = 0; d < 3; d++) {
+      const day = new Date(Date.now() - d * 86400000);
+      logs.push({
+        childId: iosChild._id,
+        deviceId: iosDevice._id,
+        date: ymd(day),
+        apps: [], // iOS does not expose per-app usage
+        web: [{ url: 'https://en.wikipedia.org', timestamp: day, blocked: false }],
+        location: [{ lat: HOME.lat, lng: HOME.lng, timestamp: new Date(day.setHours(8, 0, 0, 0)) }],
+        blockedAttempts: [{ type: 'shield', target: 'Selected apps', timestamp: day }],
+        screenTime: { limitReachedAt: new Date(day.setHours(19, 30, 0, 0)), shieldEvents: 2 + d },
+      });
+    }
   }
   await ActivityLog.insertMany(logs);
 

@@ -11,14 +11,16 @@ import {
   TouchableOpacity,
   Pressable,
   Image,
+  Switch,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import * as api from '../../services/api';
 import type { RouteProp } from '@react-navigation/native';
-import type { RootStackParamList } from '../../types';
+import type { RootStackParamList, IosSelectionSummary } from '../../types';
 import type { InstalledApp } from '../../services/api';
+import { isIosChild } from '../../utils/platform';
 import { C } from '../../theme';
 
 type Props = {
@@ -34,6 +36,10 @@ export default function AppRulesScreen({ route }: Props) {
   const [loading, setLoading] = useState(true);
   const [pickerVisible, setPickerVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  // iOS child: apps are picked on the iPhone (FamilyActivityPicker); we only toggle blocking here.
+  const [iosChild, setIosChild] = useState(false);
+  const [iosBlockSelected, setIosBlockSelected] = useState(false);
+  const [iosSelection, setIosSelection] = useState<IosSelectionSummary | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -45,8 +51,18 @@ export default function AppRulesScreen({ route }: Props) {
     try {
       const rules = await api.getRules(childId);
       const blocked = rules.blockedApps || [];
+      setIosBlockSelected(Boolean(rules.iosBlockSelected));
+      setIosSelection(rules.iosSelection ?? null);
 
       const devices = await api.getChildDevices(childId);
+      const ios = isIosChild(devices);
+      setIosChild(ios);
+      if (ios) {
+        // No package-name app list on iOS; keep any stored Android entries untouched on save.
+        setInstalledApps([]);
+        setBlockedApps(blocked.map(pkg => ({ packageName: pkg, appName: pkg })));
+        return;
+      }
       let allApps: InstalledApp[] = [];
       for (const device of devices) {
         try {
@@ -98,7 +114,11 @@ export default function AppRulesScreen({ route }: Props) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await api.updateBlockedApps(childId, blockedApps.map(a => a.packageName));
+      if (iosChild) {
+        await api.updateBlockedApps(childId, blockedApps.map(a => a.packageName), { iosBlockSelected });
+      } else {
+        await api.updateBlockedApps(childId, blockedApps.map(a => a.packageName));
+      }
       Alert.alert(t('appRules.saved'), t('appRules.savedDesc'));
     } catch (error: any) {
       Alert.alert(t('common.error'), error.message || t('appRules.updateError'));
@@ -126,6 +146,36 @@ export default function AppRulesScreen({ route }: Props) {
           </Text>
         </View>
 
+        {iosChild ? (
+        <View className="bg-white rounded-3xl p-5 mx-4 mb-3 border border-gray-100 shadow-sm">
+          <Text className="text-xs text-gray-400 font-bold uppercase mb-3">{t('appRules.blockedApps')}</Text>
+          <View className="flex-row items-start gap-x-3 mb-4">
+            <View className="w-9 h-9 rounded-xl justify-center items-center bg-nest-50">
+              <Ionicons name="logo-apple" size={18} color={C.nest500} />
+            </View>
+            <View className="flex-1">
+              <Text className="text-sm font-display font-bold text-gray-900 mb-1">{t('appRules.iosSelectionTitle')}</Text>
+              <Text className="text-xs text-gray-400 leading-4">{t('appRules.iosSelectionDesc')}</Text>
+            </View>
+          </View>
+
+          {iosSelection && (
+            <Text className="text-xs text-gray-500 mb-3">
+              {t('appRules.iosSelectionCount', { apps: iosSelection.appCount, categories: iosSelection.categoryCount })}
+            </Text>
+          )}
+
+          <View className="flex-row justify-between items-center py-3 border-t border-gray-100">
+            <Text className="text-sm text-gray-900">{t('appRules.iosBlockSelected')}</Text>
+            <Switch
+              value={iosBlockSelected}
+              onValueChange={setIosBlockSelected}
+              trackColor={{ true: C.safe500, false: C.gray200 }}
+              thumbColor="#FFFFFF"
+            />
+          </View>
+        </View>
+        ) : (
         <View className="bg-white rounded-3xl p-5 mx-4 mb-3 border border-gray-100 shadow-sm">
           <Text className="text-xs text-gray-400 font-bold uppercase mb-3">{t('appRules.blockedApps')}</Text>
           <Text className="text-sm font-display font-bold text-gray-900 mb-1">{t('appRules.blockedAppsTitle')}</Text>
@@ -176,6 +226,7 @@ export default function AppRulesScreen({ route }: Props) {
             ))
           )}
         </View>
+        )}
 
         <TouchableOpacity
           onPress={handleSave}

@@ -1,0 +1,11 @@
+# Xcode
+xcuserdata/
+*.xcuserstate
+DerivedData/
+build/
+*.xcarchive
+*.ipa
+*.dSYM.zip
+# SwiftPM resolved state lives in the project; keep it. Ignore local package checkouts.
+.build/
+.swiftpm/

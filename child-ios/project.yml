@@ -1,0 +1,162 @@
+# XcodeGen spec — regenerate the project with:  cd child-ios && xcodegen generate
+# (brew install xcodegen). PrimeKidsChild.xcodeproj is a build artifact of this file.
+name: PrimeKidsChild
+options:
+  bundleIdPrefix: com.parenthelper
+  developmentLanguage: en
+  deploymentTarget:
+    iOS: "16.0"
+  xcodeVersion: "16.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: false
+  groupSortPosition: top
+
+configs:
+  Debug: debug
+  Release: release
+
+configFiles:
+  Debug: Config/Debug.xcconfig
+  Release: Config/Release.xcconfig
+
+packages:
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk
+    from: "11.0.0"
+
+settings:
+  base:
+    DEVELOPMENT_TEAM: 2R68Z37544
+    CODE_SIGN_STYLE: Automatic
+    TARGETED_DEVICE_FAMILY: "1"
+    SWIFT_VERSION: "5.9"
+
+targets:
+  # ── Main app ────────────────────────────────────────────────────────────────
+  PrimeKidsChild:
+    type: application
+    platform: iOS
+    sources:
+      - path: PrimeKidsChild
+        excludes:
+          - "Info.plist"
+          - "PrimeKidsChild.entitlements"
+      - path: Shared
+        excludes:
+          - "PrivacyInfo-Extension.xcprivacy"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.parenthelper.child
+        PRODUCT_NAME: PrimeKidsChild
+        INFOPLIST_FILE: PrimeKidsChild/Info.plist
+        CODE_SIGN_ENTITLEMENTS: PrimeKidsChild/PrimeKidsChild.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        SUPPORTS_MACCATALYST: NO
+        OTHER_LDFLAGS: -ObjC
+    dependencies:
+      - target: ContentBlocker
+      - target: DeviceActivityMonitorExtension
+      - target: ShieldConfigurationExtension
+      - target: ShieldActionExtension
+      - package: Firebase
+        product: FirebaseMessaging
+      - sdk: FamilyControls.framework
+      - sdk: ManagedSettings.framework
+      - sdk: DeviceActivity.framework
+
+  # ── Safari content blocker ─────────────────────────────────────────────────
+  ContentBlocker:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: ContentBlocker
+        excludes:
+          - "Info.plist"
+          - "ContentBlocker.entitlements"
+      - path: Shared/AppGroup.swift
+      - path: Shared/PrivacyInfo-Extension.xcprivacy
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.parenthelper.child.ContentBlocker
+        INFOPLIST_FILE: ContentBlocker/Info.plist
+        CODE_SIGN_ENTITLEMENTS: ContentBlocker/ContentBlocker.entitlements
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Prime Kids
+        SKIP_INSTALL: YES
+
+  # ── Family Controls extensions ─────────────────────────────────────────────
+  DeviceActivityMonitorExtension:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: DeviceActivityMonitorExtension
+        excludes:
+          - "Info.plist"
+          - "*.entitlements"
+      - path: Shared/AppGroup.swift
+      - path: Shared/PrivacyInfo-Extension.xcprivacy
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.parenthelper.child.DeviceActivityMonitor
+        INFOPLIST_FILE: DeviceActivityMonitorExtension/Info.plist
+        CODE_SIGN_ENTITLEMENTS: DeviceActivityMonitorExtension/DeviceActivityMonitorExtension.entitlements
+        GENERATE_INFOPLIST_FILE: YES
+        SKIP_INSTALL: YES
+    dependencies:
+      - sdk: DeviceActivity.framework
+      - sdk: ManagedSettings.framework
+      - sdk: FamilyControls.framework
+
+  ShieldConfigurationExtension:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: ShieldConfigurationExtension
+        excludes:
+          - "Info.plist"
+          - "*.entitlements"
+      - path: Shared/AppGroup.swift
+      - path: Shared/PrivacyInfo-Extension.xcprivacy
+      - path: PrimeKidsChild/Assets.xcassets   # LogoMark for the shield icon
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.parenthelper.child.ShieldConfiguration
+        INFOPLIST_FILE: ShieldConfigurationExtension/Info.plist
+        CODE_SIGN_ENTITLEMENTS: ShieldConfigurationExtension/ShieldConfigurationExtension.entitlements
+        GENERATE_INFOPLIST_FILE: YES
+        SKIP_INSTALL: YES
+        ASSETCATALOG_COMPILER_APPICON_NAME: ""
+    dependencies:
+      - sdk: ManagedSettings.framework
+      - sdk: ManagedSettingsUI.framework
+
+  ShieldActionExtension:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: ShieldActionExtension
+        excludes:
+          - "Info.plist"
+          - "*.entitlements"
+      - path: Shared/AppGroup.swift
+      - path: Shared/PrivacyInfo-Extension.xcprivacy
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.parenthelper.child.ShieldAction
+        INFOPLIST_FILE: ShieldActionExtension/Info.plist
+        CODE_SIGN_ENTITLEMENTS: ShieldActionExtension/ShieldActionExtension.entitlements
+        GENERATE_INFOPLIST_FILE: YES
+        SKIP_INSTALL: YES
+    dependencies:
+      - sdk: ManagedSettings.framework
+
+schemes:
+  PrimeKidsChild:
+    build:
+      targets:
+        PrimeKidsChild: all
+    run:
+      config: Debug
+    archive:
+      config: Release

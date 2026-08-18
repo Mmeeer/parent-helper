@@ -5,7 +5,20 @@ final class KeychainManager {
     static let shared = KeychainManager()
     private init() {}
 
-    private let service = "com.primekids.child"
+    private let service = "com.parenthelper.child"
+    /// App Group used as keychain access group so extensions can read the device token.
+    /// Unsigned simulator builds have no entitlements, so the access group is omitted there.
+    #if targetEnvironment(simulator)
+    private let accessGroup: String? = nil
+    #else
+    private let accessGroup: String? = AppGroup.identifier
+    #endif
+
+    private func withGroup(_ q: [String: Any]) -> [String: Any] {
+        var q = q
+        if let g = accessGroup { q[kSecAttrAccessGroup as String] = g }
+        return q
+    }
 
     func save(_ value: String, forKey key: String) {
         guard let data = value.data(using: .utf8) else { return }
@@ -14,12 +27,13 @@ final class KeychainManager {
             kSecAttrService as String: service,
             kSecAttrAccount as String: key,
         ]
-        SecItemDelete(query as CFDictionary)
+        SecItemDelete(withGroup(query) as CFDictionary)
 
-        var newItem = query
+        var newItem = withGroup(query)
         newItem[kSecValueData as String] = data
         newItem[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
-        SecItemAdd(newItem as CFDictionary, nil)
+        let status = SecItemAdd(newItem as CFDictionary, nil)
+        if status != errSecSuccess { print("[Keychain] save '\(key)' failed: \(status)") }
     }
 
     func get(_ key: String) -> String? {
@@ -31,8 +45,11 @@ final class KeychainManager {
             kSecMatchLimit as String: kSecMatchLimitOne,
         ]
         var result: AnyObject?
-        let status = SecItemCopyMatching(query as CFDictionary, &result)
-        guard status == errSecSuccess, let data = result as? Data else { return nil }
+        let status = SecItemCopyMatching(withGroup(query) as CFDictionary, &result)
+        guard status == errSecSuccess, let data = result as? Data else {
+            if status != errSecItemNotFound { print("[Keychain] read '\(key)' failed: \(status)") }
+            return nil
+        }
         return String(data: data, encoding: .utf8)
     }
 
@@ -42,7 +59,7 @@ final class KeychainManager {
             kSecAttrService as String: service,
             kSecAttrAccount as String: key,
         ]
-        SecItemDelete(query as CFDictionary)
+        SecItemDelete(withGroup(query) as CFDictionary)
     }
 
     func clear() {
@@ -50,6 +67,6 @@ final class KeychainManager {
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
         ]
-        SecItemDelete(query as CFDictionary)
+        SecItemDelete(withGroup(query) as CFDictionary)
     }
 }

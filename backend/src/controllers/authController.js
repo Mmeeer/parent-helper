@@ -36,7 +36,7 @@ exports.register = async (req, res, next) => {
     const tokenFamily = crypto.randomUUID();
     const verificationCode = crypto.randomInt(100000, 999999).toString();
     const user = new User({
-      email, phone, passwordHash: password, name, tokenFamily,
+      email, phone: phone || null, passwordHash: password, name, tokenFamily,
       emailVerificationCode: verificationCode,
       emailVerificationCodeExpiresAt: new Date(Date.now() + 15 * 60 * 1000),
     });

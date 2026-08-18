@@ -60,6 +60,17 @@ const deviceSchema = new mongoose.Schema({
     unique: true,
     sparse: true,
   },
+  // FCM registration token of the child device itself (iOS: APNs→FCM via Firebase Messaging).
+  // Used to deliver silent "command" pushes when the Socket.IO connection is not alive
+  // (iOS suspends sockets in background). Android child app currently uses sockets only.
+  pushToken: {
+    type: String,
+    default: null,
+  },
+  pushTokenUpdatedAt: {
+    type: Date,
+    default: null,
+  },
   installedApps: [{
     packageName: { type: String, required: true },
     appName: { type: String, required: true },

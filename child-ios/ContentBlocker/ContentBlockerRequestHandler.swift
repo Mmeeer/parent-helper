@@ -1,43 +1,27 @@
 import Foundation
 
-class ContentBlockerRequestHandler: NSObject, NSExtensionRequestHandling {
+/// Safari Content Blocker. Serves the rule list written by the main app
+/// (`ContentBlockerService`) into the shared App Group container; falls back to the
+/// bundled no-op list so the extension always loads.
+final class ContentBlockerRequestHandler: NSObject, NSExtensionRequestHandling {
     func beginRequest(with context: NSExtensionContext) {
-        let attachment = NSItemProvider(
-            contentsOf: getBlockerListURL()
-        )!
-
+        let url = rulesURL()
+        guard let attachment = NSItemProvider(contentsOf: url) else {
+            context.cancelRequest(withError: NSError(domain: "PrimeKids.ContentBlocker", code: 1,
+                                                     userInfo: [NSLocalizedDescriptionKey: "Rules file unreadable"]))
+            return
+        }
         let item = NSExtensionItem()
         item.attachments = [attachment]
         context.completeRequest(returningItems: [item], completionHandler: nil)
     }
 
-    private func getBlockerListURL() -> URL {
-        // Use shared App Group container for rules synced by main app
-        let groupId = "group.com.primekids.child"
-
-        if let containerURL = FileManager.default.containerURL(
-            forSecurityApplicationGroupIdentifier: groupId
-        ) {
-            let fileURL = containerURL.appendingPathComponent("blockerList.json")
-            if FileManager.default.fileExists(atPath: fileURL.path) {
-                return fileURL
-            }
+    private func rulesURL() -> URL {
+        if let container = AppGroup.containerURL {
+            let shared = container.appendingPathComponent("blockerList.json")
+            if FileManager.default.fileExists(atPath: shared.path) { return shared }
         }
-
-        // Fallback to bundled default empty rules
         return Bundle.main.url(forResource: "blockerList", withExtension: "json")
-            ?? createEmptyBlockerList()
-    }
-
-    private func createEmptyBlockerList() -> URL {
-        let tempDir = FileManager.default.temporaryDirectory
-        let fileURL = tempDir.appendingPathComponent("blockerList.json")
-
-        let emptyRules = """
-        [{"action":{"type":"block"},"trigger":{"url-filter":"^$"}}]
-        """
-
-        try? emptyRules.write(to: fileURL, atomically: true, encoding: .utf8)
-        return fileURL
+            ?? FileManager.default.temporaryDirectory.appendingPathComponent("blockerList.json")
     }
 }

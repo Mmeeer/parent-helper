@@ -90,11 +90,16 @@ async function sendAlertNotification(parentId, alert) {
         },
       },
       apns: {
+        headers: { 'apns-priority': '10', 'apns-push-type': 'alert' },
         payload: {
           aps: {
-            sound: isSos ? 'sos_alarm.caf' : 'default',
+            // 'critical' would require Apple's Critical Alerts entitlement (not granted);
+            // 'time-sensitive' breaks through Focus and needs only the Time Sensitive
+            // capability, which the parent app declares. Custom sound file is not bundled
+            // in the iOS parent app yet, so use the default sound.
+            sound: 'default',
             badge: 1,
-            ...(isSos ? { 'interruption-level': 'critical' } : {}),
+            ...(isSos ? { 'interruption-level': 'time-sensitive' } : {}),
           },
         },
       },
@@ -163,6 +168,16 @@ async function sendBatchAlertNotifications(parentId, alerts) {
           channelId: hasSos ? ALERT_CHANNELS.sos : ALERT_CHANNELS.default,
         },
       },
+      apns: {
+        headers: { 'apns-priority': '10', 'apns-push-type': 'alert' },
+        payload: {
+          aps: {
+            sound: 'default',
+            badge: 1,
+            ...(hasSos ? { 'interruption-level': 'time-sensitive' } : {}),
+          },
+        },
+      },
     };
 
     await admin.messaging().sendEachForMulticast({ tokens, ...message });
@@ -171,4 +186,51 @@ async function sendBatchAlertNotifications(parentId, alerts) {
   }
 }
 
-module.exports = { initFirebase, sendAlertNotification, sendBatchAlertNotifications };
+/**
+ * Silent data push to a CHILD device (iOS): wakes the app so it can act on a command
+ * even when its Socket.IO connection is suspended. Payload is data-only:
+ *   { command: 'sync'|'locate'|'lock'|'unlock'|'unpair'|'rules:updated', params: <json string> }
+ * @param {object} device - Device document (needs pushToken, platform, _id)
+ * @param {string} command
+ * @param {object} [params]
+ */
+async function sendDeviceCommand(device, command, params = {}) {
+  if (!device?.pushToken) return false;
+  if (!firebaseInitialized && !initFirebase()) return false;
+
+  const message = {
+    token: device.pushToken,
+    data: {
+      command: String(command),
+      params: JSON.stringify(params || {}),
+      deviceId: String(device._id),
+    },
+    android: { priority: 'high' },
+    apns: {
+      headers: {
+        'apns-push-type': 'background',
+        'apns-priority': '5',
+        'apns-topic': 'com.parenthelper.child',
+      },
+      payload: { aps: { 'content-available': 1 } },
+    },
+  };
+
+  try {
+    await admin.messaging().send(message);
+    console.log(`[FCM] Device command '${command}' pushed to device ${device._id}`);
+    return true;
+  } catch (err) {
+    const code = err?.code || '';
+    if (code === 'messaging/registration-token-not-registered' || code === 'messaging/invalid-registration-token') {
+      const Device = require('../models/Device');
+      await Device.updateOne({ _id: device._id }, { $set: { pushToken: null } }).catch(() => {});
+      console.log(`[FCM] Cleared stale push token for device ${device._id}`);
+    } else {
+      console.error(`[FCM] Device command push failed for ${device._id}:`, err.message);
+    }
+    return false;
+  }
+}
+
+module.exports = { initFirebase, sendAlertNotification, sendBatchAlertNotifications, sendDeviceCommand };

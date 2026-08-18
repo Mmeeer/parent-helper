@@ -216,7 +216,7 @@ export default function GeofenceScreen({ route }: Props) {
             <Marker
               coordinate={{ latitude: g.lat, longitude: g.lng }}
               title={g.name}
-              description={`${g.radiusMeters}м радиус`}
+              description={t('geofence.radiusMeters', { m: g.radiusMeters })}
               pinColor={g.active ? C.nest500 : C.gray400}
             />
             <Circle
@@ -289,7 +289,7 @@ export default function GeofenceScreen({ route }: Props) {
                     className="text-xs font-medium"
                     style={{ color: form.radiusMeters === r ? '#FFFFFF' : C.gray500 }}
                   >
-                    {r}м
+                    {r}{t('common.meters')}
                   </Text>
                 </TouchableOpacity>
               ))}

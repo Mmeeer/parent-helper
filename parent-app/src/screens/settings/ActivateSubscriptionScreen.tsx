@@ -41,7 +41,7 @@ export default function ActivateSubscriptionScreen({ navigation }: Props) {
     try {
       await api.activateSubscription(key.trim());
       Alert.alert(t('common.success'), t('subscription.activated'), [
-        { text: 'За', onPress: () => { loadSubscription(); setKey(''); } },
+        { text: t('common.ok'), onPress: () => { loadSubscription(); setKey(''); } },
       ]);
     } catch (error: any) {
       Alert.alert(t('common.error'), error.message || t('subscription.activateError'));

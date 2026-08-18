@@ -2,7 +2,8 @@ import Foundation
 
 final class PrefsManager {
     static let shared = PrefsManager()
-    private let defaults = UserDefaults.standard
+    // Shared with the app extensions via the App Group container.
+    private let defaults = UserDefaults(suiteName: AppGroup.identifier) ?? .standard
     private let keychain = KeychainManager.shared
 
     private init() {}
@@ -17,7 +18,21 @@ final class PrefsManager {
         }
     }
 
+    /// 4–6 digit PIN chosen by the parent on this device to protect "Parent settings".
+    var parentPin: String? {
+        get { keychain.get("parentPin") }
+        set {
+            if let v = newValue { keychain.save(v, forKey: "parentPin") }
+            else { keychain.delete("parentPin") }
+        }
+    }
+
     // MARK: - UserDefaults (non-sensitive)
+
+    var onboardingCompleted: Bool {
+        get { defaults.bool(forKey: "onboardingCompleted") }
+        set { defaults.set(newValue, forKey: "onboardingCompleted") }
+    }
 
     var deviceId: String? {
         get { defaults.string(forKey: "deviceId") }
@@ -35,7 +50,7 @@ final class PrefsManager {
     }
 
     var serverURL: String {
-        get { defaults.string(forKey: "serverURL") ?? "https://api.primekids.com" }
+        get { defaults.string(forKey: "serverURL") ?? AppConfig.defaultServerURL }
         set { defaults.set(newValue, forKey: "serverURL") }
     }
 
@@ -48,9 +63,14 @@ final class PrefsManager {
         set { defaults.set(newValue, forKey: "apnsToken") }
     }
 
+    var fcmToken: String? {
+        get { defaults.string(forKey: "fcmToken") }
+        set { defaults.set(newValue, forKey: "fcmToken") }
+    }
+
     func clear() {
         keychain.clear()
-        let keys = ["deviceId", "childId", "parentId", "apnsToken"]
+        let keys = ["deviceId", "childId", "parentId", "apnsToken", "fcmToken", "onboardingCompleted"]
         keys.forEach { defaults.removeObject(forKey: $0) }
     }
 }

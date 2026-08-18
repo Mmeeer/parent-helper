@@ -4,8 +4,8 @@ import BackgroundTasks
 final class BackgroundTaskManager {
     static let shared = BackgroundTaskManager()
 
-    static let heartbeatTaskId = "com.primekids.child.heartbeat"
-    static let syncTaskId = "com.primekids.child.activitySync"
+    static let heartbeatTaskId = "com.parenthelper.child.heartbeat"
+    static let syncTaskId = "com.parenthelper.child.activitySync"
 
     private init() {}
 
@@ -50,6 +50,7 @@ final class BackgroundTaskManager {
 
         let syncTask = Task {
             await ActivitySyncService.shared.sendHeartbeat()
+            await CommandHandler.pollQueue()
             task.setTaskCompleted(success: true)
         }
 

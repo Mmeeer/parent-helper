@@ -73,7 +73,7 @@ struct SOSButton: View {
         }
     }
 
-    private var statusText: String {
+    private var statusText: LocalizedStringKey {
         switch status {
         case .idle: return "Hold to alert your parent"
         case .holding: return "Keep holding..."

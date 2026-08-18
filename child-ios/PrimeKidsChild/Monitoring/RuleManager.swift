@@ -7,15 +7,27 @@ final class RuleManager: ObservableObject {
     @Published var dailyUsageMin: Int = 0
 
     private let prefs = PrefsManager.shared
-    private let cacheKey = "cachedRules"
+    private let cacheKey = SharedKeys.cachedRules
 
     private init() {
         loadCachedRules()
+        if Demo.isOn {
+            rules = Rules(
+                screenTime: ScreenTimeRules(dailyLimitMin: 180, perApp: nil, schedule: [
+                    ScheduleRule(days: [0,1,2,3,4,5,6], startTime: "21:30", endTime: "07:00", enabled: true, blocked: true),
+                    ScheduleRule(days: [1,2,3,4,5], startTime: "08:30", endTime: "15:00", enabled: true, blocked: true),
+                ]),
+                blockedApps: nil, iosBlockSelected: true,
+                webFilter: WebFilterRules(categories: ["adult", "gambling", "violence"], customBlock: nil, customAllow: nil)
+            )
+            dailyUsageMin = 80
+        }
     }
 
     // MARK: - Fetch & Cache
 
     func refreshRules() async {
+        if Demo.isOn { return }
         guard let childId = prefs.childId else { return }
         do {
             let newRules = try await APIClient.shared.fetchRules(childId: childId)
@@ -24,6 +36,8 @@ final class RuleManager: ObservableObject {
 
             // Apply to ScreenTimeManager if FamilyControls is available
             ScreenTimeManager.shared.applyRules(newRules)
+            // Rebuild the Safari content-blocker list from the web-filter rules
+            await ContentBlockerService.shared.refreshBlockList(rules: newRules)
         } catch {
             print("[RuleManager] Fetch failed: \(error.localizedDescription)")
         }
@@ -31,12 +45,12 @@ final class RuleManager: ObservableObject {
 
     private func cacheRules(_ rules: Rules) {
         if let data = try? JSONEncoder().encode(rules) {
-            UserDefaults.standard.set(data, forKey: cacheKey)
+            AppGroup.defaults.set(data, forKey: cacheKey)
         }
     }
 
     private func loadCachedRules() {
-        guard let data = UserDefaults.standard.data(forKey: cacheKey),
+        guard let data = AppGroup.defaults.data(forKey: cacheKey),
               let cached = try? JSONDecoder().decode(Rules.self, from: data) else { return }
         rules = cached
     }
@@ -48,15 +62,19 @@ final class RuleManager: ObservableObject {
 
         let now = Date()
         let calendar = Calendar.current
-        let weekday = (calendar.component(.weekday, from: now) + 5) % 7 // Convert to 0=Mon
+        let weekday = calendar.component(.weekday, from: now) - 1 // Calendar: 1=Sun…7=Sat → 0=Sun…6=Sat (matches backend)
         let timeFormatter = DateFormatter()
         timeFormatter.dateFormat = "HH:mm"
         let currentTime = timeFormatter.string(from: now)
 
         for rule in schedule {
             guard rule.enabled != false else { continue }
-            if rule.days.contains(weekday) && currentTime >= rule.startTime && currentTime < rule.endTime {
-                return true
+            guard rule.days.contains(weekday) else { continue }
+            if rule.startTime <= rule.endTime {
+                if currentTime >= rule.startTime && currentTime < rule.endTime { return true }
+            } else {
+                // Cross-midnight window (e.g. 22:00–06:00)
+                if currentTime >= rule.startTime || currentTime < rule.endTime { return true }
             }
         }
         return false

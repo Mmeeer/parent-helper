@@ -13,9 +13,21 @@
       "backgroundColor": "#4A90D9"
     },
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.parenthelper.parent",
-      "googleServicesFile": "./GoogleService-Info.plist"
+      "buildNumber": "1",
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": [
+          "remote-notification"
+        ],
+        "NSUserNotificationsUsageDescription": "Get alerts about your child's location, screen time and SOS requests."
+      },
+      "entitlements": {
+        "aps-environment": "production",
+        "com.apple.developer.usernotifications.time-sensitive": true
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -33,6 +45,8 @@
     },
     "plugins": [
       "expo-secure-store",
+      "@react-native-firebase/app",
+      "@react-native-firebase/messaging",
       [
         "expo-notifications",
         {
@@ -46,6 +60,9 @@
       [
         "expo-build-properties",
         {
+          "ios": {
+            "useFrameworks": "static"
+          },
           "android": {
             "compileSdkVersion": 36,
             "targetSdkVersion": 36,
@@ -64,7 +81,9 @@
       [
         "expo-font",
         {
-          "fonts": ["./assets/fonts/ionicons.ttf"]
+          "fonts": [
+            "./assets/fonts/ionicons.ttf"
+          ]
         }
       ]
     ],

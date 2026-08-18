@@ -1,111 +1,97 @@
 # Prime Kids iOS Child App — Setup Guide
 
-## Xcode Project Setup
+Native SwiftUI app (iOS 16+) with four app extensions. The Xcode project is **generated from `project.yml`** with [XcodeGen](https://github.com/yonaskolb/XcodeGen) so it stays reproducible and diff-friendly.
 
-This directory contains all Swift source files for the iOS child app. To create the Xcode project:
+## Requirements
 
-### 1. Create Xcode Project
-1. Open Xcode > File > New > Project > iOS > App
-2. Product Name: `PrimeKidsChild`
-3. Bundle Identifier: `com.primekids.child`
-4. Language: Swift, Interface: SwiftUI
-5. Deployment Target: iOS 16.0
-6. Save in the `child-ios/` directory
+- macOS 15+, **Xcode 26** (iOS 26 SDK; the iOS platform component must be installed: Xcode → Settings → Components, or `xcodebuild -downloadPlatform iOS`)
+- `brew install xcodegen`
+- Apple Developer team **2R68Z37544** (Ulzii Uyalagt Systems LLC) added in Xcode → Settings → Accounts
+- A physical iPhone on iOS 16+ — Family Controls, shields and Safari extensions do **not** work in the Simulator
 
-### 2. Add Source Files
-Drag all folders into the Xcode project:
-- `PrimeKidsChild/` (main app target)
-- `ContentBlocker/` (extension target)
+## Generate & open
 
-### 3. Add Extension Targets
+```sh
+cd child-ios
+xcodegen generate            # writes PrimeKidsChild.xcodeproj
+open PrimeKidsChild.xcodeproj
+```
 
-**Content Blocker Extension:**
-1. File > New > Target > Content Blocker Extension
-2. Product Name: `ContentBlocker`
-3. Bundle ID: `com.primekids.child.ContentBlocker`
-4. Replace generated files with the ones in `ContentBlocker/`
+Re-run `xcodegen generate` whenever you add/remove files or edit `project.yml`. Do not hand-edit target settings in Xcode — put them in `project.yml` / `Config/*.xcconfig`.
 
-**DeviceActivityMonitor Extension (Phase 3):**
-1. File > New > Target > Device Activity Monitor Extension
-2. Product Name: `DeviceActivityMonitor`
-3. Requires FamilyControls entitlement from Apple
+## Targets
 
-### 4. Configure Entitlements
+| Target | Bundle ID | Purpose |
+|---|---|---|
+| `PrimeKidsChild` | `com.parenthelper.child` | Main app (pairing, location, SOS, rules, Screen Time integration) |
+| `ContentBlocker` | `…child.ContentBlocker` | Safari content blocker fed by `ContentBlockerService` |
+| `DeviceActivityMonitorExtension` | `…child.DeviceActivityMonitor` | Applies shields at schedule boundaries / daily-limit threshold |
+| `ShieldConfigurationExtension` | `…child.ShieldConfiguration` | Branded, bilingual shield UI |
+| `ShieldActionExtension` | `…child.ShieldAction` | "Close" / "Ask parent" buttons on the shield |
 
-Entitlements files are provided in the repository:
+All targets share App Group **`group.com.parenthelper.child`** (`Shared/AppGroup.swift`) — extensions read state/selection from its `UserDefaults` suite; the Keychain uses it as access group.
 
-**Main App Target:**
-- Add `PrimeKidsChild/PrimeKidsChild.entitlements` to the main target
-- In Build Settings > Code Signing Entitlements, set to `PrimeKidsChild/PrimeKidsChild.entitlements`
+## Configuration
 
-**Content Blocker Extension:**
-- Add `ContentBlocker/ContentBlocker.entitlements` to the extension target
-- In Build Settings > Code Signing Entitlements, set to `ContentBlocker/ContentBlocker.entitlements`
+- `Config/Shared.xcconfig` — team, deployment target, versions (`MARKETING_VERSION`, `CURRENT_PROJECT_VERSION`).
+- `Config/Debug.xcconfig` / `Release.xcconfig` — `PK_SERVER_URL` (→ `Info.plist` `PKServerURL` → `AppConfig.defaultServerURL`). Default: `https://primekids.masterclass.mn/parent-helper`.
+- `PrimeKidsChild/GoogleService-Info.plist` — Firebase iOS app `com.parenthelper.child` (Messaging only; APNs → FCM token → backend `POST /devices/push-token`).
+- Entitlements: `aps-environment` is `development` in the file; Xcode switches it to `production` when exporting for App Store.
 
-### 5. Configure Capabilities
+## Capabilities (already in entitlements; must also be enabled on the App IDs)
 
-In the main target's Signing & Capabilities:
-- [x] Background Modes: Location updates, Background fetch, Background processing, Remote notifications
-- [x] Push Notifications
-- [x] App Groups: `group.com.primekids.child`
-- [ ] Family Controls (requires Apple approval — see `FamilyControlsEntitlement.md`)
+Main app: Family Controls, App Groups, Push Notifications, Time Sensitive Notifications, Background Modes (location, fetch, processing, remote-notification).
+Family Controls extensions: Family Controls, App Groups. Content blocker: App Groups.
 
-### 6. Configure Info.plist
-The Info.plist is provided with:
-- Background task identifiers
-- Location permission descriptions
-- Background modes
-- App Transport Security (ATS) — enforced (no arbitrary loads)
-- Export compliance (no non-exempt encryption)
-- URL scheme: `primekids-child`
+Family Controls **(Distribution)** requires Apple's approval (requested 2026-08-17, team-level). Until then, development builds work on your own devices.
 
-### 7. Required Environment
+## Build from the command line
 
-Set the server URL before building:
-- In `PrefsManager.swift`, update the default `serverURL`
-- Or the user can configure it during pairing
+```sh
+xcodebuild -resolvePackageDependencies -project PrimeKidsChild.xcodeproj -scheme PrimeKidsChild
+xcodebuild build -project PrimeKidsChild.xcodeproj -scheme PrimeKidsChild -destination 'generic/platform=iOS'
+# Archive + export for App Store Connect (see TestFlightChecklist.md):
+xcodebuild archive -project PrimeKidsChild.xcodeproj -scheme PrimeKidsChild -destination 'generic/platform=iOS' -archivePath build/PrimeKidsChild.xcarchive
+xcodebuild -exportArchive -archivePath build/PrimeKidsChild.xcarchive -exportOptionsPlist ExportOptions.plist -exportPath build/export
+```
 
 ## Architecture
 
 ```
 PrimeKidsChild/
-├── App/                    # App entry point + AppDelegate
-├── Views/                  # SwiftUI views (Pairing, Dashboard, SOS)
-├── Services/               # API client, location, WebSocket, notifications
-├── Monitoring/             # Rule management, screen time, background tasks
-├── Storage/                # Keychain + UserDefaults managers
-├── Models/                 # Codable data models
-└── Assets.xcassets/        # Colors, icons
-
-ContentBlocker/             # Safari Content Blocker extension
+├── App/            PrimeKidsChildApp (root), AppDelegate (Firebase, BGTasks, push)
+├── Views/          PairingView, DashboardView, SOSButton
+├── Services/       APIClient, LocationManager, WebSocketManager (Socket.IO v4), NotificationManager (FCM),
+│                   ContentBlockerService, CommandHandler (sync/locate/lock/unlock/unpair)
+├── Monitoring/     RuleManager, ScreenTimeManager (FamilyControls/ManagedSettings/DeviceActivity),
+│                   ActivitySyncService, BackgroundTaskManager
+├── Storage/        PrefsManager (App Group defaults), KeychainManager (shared access group)
+├── Models/         Codable API models
+├── Assets.xcassets, Info.plist, PrivacyInfo.xcprivacy, PrimeKidsChild.entitlements
+Shared/             AppGroup/SharedKeys, AppConfig, extension privacy manifest
+ContentBlocker/ DeviceActivityMonitorExtension/ ShieldConfigurationExtension/ ShieldActionExtension/
+Config/             xcconfigs      project.yml   ExportOptions.plist
 ```
 
-## Feature Matrix: iOS vs Android
+## Feature matrix: iOS vs Android
 
 | Feature | Android | iOS | Notes |
-|---------|---------|-----|-------|
-| Device Pairing | Yes | Yes | Identical flow |
-| Location Tracking | Yes | Yes | CLLocationManager with Always auth |
-| Heartbeat | Yes | Yes | BGAppRefreshTask every ~15 min |
-| Activity Sync | Yes | Yes | BGProcessingTask every ~15 min |
-| SOS Button | Yes | Yes | Hold-to-activate with GPS |
-| Push Notifications | FCM | APNs via FCM | Backend routes FCM to APNs |
-| WebSocket Commands | Yes | Yes | URLSessionWebSocketTask |
-| App Blocking | DevicePolicyManager | FamilyControls | Requires Apple entitlement |
-| Screen Time Limits | UsageStatsManager | FamilyControls | Limited on iOS |
-| VPN Web Filter | Yes | No | Apple blocks VPN for parental apps |
-| Safari Content Blocker | N/A | Yes | Safari only, static rules |
-| Boot Auto-Start | Yes | No | iOS limitation |
-| Installed Apps List | Yes | No | iOS privacy restriction |
-| App Install Monitor | Yes | No | iOS privacy restriction |
-| Lock Screen Overlay | Yes | No | iOS doesn't allow overlays |
+|---|---|---|---|
+| Device pairing (code) | Yes | Yes | Same backend flow |
+| Location tracking | Yes | Yes | CLLocationManager, Always auth, significant-change in background |
+| Heartbeat / activity sync | Yes | Yes | BGAppRefresh / BGProcessing (~15 min, iOS-scheduled) |
+| SOS button | Yes | Yes | Hold-to-send with GPS |
+| Push | FCM | FCM via APNs | Same backend send path |
+| Realtime commands | Socket.IO | Socket.IO (foreground) + FCM silent push | Backend B2/B3 |
+| App blocking | DevicePolicyManager | FamilyControls shields on parent-picked selection | Selection made on the child device |
+| Schedules / daily limit | Yes | Yes (DeviceActivity + shields) | Apple's shield UI, branded |
+| Remote lock | Full-screen lock | **Pause** = shield all apps | iOS cannot lock the device |
+| Web filter | VPN (all browsers) | Safari content blocker + Apple adult filter | Safari/WebKit only |
+| Installed apps list / install alerts | Yes | No | iOS privacy sandbox |
+| Browsing history | Yes | No | No API |
+| Anti-uninstall | Yes | No | Use Screen Time "Deleting Apps" restriction |
+| Boot auto-start | Yes | Partial | Significant-change location relaunches the app |
 
-## App Store Submission
+## App Store submission docs
 
-See the following documents for App Store release preparation:
-- `FamilyControlsEntitlement.md` — How to apply for the FamilyControls entitlement
-- `AppStoreMetadata.md` — App Store listing content (description, keywords, screenshots)
-- `PrivacyNutritionLabels.md` — Privacy nutrition label declarations
-- `APPLE_REVIEW_NOTES.md` — Detailed notes for the Apple review team
-- `TestFlightChecklist.md` — TestFlight beta testing checklist
-- `ExportOptions.plist` — Archive export configuration for App Store upload
+`FamilyControlsEntitlement.md`, `FamilyControlsRequestForms.md`, `AppStoreMetadata.md`, `PrivacyNutritionLabels.md`, `APPLE_REVIEW_NOTES.md`, `TestFlightChecklist.md`, `ExportOptions.plist`. Overall plan: [../IOS_SUBMISSION_PLAN.md](../IOS_SUBMISSION_PLAN.md).

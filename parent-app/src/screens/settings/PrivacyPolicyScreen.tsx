@@ -4,8 +4,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { C } from '../../theme';
 import { useTranslation } from 'react-i18next';
 
+const PRIVACY_POLICY_URL = 'https://primekids.masterclass.mn/parent-helper/legal/privacy-policy.html';
+const TERMS_URL = 'https://primekids.masterclass.mn/parent-helper/legal/terms-of-service.html';
+
 export default function PrivacyPolicyScreen() {
   const { t } = useTranslation();
+
+  const LEGAL_LINKS = [
+    { key: 'policy', label: t('privacy.viewFullPolicy'), url: PRIVACY_POLICY_URL, icon: 'shield-checkmark-outline' as const },
+    { key: 'terms', label: t('privacy.viewTerms'), url: TERMS_URL, icon: 'document-text-outline' as const },
+  ];
 
   const SECTIONS = [
     {
@@ -79,6 +87,27 @@ export default function PrivacyPolicyScreen() {
             {t('privacy.termsOfServiceDesc')}
           </Text>
         </View>
+
+        {/* Hosted legal documents */}
+        {LEGAL_LINKS.map((link) => (
+          <TouchableOpacity
+            key={link.key}
+            onPress={() => { Linking.openURL(link.url).catch(() => {}); }}
+            className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 mb-4"
+            activeOpacity={0.7}
+          >
+            <View className="flex-row items-center">
+              <View className="w-8 h-8 rounded-lg bg-nest-50 items-center justify-center mr-3">
+                <Ionicons name={link.icon} size={16} color={C.nest500} />
+              </View>
+              <View className="flex-1">
+                <Text className="font-display font-bold text-sm text-gray-900">{link.label}</Text>
+                <Text className="text-xs text-gray-400 mt-0.5" numberOfLines={1}>{link.url}</Text>
+              </View>
+              <Ionicons name="open-outline" size={16} color={C.gray300} />
+            </View>
+          </TouchableOpacity>
+        ))}
 
         {/* Contact */}
         <TouchableOpacity

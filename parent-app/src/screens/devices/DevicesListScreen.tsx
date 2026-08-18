@@ -11,6 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { formatTimeAgo } from '../../utils/formatters';
+import { isIosChild } from '../../utils/platform';
 import * as api from '../../services/api';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
@@ -22,6 +23,8 @@ type Props = {
   readonly navigation: NativeStackNavigationProp<RootStackParamList, 'DevicesList'>;
   readonly route: RouteProp<RootStackParamList, 'DevicesList'>;
 };
+
+type IoniconName = keyof typeof Ionicons.glyphMap;
 
 export default function DevicesListScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
@@ -83,6 +86,17 @@ export default function DevicesListScreen({ navigation, route }: Props) {
         { text: t('devices.unpairBtn'), style: 'destructive', onPress: () => { void doUnpair(deviceId); } },
       ],
     );
+  };
+
+  // On iOS the 'lock' command shields all apps (no screen lock) — same command, different wording.
+  const commandsFor = (device: DeviceStatus) => {
+    const ios = isIosChild(device);
+    return [
+      { cmd: 'lock' as const, icon: (ios ? 'pause-circle-outline' : 'lock-closed-outline') as IoniconName, label: ios ? t('devices.pauseDevice') : t('devices.lock'), color: C.danger500, bg: C.danger50 },
+      { cmd: 'unlock' as const, icon: (ios ? 'play-circle-outline' : 'lock-open-outline') as IoniconName, label: ios ? t('devices.resumeDevice') : t('devices.unlock'), color: C.safe500, bg: C.safe50 },
+      { cmd: 'locate' as const, icon: 'locate-outline' as IoniconName, label: t('devices.findLocation'), color: C.nest500, bg: C.nest50 },
+      { cmd: 'sync' as const, icon: 'sync-outline' as IoniconName, label: t('devices.sync'), color: C.warm500, bg: C.warm50 },
+    ];
   };
 
   if (loading) {
@@ -181,12 +195,7 @@ export default function DevicesListScreen({ navigation, route }: Props) {
               {t('devices.remoteControl')}
             </Text>
             <View className="flex-row gap-x-2">
-              {[
-                { cmd: 'lock' as const, icon: 'lock-closed-outline' as const, label: t('devices.lock'), color: C.danger500, bg: C.danger50 },
-                { cmd: 'unlock' as const, icon: 'lock-open-outline' as const, label: t('devices.unlock'), color: C.safe500, bg: C.safe50 },
-                { cmd: 'locate' as const, icon: 'locate-outline' as const, label: t('devices.findLocation'), color: C.nest500, bg: C.nest50 },
-                { cmd: 'sync' as const, icon: 'sync-outline' as const, label: t('devices.sync'), color: C.warm500, bg: C.warm50 },
-              ].map(({ cmd, icon, label, color, bg }) => (
+              {commandsFor(device).map(({ cmd, icon, label, color, bg }) => (
                 <View key={cmd} className="flex-1 items-center py-3 rounded-2xl" style={{ backgroundColor: bg }}>
                   <TouchableOpacity
                     onPress={() => sendCommand(device.id, cmd)}
@@ -199,6 +208,10 @@ export default function DevicesListScreen({ navigation, route }: Props) {
                 </View>
               ))}
             </View>
+
+            {isIosChild(device) && (
+              <Text className="text-[11px] text-gray-400 mt-2">{t('devices.iosPauseHint')}</Text>
+            )}
 
             {commandingId === device.id && (
               <ActivityIndicator className="mt-2" color={C.nest500} />
@@ -225,12 +238,12 @@ export default function DevicesListScreen({ navigation, route }: Props) {
           }
           // Replace flow: confirm, unpair existing, then go to pairing
           Alert.alert(
-            t('devices.replaceTitle', 'Replace device?'),
-            t('devices.replaceConfirm', 'Each child can have only one device. The current device will be unpaired before you can pair a new one.'),
+            t('devices.replaceTitle'),
+            t('devices.replaceConfirm'),
             [
               { text: t('common.cancel'), style: 'cancel' },
               {
-                text: t('devices.replaceBtn', 'Replace'),
+                text: t('devices.replaceBtn'),
                 style: 'destructive',
                 onPress: () => { void (async () => {
                   try {
@@ -253,7 +266,7 @@ export default function DevicesListScreen({ navigation, route }: Props) {
           color="#FFFFFF"
         />
         <Text className="text-sm font-display font-bold text-white tracking-wide">
-          {devices.length === 0 ? t('devices.pairNew') : t('devices.replaceDevice', 'Replace Device')}
+          {devices.length === 0 ? t('devices.pairNew') : t('devices.replaceDevice')}
         </Text>
       </TouchableOpacity>
 

@@ -54,6 +54,28 @@
  *                   timestamp:
  *                     type: string
  *                     format: date-time
+ *               blockedAttempts:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     type:
+ *                       type: string
+ *                       enum: [app, web, new_app, uninstall_attempt, web_filter, shield]
+ *                     target:
+ *                       type: string
+ *                     timestamp:
+ *                       type: string
+ *                       format: date-time
+ *               screenTime:
+ *                 type: object
+ *                 description: Optional daily summary (iOS DeviceActivityMonitor); apps[] may be omitted
+ *                 properties:
+ *                   limitReachedAt:
+ *                     type: string
+ *                     format: date-time
+ *                   shieldEvents:
+ *                     type: integer
  *     responses:
  *       200:
  *         description: Activity synced

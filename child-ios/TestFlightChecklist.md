@@ -9,18 +9,18 @@
 - [ ] Provisioning profile for App Store distribution
 
 ### 2. App ID Configuration
-- [ ] App ID registered: `com.primekids.child`
-- [ ] Extension App ID registered: `com.primekids.child.ContentBlocker`
+- [x] App ID registered: `com.parenthelper.child` (2026-08-17)
+- [x] Extension App IDs: `.ContentBlocker`, `.DeviceActivityMonitor`, `.ShieldConfiguration`, `.ShieldAction`
 - [ ] Push Notifications capability enabled
-- [ ] App Groups capability enabled (`group.com.primekids.child`)
+- [ ] App Groups capability enabled (`group.com.parenthelper.child`)
 - [ ] FamilyControls capability enabled (requires separate entitlement approval)
 
 ### 3. App Store Connect Setup
-- [ ] App record created in App Store Connect
-- [ ] Bundle ID selected: `com.primekids.child`
+- [x] App record created in App Store Connect (Apple ID 6802229430, name "Prime Kids: Child")
+- [x] Bundle ID selected: `com.parenthelper.child`
 - [ ] Primary language: English (U.S.)
 - [ ] App category: Utilities
-- [ ] Privacy policy URL entered: https://parenthelper.com/legal/privacy-policy.html
+- [x] Privacy policy URL entered: https://primekids.masterclass.mn/parent-helper/legal/privacy-policy.html
 - [ ] App privacy (nutrition labels) completed (see PrivacyNutritionLabels.md)
 
 ---
@@ -65,13 +65,17 @@ xcodebuild -exportArchive \
 - [ ] Internal testers receive email invitation automatically
 - [ ] Test core flows:
   - [ ] App launches and shows pairing screen
-  - [ ] QR code / pairing code generation works
+  - [ ] Pairing code entry works (PRIME888 against the review account)
   - [ ] Pairing with Parent Helper app succeeds
   - [ ] Location tracking activates after permission grant
   - [ ] Push notifications received
   - [ ] SOS button sends alert to parent
   - [ ] Dashboard shows correct status
-  - [ ] Content Blocker extension loads in Safari settings
+  - [ ] Content Blocker extension appears in Settings → Safari → Extensions and blocks a domain from the parent's list
+  - [ ] Parent settings PIN + Manage apps picker; shield appears on a selected app when "Block selected apps" is on
+  - [ ] Bedtime schedule shields at start time; daily limit shields at threshold
+  - [ ] Remote Pause/Resume from the parent app (with app in background — arrives via silent push / poll)
+  - [ ] Unpair from parent app returns child app to pairing screen
 
 ### 7. External Testing (up to 10,000 testers)
 - [ ] Submit build for Beta App Review

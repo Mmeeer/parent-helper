@@ -148,10 +148,33 @@ final class APIClient {
 
     // MARK: - FCM Token
 
+    /// Registers the FCM registration token for this child device (device-token auth).
+    /// Backend route: POST /devices/push-token  { token, platform: "ios" }  (see IOS_SUBMISSION_PLAN §4 B1)
     func registerPushToken(_ token: String) async throws {
-        struct Body: Codable { let token: String; let platform: String }
-        let body = try encoder.encode(Body(token: token, platform: "ios"))
-        try await requestVoid("/auth/fcm-token", method: "POST", body: body)
+        let body = try JSONSerialization.data(withJSONObject: ["token": token, "platform": "ios"])
+        try await requestVoid("/devices/push-token", method: "POST", body: body)
+    }
+
+    // MARK: - Commands (REST fallback to Socket.IO / silent push)
+
+    /// GET /devices/commands → pending commands for this device (oldest first).
+    func fetchPendingCommands() async throws -> [DeviceCommand] {
+        return try await request("/devices/commands")
+    }
+
+    /// POST /devices/commands/:id/ack
+    func ackCommand(id: String) async throws {
+        try await requestVoid("/devices/commands/\(id)/ack", method: "POST", body: nil)
+    }
+
+    // MARK: - iOS app selection (FamilyActivitySelection metadata)
+
+    /// POST /rules/:childId/ios-selection  { blob, appCount, categoryCount, webDomainCount }
+    func uploadIosSelection(childId: String, blob: String, appCount: Int, categoryCount: Int, webDomainCount: Int) async throws {
+        let body = try JSONSerialization.data(withJSONObject: [
+            "blob": blob, "appCount": appCount, "categoryCount": categoryCount, "webDomainCount": webDomainCount,
+        ])
+        try await requestVoid("/rules/\(childId)/ios-selection", method: "POST", body: body)
     }
 }
 

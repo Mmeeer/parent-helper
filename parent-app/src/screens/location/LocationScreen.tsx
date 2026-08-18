@@ -52,7 +52,7 @@ export default function LocationScreen({ route }: Props) {
     let cancelled = false;
     api.getChildren().then((list) => {
       if (cancelled) return;
-      const found = list.find((c) => c.id === childId);
+      const found = list.find((c) => c._id === childId);
       if (found) setChildName(found.name);
     }).catch(() => { /* tolerate */ });
     return () => { cancelled = true; };

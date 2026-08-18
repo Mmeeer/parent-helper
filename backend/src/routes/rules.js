@@ -4,10 +4,14 @@ const emailVerified = require('../middleware/emailVerified');
 const deviceAuth = require('../middleware/deviceAuth');
 const requireSubscription = require('../middleware/requireSubscription');
 const rulesController = require('../controllers/rulesController');
-const { screenTimeRules, appRules, webFilterRules } = require('../middleware/validate');
+const { screenTimeRules, appRules, webFilterRules, iosSelectionRules } = require('../middleware/validate');
+const { syncLimiter } = require('../middleware/rateLimiter');
 
 // Child device fetches rules
 router.get('/:childId', deviceAuth, rulesController.get);
+
+// Child iOS device uploads its FamilyActivitySelection (opaque tokens + counts)
+router.post('/:childId/ios-selection', deviceAuth, syncLimiter, iosSelectionRules, rulesController.setIosSelection);
 
 // Parent fetches rules (must come before PUT routes)
 router.get('/:childId/view', auth, rulesController.getForParent);

@@ -154,3 +154,7 @@ dist
 
 # Play submission secret — NEVER commit
 google-play-service-account.json
+
+# App Store Connect API key (EAS submit)
+asc-api-key.p8
+*.p8

@@ -1,20 +1,31 @@
 import Foundation
+import Combine
 
-// FamilyControls is only available on iOS 16+ with proper entitlements.
-// This file provides the integration layer. The actual FamilyControls
-// imports are guarded so the app compiles without the entitlement.
-
+// FamilyControls / ManagedSettings / DeviceActivity are only available on iOS 16+
+// with the Family Controls entitlement. Imports are guarded so the target still
+// compiles on platforms/SDKs without the frameworks.
 #if canImport(FamilyControls)
 import FamilyControls
 import ManagedSettings
 import DeviceActivity
 #endif
 
+/// Bridges backend `Rules` to Apple's Screen Time APIs.
+///
+/// Responsibilities (v1):
+/// - request / check FamilyControls authorization,
+/// - persist the parent's `FamilyActivitySelection` (picked on this device) in the App Group,
+/// - apply / clear `ManagedSettingsStore` shields for: block-selected-apps, remote pause,
+///   Apple's built-in adult web filter,
+/// - (re)start `DeviceActivity` schedule monitoring for bedtime/school windows and the daily
+///   limit; the DeviceActivityMonitor extension applies shields when those fire.
 final class ScreenTimeManager: ObservableObject {
     static let shared = ScreenTimeManager()
 
     @Published var isAuthorized = false
     @Published var authorizationError: String?
+
+    private let defaults = AppGroup.defaults
 
     private init() {
         checkAuthorization()
@@ -22,112 +33,187 @@ final class ScreenTimeManager: ObservableObject {
 
     // MARK: - Authorization
 
+    /// Prefer `.child`: on an iPhone signed into a Family Sharing child account the parent
+    /// approves with their Apple ID and the child cannot remove the app or revoke the
+    /// authorization without the parent. If the device is not a Family Sharing child
+    /// (e.g. a reviewer's or a teenager's own Apple ID) fall back to `.individual`.
     func requestAuthorization() async {
         #if canImport(FamilyControls)
-        if #available(iOS 16.0, *) {
+        let center = AuthorizationCenter.shared
+        if center.authorizationStatus == .approved {
+            await MainActor.run { self.isAuthorized = true; self.authorizationError = nil }
+            return
+        }
+        var lastError: Error?
+        for member in [FamilyControlsMember.child, .individual] {
             do {
-                try await AuthorizationCenter.shared.requestAuthorization(for: .individual)
+                try await center.requestAuthorization(for: member)
                 await MainActor.run {
                     self.isAuthorized = true
                     self.authorizationError = nil
                 }
+                defaults.set(member == .child ? "child" : "individual", forKey: SharedKeys.authorizationMember)
+                return
             } catch {
-                await MainActor.run {
-                    self.isAuthorized = false
-                    self.authorizationError = error.localizedDescription
-                }
-                print("[ScreenTime] Auth failed: \(error.localizedDescription)")
+                lastError = error
+                print("[ScreenTime] Auth (\(member == .child ? "child" : "individual")) failed: \(error.localizedDescription)")
             }
+        }
+        await MainActor.run {
+            self.isAuthorized = false
+            self.authorizationError = lastError?.localizedDescription
         }
         #endif
     }
 
     func checkAuthorization() {
+        if Demo.isOn { isAuthorized = true; return }
         #if canImport(FamilyControls)
-        if #available(iOS 16.0, *) {
-            isAuthorized = AuthorizationCenter.shared.authorizationStatus == .approved
-        }
+        isAuthorized = AuthorizationCenter.shared.authorizationStatus == .approved
         #endif
     }
 
-    // MARK: - Apply Rules
-
-    func applyRules(_ rules: Rules) {
-        #if canImport(FamilyControls)
-        if #available(iOS 16.0, *) {
-            guard isAuthorized else { return }
-
-            let store = ManagedSettingsStore()
-
-            // Apply blocked apps as shields
-            if let blocked = rules.blockedApps, !blocked.isEmpty {
-                // Note: On iOS, we can't block by package name directly.
-                // FamilyControls uses ApplicationToken which comes from the picker.
-                // For now, we set category-based restrictions if available.
-                // Full implementation requires DeviceActivityMonitor extension.
-                print("[ScreenTime] Would block \(blocked.count) apps (requires token mapping)")
-            }
-
-            // Apply web content restrictions
-            if let webFilter = rules.webFilter {
-                if let customBlock = webFilter.customBlock, !customBlock.isEmpty {
-                    var filter = WebContentSettings.FilterPolicy.auto(.specific(
-                        during: DeviceActivitySchedule(
-                            intervalStart: DateComponents(hour: 0, minute: 0),
-                            intervalEnd: DateComponents(hour: 23, minute: 59),
-                            repeats: true
-                        )
-                    ))
-                    store.webContent.blockedByFilter = .auto
-                    print("[ScreenTime] Applied web filter with \(customBlock.count) blocked domains")
-                }
-            }
-
-            // Apply schedule-based restrictions
-            if let schedule = rules.screenTime?.schedule {
-                for rule in schedule where rule.enabled != false {
-                    applyScheduleRestriction(rule, store: store)
-                }
-            }
-        }
-        #endif
-    }
+    // MARK: - Selection (picked on the child device by the parent)
 
     #if canImport(FamilyControls)
-    @available(iOS 16.0, *)
-    private func applyScheduleRestriction(_ rule: ScheduleRule, store: ManagedSettingsStore) {
-        // Parse start/end times
-        let parts = rule.startTime.split(separator: ":").compactMap { Int($0) }
-        let endParts = rule.endTime.split(separator: ":").compactMap { Int($0) }
-        guard parts.count == 2, endParts.count == 2 else { return }
-
-        let schedule = DeviceActivitySchedule(
-            intervalStart: DateComponents(hour: parts[0], minute: parts[1]),
-            intervalEnd: DateComponents(hour: endParts[0], minute: endParts[1]),
-            repeats: true
-        )
-
-        let center = DeviceActivityCenter()
-        do {
-            try center.startMonitoring(
-                DeviceActivityName(rawValue: "schedule_\(rule.startTime)_\(rule.endTime)"),
-                during: schedule
-            )
-        } catch {
-            print("[ScreenTime] Schedule monitor error: \(error.localizedDescription)")
+    var selection: FamilyActivitySelection {
+        get {
+            guard let data = defaults.data(forKey: SharedKeys.familyActivitySelection),
+                  let sel = try? JSONDecoder().decode(FamilyActivitySelection.self, from: data)
+            else { return FamilyActivitySelection() }
+            return sel
+        }
+        set {
+            if let data = try? JSONEncoder().encode(newValue) {
+                defaults.set(data, forKey: SharedKeys.familyActivitySelection)
+            }
+            applyCurrentState()
         }
     }
     #endif
 
-    // MARK: - Clear Restrictions
+    // MARK: - Apply rules from backend
+
+    func applyRules(_ rules: Rules) {
+        #if canImport(FamilyControls)
+        guard isAuthorized else { return }
+
+        // Parent's "block selected apps" toggle. On iOS the *which* comes from the on-device
+        // selection; the backend flag only says whether blocking is on.
+        let blockingOn = !(rules.blockedApps ?? []).isEmpty || rules.iosBlockSelected == true
+        defaults.set(blockingOn, forKey: SharedKeys.blockingEnabled)
+
+        // Apple's built-in adult-content web filter when the parent enabled the "adult" category.
+        let adultFilterOn = rules.webFilter?.categories?.contains("adult") == true
+        let store = ManagedSettingsStore()
+        store.webContent.blockedByFilter = adultFilterOn ? .auto() : nil
+
+        // Schedules (bedtime / school hours) + daily limit → DeviceActivity monitoring.
+        restartMonitoring(rules)
+
+        applyCurrentState()
+        #endif
+    }
+
+    /// Re-evaluates shields from the shared state (selection, blocking flag, pause flag).
+    func applyCurrentState() {
+        #if canImport(FamilyControls)
+        guard isAuthorized else { return }
+        let store = ManagedSettingsStore()
+        let paused = defaults.bool(forKey: SharedKeys.devicePaused)
+        let blockingOn = defaults.bool(forKey: SharedKeys.blockingEnabled)
+        let sel = selection
+
+        if paused {
+            // Remote "pause device": shield every app category (our own app is never shielded).
+            store.shield.applications = nil
+            store.shield.applicationCategories = .all()
+            store.shield.webDomainCategories = .all()
+        } else if blockingOn && !(sel.applicationTokens.isEmpty && sel.categoryTokens.isEmpty) {
+            store.shield.applications = sel.applicationTokens.isEmpty ? nil : sel.applicationTokens
+            store.shield.applicationCategories = sel.categoryTokens.isEmpty
+                ? nil : .specific(sel.categoryTokens)
+            store.shield.webDomains = sel.webDomainTokens.isEmpty ? nil : sel.webDomainTokens
+            store.shield.webDomainCategories = nil
+        } else {
+            store.shield.applications = nil
+            store.shield.applicationCategories = nil
+            store.shield.webDomains = nil
+            store.shield.webDomainCategories = nil
+        }
+        #endif
+    }
+
+    // MARK: - Remote pause
+
+    func setPaused(_ paused: Bool) {
+        defaults.set(paused, forKey: SharedKeys.devicePaused)
+        applyCurrentState()
+    }
+
+    // MARK: - DeviceActivity monitoring
+
+    #if canImport(FamilyControls)
+    private func restartMonitoring(_ rules: Rules) {
+        let center = DeviceActivityCenter()
+        center.stopMonitoring()
+
+        // Bedtime / school schedules → one activity per rule. The monitor extension shields
+        // everything at intervalDidStart and clears at intervalDidEnd.
+        for (idx, rule) in (rules.screenTime?.schedule ?? []).enumerated() where rule.enabled != false {
+            guard let start = Self.components(rule.startTime), let end = Self.components(rule.endTime) else { continue }
+            let schedule = DeviceActivitySchedule(intervalStart: start, intervalEnd: end, repeats: true)
+            let name = DeviceActivityName("schedule_\(idx)")
+            do {
+                try center.startMonitoring(name, during: schedule)
+            } catch {
+                print("[ScreenTime] schedule monitor error: \(error.localizedDescription)")
+            }
+        }
+
+        // Daily limit → whole-day activity with a threshold event on the parent's selection
+        // (or all apps if nothing selected). The extension shields on eventDidReachThreshold.
+        if let limit = rules.screenTime?.dailyLimitMin, limit > 0 {
+            let day = DeviceActivitySchedule(
+                intervalStart: DateComponents(hour: 0, minute: 0),
+                intervalEnd: DateComponents(hour: 23, minute: 59),
+                repeats: true
+            )
+            let sel = selection
+            let event = DeviceActivityEvent(
+                applications: sel.applicationTokens,
+                categories: sel.categoryTokens,
+                webDomains: sel.webDomainTokens,
+                threshold: DateComponents(minute: limit)
+            )
+            do {
+                try center.startMonitoring(
+                    DeviceActivityName("dailyLimit"),
+                    during: day,
+                    events: [DeviceActivityEvent.Name("dailyLimit"): event]
+                )
+            } catch {
+                print("[ScreenTime] daily-limit monitor error: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    private static func components(_ hhmm: String) -> DateComponents? {
+        let parts = hhmm.split(separator: ":").compactMap { Int($0) }
+        guard parts.count == 2 else { return nil }
+        return DateComponents(hour: parts[0], minute: parts[1])
+    }
+    #endif
+
+    // MARK: - Clear everything (unpair)
 
     func clearAllRestrictions() {
         #if canImport(FamilyControls)
-        if #available(iOS 16.0, *) {
-            let store = ManagedSettingsStore()
-            store.clearAllSettings()
-            DeviceActivityCenter().stopMonitoring()
-        }
+        ManagedSettingsStore().clearAllSettings()
+        DeviceActivityCenter().stopMonitoring()
         #endif
+        defaults.removeObject(forKey: SharedKeys.familyActivitySelection)
+        defaults.set(false, forKey: SharedKeys.blockingEnabled)
+        defaults.set(false, forKey: SharedKeys.devicePaused)
     }
 }

@@ -31,7 +31,7 @@ export default function RegisterScreen({ navigation }: Props) {
   const confirmRef = useRef<TextInput>(null);
 
   const handleRegister = async () => {
-    if (!name.trim() || !phone.trim() || !email.trim() || !password.trim()) {
+    if (!name.trim() || !email.trim() || !password.trim()) {
       Alert.alert(t('common.error'), t('auth.fillAllFields'));
       return;
     }
@@ -45,7 +45,8 @@ export default function RegisterScreen({ navigation }: Props) {
     }
     setLoading(true);
     try {
-      await register(email.trim(), password, name.trim(), phone.trim());
+      // Phone is optional — only send it when the user filled it in.
+      await register(email.trim(), password, name.trim(), phone.trim() || undefined);
     } catch (error: any) {
       Alert.alert(t('auth.registerFailed'), error.message || t('auth.registerError'));
     } finally {
@@ -100,7 +101,7 @@ export default function RegisterScreen({ navigation }: Props) {
 
           {/* Phone */}
           <View className="mb-5">
-            <Text className="font-display font-bold text-gray-900 mb-2">{t('auth.phone')}</Text>
+            <Text className="font-display font-bold text-gray-900 mb-2">{t('register.phoneOptional')}</Text>
             <View className="flex-row items-center px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200">
               <Ionicons name="call-outline" size={17} color="#9ca3af" />
               <TextInput

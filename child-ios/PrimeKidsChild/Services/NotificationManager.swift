@@ -1,15 +1,21 @@
 import Foundation
 import UserNotifications
 import UIKit
+import FirebaseMessaging
 
-final class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterDelegate {
+/// Local + remote notifications. Remote path: APNs token → Firebase Messaging → FCM
+/// registration token → backend (`POST /devices/push-token`). The backend then reaches this
+/// device with the same `sendEachForMulticast` it already uses for the parent app.
+final class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterDelegate, MessagingDelegate {
     static let shared = NotificationManager()
 
     @Published var isAuthorized = false
 
     override private init() {
         super.init()
+        if Demo.isOn { isAuthorized = true }
         UNUserNotificationCenter.current().delegate = self
+        Messaging.messaging().delegate = self
     }
 
     func requestPermission() async -> Bool {
@@ -35,10 +41,27 @@ final class NotificationManager: NSObject, ObservableObject, UNUserNotificationC
         let token = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
         PrefsManager.shared.apnsToken = token
         print("[Notifications] APNs token: \(token.prefix(16))...")
+        // Hand the APNs token to Firebase; it will call back with an FCM token.
+        Messaging.messaging().apnsToken = deviceToken
+    }
 
-        // Register with backend
-        Task {
-            try? await APIClient.shared.registerPushToken(token)
+    // MARK: - MessagingDelegate
+
+    func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
+        guard let fcmToken, !fcmToken.isEmpty else { return }
+        PrefsManager.shared.fcmToken = fcmToken
+        guard PrefsManager.shared.isPaired else { return } // sent again right after pairing
+        Task { await registerTokenWithBackend() }
+    }
+
+    /// Sends the current FCM token to the backend (idempotent). Called on token refresh and after pairing.
+    func registerTokenWithBackend() async {
+        guard let token = PrefsManager.shared.fcmToken else { return }
+        do {
+            try await APIClient.shared.registerPushToken(token)
+            print("[Notifications] FCM token registered with backend")
+        } catch {
+            print("[Notifications] token registration failed: \(error.localizedDescription)")
         }
     }
 
@@ -59,45 +82,8 @@ final class NotificationManager: NSObject, ObservableObject, UNUserNotificationC
         didReceive response: UNNotificationResponse
     ) async {
         let userInfo = response.notification.request.content.userInfo
-
-        // Handle silent push commands
-        if let command = userInfo["command"] as? String {
-            await handleRemoteCommand(command)
+        if let command = (userInfo["command"] as? String) ?? (userInfo["type"] as? String) {
+            await CommandHandler.handle(command)
         }
-
-        // Handle rule update trigger
-        if userInfo["type"] as? String == "rules:updated" {
-            await RuleManager.shared.refreshRules()
-        }
-    }
-
-    private func handleRemoteCommand(_ command: String) async {
-        switch command {
-        case "sync":
-            await ActivitySyncService.shared.syncNow()
-        case "locate":
-            if let location = await LocationManager.shared.getCurrentLocation() {
-                let entry = LocationEntry(
-                    lat: location.coordinate.latitude,
-                    lng: location.coordinate.longitude,
-                    timestamp: ISO8601DateFormatter().string(from: Date())
-                )
-                let sync = ActivitySyncRequest(
-                    date: Self.todayString(),
-                    apps: nil,
-                    location: [entry],
-                    blockedAttempts: nil
-                )
-                try? await APIClient.shared.syncActivity(sync)
-            }
-        default:
-            print("[Notifications] Unknown command: \(command)")
-        }
-    }
-
-    private static func todayString() -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        return formatter.string(from: Date())
     }
 }

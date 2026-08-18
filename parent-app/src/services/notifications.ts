@@ -9,6 +9,77 @@ import * as api from './api';
 let _pushHealthy = true;
 let _retryScheduled = false;
 let _appStateSubscription: { remove(): void } | null = null;
+let _tokenRefreshUnsubscribe: (() => void) | null = null;
+
+/**
+ * Minimal shape of the `@react-native-firebase/messaging` module instance we use.
+ * Loaded lazily (iOS only) so the Android path is unchanged and the app still
+ * runs when the native module is unavailable (e.g. Expo Go).
+ */
+type FirebaseMessagingInstance = {
+  registerDeviceForRemoteMessages(): Promise<void>;
+  getToken(): Promise<string>;
+  deleteToken(): Promise<void>;
+  onTokenRefresh(listener: (token: string) => void): () => void;
+};
+
+function getFirebaseMessaging(): FirebaseMessagingInstance | null {
+  if (Platform.OS !== 'ios') return null;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const mod = require('@react-native-firebase/messaging');
+    const factory = (mod?.default ?? mod) as (() => FirebaseMessagingInstance) | undefined;
+    return typeof factory === 'function' ? factory() : null;
+  } catch (err) {
+    console.warn('[Notifications] @react-native-firebase/messaging unavailable:', err);
+    return null;
+  }
+}
+
+/**
+ * Resolve the platform push token the backend can deliver to through FCM.
+ * - iOS: FCM registration token via RN Firebase (raw APNs tokens from
+ *   `getDevicePushTokenAsync` are rejected by FCM `sendEachForMulticast`).
+ * - Android: native FCM token from expo-notifications.
+ */
+async function getPlatformPushToken(): Promise<string> {
+  if (Platform.OS === 'ios') {
+    const messaging = getFirebaseMessaging();
+    if (messaging) {
+      // Safe to call repeatedly; no-op when auto-registration is enabled.
+      await messaging.registerDeviceForRemoteMessages();
+      return messaging.getToken();
+    }
+    console.warn('[Notifications] Falling back to raw APNs token on iOS');
+  }
+  const tokenData = await Notifications.getDevicePushTokenAsync();
+  return tokenData.data;
+}
+
+/**
+ * On iOS, FCM tokens can rotate. Re-register with the backend when that happens.
+ */
+function subscribeToTokenRefresh() {
+  if (_tokenRefreshUnsubscribe) return;
+  const messaging = getFirebaseMessaging();
+  if (!messaging) return;
+  try {
+    _tokenRefreshUnsubscribe = messaging.onTokenRefresh((token) => {
+      api.registerFcmToken(token, 'ios')
+        .then(() => {
+          _pushHealthy = true;
+          console.log('[Notifications] Re-registered refreshed FCM token');
+        })
+        .catch((err) => {
+          _pushHealthy = false;
+          console.error('[Notifications] Token refresh registration failed:', err);
+          scheduleRetryOnResume();
+        });
+    });
+  } catch (err) {
+    console.warn('[Notifications] onTokenRefresh subscription failed:', err);
+  }
+}
 
 export function isPushRegistrationHealthy(): boolean {
   return _pushHealthy;
@@ -37,7 +108,9 @@ Notifications.setNotificationHandler({
     const data = notification.request.content.data;
     const isSos = data?.type === 'sos';
     return {
-      shouldShowAlert: true,
+      shouldShowAlert: true,   // legacy (SDK < 53 / Android)
+      shouldShowBanner: true,  // iOS 14+ (expo-notifications 0.31 / SDK 53)
+      shouldShowList: true,
       shouldPlaySound: isSos,
       shouldSetBadge: true,
     };
@@ -87,15 +160,15 @@ export async function registerForPushNotifications(): Promise<string | null> {
   }
 
   try {
-    // Get the FCM token (native device token for Firebase)
-    const tokenData = await Notifications.getDevicePushTokenAsync();
-    const fcmToken = tokenData.data;
+    // Get the FCM token (RN Firebase on iOS, native device token on Android)
+    const fcmToken = await getPlatformPushToken();
 
     // Send to backend
     await api.registerFcmToken(fcmToken, Platform.OS as 'ios' | 'android');
 
     _pushHealthy = true;
     console.log('[Notifications] Registered FCM token');
+    subscribeToTokenRefresh();
     return fcmToken;
   } catch (err) {
     _pushHealthy = false;
@@ -110,10 +183,13 @@ export async function registerForPushNotifications(): Promise<string | null> {
  */
 export async function unregisterPushNotifications(): Promise<void> {
   try {
-    const tokenData = await Notifications.getDevicePushTokenAsync();
-    await api.removeFcmToken(tokenData.data);
+    const token = await getPlatformPushToken();
+    await api.removeFcmToken(token);
   } catch {
     // Ignore — best effort on logout
+  } finally {
+    _tokenRefreshUnsubscribe?.();
+    _tokenRefreshUnsubscribe = null;
   }
 }
 

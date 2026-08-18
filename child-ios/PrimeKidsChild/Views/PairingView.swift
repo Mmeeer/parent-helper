@@ -11,15 +11,13 @@ struct PairingView: View {
         VStack(spacing: 0) {
             Spacer()
 
-            // Shield icon
-            Image(systemName: "shield.checkered")
-                .font(.system(size: 64))
-                .foregroundColor(Color("Primary"))
-                .padding(.bottom, 16)
-
-            Text("Prime Kids")
-                .font(.system(size: 28, weight: .bold))
-                .foregroundColor(Color(.label))
+            // Brand logo
+            Image("Logo")
+                .resizable()
+                .scaledToFit()
+                .frame(height: 72)
+                .padding(.bottom, 12)
+                .accessibilityLabel(Text("Prime Kids"))
 
             Text("Enter the pairing code from your parent's app")
                 .font(.subheadline)
@@ -44,10 +42,12 @@ struct PairingView: View {
                     .autocorrectionDisabled()
                     .keyboardType(.asciiCapable)
                     .focused($isCodeFocused)
+                    .submitLabel(.go)
+                    .onSubmit { if pairingCode.count >= 6 && !isLoading { pair() } }
                     .padding(.vertical, 16)
                     .background(Color(.systemGray6))
                     .cornerRadius(16)
-                    .onChange(of: pairingCode) { _, newValue in
+                    .onChange(of: pairingCode) { newValue in
                         pairingCode = String(newValue.prefix(8))
                             .uppercased()
                             .filter { $0.isLetter || $0.isNumber }
@@ -73,7 +73,7 @@ struct PairingView: View {
                         ProgressView()
                             .tint(.white)
                     }
-                    Text(isLoading ? "Pairing..." : "Pair Device")
+                    Text(isLoading ? LocalizedStringKey("Pairing...") : LocalizedStringKey("Pair Device"))
                         .fontWeight(.semibold)
                 }
                 .frame(maxWidth: .infinity)
@@ -90,7 +90,9 @@ struct PairingView: View {
             Spacer()
         }
         .background(Color(.systemGroupedBackground))
-        .onAppear { isCodeFocused = true }
+        .onAppear {
+            if Demo.isOn { pairingCode = "K7Q2M4X9" } else { isCodeFocused = true }
+        }
     }
 
     private func pair() {
@@ -108,6 +110,7 @@ struct PairingView: View {
                 prefs.parentId = response.parentId
 
                 await MainActor.run {
+                    isLoading = false
                     isPaired = true
                 }
             } catch {

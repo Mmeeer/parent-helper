@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { formatTimeAgo } from '../../utils/formatters';
 import { showError } from '../../utils/showError';
+import { isIosOnly } from '../../utils/platform';
 import * as api from '../../services/api';
 import { onSocketEvent } from '../../services/socket';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,6 +16,9 @@ import { useTranslation } from 'react-i18next';
 import { C } from '../../theme';
 
 type AlertCategory = 'all' | 'location' | 'app' | 'web' | 'sos';
+
+// Alert types that only the Android child app can produce; hidden for iOS-only families.
+const ANDROID_ONLY_TYPES = new Set(['new_app_installed', 'uninstall_attempt']);
 
 const CATEGORY_MAP: Record<string, AlertCategory> = {
   geofence_trigger: 'location',
@@ -123,6 +127,24 @@ export default function AlertsScreen() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [activeFilter, setActiveFilter] = useState<AlertCategory>('all');
+  // Account-wide screen: hide Android-only alert types when every paired device is an iPhone.
+  const [iosOnly, setIosOnly] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const children = await api.getChildren();
+        const perChild = await Promise.all(
+          children.map((c) => api.getChildDevices(c._id).catch(() => [])),
+        );
+        if (!cancelled) setIosOnly(isIosOnly(perChild.flat()));
+      } catch {
+        // Best effort — default to showing every alert type
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const loadAlerts = useCallback(async (pageNum = 1, append = false) => {
     try {
@@ -164,7 +186,8 @@ export default function AlertsScreen() {
     }
   };
 
-  const unreadCount = alerts.filter((a) => !a.read).length;
+  const visibleAlerts = iosOnly ? alerts.filter((a) => !ANDROID_ONLY_TYPES.has(a.type)) : alerts;
+  const unreadCount = visibleAlerts.filter((a) => !a.read).length;
 
   useEffect(() => {
     navigation.setOptions({ tabBarBadge: unreadCount > 0 ? unreadCount : undefined });
@@ -192,8 +215,8 @@ export default function AlertsScreen() {
 
   const filteredAlerts = groupAlerts(
     activeFilter === 'all'
-      ? alerts
-      : alerts.filter((a) => CATEGORY_MAP[a.type] === activeFilter),
+      ? visibleAlerts
+      : visibleAlerts.filter((a) => CATEGORY_MAP[a.type] === activeFilter),
   );
 
   const renderAlert = ({ item, index }: { item: AlertType & { groupCount?: number }; index: number }) => {

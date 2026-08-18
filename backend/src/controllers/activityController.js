@@ -41,16 +41,31 @@ exports.sync = async (req, res, next) => {
     // Use authenticated device identity instead of trusting request body
     const childId = req.device.childId;
     const deviceId = req.device._id;
-    const { date, apps, web, location: rawLocation, blockedAttempts } = req.body;
+    const { date, apps, web, location: rawLocation, blockedAttempts, screenTime } = req.body;
 
     // Throttle location points to reduce storage and API costs
     const location = throttleLocations(rawLocation);
 
     // Upsert: for apps use $set (child sends full daily snapshot each sync),
     // for web/location/blockedAttempts use $push (discrete events that accumulate)
+    // `apps` may be missing/empty (iOS cannot report per-app usage) — only $set when it is an array.
     const update = {};
-    if (apps) {
-      update.$set = { apps };
+    const setFields = {};
+    if (Array.isArray(apps)) {
+      setFields.apps = apps;
+    }
+    // Optional screen-time summary (iOS DeviceActivityMonitor): { limitReachedAt, shieldEvents }
+    if (screenTime && typeof screenTime === 'object') {
+      if (screenTime.limitReachedAt) {
+        const t = new Date(screenTime.limitReachedAt);
+        if (!Number.isNaN(t.getTime())) setFields['screenTime.limitReachedAt'] = t;
+      }
+      if (typeof screenTime.shieldEvents === 'number' && Number.isFinite(screenTime.shieldEvents)) {
+        setFields['screenTime.shieldEvents'] = Math.max(0, Math.floor(screenTime.shieldEvents));
+      }
+    }
+    if (Object.keys(setFields).length > 0) {
+      update.$set = setFields;
     }
     const pushFields = {};
     if (web) pushFields.web = { $each: web };

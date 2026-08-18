@@ -1,0 +1,3 @@
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "Prime Kids энэ төхөөрөмжийн байршлыг эцэг эхтэй чинь хуваалцаж, тэд таныг хаана байгааг харж, аюулгүй бүсээс гарахад мэдэгдэл авна. Апп хаалттай үед ч ажиллахын тулд байршлыг дэвсгэрт ашигладаг.";
+"NSLocationWhenInUseUsageDescription" = "Prime Kids энэ төхөөрөмжийн байршлыг эцэг эхтэй чинь хуваалцаж, тэд таныг хаана байгааг харна.";
+"CFBundleDisplayName" = "Prime Kids";

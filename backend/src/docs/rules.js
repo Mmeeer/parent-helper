@@ -33,8 +33,63 @@
  *                   $ref: '#/components/schemas/AppRules'
  *                 webFilter:
  *                   $ref: '#/components/schemas/WebFilterRules'
- *       404:
- *         description: Rules not found
+ *                 iosBlockSelected:
+ *                   type: boolean
+ *                 iosSelection:
+ *                   type: object
+ *                   properties:
+ *                     blob:
+ *                       type: string
+ *                       nullable: true
+ *                     appCount:
+ *                       type: integer
+ *                     categoryCount:
+ *                       type: integer
+ *                     webDomainCount:
+ *                       type: integer
+ *                     updatedAt:
+ *                       type: string
+ *                       format: date-time
+ *                       nullable: true
+ *       403:
+ *         description: Device does not belong to this child
+ */
+
+/**
+ * @swagger
+ * /rules/{childId}/ios-selection:
+ *   post:
+ *     tags: [Rules]
+ *     summary: Child iOS device uploads its FamilyActivitySelection (opaque tokens + counts)
+ *     security:
+ *       - DeviceAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: childId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               blob:
+ *                 type: string
+ *                 description: base64-encoded FamilyActivitySelection (max 200KB)
+ *               appCount:
+ *                 type: integer
+ *               categoryCount:
+ *                 type: integer
+ *               webDomainCount:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Selection stored; parent notified via rules:updated
+ *       403:
+ *         description: Device does not belong to this child
  */
 
 /**

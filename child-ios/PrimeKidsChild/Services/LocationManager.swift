@@ -16,26 +16,43 @@ final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelega
         super.init()
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyHundredMeters
-        manager.allowsBackgroundLocationUpdates = true
         manager.pausesLocationUpdatesAutomatically = false
         manager.distanceFilter = 100 // meters
+        manager.showsBackgroundLocationIndicator = false
+        authorizationStatus = manager.authorizationStatus
+        manager.allowsBackgroundLocationUpdates = (authorizationStatus == .authorizedAlways)
     }
 
     // MARK: - Permissions
 
+    /// Two-step per Apple guidance: WhenInUse first (system prompt), then Always.
+    /// Calling requestAlways from .notDetermined shows the WhenInUse prompt; iOS asks
+    /// for the Always upgrade later once background location is actually used.
     func requestAlwaysAuthorization() {
-        manager.requestAlwaysAuthorization()
+        switch manager.authorizationStatus {
+        case .notDetermined: manager.requestWhenInUseAuthorization()
+        case .authorizedWhenInUse: manager.requestAlwaysAuthorization()
+        default: break
+        }
     }
 
+    /// Background ("Always") permission — what the product needs.
     var isAuthorized: Bool {
-        authorizationStatus == .authorizedAlways
+        if Demo.isOn { return true }
+        return authorizationStatus == .authorizedAlways
+    }
+
+    /// Any location permission (foreground tracking still works with WhenInUse).
+    var canTrack: Bool {
+        authorizationStatus == .authorizedAlways || authorizationStatus == .authorizedWhenInUse
     }
 
     // MARK: - Tracking
 
     func startTracking() {
-        guard isAuthorized else { return }
-        manager.startMonitoringSignificantLocationChanges()
+        guard canTrack else { return }
+        manager.allowsBackgroundLocationUpdates = isAuthorized
+        if isAuthorized { manager.startMonitoringSignificantLocationChanges() }
         manager.startUpdatingLocation()
     }
 
@@ -65,11 +82,24 @@ final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelega
         return entries
     }
 
+    /// Put entries back (front of the buffer) after a failed upload; keeps the ring-buffer cap.
+    func requeue(_ entries: [LocationEntry]) {
+        guard !entries.isEmpty else { return }
+        bufferLock.lock()
+        defer { bufferLock.unlock() }
+        locationBuffer.insert(contentsOf: entries, at: 0)
+        if locationBuffer.count > 500 { locationBuffer.removeFirst(locationBuffer.count - 500) }
+    }
+
     // MARK: - CLLocationManagerDelegate
 
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         authorizationStatus = manager.authorizationStatus
-        if isAuthorized {
+        if authorizationStatus == .authorizedWhenInUse {
+            // Ask for the Always upgrade right away (system decides whether to prompt now or later).
+            manager.requestAlwaysAuthorization()
+        }
+        if canTrack && PrefsManager.shared.isPaired {
             startTracking()
         }
     }

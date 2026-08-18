@@ -3,6 +3,7 @@ import { View, Text, Switch, TouchableOpacity, Alert, ActivityIndicator, ScrollV
 import { Ionicons } from '@expo/vector-icons';
 import * as api from '../../services/api';
 import type { AlertSettings } from '../../services/api';
+import { isIosOnly } from '../../utils/platform';
 import { C } from '../../theme';
 import { useTranslation } from 'react-i18next';
 
@@ -30,6 +31,8 @@ export default function NotificationSettingsScreen() {
   const [settings, setSettings] = useState<AlertSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  // Account-wide screen: hide Android-only alert types when every paired device is an iPhone.
+  const [iosOnly, setIosOnly] = useState(false);
 
   const ALERT_TYPE_LABELS: Record<string, { label: string; icon: keyof typeof Ionicons.glyphMap }> = {
     screen_time_limit: { label: t('notifications.screenTimeExceeded'), icon: 'time-outline' },
@@ -41,6 +44,22 @@ export default function NotificationSettingsScreen() {
     uninstall_attempt: { label: t('notifications.uninstallAttempt'), icon: 'trash-outline' },
     sos: { label: t('notifications.sosAlert'), icon: 'alert-circle-outline' },
   };
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const children = await api.getChildren();
+        const perChild = await Promise.all(
+          children.map((c) => api.getChildDevices(c._id).catch(() => [])),
+        );
+        if (!cancelled) setIosOnly(isIosOnly(perChild.flat()));
+      } catch {
+        // Best effort — default to showing every alert type
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     api.getAlertSettings()
@@ -121,10 +140,14 @@ export default function NotificationSettingsScreen() {
         {/* Alert types */}
         <Text className="text-xs text-gray-400 font-bold px-1 mb-2">{t('notifications.types')}</Text>
         <View className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 mb-6" style={{ opacity: settings.enabled ? 1 : 0.5 }}>
-          {Object.entries(ALERT_TYPE_LABELS).map(([key, { label, icon }], index) => (
+          {Object.entries(ALERT_TYPE_LABELS)
+            // 'uninstall_attempt' and 'new_app_installed' are Android-only
+            // (iOS has no uninstall detection and no installed-app list).
+            .filter(([key]) => !(iosOnly && (key === 'uninstall_attempt' || key === 'new_app_installed')))
+            .map(([key, { label, icon }], index, list) => (
             <View
               key={key}
-              className={`p-4 flex-row items-center ${index < Object.keys(ALERT_TYPE_LABELS).length - 1 ? 'border-b border-gray-50' : ''}`}
+              className={`p-4 flex-row items-center ${index < list.length - 1 ? 'border-b border-gray-50' : ''}`}
             >
               <View className="w-9 h-9 rounded-xl bg-nest-50 items-center justify-center mr-3">
                 <Ionicons name={icon} size={18} color={C.nest500} />

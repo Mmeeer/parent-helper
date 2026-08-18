@@ -116,10 +116,11 @@ export async function login(email: string, password: string): Promise<AuthRespon
   return data;
 }
 
-export async function register(email: string, password: string, name: string, phone: string): Promise<AuthResponse> {
+export async function register(email: string, password: string, name: string, phone?: string): Promise<AuthResponse> {
   const data = await request<AuthResponse>('/auth/register', {
     method: 'POST',
-    body: JSON.stringify({ email, password, name, phone }),
+    // Phone is optional; omit the field entirely when empty.
+    body: JSON.stringify({ email, password, name, ...(phone ? { phone } : {}) }),
   });
   await saveTokens({ accessToken: data.accessToken, refreshToken: data.refreshToken });
   return data;
@@ -302,10 +303,14 @@ export async function updateScreenTime(
   });
 }
 
-export async function updateBlockedApps(childId: string, blockedApps: string[]): Promise<Rules> {
+export async function updateBlockedApps(
+  childId: string,
+  blockedApps: string[],
+  extra?: { iosBlockSelected?: boolean },
+): Promise<Rules> {
   return request<Rules>(`/rules/${childId}/apps`, {
     method: 'PUT',
-    body: JSON.stringify({ blockedApps }),
+    body: JSON.stringify({ blockedApps, ...(extra ?? {}) }),
   });
 }
 

@@ -31,10 +31,17 @@ const activityLogSchema = new mongoose.Schema({
     timestamp: Date,
   }],
   blockedAttempts: [{
-    type: { type: String, enum: ['app', 'web', 'new_app', 'uninstall_attempt'] },
+    // 'web_filter' = Android VPN/DNS filter hit; 'shield' = iOS ManagedSettings shield shown
+    type: { type: String, enum: ['app', 'web', 'new_app', 'uninstall_attempt', 'web_filter', 'shield'] },
     target: String,
     timestamp: Date,
   }],
+  // Optional daily screen-time summary (iOS DeviceActivityMonitor reports these
+  // instead of per-app usage, which Apple does not expose to the app).
+  screenTime: {
+    limitReachedAt: { type: Date, default: null },
+    shieldEvents: { type: Number, default: 0 },
+  },
 }, { timestamps: true });
 
 activityLogSchema.index({ childId: 1, date: -1 });

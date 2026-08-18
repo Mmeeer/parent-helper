@@ -8,6 +8,8 @@ management applications.
 
 Apply at: https://developer.apple.com/contact/request/family-controls-distribution
 
+> **Status:** team-level request for 2R68Z37544 submitted 2026-08-17 (the form is now a single "Get Entitlement" button — see `FamilyControlsRequestForms.md`). Re-check Identifiers for "Family Controls (Distribution)" ~2026-09-07.
+
 ---
 
 ## Application Form — Suggested Responses
@@ -16,7 +18,7 @@ Apply at: https://developer.apple.com/contact/request/family-controls-distributi
 Prime Kids
 
 ### Bundle ID
-com.primekids.child
+com.parenthelper.child
 
 ### App Description
 Prime Kids is a parental control companion app installed on a child's iOS
@@ -32,17 +34,17 @@ parent/guardian.
    device pairing process. The parent/guardian must authenticate with their
    Apple ID (Family Sharing) to grant authorization. The child cannot self-authorize.
 
-2. **DeviceActivityMonitor** — We use a DeviceActivityMonitor extension to track
-   app usage durations and report them to the parent via our backend API. This
-   allows parents to view daily and weekly screen time reports.
+2. **DeviceActivityMonitor** — Our extension receives schedule interval callbacks
+   (bedtime / school hours) and the daily-limit threshold event and applies or
+   clears ManagedSettings shields. No usage data leaves the extension.
 
 3. **ManagedSettings** — We use ManagedSettingsStore to:
    - Block specific apps or app categories when screen time limits are exceeded
    - Apply time-based restrictions (e.g., no apps after bedtime)
    - Shield blocked applications with a parent-friendly explanation screen
 
-4. **DeviceActivityReport** — We use DeviceActivityReport to generate on-device
-   usage summaries that are sent to the parent's companion app.
+4. **FamilyActivityPicker** — Shown on the child device behind a parent PIN so the
+   parent chooses which apps/categories the rules apply to.
 
 ### Why can't you use Screen Time APIs or other alternatives?
 
@@ -59,7 +61,7 @@ their child's iOS device usage for safety purposes.
 - All screen time and app usage data is encrypted in transit (TLS) and at rest
 - Data is only accessible to the paired parent/guardian
 - No data is sold or shared with advertisers or data brokers
-- Full privacy policy: https://parenthelper.com/legal/privacy-policy.html
+- Full privacy policy: https://primekids.masterclass.mn/parent-helper/legal/privacy-policy.html
 - COPPA compliant
 
 ---
@@ -70,7 +72,7 @@ When configuring the App ID in the Apple Developer Portal:
 
 - [x] **Push Notifications** — For SOS alerts, rule updates, and device status
 - [x] **Background Modes** — Location updates, Background fetch, Background processing, Remote notifications
-- [x] **App Groups** — `group.com.primekids.child` (shared data between main app and Content Blocker extension)
+- [x] **App Groups** — `group.com.parenthelper.child` (shared data between main app and Content Blocker extension)
 - [x] **Family Controls** — Screen time monitoring and app restriction enforcement
 - [x] **Content Blocker** — Safari web content filtering extension
 
@@ -79,15 +81,15 @@ When configuring the App ID in the Apple Developer Portal:
 ## App ID Configuration (developer.apple.com)
 
 1. Go to Certificates, Identifiers & Profiles > Identifiers
-2. Create or edit App ID: `com.primekids.child`
+2. Create or edit App ID: `com.parenthelper.child`
 3. Enable capabilities:
    - App Groups
    - Family Controls
    - Push Notifications
    - Background Modes (configured in Info.plist, not in portal)
-4. Create extension App ID: `com.primekids.child.ContentBlocker`
+4. Create extension App ID: `com.parenthelper.child.ContentBlocker`
 5. Enable capabilities for extension:
-   - App Groups (same group: `group.com.primekids.child`)
+   - App Groups (same group: `group.com.parenthelper.child`)
 
 ---
 

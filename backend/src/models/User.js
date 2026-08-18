@@ -10,8 +10,11 @@ const userSchema = new mongoose.Schema({
     trim: true,
   },
   phone: {
+    // Optional since iOS submission (Apple 5.1.1 data minimisation): the phone number is not
+    // used by any feature; keep for existing accounts and optional entry.
     type: String,
-    required: true,
+    required: false,
+    default: null,
     trim: true,
   },
   passwordHash: {

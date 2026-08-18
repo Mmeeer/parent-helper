@@ -1,0 +1,3 @@
+#include "Shared.xcconfig"
+PK_SERVER_URL = https:/$()/primekids.masterclass.mn/parent-helper
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG

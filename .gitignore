@@ -19,3 +19,7 @@ child/release/*.png
 child/release/_uidump.xml
 child/release/app-release-fixed.apk
 backend/.env
+
+# Apple keys (APNs / App Store Connect API) — never commit
+*.p8
+AuthKey_*.p8

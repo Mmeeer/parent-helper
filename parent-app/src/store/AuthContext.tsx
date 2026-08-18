@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import type { User } from '../types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as api from '../services/api';
+import { DEMO_LOGIN, DEMO_EMAIL, DEMO_PASSWORD } from '../utils/demoHooks';
 import { connectSocket, disconnectSocket, setOnAuthExpired } from '../services/socket';
 import { registerForPushNotifications, unregisterPushNotifications } from '../services/notifications';
 
@@ -12,7 +14,7 @@ interface AuthState {
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string, phone: string) => Promise<void>;
+  register: (email: string, password: string, name: string, phone?: string) => Promise<void>;
   logout: () => Promise<void>;
   verifyEmail: (code: string) => Promise<void>;
   resendVerification: () => Promise<{ message: string }>;
@@ -40,6 +42,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setState({ user, isLoading: false, isAuthenticated: true });
           connectSocket();
           registerForPushNotifications();
+        } else if (DEMO_LOGIN && DEMO_PASSWORD) {
+          // Dev-only screenshot hook (see src/utils/demoHooks.ts)
+          const data = await api.login(DEMO_EMAIL, DEMO_PASSWORD);
+          await AsyncStorage.setItem('onboardingComplete', 'true');
+          setState({ user: data.user, isLoading: false, isAuthenticated: true });
+          connectSocket();
         } else {
           setState({ user: null, isLoading: false, isAuthenticated: false });
         }
@@ -57,7 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     registerForPushNotifications();
   }, []);
 
-  const register = useCallback(async (email: string, password: string, name: string, phone: string) => {
+  const register = useCallback(async (email: string, password: string, name: string, phone?: string) => {
     const data = await api.register(email, password, name, phone);
     setState({ user: data.user, isLoading: false, isAuthenticated: true });
     connectSocket();

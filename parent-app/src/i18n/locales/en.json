@@ -25,7 +25,10 @@
     "update": "Update",
     "create": "Create",
     "search": "Search",
-    "saveChanges": "Save Changes"
+    "saveChanges": "Save Changes",
+    "hours": "hours",
+    "meters": "m",
+    "notConnected": "Not connected"
   },
   "auth": {
     "login": "Sign In",
@@ -105,13 +108,11 @@
     "invalidKey": "Invalid or expired key.",
     "tutorial": "Tutorial",
     "step01": "Install on child's device",
-    "step01Sub": "Available on Android",
+    "step01Sub": "Available on iPhone & Android",
     "step02": "Easy activation",
     "step02Sub": "Enter pairing code",
     "step03": "Start monitoring",
     "step03Sub": "Real-time reports",
-    "help": "Help",
-    "messengerHelp": "Contact via Messenger",
     "children": "Children",
     "childrenList": "Children",
     "noChildren": "No children added",
@@ -187,7 +188,10 @@
     "blockApp": "Block App",
     "blockAppConfirm": "Block \"{{appName}}\" on {{childName}}'s device?",
     "appBlockError": "Unable to block app.",
-    "loadError": "Failed to load activity data."
+    "loadError": "Failed to load activity data.",
+    "connectDeviceTitle": "Connect a device",
+    "connectDevice": "Connect Device",
+    "connectDeviceDesc": "Pair {{childName}}'s phone to start monitoring screen time, location, and app usage."
   },
   "devices": {
     "title": "DEVICES",
@@ -206,7 +210,14 @@
     "unpairBtn": "Unpair",
     "unpairSuccess": "Device has been unpaired.",
     "unpairError": "Could not unpair device.",
-    "pairNew": "Pair New Device"
+    "pairNew": "Pair New Device",
+    "pauseDevice": "Pause device",
+    "resumeDevice": "Resume",
+    "iosPauseHint": "On iPhone, pausing shields all apps instead of locking the screen.",
+    "replaceTitle": "Replace device?",
+    "replaceConfirm": "Each child can have only one device. The current device will be unpaired before you can pair a new one.",
+    "replaceBtn": "Replace",
+    "replaceDevice": "Replace Device"
   },
   "pairDevice": {
     "title": "PAIRING",
@@ -245,7 +256,8 @@
     "deleteGeofence": "Delete Geofence",
     "deleteConfirm": "Are you sure you want to delete \"{{name}}\"?",
     "deleteError": "Failed to delete geofence.",
-    "updateError": "Failed to update geofence."
+    "updateError": "Failed to update geofence.",
+    "radiusMeters": "{{m}} m radius"
   },
   "location": {
     "loadError": "Failed to load location data",
@@ -374,7 +386,11 @@
     "savedDesc": "Rules have been saved successfully.",
     "searchApp": "Search apps...",
     "selectAppToBlock": "Select App to Block",
-    "updateError": "Failed to update rules."
+    "updateError": "Failed to update rules.",
+    "iosSelectionTitle": "Apps are chosen on your child's iPhone",
+    "iosSelectionDesc": "Open Prime Kids on the child's iPhone → Parent settings → Manage apps to pick which apps and categories are managed. Then turn on blocking here.",
+    "iosBlockSelected": "Block selected apps",
+    "iosSelectionCount": "{{apps}} apps · {{categories}} categories selected"
   },
   "webFilter": {
     "title": "CONTROLS",
@@ -396,7 +412,21 @@
     "saveChanges": "Save Changes",
     "saved": "Web filter rules updated.",
     "savedDesc": "Rules have been saved successfully.",
-    "updateError": "Failed to update rules."
+    "updateError": "Failed to update rules.",
+    "iosSafariOnly": "On iPhone, filtering applies to Safari only. Set Safari as the default browser on your child's device.",
+    "categories": {
+      "adult": "Adult content",
+      "gambling": "Gambling",
+      "violence": "Violence",
+      "drugs": "Drugs",
+      "weapons": "Weapons",
+      "hate": "Hate speech",
+      "malware": "Malware",
+      "phishing": "Phishing",
+      "social_media": "Social media",
+      "gaming": "Gaming",
+      "streaming": "Streaming"
+    }
   },
   "settings": {
     "title": "Settings",
@@ -421,7 +451,7 @@
     "deleteAccountModal": "Enter your password to confirm. All your data will be permanently deleted after 30 days.",
     "deleteAccountReason": "Reason (optional)",
     "deleteAccountSent": "Account Deletion Requested",
-    "deleteAccountSentDesc": "Your account will be permanently deleted after 30 days. Contact support to cancel.",
+    "deleteAccountSentDesc": "Your account will be permanently deleted after 30 days. Sign in again within 30 days to cancel.",
     "deleteAccountError": "Failed to delete account.",
     "enterPasswordError": "Please enter your password.",
     "verifyEmail": "Verify Email",
@@ -489,7 +519,9 @@
     "yourRightsDesc": "You have the right to edit, download, or delete your data at any time. You can submit a deletion request from the Settings section.",
     "termsOfService": "Terms of Service",
     "termsOfServiceDesc": "By using this application, you agree to our terms of service. The terms define user rights, obligations, and limitations.",
-    "contact": "Contact"
+    "contact": "Contact",
+    "viewFullPolicy": "View full Privacy Policy",
+    "viewTerms": "View Terms of Service"
   },
   "subscription": {
     "activeSubscription": "Active Subscription",
@@ -568,5 +600,42 @@
     "featuresBullet3": "Danger alerts & notifications",
     "featuresBullet4": "Block apps & web content",
     "getStarted": "Get Started"
+  },
+  "screenTime": {
+    "iosPerAppUnavailable": "Per-app limits are not available for iPhone yet. Daily limit and schedules apply to the apps selected on the child's iPhone."
+  },
+  "days": {
+    "sun": "Sun",
+    "mon": "Mon",
+    "tue": "Tue",
+    "wed": "Wed",
+    "thu": "Thu",
+    "fri": "Fri",
+    "sat": "Sat"
+  },
+  "nav": {
+    "home": "Home",
+    "alerts": "Alerts",
+    "approvals": "Approvals",
+    "settings": "Settings",
+    "childDetail": "Child Detail",
+    "addChild": "Add Child",
+    "rules": "Rules",
+    "screenTime": "Screen Time",
+    "appRules": "App Rules",
+    "webFilter": "Web Filter",
+    "location": "Location",
+    "devices": "Devices",
+    "pairDevice": "Pair Device",
+    "reports": "Reports",
+    "geofences": "Geofences",
+    "subscription": "Subscription",
+    "editProfile": "Edit Profile",
+    "changePassword": "Change Password",
+    "notificationSettings": "Notification Settings",
+    "privacyPolicy": "Privacy Policy"
+  },
+  "register": {
+    "phoneOptional": "Phone (optional)"
   }
 }

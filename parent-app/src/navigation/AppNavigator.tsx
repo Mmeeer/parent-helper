@@ -5,7 +5,12 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTranslation } from 'react-i18next';
+import { DEMO_SCREEN } from '../utils/demoHooks';
+import * as api from '../services/api';
 import { useAuth } from '../store/AuthContext';
+import { onSocketEvent } from '../services/socket';
+import { isIosOnly } from '../utils/platform';
 import type { RootStackParamList } from '../types';
 import { C } from '../theme';
 import { ONBOARDING_COMPLETE_KEY } from '../screens/onboarding/OnboardingScreen';
@@ -46,6 +51,29 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator();
 
 function MainTabs() {
+  // Hook inside the navigator component so tab titles re-render on language change.
+  const { t } = useTranslation();
+  // App-install approvals are Android-only; hide the tab when every paired device is an iPhone.
+  const [iosOnly, setIosOnly] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const refresh = async () => {
+      try {
+        const children = await api.getChildren();
+        const perChild = await Promise.all(
+          children.map((c) => api.getChildDevices(c._id).catch(() => [])),
+        );
+        if (!cancelled) setIosOnly(isIosOnly(perChild.flat()));
+      } catch {
+        // Best effort — default to showing the tab
+      }
+    };
+    refresh();
+    const unsub = onSocketEvent('device:paired', () => { refresh(); });
+    return () => { cancelled = true; unsub(); };
+  }, []);
+
   return (
     <View style={{ flex: 1 }}>
       <ConnectionBanner />
@@ -79,7 +107,7 @@ function MainTabs() {
         name="Dashboard"
         component={HomeScreen}
         options={{
-          title: 'Home',
+          title: t('nav.home'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home-outline" size={size} color={color} />
           ),
@@ -89,29 +117,31 @@ function MainTabs() {
         name="Alerts"
         component={AlertsScreen}
         options={{
-          title: 'Alerts',
+          title: t('nav.alerts'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="notifications-outline" size={size} color={color} />
           ),
           tabBarBadgeStyle: { backgroundColor: C.danger500, fontSize: 9, minWidth: 16, height: 16, lineHeight: 16 },
         }}
       />
+      {!iosOnly && (
       <Tab.Screen
         name="Approvals"
         component={ApprovalsScreen}
         options={{
-          title: 'Approvals',
+          title: t('nav.approvals'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="checkmark-circle-outline" size={size} color={color} />
           ),
           tabBarBadgeStyle: { backgroundColor: C.warm500, fontSize: 9, minWidth: 16, height: 16, lineHeight: 16 },
         }}
       />
+      )}
       <Tab.Screen
         name="Settings"
         component={SettingsScreen}
         options={{
-          title: 'Settings',
+          title: t('nav.settings'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="settings-outline" size={size} color={color} />
           ),
@@ -123,6 +153,7 @@ function MainTabs() {
 }
 
 const AppNavigator = React.forwardRef<any>((_, ref) => {
+  const { t } = useTranslation();
   const { isAuthenticated, isLoading, user } = useAuth();
   const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
 
@@ -140,8 +171,28 @@ const AppNavigator = React.forwardRef<any>((_, ref) => {
 
   const needsOnboarding = isAuthenticated && !onboardingDone;
 
+  // Dev-only screenshot hook: jump to a screen once the navigator is ready.
+  const onReady = () => {
+    if (!DEMO_SCREEN || !isAuthenticated) return;
+    const nav = (ref as React.RefObject<any>)?.current;
+    if (!nav) return;
+    (async () => {
+      try {
+        const [route, tab] = DEMO_SCREEN.split(':');
+        if (route === 'MainTabs') {
+          nav.navigate('MainTabs', tab ? { screen: tab } : undefined);
+          return;
+        }
+        const children = await api.getChildren();
+        const child = children[0];
+        if (!child) return;
+        nav.navigate(route, { childId: child._id, childName: child.name });
+      } catch { /* ignore in demo */ }
+    })();
+  };
+
   return (
-    <NavigationContainer ref={ref}>
+    <NavigationContainer ref={ref} onReady={onReady}>
       <Stack.Navigator
         screenOptions={{
           headerStyle: { backgroundColor: C.bg },
@@ -167,82 +218,82 @@ const AppNavigator = React.forwardRef<any>((_, ref) => {
             <Stack.Screen
               name="ChildDetail"
               component={ChildDetailScreen}
-              options={{ title: 'Child Detail' }}
+              options={{ title: t('nav.childDetail') }}
             />
             <Stack.Screen
               name="AddChild"
               component={AddChildScreen}
-              options={{ title: 'Add Child' }}
+              options={{ title: t('nav.addChild') }}
             />
             <Stack.Screen
               name="RulesOverview"
               component={RulesOverviewScreen}
-              options={{ title: 'Rules' }}
+              options={{ title: t('nav.rules') }}
             />
             <Stack.Screen
               name="ScreenTimeRules"
               component={ScreenTimeRulesScreen}
-              options={{ title: 'Screen Time' }}
+              options={{ title: t('nav.screenTime') }}
             />
             <Stack.Screen
               name="AppRules"
               component={AppRulesScreen}
-              options={{ title: 'App Rules' }}
+              options={{ title: t('nav.appRules') }}
             />
             <Stack.Screen
               name="WebFilter"
               component={WebFilterScreen}
-              options={{ title: 'Web Filter' }}
+              options={{ title: t('nav.webFilter') }}
             />
             <Stack.Screen
               name="LocationMap"
               component={LocationScreen}
-              options={{ title: 'Location' }}
+              options={{ title: t('nav.location') }}
             />
             <Stack.Screen
               name="DevicesList"
               component={DevicesListScreen}
-              options={{ title: 'Devices' }}
+              options={{ title: t('nav.devices') }}
             />
             <Stack.Screen
               name="PairDevice"
               component={PairDeviceScreen}
-              options={{ title: 'Pair Device' }}
+              options={{ title: t('nav.pairDevice') }}
             />
             <Stack.Screen
               name="Reports"
               component={ReportsScreen}
-              options={{ title: 'Reports' }}
+              options={{ title: t('nav.reports') }}
             />
             <Stack.Screen
               name="Geofences"
               component={GeofenceScreen}
-              options={{ title: 'Geofences' }}
+              options={{ title: t('nav.geofences') }}
             />
             <Stack.Screen
               name="ActivateSubscription"
               component={ActivateSubscriptionScreen}
-              options={{ title: 'Subscription' }}
+              options={{ title: t('nav.subscription') }}
             />
             <Stack.Screen
               name="EditProfile"
               component={EditProfileScreen}
-              options={{ title: 'Профайл засах' }}
+              options={{ title: t('nav.editProfile') }}
             />
             <Stack.Screen
               name="ChangePassword"
               component={ChangePasswordScreen}
-              options={{ title: 'Нууц үг солих' }}
+              options={{ title: t('nav.changePassword') }}
             />
             <Stack.Screen
               name="NotificationSettings"
               component={NotificationSettingsScreen}
-              options={{ title: 'Мэдэгдлийн тохиргоо' }}
+              options={{ title: t('nav.notificationSettings') }}
             />
             <Stack.Screen
               name="PrivacyPolicy"
               component={PrivacyPolicyScreen}
-              options={{ title: 'Нууцлалын бодлого' }}
+              options={{ title: t('nav.privacyPolicy') }}
             />
             <Stack.Screen
               name="VerifyEmail"

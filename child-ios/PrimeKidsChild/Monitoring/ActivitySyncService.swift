@@ -16,24 +16,40 @@ final class ActivitySyncService {
         guard PrefsManager.shared.isPaired else { return }
 
         let locations = LocationManager.shared.drainLocations()
+        let defaults = AppGroup.defaults
+
+        // "Ask parent" taps recorded by the ShieldAction extension ("<iso>|<subject>")
+        let pending = defaults.stringArray(forKey: SharedKeys.pendingParentRequests) ?? []
+        let attempts: [BlockedAttemptEntry] = pending.compactMap { raw in
+            let parts = raw.split(separator: "|", maxSplits: 1).map(String.init)
+            guard parts.count == 2 else { return nil }
+            return BlockedAttemptEntry(type: "shield", target: parts[1], timestamp: parts[0])
+        }
+        let limitReached = defaults.bool(forKey: SharedKeys.dailyLimitReached)
+        let summary = ScreenTimeSummary(
+            limitReachedAt: limitReached ? ISO8601DateFormatter().string(from: Date()) : nil,
+            shieldEvents: attempts.count
+        )
 
         // Skip sync if nothing to report
-        guard !locations.isEmpty else { return }
+        guard !locations.isEmpty || !attempts.isEmpty || limitReached else { return }
 
         let request = ActivitySyncRequest(
             date: Self.todayString(),
             apps: nil, // iOS doesn't expose per-app usage to third-party apps
             location: locations,
-            blockedAttempts: nil
+            blockedAttempts: attempts.isEmpty ? nil : attempts,
+            screenTime: summary
         )
 
         do {
             try await APIClient.shared.syncActivity(request)
-            print("[Sync] Uploaded \(locations.count) location(s)")
+            if !pending.isEmpty { defaults.removeObject(forKey: SharedKeys.pendingParentRequests) }
+            print("[Sync] Uploaded \(locations.count) location(s), \(attempts.count) shield event(s)")
         } catch {
             print("[Sync] Failed: \(error.localizedDescription)")
-            // Re-buffer locations on failure so they're not lost
-            // In production, you'd store these to disk for retry
+            // Re-buffer so the next sync retries them.
+            LocationManager.shared.requeue(locations)
         }
     }
 

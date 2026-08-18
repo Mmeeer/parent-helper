@@ -110,12 +110,24 @@ export interface WebFilter {
   customAllow: string[];
 }
 
+/** Summary of the FamilyActivitySelection picked on the child's iPhone. */
+export interface IosSelectionSummary {
+  appCount: number;
+  categoryCount: number;
+  webDomainCount: number;
+  updatedAt: string;
+}
+
 export interface Rules {
   _id: string;
   childId: string;
   screenTime: ScreenTimeRules;
   blockedApps: string[];
   webFilter: WebFilter;
+  /** iOS only: shield the apps/categories selected on the child's device. */
+  iosBlockSelected?: boolean;
+  /** iOS only: present once the child device has uploaded a selection. */
+  iosSelection?: IosSelectionSummary | null;
 }
 
 // ─── Activity ────────────────────────────────────────────

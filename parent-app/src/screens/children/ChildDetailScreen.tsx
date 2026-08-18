@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { formatDuration, formatTime } from '../../utils/formatters';
 import { showError } from '../../utils/showError';
+import { isIosChild } from '../../utils/platform';
 import * as api from '../../services/api';
 import { onSocketEvent } from '../../services/socket';
 import { useTranslation } from 'react-i18next';
@@ -46,12 +47,15 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
   const [loading, setLoading] = useState(true);
   // NOSONAR: SonarLint S1854 false-positive on useState destructuring
   const [deviceCount, setDeviceCount] = useState(0);
+  // iOS child: no browsing history (Safari content blocker only reports counts).
+  const [iosChild, setIosChild] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
       // Devices first — if none, the rest of the dashboard is meaningless.
       const deviceList = await api.getChildDevices(childId).catch(() => []);
       setDeviceCount(deviceList.length);
+      setIosChild(isIosChild(deviceList));
       if (deviceList.length === 0) {
         setLoading(false);
         setRefreshing(false);
@@ -175,7 +179,7 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
             </View>
             <View className="flex-1 ml-3">
               <Text className="font-extrabold text-lg text-gray-900">{childName}</Text>
-              <Text className="text-xs text-gray-400">{t('common.notConnected', 'Not connected')}</Text>
+              <Text className="text-xs text-gray-400">{t('common.notConnected')}</Text>
             </View>
           </View>
 
@@ -185,10 +189,10 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
               <Ionicons name="phone-portrait-outline" size={40} color={C.nest500} />
             </View>
             <Text className="text-lg font-display font-extrabold text-gray-900 text-center mb-2">
-              {t('childDetail.connectDeviceTitle', 'Connect a device')}
+              {t('childDetail.connectDeviceTitle')}
             </Text>
             <Text className="text-sm text-gray-500 text-center leading-5 mb-6">
-              {t('childDetail.connectDeviceDesc', { childName, defaultValue: `Pair {{childName}}'s phone to start monitoring screen time, location, and app usage.` })}
+              {t('childDetail.connectDeviceDesc', { childName })}
             </Text>
             <TouchableOpacity
               onPress={() => navigation.navigate('PairDevice', { childId, childName })}
@@ -196,7 +200,7 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
             >
               <Ionicons name="add-circle-outline" size={20} color="#FFFFFF" />
               <Text className="text-sm font-display font-bold text-white tracking-wide">
-                {t('childDetail.connectDevice', 'Connect Device')}
+                {t('childDetail.connectDevice')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -371,7 +375,9 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
           </View>
         )}
 
-        {/* ── Website access card ── */}
+        {/* ── Website access card (Android only — iOS reports no per-URL history) ── */}
+        {!iosChild && (
+        <>
         <Text className="text-xs font-semibold text-gray-400 tracking-wide mb-3 mt-6">{t('childDetail.webActivity')}</Text>
         {webHistory.length === 0 ? (
           <View
@@ -426,6 +432,8 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
               </View>
             )}
           </View>
+        )}
+        </>
         )}
 
         {/* ── Device info grid ── */}

@@ -117,6 +117,85 @@
 
 /**
  * @swagger
+ * /devices/push-token:
+ *   post:
+ *     tags: [Devices]
+ *     summary: Register the child device's FCM push token (used for silent command pushes)
+ *     security:
+ *       - DeviceAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [token]
+ *             properties:
+ *               token:
+ *                 type: string
+ *               platform:
+ *                 type: string
+ *                 enum: [android, ios]
+ *     responses:
+ *       200:
+ *         description: Token stored
+ *       400:
+ *         description: Invalid push token
+ */
+
+/**
+ * @swagger
+ * /devices/commands:
+ *   get:
+ *     tags: [Devices]
+ *     summary: Fetch pending (un-acked) commands for this device — REST fallback when socket/push was missed
+ *     security:
+ *       - DeviceAuth: []
+ *     responses:
+ *       200:
+ *         description: Up to 20 pending commands, oldest first
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                   command:
+ *                     type: string
+ *                     enum: [lock, unlock, locate, sync, unpair, "rules:updated"]
+ *                   params:
+ *                     type: object
+ *                   createdAt:
+ *                     type: string
+ *                     format: date-time
+ */
+
+/**
+ * @swagger
+ * /devices/commands/{id}/ack:
+ *   post:
+ *     tags: [Devices]
+ *     summary: Acknowledge a queued command as executed
+ *     security:
+ *       - DeviceAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Command acknowledged
+ *       404:
+ *         description: Command not found (already acked or not owned by this device)
+ */
+
+/**
+ * @swagger
  * /devices/sync-apps:
  *   post:
  *     tags: [Devices]

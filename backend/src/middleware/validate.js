@@ -75,6 +75,19 @@ const appRules = [
   body('blockedApps').optional().isArray({ max: 500 }).withMessage('Too many blocked apps'),
   body('blockedApps.*').optional().trim().isLength({ max: 200 }),
   body('blockedCategories').optional().isArray({ max: 50 }),
+  // iOS: parent toggles shielding of the child-picked FamilyActivitySelection
+  body('iosBlockSelected').optional().isBoolean().withMessage('iosBlockSelected must be boolean').toBoolean(),
+  checkValidation,
+];
+
+// Child iOS device uploads its FamilyActivitySelection (opaque on-device tokens)
+const IOS_SELECTION_BLOB_MAX = 200 * 1024;
+const iosSelectionRules = [
+  body('blob').optional({ nullable: true }).isString().withMessage('blob must be a base64 string')
+    .isLength({ max: IOS_SELECTION_BLOB_MAX }).withMessage('blob too large (max 200KB)'),
+  body('appCount').optional().isInt({ min: 0, max: 100000 }).withMessage('appCount must be a non-negative integer').toInt(),
+  body('categoryCount').optional().isInt({ min: 0, max: 100000 }).withMessage('categoryCount must be a non-negative integer').toInt(),
+  body('webDomainCount').optional().isInt({ min: 0, max: 100000 }).withMessage('webDomainCount must be a non-negative integer').toInt(),
   checkValidation,
 ];
 
@@ -105,5 +118,6 @@ module.exports = {
   screenTimeRules,
   appRules,
   webFilterRules,
+  iosSelectionRules,
   subscriptionActivate,
 };

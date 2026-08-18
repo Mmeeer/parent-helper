@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, ScrollView, Alert, TextInput, Switch, TouchableOpacity, Text, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { WEB_FILTER_CATEGORIES } from '../../utils/constants';
 import * as api from '../../services/api';
+import { isIosChild } from '../../utils/platform';
 import type { RouteProp } from '@react-navigation/native';
 import type { RootStackParamList } from '../../types';
 import { C } from '../../theme';
@@ -21,6 +22,16 @@ export default function WebFilterScreen({ route }: Props) {
   const [newBlockDomain, setNewBlockDomain] = useState('');
   const [newAllowDomain, setNewAllowDomain] = useState('');
   const [saving, setSaving] = useState(false);
+  // iOS child: filtering is enforced by the Safari content blocker only.
+  const [iosChild, setIosChild] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    api.getChildDevices(childId)
+      .then((devices) => { if (!cancelled) setIosChild(isIosChild(devices)); })
+      .catch(() => { /* no devices yet — keep default */ });
+    return () => { cancelled = true; };
+  }, [childId]);
 
   const toggleCategory = (cat: string) => {
     if (categories.includes(cat)) {
@@ -65,7 +76,7 @@ export default function WebFilterScreen({ route }: Props) {
   };
 
   const formatCategory = (cat: string) =>
-    cat.charAt(0).toUpperCase() + cat.slice(1).replaceAll('_', ' ');
+    t(`webFilter.categories.${cat}`, cat.charAt(0).toUpperCase() + cat.slice(1).replaceAll('_', ' '));
 
   return (
     <ScrollView className="flex-1 bg-surface">
@@ -76,6 +87,13 @@ export default function WebFilterScreen({ route }: Props) {
           {t('webFilter.webFilter')}
         </Text>
       </View>
+
+      {iosChild && (
+        <View className="flex-row items-start gap-x-3 bg-nest-50 rounded-2xl p-4 mx-4 mb-3">
+          <Ionicons name="logo-apple" size={18} color={C.nest500} />
+          <Text className="flex-1 text-xs text-gray-700 leading-4">{t('webFilter.iosSafariOnly')}</Text>
+        </View>
+      )}
 
       {/* Category Filters */}
       <View className="bg-white rounded-3xl p-5 mx-4 mb-3 border border-gray-100 shadow-sm">

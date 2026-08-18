@@ -1,16 +1,24 @@
 import UIKit
 import BackgroundTasks
+import FirebaseCore
 
 class AppDelegate: NSObject, UIApplicationDelegate {
     func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
+        // Firebase is configured in PrimeKidsChildApp.init(); this is a safety net.
+        if FirebaseApp.app() == nil { FirebaseApp.configure() }
+        _ = NotificationManager.shared // installs UNUserNotificationCenter + Messaging delegates
+
         // Enable battery monitoring
         UIDevice.current.isBatteryMonitoringEnabled = true
 
         // Register background tasks
         BackgroundTaskManager.shared.registerTasks()
+
+        // Realtime command handlers (also used after in-session pairing)
+        setupCommandHandlers()
 
         // If already paired, start services
         if PrefsManager.shared.isPaired {
@@ -18,11 +26,9 @@ class AppDelegate: NSObject, UIApplicationDelegate {
             WebSocketManager.shared.connect()
             BackgroundTaskManager.shared.scheduleTasks()
 
-            // Setup WebSocket command handlers
-            setupCommandHandlers()
-
             Task {
                 await RuleManager.shared.refreshRules()
+                await NotificationManager.shared.registerTokenWithBackend()
             }
         }
 
@@ -52,39 +58,12 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         didReceiveRemoteNotification userInfo: [AnyHashable: Any],
         fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
     ) {
-        // Handle silent push notifications
-        if let command = userInfo["command"] as? String {
-            Task {
-                switch command {
-                case "sync":
-                    await ActivitySyncService.shared.syncNow()
-                case "locate":
-                    if let loc = await LocationManager.shared.getCurrentLocation() {
-                        let entry = LocationEntry(
-                            lat: loc.coordinate.latitude,
-                            lng: loc.coordinate.longitude,
-                            timestamp: ISO8601DateFormatter().string(from: Date())
-                        )
-                        let formatter = DateFormatter()
-                        formatter.dateFormat = "yyyy-MM-dd"
-                        let sync = ActivitySyncRequest(
-                            date: formatter.string(from: Date()),
-                            apps: nil, location: [entry], blockedAttempts: nil
-                        )
-                        try? await APIClient.shared.syncActivity(sync)
-                    }
-                default:
-                    break
-                }
-                completionHandler(.newData)
-            }
-        } else if userInfo["type"] as? String == "rules:updated" {
-            Task {
-                await RuleManager.shared.refreshRules()
-                completionHandler(.newData)
-            }
-        } else {
-            completionHandler(.noData)
+        // Silent push from the backend: { command: "sync"|"locate"|"lock"|"unlock"|"unpair" } or { type: "rules:updated" }
+        let command = (userInfo["command"] as? String) ?? (userInfo["type"] as? String)
+        guard let command else { completionHandler(.noData); return }
+        Task {
+            await CommandHandler.handle(command)
+            completionHandler(.newData)
         }
     }
 
@@ -92,6 +71,12 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 
     func applicationDidBecomeActive(_ application: UIApplication) {
         BackgroundTaskManager.shared.scheduleTasks()
+        guard PrefsManager.shared.isPaired else { return }
+        ScreenTimeManager.shared.checkAuthorization()
+        Task {
+            await CommandHandler.pollQueue()
+            await ActivitySyncService.shared.syncNow()
+        }
     }
 
     // MARK: - WebSocket Command Handlers
@@ -100,31 +85,11 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         WebSocketManager.shared.onRulesUpdated = {
             Task { await RuleManager.shared.refreshRules() }
         }
-
         WebSocketManager.shared.onCommand = { command in
-            Task {
-                switch command {
-                case "sync":
-                    await ActivitySyncService.shared.syncNow()
-                case "locate":
-                    if let loc = await LocationManager.shared.getCurrentLocation() {
-                        let entry = LocationEntry(
-                            lat: loc.coordinate.latitude,
-                            lng: loc.coordinate.longitude,
-                            timestamp: ISO8601DateFormatter().string(from: Date())
-                        )
-                        let formatter = DateFormatter()
-                        formatter.dateFormat = "yyyy-MM-dd"
-                        let sync = ActivitySyncRequest(
-                            date: formatter.string(from: Date()),
-                            apps: nil, location: [entry], blockedAttempts: nil
-                        )
-                        try? await APIClient.shared.syncActivity(sync)
-                    }
-                default:
-                    print("[Command] Unknown: \(command)")
-                }
-            }
+            Task { await CommandHandler.handle(command) }
+        }
+        WebSocketManager.shared.onUnpaired = {
+            Task { await CommandHandler.unpair() }
         }
     }
 }

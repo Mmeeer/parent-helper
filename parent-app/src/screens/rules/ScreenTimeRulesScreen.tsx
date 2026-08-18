@@ -17,6 +17,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { DAYS_OF_WEEK, DAY_NAME_TO_NUM, DAY_NUM_TO_NAME } from '../../utils/constants';
 import { formatDuration } from '../../utils/formatters';
+import { isIosChild } from '../../utils/platform';
 import * as api from '../../services/api';
 import { onSocketEvent } from '../../services/socket';
 import type { RouteProp } from '@react-navigation/native';
@@ -40,6 +41,8 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [installedApps, setInstalledApps] = useState<InstalledApp[]>([]);
+  // Per-app limits rely on the Android package-name app list; hidden for iPhone children.
+  const [iosChild, setIosChild] = useState(false);
 
   // Per-app form
   const [pickerVisible, setPickerVisible] = useState(false);
@@ -78,6 +81,13 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
       }
 
       const devices = await api.getChildDevices(childId);
+      const ios = isIosChild(devices);
+      setIosChild(ios);
+      if (ios) {
+        // No package-name app list on iOS; per-app limits section is hidden.
+        setInstalledApps([]);
+        return;
+      }
       let allApps: InstalledApp[] = [];
       for (const device of devices) {
         try {
@@ -239,7 +249,7 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
             placeholder="2"
             placeholderTextColor={C.gray300}
           />
-          <Text className="text-sm text-gray-500">{t('common.hours', 'hours')}</Text>
+          <Text className="text-sm text-gray-500">{t('common.hours')}</Text>
           <Text className="text-xs text-gray-400 font-medium">
             ({formatDuration(parsedLimit)})
           </Text>
@@ -266,7 +276,13 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
         </View>
       </View>
 
-      {/* Per-App Limits */}
+      {/* Per-App Limits (Android only — iOS has no package-name app list) */}
+      {iosChild ? (
+        <View className="flex-row items-start gap-x-3 bg-nest-50 rounded-2xl p-4 mx-4 mb-3">
+          <Ionicons name="logo-apple" size={18} color={C.nest500} />
+          <Text className="flex-1 text-xs text-gray-700 leading-4">{t('screenTime.iosPerAppUnavailable')}</Text>
+        </View>
+      ) : (
       <View className="bg-white rounded-3xl p-5 mx-4 mb-3 border border-gray-100 shadow-sm">
         <Text className="text-xs text-gray-400 font-bold uppercase mb-3">{t('screenTimeRules.appLimit')}</Text>
         <Text className="text-sm font-display font-bold text-gray-900 mb-1">{t('screenTimeRules.appLimitTitle')}</Text>
@@ -337,6 +353,7 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
           ))
         )}
       </View>
+      )}
 
       {/* Schedules */}
       <View className="bg-white rounded-3xl p-5 mx-4 mb-3 border border-gray-100 shadow-sm">
@@ -376,7 +393,7 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
                   <Text
                     className={`text-xs font-medium ${schedule.days.includes(day) ? 'text-white' : 'text-gray-400'}`}
                   >
-                    {day.slice(0, 3)}
+                    {t(`days.${day.slice(0, 3).toLowerCase()}`)}
                   </Text>
                 </TouchableOpacity>
               ))}

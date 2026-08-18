@@ -1,12 +1,24 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getLocales } from 'expo-localization';
 
 import mn from './locales/mn.json';
 import en from './locales/en.json';
 
 const LANGUAGE_KEY = 'app_language';
-const DEFAULT_LANGUAGE = 'mn';
+const SUPPORTED_LANGUAGES = ['mn', 'en'] as const;
+type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
+
+/** Pick the initial language from the device locale: Mongolian devices get 'mn', everyone else 'en'. */
+const getDeviceLanguage = (): SupportedLanguage => {
+  try {
+    const code = getLocales()[0]?.languageCode?.toLowerCase();
+    return code === 'mn' ? 'mn' : 'en';
+  } catch {
+    return 'en';
+  }
+};
 
 const resources = {
   mn: { translation: mn },
@@ -21,14 +33,16 @@ const initI18n = async () => {
     // ignore
   }
 
-  // Mongolian is the default for first-time users regardless of device
-  // locale. Users can switch to English from Settings.
-  const lng = savedLang || DEFAULT_LANGUAGE;
+  // Stored preference wins; otherwise follow the device locale.
+  // Users can switch language at any time from Settings.
+  const lng = savedLang && (SUPPORTED_LANGUAGES as readonly string[]).includes(savedLang)
+    ? savedLang
+    : getDeviceLanguage();
 
   await i18n.use(initReactI18next).init({
     resources,
     lng,
-    fallbackLng: 'mn',
+    fallbackLng: 'en',
     interpolation: {
       escapeValue: false,
     },
