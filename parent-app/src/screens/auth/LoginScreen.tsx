@@ -6,6 +6,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../store/AuthContext';
+import LanguageToggle from '../../components/LanguageToggle';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../types';
 
@@ -47,6 +48,8 @@ export default function LoginScreen({ navigation }: Props) {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
+        <LanguageToggle style={{ marginTop: 56 }} />
+
         {/* Branding */}
         <View className="items-center mb-8">
           <Image

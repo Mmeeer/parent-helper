@@ -10,14 +10,19 @@ const LANGUAGE_KEY = 'app_language';
 const SUPPORTED_LANGUAGES = ['mn', 'en'] as const;
 type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 
-/** Pick the initial language from the device locale: Mongolian devices get 'mn', everyone else 'en'. */
+/**
+ * Default language is Mongolian (primary market). English is offered via the language toggle
+ * on the Login/Register screens and in Settings; the choice is persisted.
+ * `getLocales` is kept only for diagnostics/future use.
+ */
+const DEFAULT_LANGUAGE: SupportedLanguage = 'mn';
 const getDeviceLanguage = (): SupportedLanguage => {
   try {
-    const code = getLocales()[0]?.languageCode?.toLowerCase();
-    return code === 'mn' ? 'mn' : 'en';
+    void getLocales();
   } catch {
-    return 'en';
+    // ignore
   }
+  return DEFAULT_LANGUAGE;
 };
 
 const resources = {
@@ -33,8 +38,8 @@ const initI18n = async () => {
     // ignore
   }
 
-  // Stored preference wins; otherwise follow the device locale.
-  // Users can switch language at any time from Settings.
+  // Stored preference wins; otherwise Mongolian by default.
+  // Users can switch language on the login screen or in Settings.
   const lng = savedLang && (SUPPORTED_LANGUAGES as readonly string[]).includes(savedLang)
     ? savedLang
     : getDeviceLanguage();

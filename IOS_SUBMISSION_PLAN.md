@@ -191,7 +191,7 @@ Priority: **P0 = must ship for v1**, **P1 = ship if time allows / v1.1**, **P2 =
 | # | Guideline | Finding | Status |
 |---|---|---|---|
 | 1 | 3.1.1 / 4.2 | Parent dashboard (inactive subscription) showed "Contact via Messenger" (`m.me/`) and "Tutorial" (`youtube.com`) placeholder cards next to key entry → could read as external purchase channel + dead links | **Fixed** — cards removed |
-| 2 | 2.1 | Parent app defaulted to Mongolian regardless of device locale; no language switch before login | **Fixed** — device locale via expo-localization |
+| 2 | 2.1 | Parent app defaulted to Mongolian; no language switch before login | **Fixed** — owner wants MN default; added МН/EN toggle on Login & Register screens (+ Settings); review notes explain it |
 | 3 | 3.1.1 | Reviewer must have an active subscription | Review account seeded with 12-month key; review notes state keys are issued by administrator, no in-app purchase | ✅ |
 | 4 | 4.2 | Screen-time "App Limits" picker dead for iPhone children | **Fixed** — gated by `isIosChild`, info line |
 | 5 | 2.3 | "Available on Android" copy in dashboard steps | **Fixed** → "iPhone & Android" |

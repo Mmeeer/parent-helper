@@ -45,6 +45,10 @@ parent, enforce bedtime/school schedules and a daily limit, and to let the
 parent pause the device remotely; Always-location for safe-zone alerts and the
 child's SOS button; and a Safari content-blocker extension for web filtering.
 
+The parent app opens in Mongolian by default (primary market). Tap the
+"EN" toggle at the top of the login screen (or Settings → Language) to
+switch to English.
+
 SINGLE-DEVICE REVIEW FLOW (no second device needed):
 1. Install "Prime Kids: Parent Helper" and sign in:
      review@parenthelper.com / ReviewTest2026!
