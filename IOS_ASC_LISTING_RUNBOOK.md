@@ -1,7 +1,7 @@
 # App Store Connect Listing Runbook (for the browser AI)
 
 Team **Ulzii Uyalagt Systems LLC (2R68Z37544)** · Parent app **6802229006** "Prime Kids: Parent Helper" · Child app **6802229430** "Prime Kids: Child".
-Rules: do tasks in order; **Save** after each section; never Submit for Review; stop and hand back to the human for logins/2FA, legal declarations (DSA), and any file-chooser dialog (screenshots). Type values exactly. At the end output the Report.
+Rules: do tasks in order; **Save** after each section; never Submit for Review; stop and hand back to the human for logins/2FA and any file-chooser dialog (screenshots). Do not fill any DSA/trader form. Type values exactly. At the end output the Report.
 
 Files on this Mac (for uploads): `/Users/mergenganbat/Desktop/drd/parent-helper/`
 
@@ -92,9 +92,13 @@ Nothing else (no Browsing History, no Contact Info). **Publish**.
 
 App Information → Localizable Information → **+ language → Mongolian**; version page → language menu → add Mongolian. Only if the UI offers Mongolian. Fill: Name same; Subtitle parent `Гэр бүлийн аюулгүй байдал`, child `Хүүхдийн аюулгүй байдлын апп`; Description = the Mongolian sections in the same metadata files (if absent, skip description); screenshots from `…/screenshots/iphone-6.9-mn/`. If Mongolian is not offered, skip and report.
 
-## Task 9 — DSA trader status (hand back)
+## Task 9 — Pricing and Availability: Mongolia only (avoids the EU DSA declaration)
 
-Open the DSA dialog, choose **"I'm a trader"**, and stop — hand back to the human to enter the company address / phone / email that will be public (Account Holder decision).
+For **both** apps (6802229006 and 6802229430): App Store Connect → the app → **Pricing and Availability**:
+- **Price:** Free (Free tier / 0).
+- **Availability:** choose "**Available in selected countries or regions**" → **Deselect All** → tick **Mongolia** only → Save/Confirm.
+- Do **not** fill in the Digital Services Act trader form (not required when no EU storefront is selected). Report whether the DSA banner still appears afterwards.
+- Pre-orders / discounted / Apple Silicon Mac availability: leave defaults (off).
 
 ---
 
@@ -106,6 +110,6 @@ Open the DSA dialog, choose **"I'm a trader"**, and stop — hand back to the hu
 5/6 Child: category ___ | age rating ___ | version fields saved yes/no | screenshots uploaded N/5 | review info saved yes/no
 7  Child App Privacy: published yes/no (types: ___)
 8  Mongolian localization: added / not offered
-9  DSA: handed back — status ___
+9  Availability: parent = Mongolia only yes/no | child = Mongolia only yes/no | DSA banner still shown: yes/no
 Anything unexpected: ___
 ```
