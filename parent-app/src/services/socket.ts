@@ -1,6 +1,6 @@
 import { io, Socket } from 'socket.io-client';
 import { API_BASE_URL } from '../utils/constants';
-import { getAccessToken } from './api';
+import { getFreshAccessToken } from './api';
 
 let socket: Socket | null = null;
 
@@ -61,10 +61,13 @@ export function connectSocket(): void {
 
   socket.on('connect', () => {
     setStatus('connected');
-    const token = getAccessToken();
-    if (token) {
-      socket?.emit('join:parent', token);
-    }
+    void joinParentRoom();
+  });
+
+  // Server replies with an 'error' event when join:parent carried a stale JWT.
+  socket.on('error', (payload: unknown) => {
+    const msg = (payload as { message?: string } | undefined)?.message ?? '';
+    if (/token/i.test(msg)) void joinParentRoom(true);
   });
 
   socket.on('disconnect', (reason) => {
@@ -79,9 +82,12 @@ export function connectSocket(): void {
     setStatus('disconnected');
   });
 
-  // Auth expired/revoked — trigger token refresh or logout
+  // Access token expired while connected: refresh and reconnect (the server disconnects us).
+  // Only a revoked/suspended account logs the user out.
   socket.on('auth:expired', () => {
-    onAuthExpired?.();
+    void getFreshAccessToken().then((t) => {
+      if (t) socket?.connect(); else onAuthExpired?.();
+    });
   });
 
   socket.on('auth:revoked', () => {
@@ -114,6 +120,20 @@ export function connectSocket(): void {
   forward('location:update');
   forward('rules:updated');
   forward('device:paired');
+}
+
+let joining = false;
+/** Emit join:parent with a token that is not about to expire. */
+async function joinParentRoom(forceRefresh = false): Promise<void> {
+  if (joining) return;
+  joining = true;
+  try {
+    const token = await getFreshAccessToken(); // checks exp; refreshes only when needed
+    void forceRefresh;
+    if (token && socket?.connected) socket.emit('join:parent', token);
+  } finally {
+    joining = false;
+  }
 }
 
 export function disconnectSocket(): void {

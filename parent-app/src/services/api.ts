@@ -48,6 +48,25 @@ export function getAccessToken(): string | null {
   return accessToken;
 }
 
+/** Seconds until the current access token expires (null if unknown). */
+function accessTokenTtl(): number | null {
+  if (!accessToken) return null;
+  try {
+    const payload = JSON.parse(globalThis.atob(accessToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return typeof payload.exp === 'number' ? payload.exp - Math.floor(Date.now() / 1000) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Returns an access token that is valid for at least ~2 more minutes, refreshing if needed. */
+export async function getFreshAccessToken(): Promise<string | null> {
+  const ttl = accessTokenTtl();
+  if (accessToken && (ttl === null || ttl > 120)) return accessToken;
+  if (refreshToken) await tryRefreshToken();
+  return accessToken;
+}
+
 // ─── HTTP Client ─────────────────────────────────────────
 async function request<T>(
   path: string,
@@ -63,12 +82,16 @@ async function request<T>(
     headers['Authorization'] = `Bearer ${accessToken}`;
   }
 
+  const sentWithToken = accessToken;
   let response = await fetch(url, { ...options, headers });
 
-  // If 401 and we have a refresh token, try refreshing
+  // If 401 and we have a refresh token, refresh (single-flight) and retry once.
+  // Concurrent 401s share ONE refresh: the backend rotates refresh tokens and treats a
+  // second use of the old token as reuse → it would invalidate every session.
   if (response.status === 401 && refreshToken) {
-    const refreshed = await tryRefreshToken();
-    if (refreshed) {
+    // Another request may already have refreshed since we sent ours.
+    const refreshed = accessToken && accessToken !== sentWithToken ? true : await tryRefreshToken();
+    if (refreshed && accessToken) {
       headers['Authorization'] = `Bearer ${accessToken}`;
       response = await fetch(url, { ...options, headers });
     }
@@ -82,20 +105,29 @@ async function request<T>(
   return response.json();
 }
 
+let refreshInFlight: Promise<boolean> | null = null;
+
 async function tryRefreshToken(): Promise<boolean> {
-  try {
-    const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken }),
-    });
-    if (!res.ok) return false;
-    const tokens: TokenPair = await res.json();
-    await saveTokens(tokens);
-    return true;
-  } catch {
-    return false;
-  }
+  if (refreshInFlight) return refreshInFlight;
+  refreshInFlight = (async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+      });
+      if (!res.ok) return false;
+      const tokens: TokenPair = await res.json();
+      await saveTokens(tokens);
+      return true;
+    } catch {
+      return false;
+    } finally {
+      // Let the next expiry start a fresh refresh cycle.
+      setTimeout(() => { refreshInFlight = null; }, 0);
+    }
+  })();
+  return refreshInFlight;
 }
 
 export class ApiError extends Error {

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { AppState } from 'react-native';
 import type { User } from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as api from '../services/api';
@@ -78,6 +79,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await api.logout();
     setState({ user: null, isLoading: false, isAuthenticated: false });
   }, []);
+
+  // On foreground: make sure the access token is fresh and the socket is up,
+  // so the burst of screen loads never starts with an expired token.
+  useEffect(() => {
+    if (!state.isAuthenticated) return;
+    const sub = AppState.addEventListener('change', (next) => {
+      if (next === 'active') {
+        api.getFreshAccessToken().then((t) => { if (t) connectSocket(); }).catch(() => {});
+      }
+    });
+    return () => sub.remove();
+  }, [state.isAuthenticated]);
 
   // When server signals auth:expired or auth:revoked, force logout
   useEffect(() => {
