@@ -58,7 +58,7 @@ Notes: Background Modes are set in Info.plist, not here. Ticking Family Controls
 
   | Scope | Submitted | Case/ref | Approved |
   |---|---|---|---|
-  | Team-level (2R68Z37544) — covers com.parenthelper.child + 3 extensions | 2026-08-17 ("We'll review your request and contact you soon") | none given | ⏳ pending — re-check Identifiers for "Family Controls (Distribution)" ~2026-09-07 |
+  | Team-level (2R68Z37544) — covers com.parenthelper.child + 3 extensions | 2026-08-17 ("We'll review your request and contact you soon") | none given | ✅ **granted by 2026-08-18** — "Family Controls (Distribution)" row is tickable on the child App IDs (tick it on all 4 — see IOS_ASC_LISTING_RUNBOOK.md Task 1) |
 
 - [ ] Follow up if silent after **3 weeks**. Approval email → App ID shows "Family Controls (Distribution)".
 
