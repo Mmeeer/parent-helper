@@ -128,6 +128,8 @@ Priority: **P0 = must ship for v1**, **P1 = ship if time allows / v1.1**, **P2 =
 - P1: per-app limits (A6), "Ask for more time" round-trip, DeviceActivityReport view on child, Mongolian App Store localization.
 - P2: Live Activity/Widget for status, iPad layout (keep iPhone-only for v1: `TARGETED_DEVICE_FAMILY = 1`).
 
+> **2026-08-19:** Child app **1.0.0 (1) uploaded to App Store Connect** headlessly (archive → export → altool) using an Admin-role ASC API key `44VPNY6FPV`; recipe in `child-ios/scripts/release.sh`. Signed "Apple Distribution: Ulzii Uyalagt Systems LLC", family-controls on app + 3 extensions. Parent app builds 4 & 5 on TestFlight; Android vc9 built (AAB link in chat) — upload to Play manually. ASC listings being filled by the desktop agent (see IOS_ASC_PARENT_SUBMIT_PROMPT.md / IOS_ASC_CHILD_SUBMIT_PROMPT.md).
+
 ### Phase 3 — Device testing (Week 5–6)
 
 - [ ] Two-device end-to-end with a real Family Sharing child account: pair → shields fire at schedule → daily limit → remote pause → SOS → geofence entry/exit → unpair.
