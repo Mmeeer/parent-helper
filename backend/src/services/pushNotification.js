@@ -198,6 +198,10 @@ async function sendDeviceCommand(device, command, params = {}) {
   if (!device?.pushToken) return false;
   if (!firebaseInitialized && !initFirebase()) return false;
 
+  // lock/unlock (pause/resume) ship as VISIBLE pushes with mutable-content so the child
+  // app's Notification Service Extension can enforce them even when the app was force-quit
+  // (iOS never delivers silent pushes to a force-quit app). Other commands stay silent.
+  const isEnforced = ['lock', 'pause', 'unlock', 'resume'].includes(String(command));
   const message = {
     token: device.pushToken,
     data: {
@@ -206,14 +210,35 @@ async function sendDeviceCommand(device, command, params = {}) {
       deviceId: String(device._id),
     },
     android: { priority: 'high' },
-    apns: {
-      headers: {
-        'apns-push-type': 'background',
-        'apns-priority': '5',
-        'apns-topic': 'com.parenthelper.child',
-      },
-      payload: { aps: { 'content-available': 1 } },
-    },
+    apns: isEnforced
+      ? {
+          headers: {
+            'apns-push-type': 'alert',
+            'apns-priority': '10',
+            'apns-topic': 'com.parenthelper.child',
+          },
+          payload: {
+            aps: {
+              alert: {
+                title: 'Prime Kids',
+                body: String(command) === 'lock' || String(command) === 'pause'
+                  ? 'Таны эцэг эх төхөөрөмжийг түр зогсоолоо.'
+                  : 'Төхөөрөмж дахин ашиглахад бэлэн боллоо.',
+              },
+              sound: 'default',
+              'mutable-content': 1,
+              'content-available': 1,
+            },
+          },
+        }
+      : {
+          headers: {
+            'apns-push-type': 'background',
+            'apns-priority': '5',
+            'apns-topic': 'com.parenthelper.child',
+          },
+          payload: { aps: { 'content-available': 1 } },
+        },
   };
 
   try {

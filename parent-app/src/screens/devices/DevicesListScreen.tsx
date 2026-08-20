@@ -56,7 +56,13 @@ export default function DevicesListScreen({ navigation, route }: Props) {
     setCommandingId(deviceId);
     try {
       const result = await api.sendDeviceCommand(deviceId, command);
-      Alert.alert(t('devices.commandSent'), result.message);
+      // Tell the parent HOW it will arrive: live now, or when the child's phone next wakes.
+      const detail = result.viaSocket
+        ? t('devices.deliveredLive')
+        : result.viaPush
+          ? t('devices.deliveredPush')
+          : t('devices.deliveredQueued');
+      Alert.alert(t('devices.commandSent'), detail);
       if (command === 'locate') {
         setTimeout(loadDevices, 3000);
       }
@@ -163,7 +169,7 @@ export default function DevicesListScreen({ navigation, route }: Props) {
                     color: device.status === 'online' ? C.safe600 : C.gray400,
                   }}
                 >
-                  {device.status === 'online' ? 'Online' : device.status}
+                  {device.status === 'online' ? t('common.online') : t('common.offline')}
                 </Text>
               </View>
             </View>

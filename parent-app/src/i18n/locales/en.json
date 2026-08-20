@@ -217,7 +217,10 @@
     "replaceTitle": "Replace device?",
     "replaceConfirm": "Each child can have only one device. The current device will be unpaired before you can pair a new one.",
     "replaceBtn": "Replace",
-    "replaceDevice": "Replace Device"
+    "replaceDevice": "Replace Device",
+    "deliveredLive": "Delivered instantly — the child’s device is connected.",
+    "deliveredPush": "Sent to the child’s device. It usually applies within a few seconds.",
+    "deliveredQueued": "The child’s device is asleep right now. The command will apply the next time it wakes up (usually within minutes)."
   },
   "pairDevice": {
     "title": "PAIRING",

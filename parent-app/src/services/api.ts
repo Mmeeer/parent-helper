@@ -295,7 +295,7 @@ export async function sendDeviceCommand(
   deviceId: string,
   command: 'lock' | 'unlock' | 'locate' | 'sync',
   params?: Record<string, unknown>,
-): Promise<{ message: string }> {
+): Promise<{ message: string; viaSocket?: boolean; viaPush?: boolean; queued?: boolean }> {
   return request(`/devices/${deviceId}/command`, {
     method: 'POST',
     body: JSON.stringify({ command, params }),
