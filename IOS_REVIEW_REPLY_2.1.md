@@ -32,10 +32,10 @@ Record with Control Center → Screen Recording, starting **before you launch th
 ## B1. Resolution Center reply — Prime Kids: Parent Helper (6802229006)
 
 ```
-Thank you for the review. Answers below; a screen recording captured on a physical device (⟨iPhone model⟩, iOS ⟨version⟩) is attached. It begins at app launch and shows registration with the notification-permission prompt, login, the core features (children dashboard, child location map, alerts, activity reports, screen-time rules, web filter, device pause/locate), the subscription screen, and the in-app account-deletion flow.
+Thank you for the review. Answers below; a screen recording captured on a physical device (iPhone 15 Pro, iOS 26.5.2) is attached. It begins at app launch and shows registration with the notification-permission prompt, login, the core features (children dashboard, child location map, alerts, activity reports, screen-time rules, web filter, device pause/locate), the subscription screen, and the in-app account-deletion flow.
 
 2. DEVICES AND OS TESTED
-- ⟨iPhone model⟩, iOS ⟨version⟩ (physical device, TestFlight build 1.0.0(5))
+- iPhone 15 Pro, iOS 26.5.2 (physical device, TestFlight build 1.0.0(5))
 - iPhone 17 Pro Max simulator, iOS 26.x (development)
 - The same JavaScript codebase ships on Android (Google Play, com.parenthelper.parent), tested on multiple Android 13–15 devices.
 
@@ -65,10 +65,10 @@ Not applicable. Parental-control software for a family's own children; no protec
 ## B2. Resolution Center reply — Prime Kids: Child (6802229430)
 
 ```
-Thank you for the review. Answers below; a screen recording captured on a physical device (⟨iPhone model⟩, iOS ⟨version⟩) is attached. It begins at app launch and shows: pairing with the code PRIME888, the permission prompts (notifications, location, Screen Time / Family Controls authorisation with the system sheet, Safari content-blocker enablement), the parent-PIN "Parent settings" screen with Apple's FamilyActivityPicker, and enforcement — the Prime Kids shield appearing over a blocked app, remote pause/resume from the parent app, and the SOS button.
+Thank you for the review. Answers below; a screen recording captured on a physical device (iPhone 15 Pro, iOS 26.5.2) is attached. It begins at app launch and shows: pairing with the code PRIME888, the permission prompts (notifications, location, Screen Time / Family Controls authorisation with the system sheet, Safari content-blocker enablement), the parent-PIN "Parent settings" screen with Apple's FamilyActivityPicker, and enforcement — the Prime Kids shield appearing over a blocked app, remote pause/resume from the parent app, and the SOS button.
 
 2. DEVICES AND OS TESTED
-- ⟨iPhone model⟩, iOS ⟨version⟩ (physical device, TestFlight build 1.0.0(1))
+- iPhone 15 Pro, iOS 26.5.2 (physical device, TestFlight build 1.0.0(1))
 - iPhone 17 Pro Max simulator, iOS 26.x (development; Family Controls flows verified on the physical device).
 
 3. PURPOSE AND TARGET AUDIENCE
