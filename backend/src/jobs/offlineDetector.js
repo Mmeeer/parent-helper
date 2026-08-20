@@ -2,18 +2,27 @@ const Device = require('../models/Device');
 const Alert = require('../models/Alert');
 const { sendAlertNotification } = require('../services/pushNotification');
 
-const OFFLINE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes without heartbeat
+// Platform-aware: Android runs a persistent foreground service and heartbeats every ~15 min;
+// iOS heartbeats are opportunistic (BGAppRefresh) — iOS devices are NOT offline just because
+// the OS delayed a background wakeup. A 5-minute threshold made every iOS device flap
+// offline/online and spam "went offline" alerts.
+const OFFLINE_THRESHOLD_ANDROID_MS = 20 * 60 * 1000; // ~2 missed heartbeats
+const OFFLINE_THRESHOLD_IOS_MS = 60 * 60 * 1000;     // BGAppRefresh cadence is OS-controlled
 const CHECK_INTERVAL_MS = 60 * 1000; // Check every minute
 
 function startOfflineDetector(io) {
   const intervalId = setInterval(async () => {
     try {
-      const cutoff = new Date(Date.now() - OFFLINE_THRESHOLD_MS);
+      const cutoffAndroid = new Date(Date.now() - OFFLINE_THRESHOLD_ANDROID_MS);
+      const cutoffIos = new Date(Date.now() - OFFLINE_THRESHOLD_IOS_MS);
 
       const staleDevices = await Device.find({
         paired: true,
         status: 'online',
-        lastSeen: { $lt: cutoff },
+        $or: [
+          { platform: 'ios', lastSeen: { $lt: cutoffIos } },
+          { platform: { $ne: 'ios' }, lastSeen: { $lt: cutoffAndroid } },
+        ],
       }).populate('childId', 'name');
 
       for (const device of staleDevices) {

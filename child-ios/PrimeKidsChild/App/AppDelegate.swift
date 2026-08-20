@@ -75,6 +75,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         ScreenTimeManager.shared.checkAuthorization()
         Task {
             await NotificationManager.shared.registerTokenWithBackend()
+            await ActivitySyncService.shared.sendHeartbeat()
             await CommandHandler.pollQueue()
             await ActivitySyncService.shared.syncNow()
         }

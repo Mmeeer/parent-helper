@@ -224,6 +224,9 @@ io.on('connection', (socket) => {
       const device = await Device.findOne({ deviceToken, paired: true });
       if (device) {
         socket.join(`device:${device._id}`);
+        // A live socket is proof of life — mark online immediately so the parent
+        // doesn't see "offline" between heartbeats.
+        Device.updateOne({ _id: device._id }, { $set: { status: 'online', lastSeen: new Date() } }).catch(() => {});
         console.log(`[SOCKET] Device joined room: device:${device._id}`);
       } else {
         console.log(`[SOCKET] join:device failed: no paired device found for token`);

@@ -98,7 +98,7 @@ export default function ActivateSubscriptionScreen({ navigation }: Props) {
             {sub.expiresAt && (
               <>
                 <Text className="font-display font-extrabold text-4xl text-white mb-1">
-                  {getDaysRemaining(sub.expiresAt)} {t('subscription.daysRemaining')}
+                  {t('subscription.daysRemaining', { count: getDaysRemaining(sub.expiresAt) })}
                 </Text>
                 <Text className="text-sm text-white/70 mb-4">{t('subscription.remaining')}</Text>
                 <View className="h-2 rounded-full bg-white/20">

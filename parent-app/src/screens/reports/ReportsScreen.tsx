@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { C } from '../../theme';
 import { formatDuration } from '../../utils/formatters';
 import * as api from '../../services/api';
+import { isIosChild } from '../../utils/platform';
 import type { DailyBreakdownEntry } from '../../services/api';
 import type { RouteProp } from '@react-navigation/native';
 import type { RootStackParamList, ActivitySummary, AppUsageEntry } from '../../types';
@@ -30,14 +31,17 @@ export default function ReportsScreen({ route }: Props) {
   const [topApps, setTopApps] = useState<AppUsageEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [iosChild, setIosChild] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
       const days = period === 'week' ? 7 : 30;
-      const [summaryData, breakdownData] = await Promise.all([
+      const [summaryData, breakdownData, devices] = await Promise.all([
         api.getActivitySummary(childId, period),
         api.getDailyBreakdown(childId, days),
+        api.getChildDevices(childId).catch(() => []),
       ]);
+      setIosChild(isIosChild(devices));
       setSummary(summaryData);
       setBreakdown(breakdownData.breakdown);
       setTopApps(summaryData.topApps || []);
@@ -88,6 +92,14 @@ export default function ReportsScreen({ route }: Props) {
           {t('reports.childReports', { childName })}
         </Text>
       </View>
+
+      {/* iPhone children report location + screen-time summaries, not per-app minutes */}
+      {iosChild && (
+        <View className="flex-row items-start mx-4 mb-4 p-3.5 rounded-2xl bg-blue-50">
+          <Ionicons name="logo-apple" size={16} color="#3b82f6" style={{ marginTop: 1, marginRight: 8 }} />
+          <Text className="flex-1 text-xs text-blue-800 leading-4">{t('reports.iosSummaryNote')}</Text>
+        </View>
+      )}
 
       {/* Period Toggle */}
       <View className="flex-row mx-4 mb-5 gap-x-2">

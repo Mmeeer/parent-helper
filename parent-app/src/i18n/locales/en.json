@@ -289,7 +289,8 @@
     "noBlockAttempts": "No blocked attempts in this period",
     "topApps": "MOST USED APPS",
     "topAppsTitle": "Most Used Apps",
-    "noApps": "No app usage data"
+    "noApps": "No app usage data",
+    "iosSummaryNote": "On iPhone, Apple does not allow apps to read per-app usage. Reports for this child show location, alerts and screen-time summaries (limits and blocks) instead of per-app minutes."
   },
   "rules": {
     "title": "RULES",
