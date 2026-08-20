@@ -23,3 +23,6 @@ backend/.env
 # Apple keys (APNs / App Store Connect API) — never commit
 *.p8
 AuthKey_*.p8
+
+# review screen recordings (large, not for git)
+ios_recordings/
