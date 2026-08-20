@@ -34,10 +34,10 @@
 "Prime Kids uses notifications to confirm SOS alerts and to tell you when your parent changes a rule." = "Prime Kids нь SOS мэдэгдлийг баталгаажуулах болон эцэг эх дүрэм өөрчлөхөд танд мэдэгдэхийн тулд мэдэгдэл ашигладаг.";
 "Your parent can see where this device is and gets an alert if you leave a safe zone. Choose “Always Allow” so it keeps working when the app is closed." = "Эцэг эх чинь энэ төхөөрөмж хаана байгааг харж, аюулгүй бүсээс гарахад мэдэгдэл авна. Апп хаалттай үед ч ажиллуулахын тулд “Үргэлж зөвшөөрөх”-ийг сонгоно уу.";
 "Your parent will authorise Prime Kids to manage app limits and bedtime schedules on this device using Apple’s Screen Time." = "Эцэг эх чинь Apple-ийн Дэлгэцийн цагийг ашиглан энэ төхөөрөмж дээр аппын хязгаар, унтах цагийн хуваарийг удирдах эрхийг Prime Kids-д олгоно.";
-"The Prime Kids Safari extension blocks websites your parent has filtered. Enable it in Settings → Safari → Extensions." = "Prime Kids Safari өргөтгөл нь эцэг эхийн шүүсэн вэбсайтуудыг хаадаг. Тохиргоо → Safari → Өргөтгөлүүд хэсэгт идэвхжүүлнэ үү.";
+"The Prime Kids Safari extension blocks websites your parent has filtered. Enable it in the Settings app: Apps → Safari → Extensions → Prime Kids." = "Prime Kids Safari өргөтгөл нь эцэг эхийн шүүсэн вэбсайтуудыг хаадаг. Тохиргоо апп: Аппууд → Safari → Өргөтгөлүүд → Prime Kids гэж идэвхжүүлнэ үү.";
 "If iOS only offers “While Using”, allow it now — you can change it to “Always” in Settings → Privacy → Location Services → Prime Kids." = "Хэрэв iOS зөвхөн “Ашиглах үед” гэсэн сонголт өгвөл одоо зөвшөөрөөд, дараа нь Тохиргоо → Нууцлал → Байршлын үйлчилгээ → Prime Kids хэсгээс “Үргэлж” болгож өөрчилж болно.";
 "A parent or guardian must enter their Apple ID or device passcode." = "Эцэг эх эсвэл асран хамгаалагч Apple ID эсвэл төхөөрөмжийн нууц кодоо оруулах шаардлагатай.";
-"Filtering applies to Safari only. Other browsers are not filtered on iPhone." = "Шүүлтүүр зөвхөн Safari-д үйлчилнэ. iPhone дээр бусад хөтөч шүүгдэхгүй.";
+"iOS will open this app's settings page — go back to the Settings front page, then: Apps → Safari → Extensions → Prime Kids → turn it on. Filtering applies to Safari only." = "iOS энэ аппын тохиргооны хуудсыг нээнэ — Тохиргооны эхний хуудас руу буцаад: Аппууд → Safari → Өргөтгөлүүд → Prime Kids гэж асаана уу. Шүүлтүүр зөвхөн Safari-д үйлчилнэ.";
 "Allow location" = "Байршил зөвшөөрөх";
 "Authorise Screen Time" = "Дэлгэцийн цагийг зөвшөөрөх";
 "Open Settings" = "Тохиргоо нээх";

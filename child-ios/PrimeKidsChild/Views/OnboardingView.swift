@@ -113,14 +113,14 @@ struct OnboardingView: View {
             case .notifications: return "Prime Kids uses notifications to confirm SOS alerts and to tell you when your parent changes a rule."
             case .location: return "Your parent can see where this device is and gets an alert if you leave a safe zone. Choose “Always Allow” so it keeps working when the app is closed."
             case .screenTime: return "Your parent will authorise Prime Kids to manage app limits and bedtime schedules on this device using Apple’s Screen Time."
-            case .safari: return "The Prime Kids Safari extension blocks websites your parent has filtered. Enable it in Settings → Safari → Extensions."
+            case .safari: return "The Prime Kids Safari extension blocks websites your parent has filtered. Enable it in the Settings app: Apps → Safari → Extensions → Prime Kids."
             }
         }
         var hint: LocalizedStringKey? {
             switch self {
             case .location: return "If iOS only offers “While Using”, allow it now — you can change it to “Always” in Settings → Privacy → Location Services → Prime Kids."
             case .screenTime: return "A parent or guardian must enter their Apple ID or device passcode."
-            case .safari: return "Filtering applies to Safari only. Other browsers are not filtered on iPhone."
+            case .safari: return "iOS will open this app's settings page — go back to the Settings front page, then: Apps → Safari → Extensions → Prime Kids → turn it on. Filtering applies to Safari only."
             default: return nil
             }
         }
