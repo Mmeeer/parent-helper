@@ -7,7 +7,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 KEY_ID=${ASC_KEY_ID:-44VPNY6FPV}
 ISSUER=${ASC_ISSUER_ID:-70a1985a-c2f0-475c-a86c-5c2ee5bdc7e4}
-KEY_PATH=${ASC_KEY_PATH:-../AuthKey_${KEY_ID}.p8}
+KEY_PATH=${ASC_KEY_PATH:-$(cd .. && pwd)/AuthKey_${KEY_ID}.p8}
 AUTH=(-allowProvisioningUpdates -authenticationKeyPath "$KEY_PATH" -authenticationKeyID "$KEY_ID" -authenticationKeyIssuerID "$ISSUER")
 xcodegen generate >/dev/null
 rm -rf build/PrimeKidsChild.xcarchive build/export

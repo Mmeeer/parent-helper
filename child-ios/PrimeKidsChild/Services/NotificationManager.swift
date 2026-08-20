@@ -54,9 +54,22 @@ final class NotificationManager: NSObject, ObservableObject, UNUserNotificationC
         Task { await registerTokenWithBackend() }
     }
 
-    /// Sends the current FCM token to the backend (idempotent). Called on token refresh and after pairing.
+    /// Sends the current FCM token to the backend (idempotent). Called on token refresh,
+    /// after pairing, and on every foreground — the silent-push channel for parent commands
+    /// (pause/locate/sync) depends on this having succeeded at least once.
     func registerTokenWithBackend() async {
-        guard let token = PrefsManager.shared.fcmToken else { return }
+        guard PrefsManager.shared.isPaired else { return }
+        var token = PrefsManager.shared.fcmToken
+        if token == nil {
+            // Delegate may never have fired (e.g. APNs token arrived before the FCM SDK
+            // finished initialising) — fetch explicitly.
+            token = try? await Messaging.messaging().token()
+            if let t = token { PrefsManager.shared.fcmToken = t }
+        }
+        guard let token, !token.isEmpty else {
+            print("[Notifications] no FCM token available yet")
+            return
+        }
         do {
             try await APIClient.shared.registerPushToken(token)
             print("[Notifications] FCM token registered with backend")

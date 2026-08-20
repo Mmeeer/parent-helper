@@ -74,6 +74,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         guard PrefsManager.shared.isPaired else { return }
         ScreenTimeManager.shared.checkAuthorization()
         Task {
+            await NotificationManager.shared.registerTokenWithBackend()
             await CommandHandler.pollQueue()
             await ActivitySyncService.shared.syncNow()
         }
