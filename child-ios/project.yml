@@ -56,7 +56,6 @@ targets:
         OTHER_LDFLAGS: -ObjC
     dependencies:
       - target: ContentBlocker
-      - target: NotificationServiceExtension
       - target: DeviceActivityMonitorExtension
       - target: ShieldConfigurationExtension
       - target: ShieldActionExtension
@@ -131,28 +130,6 @@ targets:
     dependencies:
       - sdk: ManagedSettings.framework
       - sdk: ManagedSettingsUI.framework
-
-  NotificationServiceExtension:
-    type: app-extension
-    platform: iOS
-    sources:
-      - path: NotificationServiceExtension
-        excludes:
-          - "Info.plist"
-          - "*.entitlements"
-      - path: Shared/AppGroup.swift
-      - path: Shared/PrivacyInfo-Extension.xcprivacy
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.parenthelper.child.NotificationService
-        INFOPLIST_FILE: NotificationServiceExtension/Info.plist
-        CODE_SIGN_ENTITLEMENTS: NotificationServiceExtension/NotificationServiceExtension.entitlements
-        GENERATE_INFOPLIST_FILE: YES
-        SKIP_INSTALL: YES
-    dependencies:
-      - sdk: ManagedSettings.framework
-      - sdk: FamilyControls.framework
-      - sdk: UserNotifications.framework
 
   ShieldActionExtension:
     type: app-extension
