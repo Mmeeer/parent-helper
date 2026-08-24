@@ -100,8 +100,8 @@ struct PrimeKidsChildApp: App {
         switch scene {
         case "onboarding": OnboardingView(startStep: DebugLaunch.step) {}
         case "pairing": PairingView(isPaired: .constant(false))
-        case "settings": NavigationView { SettingsView() }
-        case "parent": NavigationView { ParentSettingsView() }
+        case "settings": NavigationView { SettingsView() }.navigationViewStyle(.stack)
+        case "parent": NavigationView { ParentSettingsView() }.navigationViewStyle(.stack)
         default: DashboardView()
         }
         #else

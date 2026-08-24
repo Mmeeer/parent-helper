@@ -70,7 +70,7 @@ struct SettingsView: View {
             OnboardingView { showOnboarding = false }
         }
         .sheet(isPresented: $showParent) {
-            NavigationView { ParentGateView() }
+            NavigationView { ParentGateView() }.navigationViewStyle(.stack)
         }
     }
 

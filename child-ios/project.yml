@@ -28,7 +28,7 @@ settings:
   base:
     DEVELOPMENT_TEAM: 2R68Z37544
     CODE_SIGN_STYLE: Automatic
-    TARGETED_DEVICE_FAMILY: "1"
+    TARGETED_DEVICE_FAMILY: "1,2"
     SWIFT_VERSION: "5.9"
 
 targets:
