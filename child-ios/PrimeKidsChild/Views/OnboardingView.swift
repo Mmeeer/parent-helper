@@ -8,6 +8,7 @@ struct OnboardingView: View {
     @ObservedObject private var notifications = NotificationManager.shared
     @ObservedObject private var screenTime = ScreenTimeManager.shared
     @State private var safariEnabled = false
+    @State private var requesting = false
     @State private var step: Int
     let onFinished: () -> Void
 
@@ -59,21 +60,27 @@ struct OnboardingView: View {
 
             Spacer()
 
+            // Apple 5.1.1(iv): the explanation must always lead to the system permission
+            // request, with neutral button wording ("Continue") and no way to delay it.
             VStack(spacing: 12) {
-                Button(action: { grant(s) }) {
-                    Text(isGranted(s) ? LocalizedStringKey("Granted") : s.buttonTitle)
+                Button(action: { proceed(s) }) {
+                    Text(s.primaryTitle)
                         .fontWeight(.semibold)
                         .frame(maxWidth: .infinity).frame(height: 52)
-                        .background(isGranted(s) ? Color(.systemGray4) : Color("Primary"))
+                        .background(Color("Primary"))
                         .foregroundColor(.white).cornerRadius(16)
                 }
-                .disabled(isGranted(s))
+                .disabled(requesting)
 
-                Button(action: next) {
-                    Text(step == steps.count - 1 ? LocalizedStringKey("Finish") : (isGranted(s) ? LocalizedStringKey("Continue") : LocalizedStringKey("Skip for now")))
-                        .fontWeight(.medium)
-                        .frame(maxWidth: .infinity).frame(height: 44)
-                        .foregroundColor(Color("Primary"))
+                // Only the Safari step gets a secondary action: it opens Settings, not a
+                // system permission dialog.
+                if s == .safari {
+                    Button(action: next) {
+                        Text("Finish")
+                            .fontWeight(.medium)
+                            .frame(maxWidth: .infinity).frame(height: 44)
+                            .foregroundColor(Color("Primary"))
+                    }
                 }
             }
             .padding(.horizontal, 24)
@@ -111,25 +118,24 @@ struct OnboardingView: View {
         var body: LocalizedStringKey {
             switch self {
             case .notifications: return "Prime Kids uses notifications to confirm SOS alerts and to tell you when your parent changes a rule."
-            case .location: return "Your parent can see where this device is and gets an alert if you leave a safe zone. Choose “Always Allow” so it keeps working when the app is closed."
+            case .location: return "Your parent can see where this device is and gets an alert if you leave a safe zone. Your location is also attached when you send an SOS."
             case .screenTime: return "Your parent will authorise Prime Kids to manage app limits and bedtime schedules on this device using Apple’s Screen Time."
             case .safari: return "The Prime Kids Safari extension blocks websites your parent has filtered. Enable it in the Settings app: Apps → Safari → Extensions → Prime Kids."
             }
         }
         var hint: LocalizedStringKey? {
             switch self {
-            case .location: return "If iOS only offers “While Using”, allow it now — you can change it to “Always” in Settings → Privacy → Location Services → Prime Kids."
+            case .location: return "iOS will ask next how you want to share your location. You can change your choice at any time in Settings → Privacy → Location Services."
             case .screenTime: return "A parent or guardian must enter their Apple ID or device passcode."
             case .safari: return "iOS will open this app's settings page — go back to the Settings front page, then: Apps → Safari → Extensions → Prime Kids → turn it on. Filtering applies to Safari only."
             default: return nil
             }
         }
-        var buttonTitle: LocalizedStringKey {
+        /// Neutral wording required by App Review guideline 5.1.1(iv).
+        var primaryTitle: LocalizedStringKey {
             switch self {
-            case .notifications: return "Allow notifications"
-            case .location: return "Allow location"
-            case .screenTime: return "Authorise Screen Time"
             case .safari: return "Open Settings"
+            default: return "Continue"
             }
         }
     }
@@ -143,18 +149,34 @@ struct OnboardingView: View {
         }
     }
 
-    private func grant(_ s: Step) {
+    /// Shows the system permission request for this step and then moves on. The user always
+    /// reaches the system dialog from the explanation screen — nothing can delay it.
+    private func proceed(_ s: Step) {
+        guard !requesting else { return }
+        requesting = true
         switch s {
         case .notifications:
-            Task { _ = await NotificationManager.shared.requestPermission() }
+            Task {
+                _ = await NotificationManager.shared.requestPermission()
+                await MainActor.run { requesting = false; next() }
+            }
         case .location:
             location.requestAlwaysAuthorization()
+            // CoreLocation answers through its delegate; advance once the sheet is up.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                requesting = false
+                next()
+            }
         case .screenTime:
-            Task { await screenTime.requestAuthorization() }
+            Task {
+                await screenTime.requestAuthorization()
+                await MainActor.run { requesting = false; next() }
+            }
         case .safari:
             if let url = URL(string: UIApplication.openSettingsURLString) {
                 UIApplication.shared.open(url)
             }
+            requesting = false
         }
     }
 

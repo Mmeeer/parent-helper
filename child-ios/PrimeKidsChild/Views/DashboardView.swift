@@ -1,4 +1,7 @@
 import SwiftUI
+#if canImport(FamilyControls)
+import FamilyControls
+#endif
 
 struct DashboardView: View {
     @ObservedObject private var ruleManager = RuleManager.shared
@@ -7,6 +10,7 @@ struct DashboardView: View {
     @ObservedObject private var notificationManager = NotificationManager.shared
 
     @State private var showPermissions = false
+    @State private var showParent = false
     @State private var safariEnabled = false
 
     var body: some View {
@@ -116,6 +120,57 @@ struct DashboardView: View {
                 .shadow(color: .black.opacity(0.06), radius: 12, y: 4)
                 .padding(.horizontal, 16)
 
+                // Parental controls (Screen Time). Kept on the first screen so the
+                // Screen Time features are reachable without hunting through menus.
+                VStack(alignment: .leading, spacing: 14) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "lock.shield.fill").foregroundColor(Color("Primary"))
+                        Text("Parental controls").font(.subheadline).fontWeight(.semibold)
+                        Spacer()
+                        Text(screenTimeManager.isAuthorized ? "On" : "Not set up")
+                            .font(.caption).fontWeight(.semibold)
+                            .foregroundColor(screenTimeManager.isAuthorized ? .green : .orange)
+                    }
+
+                    if screenTimeManager.isAuthorized {
+                        VStack(spacing: 8) {
+                            summaryRow("square.grid.2x2.fill", "Managed apps", managedAppsText)
+                            if let limit = ruleManager.rules?.screenTime?.dailyLimitMin, limit > 0 {
+                                summaryRow("hourglass", "Daily limit", "\(limit) min")
+                            }
+                            summaryRow("moon.zzz.fill", "Schedules", "\(ruleManager.rules?.screenTime?.schedule?.count ?? 0)")
+                            summaryRow("shield.lefthalf.filled", "App blocking",
+                                       AppGroup.defaults.bool(forKey: SharedKeys.blockingEnabled) ? "On" : "Off")
+                        }
+                        Button(action: { showParent = true }) {
+                            Text("Manage apps & limits")
+                                .fontWeight(.semibold)
+                                .frame(maxWidth: .infinity).frame(height: 46)
+                                .background(Color("Primary")).foregroundColor(.white).cornerRadius(14)
+                        }
+                    } else {
+                        Text("Screen Time lets your parent limit apps, set bedtime schedules and pause this device. A parent needs to authorise it once.")
+                            .font(.caption).foregroundColor(.secondary)
+                        Button(action: { Task { await screenTimeManager.requestAuthorization() } }) {
+                            Text("Set up Screen Time")
+                                .fontWeight(.semibold)
+                                .frame(maxWidth: .infinity).frame(height: 46)
+                                .background(Color("Primary")).foregroundColor(.white).cornerRadius(14)
+                        }
+                        if let err = screenTimeManager.authorizationError {
+                            Text(err).font(.caption2).foregroundColor(.red).fixedSize(horizontal: false, vertical: true)
+                        }
+                        Button(action: { showParent = true }) {
+                            Text("Open parent settings").font(.footnote).foregroundColor(Color("Primary"))
+                        }
+                    }
+                }
+                .padding(20)
+                .background(Color(.systemBackground))
+                .cornerRadius(20)
+                .shadow(color: .black.opacity(0.06), radius: 12, y: 4)
+                .padding(.horizontal, 16)
+
                 // Permissions Card
                 if needsPermissions {
                     Button(action: { showPermissions = true }) {
@@ -185,6 +240,9 @@ struct DashboardView: View {
         .fullScreenCover(isPresented: $showPermissions) {
             OnboardingView { showPermissions = false }
         }
+        .sheet(isPresented: $showParent) {
+            NavigationView { ParentGateView() }.navigationViewStyle(.stack)
+        }
         .onAppear {
             Task {
                 await ruleManager.refreshRules()
@@ -193,6 +251,25 @@ struct DashboardView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
             Task { safariEnabled = await ContentBlockerService.shared.isEnabled() }
+        }
+    }
+
+    /// "N apps · M categories" from the selection the parent picked on this device.
+    private var managedAppsText: String {
+        #if canImport(FamilyControls)
+        let sel = screenTimeManager.selection
+        return "\(sel.applicationTokens.count) apps · \(sel.categoryTokens.count) categories"
+        #else
+        return "—"
+        #endif
+    }
+
+    private func summaryRow(_ icon: String, _ title: LocalizedStringKey, _ value: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon).frame(width: 20).foregroundColor(.secondary)
+            Text(title).font(.footnote)
+            Spacer()
+            Text(value).font(.footnote).foregroundColor(.secondary)
         }
     }
 

@@ -32,10 +32,8 @@
 "Set up Screen Time" = "Дэлгэцийн цагийг тохируулах";
 "Turn on Safari filtering" = "Safari шүүлтүүрийг асаах";
 "Prime Kids uses notifications to confirm SOS alerts and to tell you when your parent changes a rule." = "Prime Kids нь SOS мэдэгдлийг баталгаажуулах болон эцэг эх дүрэм өөрчлөхөд танд мэдэгдэхийн тулд мэдэгдэл ашигладаг.";
-"Your parent can see where this device is and gets an alert if you leave a safe zone. Choose “Always Allow” so it keeps working when the app is closed." = "Эцэг эх чинь энэ төхөөрөмж хаана байгааг харж, аюулгүй бүсээс гарахад мэдэгдэл авна. Апп хаалттай үед ч ажиллуулахын тулд “Үргэлж зөвшөөрөх”-ийг сонгоно уу.";
 "Your parent will authorise Prime Kids to manage app limits and bedtime schedules on this device using Apple’s Screen Time." = "Эцэг эх чинь Apple-ийн Дэлгэцийн цагийг ашиглан энэ төхөөрөмж дээр аппын хязгаар, унтах цагийн хуваарийг удирдах эрхийг Prime Kids-д олгоно.";
 "The Prime Kids Safari extension blocks websites your parent has filtered. Enable it in the Settings app: Apps → Safari → Extensions → Prime Kids." = "Prime Kids Safari өргөтгөл нь эцэг эхийн шүүсэн вэбсайтуудыг хаадаг. Тохиргоо апп: Аппууд → Safari → Өргөтгөлүүд → Prime Kids гэж идэвхжүүлнэ үү.";
-"If iOS only offers “While Using”, allow it now — you can change it to “Always” in Settings → Privacy → Location Services → Prime Kids." = "Хэрэв iOS зөвхөн “Ашиглах үед” гэсэн сонголт өгвөл одоо зөвшөөрөөд, дараа нь Тохиргоо → Нууцлал → Байршлын үйлчилгээ → Prime Kids хэсгээс “Үргэлж” болгож өөрчилж болно.";
 "A parent or guardian must enter their Apple ID or device passcode." = "Эцэг эх эсвэл асран хамгаалагч Apple ID эсвэл төхөөрөмжийн нууц кодоо оруулах шаардлагатай.";
 "iOS will open this app's settings page — go back to the Settings front page, then: Apps → Safari → Extensions → Prime Kids → turn it on. Filtering applies to Safari only." = "iOS энэ аппын тохиргооны хуудсыг нээнэ — Тохиргооны эхний хуудас руу буцаад: Аппууд → Safari → Өргөтгөлүүд → Prime Kids гэж асаана уу. Шүүлтүүр зөвхөн Safari-д үйлчилнэ.";
 "Allow location" = "Байршил зөвшөөрөх";
@@ -101,3 +99,11 @@
 "On" = "Асаалттай";
 "%lld min" = "%lld мин";
 "%lld apps · %lld categories · %lld sites" = "%lld апп · %lld ангилал · %lld сайт";
+"Parental controls" = "Эцэг эхийн хяналт";
+"Not set up" = "Тохируулаагүй";
+"App blocking" = "Апп хаалт";
+"Manage apps & limits" = "Апп ба хязгаар удирдах";
+"Screen Time lets your parent limit apps, set bedtime schedules and pause this device. A parent needs to authorise it once." = "Дэлгэцийн цаг нь эцэг эхэд апп хязгаарлах, унтах цагийн хуваарь тогтоох, төхөөрөмжийг түр зогсоох боломж олгоно. Эцэг эх нэг удаа зөвшөөрөл өгөх шаардлагатай.";
+"Open parent settings" = "Эцэг эхийн тохиргоо нээх";
+"Your parent can see where this device is and gets an alert if you leave a safe zone. Your location is also attached when you send an SOS." = "Эцэг эх чинь энэ төхөөрөмж хаана байгааг харж, аюулгүй бүсээс гарахад мэдэгдэл авна. SOS илгээхэд байршил чинь мөн хавсаргагдана.";
+"iOS will ask next how you want to share your location. You can change your choice at any time in Settings → Privacy → Location Services." = "iOS дараагийн алхамд байршлаа хэрхэн хуваалцахыг асууна. Сонголтоо Тохиргоо → Нууцлал → Байршлын үйлчилгээ хэсгээс хэдийд ч өөрчилж болно.";
