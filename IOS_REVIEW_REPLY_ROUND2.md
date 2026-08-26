@@ -41,3 +41,30 @@ What the app does: it shares the device's location with the parent for safe-zone
 
 Family Controls (Distribution) is enabled for our team, 2R68Z37544.
 ```
+
+---
+
+## C. Child app (6802229430) — round-3 reply: 5.1.1(iv) + 2.5.1 (build 5)
+
+```
+Hi, thanks for the review. Both points are fixed in build 1.0 (5).
+
+5.1.1(iv) — Location permission
+You're right on both counts and we've changed the flow:
+- The button before the system prompt now says "Continue" instead of "Allow location".
+- The "Skip for now" button is gone. The explanation screen now always leads straight to the system permission request, so the user makes the decision in iOS's own dialog.
+- We also removed the line that suggested choosing "Always Allow". The screen now only explains what the feature does (the parent can see the device's location, safe-zone alerts, and location attached to an SOS) and notes that iOS will ask next and the choice can be changed later in Settings.
+
+2.5.1 — Where the Screen Time features are
+Sorry these were hard to find. They were behind the setup flow, so if setup was skipped nothing appeared. In build 5 they are on the app's main screen, in a "Parental controls" card:
+- If Screen Time has not been authorised yet, the card shows "Not set up" with a "Set up Screen Time" button that triggers the FamilyControls authorisation (a parent or guardian approves with their Apple ID or the device passcode). Any error iOS returns is now shown on screen.
+- Once authorised, the same card shows the managed apps count, the daily limit, the number of schedules and whether app blocking is on, with a "Manage apps & limits" button that opens Apple's FamilyActivityPicker (behind a parent PIN — create any 4-6 digit PIN on first use).
+
+What the Screen Time APIs are used for:
+- FamilyControls: authorisation, and FamilyActivityPicker for the parent to choose which apps/categories are managed on this device.
+- ManagedSettings: shields those apps when the parent turns blocking on, when a bedtime/school schedule is active, when the daily limit is reached, or when the parent pauses the device from the companion app. ShieldConfiguration/ShieldAction customise that shield and its "Ask parent" button.
+- DeviceActivity: schedule and daily-limit monitoring that triggers the shields.
+The app never hides or removes apps; it only shields them, and everything is controlled by the parent.
+
+To see it end to end: launch the app, enter pairing code PRIME888, follow the short setup, then use the "Parental controls" card on the main screen. The companion app "Prime Kids: Parent Helper" (App ID 6802229006, review@parenthelper.com / ReviewTest2026!) can then change limits and schedules, and pause or resume the device.
+```
