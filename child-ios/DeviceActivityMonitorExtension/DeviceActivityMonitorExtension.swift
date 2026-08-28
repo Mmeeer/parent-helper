@@ -24,8 +24,10 @@ final class DeviceActivityMonitorExtension: DeviceActivityMonitor {
         if activity.rawValue.hasPrefix("schedule_") {
             defaults.removeObject(forKey: SharedKeys.activeScheduleName)
         } else if activity.rawValue == "dailyLimit" {
-            // New day: limit resets.
+            // New day: limit and the usage ladder reset.
             defaults.set(false, forKey: SharedKeys.dailyLimitReached)
+            defaults.set(0, forKey: SharedKeys.usedMinutesToday)
+            defaults.set(Self.todayString(), forKey: SharedKeys.usedMinutesDate)
         }
         restoreBaselineShields()
     }
@@ -34,9 +36,31 @@ final class DeviceActivityMonitorExtension: DeviceActivityMonitor {
 
     override func eventDidReachThreshold(_ event: DeviceActivityEvent.Name, activity: DeviceActivityName) {
         super.eventDidReachThreshold(event, activity: activity)
-        guard activity.rawValue == "dailyLimit" else { return }
+
+        // Usage ladder: "usage_45" means the child has now spent 45 minutes in the managed
+        // apps today. Record the highest bucket reached; the app uploads it on its next sync.
+        if event.rawValue.hasPrefix("usage_"),
+           let minutes = Int(event.rawValue.dropFirst("usage_".count)) {
+            let today = Self.todayString()
+            if defaults.string(forKey: SharedKeys.usedMinutesDate) != today {
+                defaults.set(today, forKey: SharedKeys.usedMinutesDate)
+                defaults.set(0, forKey: SharedKeys.usedMinutesToday)
+            }
+            if minutes > defaults.integer(forKey: SharedKeys.usedMinutesToday) {
+                defaults.set(minutes, forKey: SharedKeys.usedMinutesToday)
+            }
+            return
+        }
+
+        guard activity.rawValue == "dailyLimit", event.rawValue == "dailyLimit" else { return }
         defaults.set(true, forKey: SharedKeys.dailyLimitReached)
         shieldSelectionOrEverything()
+    }
+
+    private static func todayString() -> String {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        return f.string(from: Date())
     }
 
     // MARK: Helpers

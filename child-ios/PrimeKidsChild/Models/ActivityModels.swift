@@ -16,6 +16,9 @@ struct ActivitySyncRequest: Codable {
 struct ScreenTimeSummary: Codable {
     let limitReachedAt: String?
     let shieldEvents: Int
+    /// Minutes spent in the parent-managed apps today (15-minute granularity — iOS only
+    /// reports threshold crossings, never a raw minute count).
+    let usedMinutes: Int
 }
 
 /// Pending command from the REST queue (GET /devices/commands).

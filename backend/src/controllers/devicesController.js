@@ -235,6 +235,7 @@ exports.getStatus = async (req, res, next) => {
       model: device.model,
       osVersion: device.osVersion,
       appVersion: device.appVersion,
+      screenTimeAuthorized: device.screenTimeAuthorized,
     });
   } catch (err) {
     next(err);
@@ -311,7 +312,7 @@ exports.listByChild = async (req, res, next) => {
     }
 
     const devices = await Device.find({ childId, paired: true })
-      .select('_id status lastSeen batteryLevel platform model osVersion appVersion')
+      .select('_id status lastSeen batteryLevel platform model osVersion appVersion screenTimeAuthorized')
       .sort({ lastSeen: -1 });
 
     res.json(devices.map((d) => ({
@@ -323,6 +324,7 @@ exports.listByChild = async (req, res, next) => {
       model: d.model,
       osVersion: d.osVersion,
       appVersion: d.appVersion,
+      screenTimeAuthorized: d.screenTimeAuthorized,
     })));
   } catch (err) {
     next(err);
@@ -595,11 +597,17 @@ exports.reportPermission = async (req, res, next) => {
 
 exports.heartbeat = async (req, res, next) => {
   try {
-    const { batteryLevel } = req.body;
+    const { batteryLevel, screenTimeAuthorized } = req.body;
 
     req.device.status = 'online';
     req.device.lastSeen = new Date();
     req.device.batteryLevel = batteryLevel;
+    // Optional: iOS child app reports its FamilyControls (Screen Time) authorisation
+    // state so the parent app can prompt when it has been revoked. Only persist when
+    // the device actually sent a boolean — otherwise keep the last known value.
+    if (typeof screenTimeAuthorized === 'boolean') {
+      req.device.screenTimeAuthorized = screenTimeAuthorized;
+    }
     await req.device.save();
 
     res.json({ status: 'ok' });

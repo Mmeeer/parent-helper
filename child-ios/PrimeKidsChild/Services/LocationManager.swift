@@ -61,6 +61,12 @@ final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelega
         manager.stopUpdatingLocation()
     }
 
+    /// Ask iOS for a single fresh fix (used by the parent's "Find location" command).
+    func requestFreshFix() {
+        guard canTrack else { return }
+        manager.requestLocation()
+    }
+
     /// Get current location for SOS or on-demand locate
     func getCurrentLocation() async -> CLLocation? {
         if let loc = lastLocation, abs(loc.timestamp.timeIntervalSinceNow) < 60 {

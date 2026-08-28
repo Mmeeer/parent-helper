@@ -17,6 +17,7 @@ import * as api from '../../services/api';
 import { onSocketEvent } from '../../services/socket';
 import type { RouteProp } from '@react-navigation/native';
 import type { RootStackParamList, LocationEntry } from '../../types';
+import { DEFAULT_REGION } from '../../utils/mapDefaults';
 import { C } from '../../theme';
 
 let MapView: any = null;
@@ -92,6 +93,17 @@ export default function LocationScreen({ route }: Props) {
   const [addressLoading, setAddressLoading] = useState(false);
 
   const latestLocation = locations.length > 0 ? (locations.at(-1) ?? null) : null;
+
+  // Centre on the child's last known position; fall back to Ulaanbaatar when
+  // there is no location fix yet.
+  const mapRegion = latestLocation
+    ? {
+        latitude: latestLocation.lat,
+        longitude: latestLocation.lng,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      }
+    : DEFAULT_REGION;
 
   // Reverse geocode on demand — only when user taps, not for every location ping
   const loadAddress = useCallback(async () => {
@@ -184,12 +196,7 @@ export default function LocationScreen({ route }: Props) {
       {showMap ? (
         <MapView
           style={{ flex: 1 }}
-          initialRegion={{
-            latitude: latestLocation.lat,
-            longitude: latestLocation.lng,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
-          }}
+          initialRegion={mapRegion}
           onMapReady={() => console.log('Map ready')}
         >
           {/* Location trail */}

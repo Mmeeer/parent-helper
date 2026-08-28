@@ -41,6 +41,8 @@ const activityLogSchema = new mongoose.Schema({
   screenTime: {
     limitReachedAt: { type: Date, default: null },
     shieldEvents: { type: Number, default: 0 },
+    // Minutes of managed-app usage reported by the iOS child app (running daily total).
+    usedMinutes: { type: Number, default: 0 },
   },
 }, { timestamps: true });
 

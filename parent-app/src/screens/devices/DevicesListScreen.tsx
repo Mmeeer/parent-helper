@@ -151,6 +151,17 @@ export default function DevicesListScreen({ navigation, route }: Props) {
                 <Text className="text-[11px] text-gray-400 mt-0.5">
                   {device.platform} {device.osVersion} — v{device.appVersion}
                 </Text>
+                {/* iOS only: Pause/app limits need Screen Time authorised on the child's device */}
+                {isIosChild(device) && device.screenTimeAuthorized != null && (
+                  <Text
+                    className="text-[11px] mt-0.5 leading-4"
+                    style={{ color: device.screenTimeAuthorized ? C.safe600 : C.danger500 }}
+                  >
+                    {device.screenTimeAuthorized
+                      ? t('devices.screenTimeOn')
+                      : t('devices.screenTimeOff')}
+                  </Text>
+                )}
               </View>
               {/* Status chip */}
               <View

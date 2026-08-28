@@ -26,13 +26,22 @@ final class ActivitySyncService {
             return BlockedAttemptEntry(type: "shield", target: parts[1], timestamp: parts[0])
         }
         let limitReached = defaults.bool(forKey: SharedKeys.dailyLimitReached)
+        // Managed-app usage recorded by the DeviceActivityMonitor extension (15-min buckets).
+        let today = Self.todayString()
+        let usedMinutes = defaults.string(forKey: SharedKeys.usedMinutesDate) == today
+            ? defaults.integer(forKey: SharedKeys.usedMinutesToday)
+            : 0
         let summary = ScreenTimeSummary(
             limitReachedAt: limitReached ? ISO8601DateFormatter().string(from: Date()) : nil,
-            shieldEvents: attempts.count
+            shieldEvents: attempts.count,
+            usedMinutes: usedMinutes
         )
 
-        // Skip sync if nothing to report
-        guard !locations.isEmpty || !attempts.isEmpty || limitReached else { return }
+        // Nothing new to upload — but still let the parent know the device is alive.
+        guard !locations.isEmpty || !attempts.isEmpty || limitReached || usedMinutes > 0 else {
+            await sendHeartbeat()
+            return
+        }
 
         let request = ActivitySyncRequest(
             date: Self.todayString(),
@@ -61,7 +70,10 @@ final class ActivitySyncService {
         let level = await MainActor.run { Int(UIDevice.current.batteryLevel * 100) }
 
         do {
-            try await APIClient.shared.sendHeartbeat(batteryLevel: max(level, 0))
+            try await APIClient.shared.sendHeartbeat(
+                batteryLevel: max(level, 0),
+                screenTimeAuthorized: ScreenTimeManager.shared.isAuthorized
+            )
             print("[Heartbeat] Sent (battery: \(level)%)")
         } catch {
             print("[Heartbeat] Failed: \(error.localizedDescription)")

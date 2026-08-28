@@ -2,7 +2,7 @@
   "expo": {
     "name": "Prime Kids: Parent Helper",
     "slug": "prime-kids-parent-helper",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "newArchEnabled": true,
@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.parenthelper.parent",
-      "buildNumber": "1",
+      "buildNumber": "7",
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,

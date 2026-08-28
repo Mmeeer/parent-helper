@@ -357,6 +357,15 @@ exports.registerFcmToken = async (req, res, next) => {
     const { token, deviceId, platform } = req.body;
     const user = await User.findById(req.user._id);
 
+    // A single FCM token identifies one app install, not one account. If another
+    // account previously signed in on this phone, its stale copy of the token would
+    // keep receiving that account's pushes, delivering other families' alerts here.
+    // Detach the token from every other user before claiming it for this one.
+    await User.updateMany(
+      { _id: { $ne: user._id }, 'fcmTokens.token': token },
+      { $pull: { fcmTokens: { token } } }
+    );
+
     // Remove existing entry for this token (in case of re-registration)
     user.fcmTokens = (user.fcmTokens || []).filter((t) => t.token !== token);
 

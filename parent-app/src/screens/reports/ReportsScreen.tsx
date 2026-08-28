@@ -126,7 +126,7 @@ export default function ReportsScreen({ route }: Props) {
 
       {/* Summary Cards */}
       {summary && (
-        <View className="flex-row mx-3 gap-x-2 mb-5">
+        <View className={`flex-row mx-3 gap-x-2 ${iosChild ? 'mb-2' : 'mb-5'}`}>
           <View className="flex-1 bg-white rounded-2xl p-4 items-center mx-1 border border-gray-100">
             <Ionicons name="time-outline" size={24} color={C.nest500} />
             <Text className="font-display font-extrabold text-2xl text-gray-900 mt-1.5">
@@ -155,6 +155,13 @@ export default function ReportsScreen({ route }: Props) {
             </Text>
           </View>
         </View>
+      )}
+
+      {/* iPhone cannot report per-app usage — say what the screen-time number actually covers */}
+      {summary && iosChild && (
+        <Text className="text-[11px] text-gray-400 mx-4 mb-5 leading-4">
+          {t('screenTime.iosManagedAppsCaption')}
+        </Text>
       )}
 
       {/* Daily Screen Time Chart */}

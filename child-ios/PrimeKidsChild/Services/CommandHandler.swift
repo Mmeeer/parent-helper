@@ -3,12 +3,22 @@ import Foundation
 /// Single entry point for remote commands, whichever transport delivered them
 /// (Socket.IO while foregrounded, FCM silent push, or the REST poll in BGAppRefresh).
 enum CommandHandler {
+    /// Runs a command and then heartbeats, so the parent app immediately sees that the
+    /// device received it (otherwise a "sync" with nothing to upload looked like a no-op).
     static func handle(_ command: String) async {
+        await run(command)
+        if command != "unpair" {
+            await ActivitySyncService.shared.sendHeartbeat()
+        }
+    }
+
+    private static func run(_ command: String) async {
         switch command {
         case "sync":
             await ActivitySyncService.shared.syncNow()
 
         case "locate":
+            LocationManager.shared.requestFreshFix()
             guard let loc = await LocationManager.shared.getCurrentLocation() else { return }
             let entry = LocationEntry(
                 lat: loc.coordinate.latitude,

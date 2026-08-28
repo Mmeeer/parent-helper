@@ -26,4 +26,6 @@ enum SharedKeys {
     static let pendingParentRequests = "pendingParentRequests"        // [String] — "Ask parent" taps from the shield
     static let cachedRules = "cachedRules"                            // Data (JSON of Rules)
     static let authorizationMember = "authorizationMember"            // "child" | "individual" — how FamilyControls was granted
+    static let usedMinutesToday = "usedMinutesToday"                  // Int — managed-app usage reached today (15-min buckets)
+    static let usedMinutesDate = "usedMinutesDate"                    // String "yyyy-MM-dd" the counter belongs to
 }

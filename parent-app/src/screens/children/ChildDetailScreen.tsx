@@ -302,6 +302,13 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
               </Text>
             </View>
 
+            {/* iPhone cannot report per-app usage — say what the number actually covers */}
+            {iosChild && (
+              <Text className="text-[11px] text-gray-400 leading-4 -mt-1.5 mb-3">
+                {t('screenTime.iosManagedAppsCaption')}
+              </Text>
+            )}
+
             {/* Progress bar */}
             <View className="bg-gray-100 rounded-full h-3 overflow-hidden mb-4">
               <View

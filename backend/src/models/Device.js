@@ -55,6 +55,12 @@ const deviceSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
+  // iOS only: whether the child granted FamilyControls (Screen Time) authorisation.
+  // null = never reported by the device (e.g. Android, or an older child build).
+  screenTimeAuthorized: {
+    type: Boolean,
+    default: null,
+  },
   deviceToken: {
     type: String,
     unique: true,

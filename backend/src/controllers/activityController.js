@@ -54,7 +54,9 @@ exports.sync = async (req, res, next) => {
     if (Array.isArray(apps)) {
       setFields.apps = apps;
     }
-    // Optional screen-time summary (iOS DeviceActivityMonitor): { limitReachedAt, shieldEvents }
+    // Optional screen-time summary (iOS DeviceActivityMonitor):
+    // { limitReachedAt, shieldEvents, usedMinutes }
+    const maxFields = {};
     if (screenTime && typeof screenTime === 'object') {
       if (screenTime.limitReachedAt) {
         const t = new Date(screenTime.limitReachedAt);
@@ -63,9 +65,18 @@ exports.sync = async (req, res, next) => {
       if (typeof screenTime.shieldEvents === 'number' && Number.isFinite(screenTime.shieldEvents)) {
         setFields['screenTime.shieldEvents'] = Math.max(0, Math.floor(screenTime.shieldEvents));
       }
+      // usedMinutes is a running daily total sent by the device, so it overwrites rather
+      // than accumulates — but via $max so an out-of-order or reset report from the device
+      // can never lower the total we already recorded for the day.
+      if (typeof screenTime.usedMinutes === 'number' && Number.isFinite(screenTime.usedMinutes)) {
+        maxFields['screenTime.usedMinutes'] = Math.min(1440, Math.max(0, Math.floor(screenTime.usedMinutes)));
+      }
     }
     if (Object.keys(setFields).length > 0) {
       update.$set = setFields;
+    }
+    if (Object.keys(maxFields).length > 0) {
+      update.$max = maxFields;
     }
     const pushFields = {};
     if (web) pushFields.web = { $each: web };
@@ -199,13 +210,17 @@ exports.summary = async (req, res, next) => {
     let totalWebVisits = 0;
 
     for (const log of logs) {
+      let appMinutes = 0;
       for (const app of (log.apps || [])) {
-        totalScreenTimeMin += app.durationMin || 0;
+        appMinutes += app.durationMin || 0;
         if (!appUsage[app.packageName]) {
           appUsage[app.packageName] = { packageName: app.packageName, appName: app.appName, durationMin: 0 };
         }
         appUsage[app.packageName].durationMin += app.durationMin || 0;
       }
+      // iOS never sends per-app usage, only a screenTime.usedMinutes total, so take
+      // whichever source reports more for this log.
+      totalScreenTimeMin += Math.max(appMinutes, (log.screenTime && log.screenTime.usedMinutes) || 0);
       totalBlocked += (log.blockedAttempts || []).length;
       totalWebVisits += (log.web || []).length;
     }
@@ -335,9 +350,12 @@ exports.dailyBreakdown = async (req, res, next) => {
       let webVisits = 0;
 
       for (const log of dayLogs) {
+        let appMinutes = 0;
         for (const app of (log.apps || [])) {
-          screenTimeMin += app.durationMin || 0;
+          appMinutes += app.durationMin || 0;
         }
+        // iOS reports only screenTime.usedMinutes (no per-app breakdown available).
+        screenTimeMin += Math.max(appMinutes, (log.screenTime && log.screenTime.usedMinutes) || 0);
         blocked += (log.blockedAttempts || []).length;
         webVisits += (log.web || []).length;
       }

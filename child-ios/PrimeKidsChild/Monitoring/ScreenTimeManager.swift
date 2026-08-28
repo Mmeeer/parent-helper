@@ -27,6 +27,10 @@ final class ScreenTimeManager: ObservableObject {
 
     private let defaults = AppGroup.defaults
 
+    /// Usage is measured in 15-minute steps up to 8 hours (32 threshold events).
+    static let usageBucketMinutes = 15
+    static let usageCeilingMinutes = 480
+
     private init() {
         checkAuthorization()
     }
@@ -186,15 +190,44 @@ final class ScreenTimeManager: ObservableObject {
                 webDomains: sel.webDomainTokens,
                 threshold: DateComponents(minute: limit)
             )
-            do {
-                try center.startMonitoring(
-                    DeviceActivityName("dailyLimit"),
-                    during: day,
-                    events: [DeviceActivityEvent.Name("dailyLimit"): event]
+            var events: [DeviceActivityEvent.Name: DeviceActivityEvent] = [
+                DeviceActivityEvent.Name("dailyLimit"): event,
+            ]
+            // Usage measurement: iOS never hands an app the raw minute count, but a threshold
+            // event tells us usage crossed that mark. A ladder of 15-minute thresholds gives the
+            // parent a screen-time figure that climbs through the day (15-minute granularity).
+            for minutes in stride(from: Self.usageBucketMinutes, through: Self.usageCeilingMinutes, by: Self.usageBucketMinutes) {
+                events[DeviceActivityEvent.Name("usage_\(minutes)")] = DeviceActivityEvent(
+                    applications: sel.applicationTokens,
+                    categories: sel.categoryTokens,
+                    webDomains: sel.webDomainTokens,
+                    threshold: DateComponents(minute: minutes)
                 )
+            }
+            do {
+                try center.startMonitoring(DeviceActivityName("dailyLimit"), during: day, events: events)
             } catch {
                 print("[ScreenTime] daily-limit monitor error: \(error.localizedDescription)")
             }
+        } else {
+            // No daily limit set — still measure usage so the parent sees screen time.
+            let day = DeviceActivitySchedule(
+                intervalStart: DateComponents(hour: 0, minute: 0),
+                intervalEnd: DateComponents(hour: 23, minute: 59),
+                repeats: true
+            )
+            let sel = selection
+            guard !(sel.applicationTokens.isEmpty && sel.categoryTokens.isEmpty) else { return }
+            var events: [DeviceActivityEvent.Name: DeviceActivityEvent] = [:]
+            for minutes in stride(from: Self.usageBucketMinutes, through: Self.usageCeilingMinutes, by: Self.usageBucketMinutes) {
+                events[DeviceActivityEvent.Name("usage_\(minutes)")] = DeviceActivityEvent(
+                    applications: sel.applicationTokens,
+                    categories: sel.categoryTokens,
+                    webDomains: sel.webDomainTokens,
+                    threshold: DateComponents(minute: minutes)
+                )
+            }
+            try? center.startMonitoring(DeviceActivityName("dailyLimit"), during: day, events: events)
         }
     }
 

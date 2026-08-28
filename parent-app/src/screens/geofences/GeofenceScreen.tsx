@@ -19,6 +19,7 @@ import type { Geofence } from '../../services/api';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import type { RootStackParamList } from '../../types';
+import { DEFAULT_REGION } from '../../utils/mapDefaults';
 import { C } from '../../theme';
 
 type Props = {
@@ -36,12 +37,6 @@ type FormData = {
 };
 
 const DEFAULT_RADIUS = 200;
-const DEFAULT_REGION = {
-  latitude: 37.7749,
-  longitude: -122.4194,
-  latitudeDelta: 0.05,
-  longitudeDelta: 0.05,
-};
 
 export default function GeofenceScreen({ route }: Props) {
   const { childId } = route.params;
@@ -184,6 +179,17 @@ export default function GeofenceScreen({ route }: Props) {
     }
   };
 
+  // Centre on the first existing geofence; otherwise fall back to Ulaanbaatar.
+  const firstGeofence = geofences[0];
+  const initialRegion = firstGeofence
+    ? {
+        latitude: firstGeofence.lat,
+        longitude: firstGeofence.lng,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+      }
+    : DEFAULT_REGION;
+
   if (loading) {
     return (
       <View className="flex-1 justify-center items-center bg-surface">
@@ -198,16 +204,7 @@ export default function GeofenceScreen({ route }: Props) {
       <MapView
         ref={mapRef}
         style={{ flex: 1 }}
-        initialRegion={
-          geofences.length > 0
-            ? {
-                latitude: geofences[0].lat,
-                longitude: geofences[0].lng,
-                latitudeDelta: 0.05,
-                longitudeDelta: 0.05,
-              }
-            : DEFAULT_REGION
-        }
+        initialRegion={initialRegion}
         onPress={handleMapPress}
       >
         {/* Existing geofences */}

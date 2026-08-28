@@ -51,6 +51,8 @@ export interface Device {
   lastSeen: string;
   batteryLevel?: number;
   appVersion: string;
+  /** iOS only: has a parent granted Screen Time (Family Controls) on the child's device? null/undefined = unknown. */
+  screenTimeAuthorized?: boolean | null;
 }
 
 export interface DeviceStatus {
@@ -62,6 +64,8 @@ export interface DeviceStatus {
   model: string;
   osVersion: string;
   appVersion: string;
+  /** iOS only: has a parent granted Screen Time (Family Controls) on the child's device? null/undefined = unknown. */
+  screenTimeAuthorized?: boolean | null;
 }
 
 export interface PairDeviceResponse {
