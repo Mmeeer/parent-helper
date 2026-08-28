@@ -12,6 +12,11 @@ final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelega
     private var locationBuffer: [LocationEntry] = []
     private let bufferLock = NSLock()
 
+    /// Live-tracking throttle: at most one upload per minute while the child is moving.
+    private let uploadThrottle: TimeInterval = 60
+    private var lastUploadAt: Date = .distantPast
+    private let uploadLock = NSLock()
+
     override private init() {
         super.init()
         manager.delegate = self
@@ -64,6 +69,7 @@ final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelega
     /// Ask iOS for a single fresh fix (used by the parent's "Find location" command).
     func requestFreshFix() {
         guard canTrack else { return }
+        uploadLock.lock(); lastUploadAt = .distantPast; uploadLock.unlock()
         manager.requestLocation()
     }
 
@@ -127,6 +133,23 @@ final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelega
             locationBuffer = Array(locationBuffer.suffix(500))
         }
         bufferLock.unlock()
+
+        // Push the fix to the backend right away (throttled) so the parent's map is live
+        // instead of waiting for the next background refresh, which iOS may delay ~15 min.
+        uploadIfDue()
+    }
+
+    /// Uploads buffered fixes at most once every `uploadThrottle` seconds. iOS keeps the app
+    /// running briefly for each background location delivery, which is enough for one POST.
+    private func uploadIfDue() {
+        guard PrefsManager.shared.isPaired else { return }
+        let now = Date()
+        uploadLock.lock()
+        let due = now.timeIntervalSince(lastUploadAt) >= uploadThrottle
+        if due { lastUploadAt = now }
+        uploadLock.unlock()
+        guard due else { return }
+        Task { await ActivitySyncService.shared.syncNow() }
     }
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {

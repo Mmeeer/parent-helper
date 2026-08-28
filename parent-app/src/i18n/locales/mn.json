@@ -277,7 +277,8 @@
     "locationPoints": "Өнөөдөр {{count}} байршлын цэг",
     "lastUpdated": "Сүүлд шинэчлэгдсэн: {{time}}",
     "mapUnavailable": "Газрын зураг ашиглах боломжгүй",
-    "openInMap": "Газрын зурагт нээх"
+    "openInMap": "Газрын зурагт нээх",
+    "live": "ШУУД"
   },
   "reports": {
     "title": "ТАЙЛАН",

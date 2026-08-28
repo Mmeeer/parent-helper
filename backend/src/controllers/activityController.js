@@ -308,7 +308,25 @@ exports.location = async (req, res, next) => {
       date: { $gte: today },
     });
 
-    const locations = logs.flatMap((log) => log.location || []).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    let locations = logs
+      .flatMap((log) => log.location || [])
+      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+    // Nothing today (device asleep, offline overnight, or just paired): fall back to the
+    // most recent day that does have fixes, so the parent still sees a last known position
+    // instead of an empty map.
+    if (locations.length === 0) {
+      const lastLog = await ActivityLog.findOne({
+        childId,
+        'location.0': { $exists: true },
+      }).sort({ date: -1 });
+      if (lastLog) {
+        locations = (lastLog.location || [])
+          .slice()
+          .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+          .slice(-1); // just the last known point, clearly stale
+      }
+    }
 
     res.json(locations);
   } catch (err) {

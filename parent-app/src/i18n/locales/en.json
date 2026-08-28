@@ -277,7 +277,8 @@
     "locationPoints": "{{count}} location points today",
     "lastUpdated": "Last updated: {{time}}",
     "mapUnavailable": "Map not available",
-    "openInMap": "Open in Maps"
+    "openInMap": "Open in Maps",
+    "live": "LIVE"
   },
   "reports": {
     "title": "REPORTS",

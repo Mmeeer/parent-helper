@@ -14,7 +14,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { formatTime } from '../../utils/formatters';
 import * as api from '../../services/api';
-import { onSocketEvent } from '../../services/socket';
+import { onSocketEvent, getSocketStatus, onSocketStatusChange } from '../../services/socket';
 import type { RouteProp } from '@react-navigation/native';
 import type { RootStackParamList, LocationEntry } from '../../types';
 import { DEFAULT_REGION } from '../../utils/mapDefaults';
@@ -73,10 +73,27 @@ export default function LocationScreen({ route }: Props) {
     }
   }, [childId]);
 
+  useEffect(() => onSocketStatusChange((st) => setIsLive(st === 'connected')), []);
+
+  // Live view: ask the child's device for a fresh fix as soon as the map opens, then keep
+  // polling while the screen is on top. Socket pushes (below) update it in between, but the
+  // poll guarantees a moving map even if the socket drops.
   useFocusEffect(
     useCallback(() => {
+      let cancelled = false;
       loadLocations();
-    }, [loadLocations]),
+      (async () => {
+        try {
+          const devices = await api.getChildDevices(childId);
+          const target = devices.find((d) => d.status === 'online') ?? devices[0];
+          if (target && !cancelled) await api.sendDeviceCommand(target.id, 'locate');
+        } catch {
+          // best effort — the map still shows the last known position
+        }
+      })();
+      const timer = setInterval(() => { if (!cancelled) loadLocations(); }, 15000);
+      return () => { cancelled = true; clearInterval(timer); };
+    }, [loadLocations, childId]),
   );
 
   // Listen for real-time location updates
@@ -90,6 +107,7 @@ export default function LocationScreen({ route }: Props) {
   }, [childId]);
 
   const [address, setAddress] = useState<string | null>(null);
+  const [isLive, setIsLive] = useState(getSocketStatus() === 'connected');
   const [addressLoading, setAddressLoading] = useState(false);
 
   const latestLocation = locations.length > 0 ? (locations.at(-1) ?? null) : null;
@@ -298,6 +316,13 @@ export default function LocationScreen({ route }: Props) {
           <Text className="text-sm font-bold text-gray-900">
             {t('location.lastKnown')}
           </Text>
+          {/* Live = socket connected, so new fixes appear without pulling to refresh. */}
+          {isLive && (
+            <View className="flex-row items-center gap-x-1 px-2 py-0.5 rounded-full bg-safe-50">
+              <View className="w-1.5 h-1.5 rounded-full bg-safe-500" />
+              <Text className="text-[10px] font-bold text-safe-600">{t('location.live')}</Text>
+            </View>
+          )}
         </View>
         {address ? (
           <Text className="text-xs text-gray-700 mb-1">{address}</Text>
