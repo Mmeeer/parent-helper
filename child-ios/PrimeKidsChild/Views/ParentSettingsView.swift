@@ -99,6 +99,12 @@ struct ParentSettingsView: View {
                     Button { showPicker = true } label: {
                         Label("Manage apps & categories", systemImage: "square.grid.2x2.fill")
                     }
+                    NavigationLink(destination: GroupsAndLimitsView()) {
+                        Label("Blocking groups & time limits", systemImage: "rectangle.3.group.fill")
+                    }
+                    NavigationLink(destination: MeasurementPickerView()) {
+                        Label("Screen-time measurement", systemImage: "chart.bar.fill")
+                    }
                     #if canImport(FamilyControls)
                     HStack {
                         Text("Selected")

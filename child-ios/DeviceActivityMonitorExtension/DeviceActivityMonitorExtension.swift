@@ -24,10 +24,15 @@ final class DeviceActivityMonitorExtension: DeviceActivityMonitor {
         if activity.rawValue.hasPrefix("schedule_") {
             defaults.removeObject(forKey: SharedKeys.activeScheduleName)
         } else if activity.rawValue == "dailyLimit" {
-            // New day: limit and the usage ladder reset.
+            // New day: whole-day limit, per-rule limits and the usage ladder all reset.
             defaults.set(false, forKey: SharedKeys.dailyLimitReached)
-            defaults.set(0, forKey: SharedKeys.usedMinutesToday)
-            defaults.set(Self.todayString(), forKey: SharedKeys.usedMinutesDate)
+            SharedStore.resetDailyCounters(today: Self.todayString())
+        } else if activity.rawValue == "pauseWindow" {
+            // Timed pause ran out — lift it even though the app itself is asleep.
+            defaults.set(false, forKey: SharedKeys.devicePaused)
+            defaults.set(0, forKey: SharedKeys.pausedUntil)
+            store.application.denyAppInstallation = nil
+            store.application.denyAppRemoval = nil
         }
         restoreBaselineShields()
     }
@@ -57,9 +62,25 @@ final class DeviceActivityMonitorExtension: DeviceActivityMonitor {
             return
         }
 
+        // Per-rule limit exhausted: shield that rule's apps on top of whatever is active.
+        if event.rawValue.hasPrefix("limit_") {
+            let id = String(event.rawValue.dropFirst("limit_".count))
+            SharedStore.markLimitExceeded(id)
+            applyUnionShields()
+            return
+        }
+
         guard activity.rawValue == "dailyLimit", event.rawValue == "dailyLimit" else { return }
         defaults.set(true, forKey: SharedKeys.dailyLimitReached)
         shieldSelectionOrEverything()
+    }
+
+    /// Recompute the union of groups + spent limits + legacy selection and apply it.
+    private func applyUnionShields() {
+        let union = ShieldUnion.active(blockingOn: defaults.bool(forKey: SharedKeys.blockingEnabled))
+        store.shield.applications = union.applicationTokens.isEmpty ? nil : union.applicationTokens
+        store.shield.applicationCategories = union.categoryTokens.isEmpty ? nil : .specific(union.categoryTokens)
+        store.shield.webDomains = union.webDomainTokens.isEmpty ? nil : union.webDomainTokens
     }
 
     private static func todayString() -> String {

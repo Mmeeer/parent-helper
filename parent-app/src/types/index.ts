@@ -60,6 +60,8 @@ export interface Device {
   paired: boolean;
   status: 'online' | 'offline';
   lastSeen: string;
+  /** Last time the child actually used the device (screen-time activity), or null/unknown. */
+  lastActivityAt?: string | null;
   batteryLevel?: number;
   appVersion: string;
   /** iOS only: has a parent granted Screen Time (Family Controls) on the child's device? null/undefined = unknown. */
@@ -70,6 +72,8 @@ export interface DeviceStatus {
   id: string;
   status: 'online' | 'offline';
   lastSeen: string;
+  /** Last time the child actually used the device (screen-time activity), or null/unknown. */
+  lastActivityAt?: string | null;
   batteryLevel?: number;
   platform: string;
   model: string;
@@ -123,6 +127,8 @@ export interface WebFilter {
   categories: string[];
   customBlock: string[];
   customAllow: string[];
+  /** iOS: 'categories' blocks by category; 'allowlist' only opens the parent's allow list. */
+  mode?: 'categories' | 'allowlist';
 }
 
 /** Summary of the FamilyActivitySelection picked on the child's iPhone. */
@@ -131,6 +137,25 @@ export interface IosSelectionSummary {
   categoryCount: number;
   webDomainCount: number;
   updatedAt: string;
+}
+
+/** A named blocking group (app set) defined on the child's iPhone. */
+export interface IosGroupMeta {
+  id: string;
+  name: string;
+  appCount: number;
+  categoryCount: number;
+  enabled: boolean;
+}
+
+/** A per-app time-limit rule defined on the child's iPhone. */
+export interface IosLimitMeta {
+  id: string;
+  name: string;
+  appCount: number;
+  categoryCount: number;
+  limitMin: number;
+  enabled: boolean;
 }
 
 export interface Rules {
@@ -143,6 +168,10 @@ export interface Rules {
   iosBlockSelected?: boolean;
   /** iOS only: present once the child device has uploaded a selection. */
   iosSelection?: IosSelectionSummary | null;
+  /** iOS only: blocking groups defined on the child's device. */
+  iosGroups?: IosGroupMeta[];
+  /** iOS only: per-app limit rules defined on the child's device. */
+  iosLimits?: IosLimitMeta[];
 }
 
 // ─── Activity ────────────────────────────────────────────

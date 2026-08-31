@@ -18,7 +18,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import * as api from '../../services/api';
 import type { RouteProp } from '@react-navigation/native';
-import type { RootStackParamList, IosSelectionSummary } from '../../types';
+import type { RootStackParamList, IosSelectionSummary, IosGroupMeta } from '../../types';
 import type { InstalledApp } from '../../services/api';
 import { isIosChild } from '../../utils/platform';
 import { C } from '../../theme';
@@ -40,6 +40,7 @@ export default function AppRulesScreen({ route }: Props) {
   const [iosChild, setIosChild] = useState(false);
   const [iosBlockSelected, setIosBlockSelected] = useState(false);
   const [iosSelection, setIosSelection] = useState<IosSelectionSummary | null>(null);
+  const [iosGroups, setIosGroups] = useState<IosGroupMeta[]>([]);
 
   useFocusEffect(
     useCallback(() => {
@@ -53,6 +54,7 @@ export default function AppRulesScreen({ route }: Props) {
       const blocked = rules.blockedApps || [];
       setIosBlockSelected(Boolean(rules.iosBlockSelected));
       setIosSelection(rules.iosSelection ?? null);
+      setIosGroups(rules.iosGroups ?? []);
 
       const devices = await api.getChildDevices(childId);
       const ios = isIosChild(devices);
@@ -111,11 +113,18 @@ export default function AppRulesScreen({ route }: Props) {
     setBlockedApps(prev => prev.filter((_, i) => i !== index));
   };
 
+  const toggleGroup = (id: string, enabled: boolean) => {
+    setIosGroups(prev => prev.map(g => (g.id === id ? { ...g, enabled } : g)));
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
       if (iosChild) {
-        await api.updateBlockedApps(childId, blockedApps.map(a => a.packageName), { iosBlockSelected });
+        await api.updateBlockedApps(childId, blockedApps.map(a => a.packageName), {
+          iosBlockSelected,
+          iosGroups: iosGroups.map(g => ({ id: g.id, enabled: g.enabled })),
+        });
       } else {
         await api.updateBlockedApps(childId, blockedApps.map(a => a.packageName));
       }
@@ -173,6 +182,33 @@ export default function AppRulesScreen({ route }: Props) {
               trackColor={{ true: C.safe500, false: C.gray200 }}
               thumbColor="#FFFFFF"
             />
+          </View>
+
+          {/* Blocking groups (named app sets) defined on the child's iPhone */}
+          <View className="border-t border-gray-100 pt-3">
+            <Text className="text-xs text-gray-400 font-bold uppercase mb-2">{t('appRules.blockingGroups')}</Text>
+            {iosGroups.length === 0 ? (
+              <Text className="text-xs text-gray-400 leading-4">{t('appRules.noGroups')}</Text>
+            ) : (
+              iosGroups.map((group) => (
+                <View key={group.id} className="flex-row justify-between items-center py-2.5">
+                  <View className="flex-1 mr-3">
+                    <Text className="text-sm font-medium text-gray-900" numberOfLines={1}>
+                      {group.name}
+                    </Text>
+                    <Text className="text-[11px] text-gray-400 mt-0.5">
+                      {t('appRules.groupCounts', { apps: group.appCount, categories: group.categoryCount })}
+                    </Text>
+                  </View>
+                  <Switch
+                    value={group.enabled}
+                    onValueChange={(v) => toggleGroup(group.id, v)}
+                    trackColor={{ true: C.safe500, false: C.gray200 }}
+                    thumbColor="#FFFFFF"
+                  />
+                </View>
+              ))
+            )}
           </View>
         </View>
         ) : (

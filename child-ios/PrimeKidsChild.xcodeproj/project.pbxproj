@@ -10,6 +10,7 @@
 		00F69D05E839DFCDB815038E /* ActivityModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44702407E4DE59BC10FC3D99 /* ActivityModels.swift */; };
 		06B86F7571D2BFEF0C0B76FE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F7BD9BFC77D5F85A0D20D3BA /* Assets.xcassets */; };
 		08A34B2612ADF56F752D928E /* AppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B3CF5033DE7317062FC16F0 /* AppGroup.swift */; };
+		0A95E68CBBA335BC39B7C954 /* MeasurementPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF77949A77A91C1124E631C9 /* MeasurementPickerView.swift */; };
 		1254EDC6224D2256F6D40921 /* ManagedSettingsUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5A94C48865AA0EF3C2CCF4CF /* ManagedSettingsUI.framework */; };
 		1A6576A4A1DC06C561238C63 /* PrefsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F992389A1B5F2AED35B61915 /* PrefsManager.swift */; };
 		2BB273A1FA3AF9B7A73FAE4A /* RuleModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68792858D303B07E289031D1 /* RuleModels.swift */; };
@@ -63,6 +64,7 @@
 		E63AE9ECE91E0EE18058988E /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4316B421897CDF80D661256D /* LocationManager.swift */; };
 		E88B25AD669A55466CD6818A /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D891A8F919F4AFF2310A642 /* APIClient.swift */; };
 		EA4501CB07500CDE4999781C /* AppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B3CF5033DE7317062FC16F0 /* AppGroup.swift */; };
+		F1DD79ECEAC8F4494AAD255B /* GroupsAndLimitsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 077E3B005765A40A4D1D5924 /* GroupsAndLimitsView.swift */; };
 		F353976C7096B730DAB30AEA /* PrivacyInfo-Extension.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = AC40AC1CF44AE03EF23A4FEA /* PrivacyInfo-Extension.xcprivacy */; };
 		F8434F30C3849F630298868F /* PrivacyInfo-Extension.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = AC40AC1CF44AE03EF23A4FEA /* PrivacyInfo-Extension.xcprivacy */; };
 		F8A36395A7BA2453C8F5B5A4 /* ManagedSettings.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1F364EACB0EF97BD00088D9 /* ManagedSettings.framework */; };
@@ -118,6 +120,7 @@
 
 /* Begin PBXFileReference section */
 		00C4D17363C6B1882560E2D6 /* RuleManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuleManager.swift; sourceTree = "<group>"; };
+		077E3B005765A40A4D1D5924 /* GroupsAndLimitsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupsAndLimitsView.swift; sourceTree = "<group>"; };
 		118DB3A02BF039BB4E277243 /* KeychainManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainManager.swift; sourceTree = "<group>"; };
 		12EAB15019E063ACF7F57D6A /* ShieldActionExtension.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = ShieldActionExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		15D96B81C567732F1A434DDF /* WebSocketManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebSocketManager.swift; sourceTree = "<group>"; };
@@ -150,6 +153,7 @@
 		ABE6E67FD96BB5FE4D684053 /* TermsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TermsView.swift; sourceTree = "<group>"; };
 		AC40AC1CF44AE03EF23A4FEA /* PrivacyInfo-Extension.xcprivacy */ = {isa = PBXFileReference; path = "PrivacyInfo-Extension.xcprivacy"; sourceTree = "<group>"; };
 		ACA8E29CC24D57704F341079 /* PrimeKidsChildApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrimeKidsChildApp.swift; sourceTree = "<group>"; };
+		AF77949A77A91C1124E631C9 /* MeasurementPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeasurementPickerView.swift; sourceTree = "<group>"; };
 		B0474B7080CA95CA3F5A66B2 /* SOSButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SOSButton.swift; sourceTree = "<group>"; };
 		B30378B80546298DCE0E2A63 /* ShieldConfigurationExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShieldConfigurationExtension.swift; sourceTree = "<group>"; };
 		B4F342659AD1161AA5E7E51C /* mn */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = mn; path = mn.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -355,6 +359,8 @@
 			isa = PBXGroup;
 			children = (
 				42EE7C11AAC0E29690E4E1C1 /* DashboardView.swift */,
+				077E3B005765A40A4D1D5924 /* GroupsAndLimitsView.swift */,
+				AF77949A77A91C1124E631C9 /* MeasurementPickerView.swift */,
 				81E18C55F1103980ACCBF045 /* OnboardingView.swift */,
 				FAEA2FE4A2E91F952793464B /* PairingView.swift */,
 				46B3F71C483766867E69CC24 /* ParentSettingsView.swift */,
@@ -638,8 +644,10 @@
 				9FE6E2D9C94465B35F7341F7 /* ContentBlockerService.swift in Sources */,
 				3983834EEFD66DD54B119B95 /* DashboardView.swift in Sources */,
 				69D213B70D59630426EAEF78 /* DeviceModels.swift in Sources */,
+				F1DD79ECEAC8F4494AAD255B /* GroupsAndLimitsView.swift in Sources */,
 				38665D61A09056E0356D8AA3 /* KeychainManager.swift in Sources */,
 				E63AE9ECE91E0EE18058988E /* LocationManager.swift in Sources */,
+				0A95E68CBBA335BC39B7C954 /* MeasurementPickerView.swift in Sources */,
 				8BA5A240A0FE0797CD630309 /* NotificationManager.swift in Sources */,
 				71775F6865DB0094FB967234 /* OnboardingView.swift in Sources */,
 				8A1551EE6C05CB2F4B9EAC82 /* PairingView.swift in Sources */,

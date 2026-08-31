@@ -68,6 +68,16 @@ const screenTimeRules = [
   body('schedule.*.startTime').optional().matches(/^([01]\d|2[0-3]):[0-5]\d$/).withMessage('startTime must be HH:mm'),
   body('schedule.*.endTime').optional().matches(/^([01]\d|2[0-3]):[0-5]\d$/).withMessage('endTime must be HH:mm'),
   body('schedule.*.blocked').optional().isBoolean().withMessage('schedule.blocked must be boolean'),
+  // iOS: parent edits limit-rule metadata (merge-by-id patch; counts are device-owned)
+  body('iosLimits').optional().isArray({ max: 50 }).withMessage('Too many iOS limit patches'),
+  body('iosLimits.*.id').isString().withMessage('iosLimits.id must be a string')
+    .trim().notEmpty().withMessage('iosLimits.id is required')
+    .isLength({ max: 100 }).withMessage('iosLimits.id too long'),
+  body('iosLimits.*.limitMin').optional().isInt({ min: 1, max: 1440 }).withMessage('iosLimits.limitMin must be 1-1440 minutes').toInt(),
+  body('iosLimits.*.enabled').optional().isBoolean().withMessage('iosLimits.enabled must be boolean').toBoolean(),
+  body('iosLimits.*.name').optional().isString().trim()
+    .notEmpty().withMessage('iosLimits.name cannot be empty')
+    .isLength({ max: 60 }).withMessage('iosLimits.name too long (max 60)'),
   checkValidation,
 ];
 
@@ -77,6 +87,15 @@ const appRules = [
   body('blockedCategories').optional().isArray({ max: 50 }),
   // iOS: parent toggles shielding of the child-picked FamilyActivitySelection
   body('iosBlockSelected').optional().isBoolean().withMessage('iosBlockSelected must be boolean').toBoolean(),
+  // iOS: parent edits blocking-group metadata (merge-by-id patch; counts are device-owned)
+  body('iosGroups').optional().isArray({ max: 50 }).withMessage('Too many iOS group patches'),
+  body('iosGroups.*.id').isString().withMessage('iosGroups.id must be a string')
+    .trim().notEmpty().withMessage('iosGroups.id is required')
+    .isLength({ max: 100 }).withMessage('iosGroups.id too long'),
+  body('iosGroups.*.enabled').optional().isBoolean().withMessage('iosGroups.enabled must be boolean').toBoolean(),
+  body('iosGroups.*.name').optional().isString().trim()
+    .notEmpty().withMessage('iosGroups.name cannot be empty')
+    .isLength({ max: 60 }).withMessage('iosGroups.name too long (max 60)'),
   checkValidation,
 ];
 
@@ -91,7 +110,34 @@ const iosSelectionRules = [
   checkValidation,
 ];
 
+// Child iOS device uploads its full blocking-group / limit-rule structure
+// (metadata only — opaque Screen-Time tokens never leave the phone). The device
+// is the source of truth: both arrays are required and replace stored state wholesale.
+const iosStructureRules = [
+  body('groups').isArray({ max: 50 }).withMessage('groups must be an array (max 50)'),
+  body('groups.*.id').isString().withMessage('groups.id must be a string')
+    .trim().notEmpty().withMessage('groups.id is required')
+    .isLength({ max: 100 }).withMessage('groups.id too long'),
+  body('groups.*.name').isString().withMessage('groups.name must be a string')
+    .trim().isLength({ max: 60 }).withMessage('groups.name too long (max 60)'),
+  body('groups.*.appCount').isInt({ min: 0, max: 10000 }).withMessage('groups.appCount must be 0-10000').toInt(),
+  body('groups.*.categoryCount').isInt({ min: 0, max: 10000 }).withMessage('groups.categoryCount must be 0-10000').toInt(),
+  body('groups.*.enabled').isBoolean().withMessage('groups.enabled must be boolean').toBoolean(),
+  body('limits').isArray({ max: 50 }).withMessage('limits must be an array (max 50)'),
+  body('limits.*.id').isString().withMessage('limits.id must be a string')
+    .trim().notEmpty().withMessage('limits.id is required')
+    .isLength({ max: 100 }).withMessage('limits.id too long'),
+  body('limits.*.name').isString().withMessage('limits.name must be a string')
+    .trim().isLength({ max: 60 }).withMessage('limits.name too long (max 60)'),
+  body('limits.*.appCount').isInt({ min: 0, max: 10000 }).withMessage('limits.appCount must be 0-10000').toInt(),
+  body('limits.*.categoryCount').isInt({ min: 0, max: 10000 }).withMessage('limits.categoryCount must be 0-10000').toInt(),
+  body('limits.*.limitMin').isInt({ min: 0, max: 1440 }).withMessage('limits.limitMin must be 0-1440 minutes').toInt(),
+  body('limits.*.enabled').isBoolean().withMessage('limits.enabled must be boolean').toBoolean(),
+  checkValidation,
+];
+
 const webFilterRules = [
+  body('mode').optional().isIn(['categories', 'allowlist']).withMessage("mode must be 'categories' or 'allowlist'"),
   body('categories').optional().isArray({ max: 50 }),
   body('customBlock').optional().isArray({ max: 500 }).withMessage('Too many custom blocks'),
   body('customBlock.*').optional().trim().isLength({ max: 253 }),
@@ -119,5 +165,6 @@ module.exports = {
   appRules,
   webFilterRules,
   iosSelectionRules,
+  iosStructureRules,
   subscriptionActivate,
 };

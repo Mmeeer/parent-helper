@@ -22,14 +22,26 @@ export default function WebFilterScreen({ route }: Props) {
   const [newBlockDomain, setNewBlockDomain] = useState('');
   const [newAllowDomain, setNewAllowDomain] = useState('');
   const [saving, setSaving] = useState(false);
-  // iOS child: filtering is enforced by the Safari content blocker only.
+  // iOS child: filtering is enforced by the content blocker / web-content filter on the device.
   const [iosChild, setIosChild] = useState(false);
+  // iOS filter mode: block by category, or strict allow-list-only browsing.
+  const [mode, setMode] = useState<'categories' | 'allowlist'>('categories');
 
   useEffect(() => {
     let cancelled = false;
     api.getChildDevices(childId)
       .then((devices) => { if (!cancelled) setIosChild(isIosChild(devices)); })
       .catch(() => { /* no devices yet — keep default */ });
+    // Load the saved filter so the form (and the iOS mode selector) reflects the server state.
+    api.getRules(childId)
+      .then((rules) => {
+        if (cancelled || !rules.webFilter) return;
+        setCategories(rules.webFilter.categories ?? []);
+        setCustomBlock(rules.webFilter.customBlock ?? []);
+        setCustomAllow(rules.webFilter.customAllow ?? []);
+        setMode(rules.webFilter.mode === 'allowlist' ? 'allowlist' : 'categories');
+      })
+      .catch(() => { /* no rules yet — keep defaults */ });
     return () => { cancelled = true; };
   }, [childId]);
 
@@ -66,7 +78,7 @@ export default function WebFilterScreen({ route }: Props) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await api.updateWebFilter(childId, { categories, customBlock, customAllow });
+      await api.updateWebFilter(childId, { categories, customBlock, customAllow, ...(iosChild ? { mode } : {}) });
       Alert.alert(t('webFilter.saved'), t('webFilter.savedDesc'));
     } catch (error: any) {
       Alert.alert(t('common.error'), error.message || t('webFilter.updateError'));
@@ -95,8 +107,38 @@ export default function WebFilterScreen({ route }: Props) {
         </View>
       )}
 
-      {/* Category Filters */}
-      <View className="bg-white rounded-3xl p-5 mx-4 mb-3 border border-gray-100 shadow-sm">
+      {/* iOS: choose between category blocking and strict allow-list-only browsing */}
+      {iosChild && (
+        <View className="bg-white rounded-3xl p-5 mx-4 mb-3 border border-gray-100 shadow-sm">
+          <Text className="text-xs text-gray-400 font-bold uppercase mb-1">{t('webFilter.filterMode')}</Text>
+          {([
+            { value: 'categories', label: t('webFilter.modeCategories') },
+            { value: 'allowlist', label: t('webFilter.modeAllowlist') },
+          ] as const).map((option) => (
+            <TouchableOpacity
+              key={option.value}
+              onPress={() => setMode(option.value)}
+              className="flex-row items-center py-3 gap-x-3"
+            >
+              <Ionicons
+                name={mode === option.value ? 'radio-button-on' : 'radio-button-off'}
+                size={22}
+                color={mode === option.value ? C.nest500 : C.gray300}
+              />
+              <Text className="flex-1 text-sm text-gray-900">{option.label}</Text>
+            </TouchableOpacity>
+          ))}
+          {mode === 'allowlist' && (
+            <Text className="text-xs text-gray-500 leading-4 mt-1">{t('webFilter.allowlistHint')}</Text>
+          )}
+        </View>
+      )}
+
+      {/* Category Filters — de-emphasized when the strict allow list takes over */}
+      <View
+        className="bg-white rounded-3xl p-5 mx-4 mb-3 border border-gray-100 shadow-sm"
+        style={{ opacity: iosChild && mode === 'allowlist' ? 0.45 : 1 }}
+      >
         <Text className="text-xs text-gray-400 font-bold uppercase mb-3">{t('webFilter.contentCategory')}</Text>
         <Text className="text-sm font-display font-bold text-gray-900 mb-1">{t('webFilter.contentCategoryTitle')}</Text>
         <Text className="text-xs text-gray-400 mb-4">

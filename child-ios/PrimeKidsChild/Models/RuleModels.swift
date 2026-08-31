@@ -7,6 +7,10 @@ struct Rules: Codable {
     let blockedApps: [String]?
     /// iOS-only flag set by the parent app: shield the apps selected on the child device.
     let iosBlockSelected: Bool?
+    /// Remote toggles for on-device blocking groups (matched by id).
+    let iosGroups: [IosGroupMeta]?
+    /// Remote minute/enabled edits for on-device limit rules (matched by id).
+    let iosPerApp: [IosLimitMeta]?
     let webFilter: WebFilterRules?
 }
 
@@ -36,4 +40,19 @@ struct WebFilterRules: Codable {
     let categories: [String]?
     let customBlock: [String]?
     let customAllow: [String]?
+    /// "categories" (default) or "allowlist" — allowlist = only customAllow domains open.
+    let mode: String?
+}
+
+struct IosGroupMeta: Codable {
+    let id: String
+    let name: String?
+    let enabled: Bool?
+}
+
+struct IosLimitMeta: Codable {
+    let id: String
+    let name: String?
+    let limitMin: Int?
+    let enabled: Bool?
 }

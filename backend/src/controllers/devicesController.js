@@ -248,11 +248,21 @@ exports.getStatus = async (req, res, next) => {
 
 exports.sendCommand = async (req, res, next) => {
   try {
-    const { command, params } = req.body;
+    const { command, params: rawParams } = req.body;
     const validCommands = ['lock', 'unlock', 'locate', 'sync'];
 
     if (!validCommands.includes(command)) {
       return res.status(400).json({ error: `Invalid command. Must be one of: ${validCommands.join(', ')}` });
+    }
+
+    // Whitelist params: unknown keys are silently stripped. Currently only 'lock'
+    // accepts params.durationMin (numeric minutes, 0-1440) for timed lockdowns.
+    const params = {};
+    if (command === 'lock' && rawParams && typeof rawParams === 'object') {
+      const { durationMin } = rawParams;
+      if (typeof durationMin === 'number' && Number.isFinite(durationMin) && durationMin >= 0 && durationMin <= 1440) {
+        params.durationMin = durationMin;
+      }
     }
 
     const device = await Device.findById(req.params.id);

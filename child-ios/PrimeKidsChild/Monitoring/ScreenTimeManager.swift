@@ -93,22 +93,42 @@ final class ScreenTimeManager: ObservableObject {
         #endif
     }
 
-    // MARK: - Selection (picked on the child device by the parent)
+    // MARK: - Selections (picked on the child device by the parent)
 
     #if canImport(FamilyControls)
+    /// Legacy single selection — still honoured as an implicit "Blocked apps" group.
     var selection: FamilyActivitySelection {
-        get {
-            guard let data = defaults.data(forKey: SharedKeys.familyActivitySelection),
-                  let sel = try? JSONDecoder().decode(FamilyActivitySelection.self, from: data)
-            else { return FamilyActivitySelection() }
-            return sel
-        }
+        get { Self.decodeSelection(defaults.data(forKey: SharedKeys.familyActivitySelection)) }
         set {
             if let data = try? JSONEncoder().encode(newValue) {
                 defaults.set(data, forKey: SharedKeys.familyActivitySelection)
             }
             applyCurrentState()
         }
+    }
+
+    /// What screen time is measured against. Parents are guided to Select All
+    /// categories here so the figure approximates total device usage.
+    var measurementSelection: FamilyActivitySelection {
+        get {
+            let stored = Self.decodeSelection(defaults.data(forKey: SharedKeys.measurementSelection))
+            // Fall back to the legacy selection so upgrades keep measuring.
+            return stored.applicationTokens.isEmpty && stored.categoryTokens.isEmpty ? selection : stored
+        }
+        set {
+            if let data = try? JSONEncoder().encode(newValue) {
+                defaults.set(data, forKey: SharedKeys.measurementSelection)
+            }
+            if let rules = RuleManager.shared.rules { restartMonitoring(rules) }
+        }
+    }
+
+    static func decodeSelection(_ data: Data?) -> FamilyActivitySelection {
+        ShieldUnion.decode(data)
+    }
+
+    static func activeShieldUnion(blockingOn: Bool) -> FamilyActivitySelection {
+        ShieldUnion.active(blockingOn: blockingOn)
     }
     #endif
 
@@ -123,10 +143,21 @@ final class ScreenTimeManager: ObservableObject {
         let blockingOn = !(rules.blockedApps ?? []).isEmpty || rules.iosBlockSelected == true
         defaults.set(blockingOn, forKey: SharedKeys.blockingEnabled)
 
-        // Apple's built-in adult-content web filter when the parent enabled the "adult" category.
-        let adultFilterOn = rules.webFilter?.categories?.contains("adult") == true
+        // Web content enforcement. Two modes:
+        //  - allowlist: ONLY the parent's allowed domains open — Apple applies this to
+        //    Safari AND WebKit-based browsers/in-app views, i.e. beyond Safari.
+        //  - categories: Apple's adult filter (same system-wide reach) when the parent
+        //    enabled the "adult" category; the Safari content blocker handles the
+        //    finer category/custom lists.
         let store = ManagedSettingsStore()
-        store.webContent.blockedByFilter = adultFilterOn ? .auto() : nil
+        if rules.webFilter?.mode == "allowlist" {
+            let allowed = Set((rules.webFilter?.customAllow ?? []).map { WebDomain(domain: $0) })
+            store.webContent.blockedByFilter = .specific(allowed)
+        } else if rules.webFilter?.categories?.contains("adult") == true {
+            store.webContent.blockedByFilter = .auto()
+        } else {
+            store.webContent.blockedByFilter = nil
+        }
 
         // Schedules (bedtime / school hours) + daily limit → DeviceActivity monitoring.
         restartMonitoring(rules)
@@ -135,30 +166,44 @@ final class ScreenTimeManager: ObservableObject {
         #endif
     }
 
-    /// Re-evaluates shields from the shared state (selection, blocking flag, pause flag).
+    /// Re-evaluates shields from the shared state (groups, limits, pause, legacy flag).
     func applyCurrentState() {
         #if canImport(FamilyControls)
         guard isAuthorized else { return }
         let store = ManagedSettingsStore()
-        let paused = defaults.bool(forKey: SharedKeys.devicePaused)
-        let blockingOn = defaults.bool(forKey: SharedKeys.blockingEnabled)
-        let sel = selection
+
+        // A timed pause that has run out clears itself even if no schedule fired.
+        var paused = defaults.bool(forKey: SharedKeys.devicePaused)
+        let until = defaults.double(forKey: SharedKeys.pausedUntil)
+        if paused, until > 0, Date().timeIntervalSince1970 >= until {
+            paused = false
+            defaults.set(false, forKey: SharedKeys.devicePaused)
+            defaults.set(0, forKey: SharedKeys.pausedUntil)
+        }
 
         if paused {
-            // Remote "pause device": shield every app category (our own app is never shielded).
+            // Remote "pause device": shield everything and freeze app install/removal
+            // for the duration (mirrors Android's locked state as far as iOS allows).
             store.shield.applications = nil
             store.shield.applicationCategories = .all()
             store.shield.webDomainCategories = .all()
-        } else if blockingOn && !(sel.applicationTokens.isEmpty && sel.categoryTokens.isEmpty) {
-            store.shield.applications = sel.applicationTokens.isEmpty ? nil : sel.applicationTokens
-            store.shield.applicationCategories = sel.categoryTokens.isEmpty
-                ? nil : .specific(sel.categoryTokens)
-            store.shield.webDomains = sel.webDomainTokens.isEmpty ? nil : sel.webDomainTokens
-            store.shield.webDomainCategories = nil
-        } else {
+            store.application.denyAppInstallation = true
+            store.application.denyAppRemoval = true
+            return
+        }
+        store.application.denyAppInstallation = nil
+        store.application.denyAppRemoval = nil
+
+        let union = Self.activeShieldUnion(blockingOn: defaults.bool(forKey: SharedKeys.blockingEnabled))
+        if union.applicationTokens.isEmpty && union.categoryTokens.isEmpty && union.webDomainTokens.isEmpty {
             store.shield.applications = nil
             store.shield.applicationCategories = nil
             store.shield.webDomains = nil
+            store.shield.webDomainCategories = nil
+        } else {
+            store.shield.applications = union.applicationTokens.isEmpty ? nil : union.applicationTokens
+            store.shield.applicationCategories = union.categoryTokens.isEmpty ? nil : .specific(union.categoryTokens)
+            store.shield.webDomains = union.webDomainTokens.isEmpty ? nil : union.webDomainTokens
             store.shield.webDomainCategories = nil
         }
         #endif
@@ -166,8 +211,28 @@ final class ScreenTimeManager: ObservableObject {
 
     // MARK: - Remote pause
 
-    func setPaused(_ paused: Bool) {
+    func setPaused(_ paused: Bool, durationMin: Int? = nil) {
         defaults.set(paused, forKey: SharedKeys.devicePaused)
+        if paused, let durationMin, durationMin > 0 {
+            let until = Date().addingTimeInterval(TimeInterval(durationMin * 60))
+            defaults.set(until.timeIntervalSince1970, forKey: SharedKeys.pausedUntil)
+            #if canImport(FamilyControls)
+            // One-shot DeviceActivity window: intervalDidEnd fires in the monitor
+            // extension exactly at `until` and lifts the pause even if the app is asleep.
+            let cal = Calendar.current
+            let schedule = DeviceActivitySchedule(
+                intervalStart: cal.dateComponents([.hour, .minute], from: Date()),
+                intervalEnd: cal.dateComponents([.hour, .minute], from: until),
+                repeats: false
+            )
+            try? DeviceActivityCenter().startMonitoring(DeviceActivityName("pauseWindow"), during: schedule)
+            #endif
+        } else {
+            defaults.set(0, forKey: SharedKeys.pausedUntil)
+            #if canImport(FamilyControls)
+            DeviceActivityCenter().stopMonitoring([DeviceActivityName("pauseWindow")])
+            #endif
+        }
         applyCurrentState()
     }
 
@@ -178,72 +243,70 @@ final class ScreenTimeManager: ObservableObject {
         let center = DeviceActivityCenter()
         center.stopMonitoring()
 
-        // Bedtime / school schedules → one activity per rule. The monitor extension shields
-        // everything at intervalDidStart and clears at intervalDidEnd.
+        // Bedtime / school schedules → one activity per rule; the monitor extension
+        // shields everything at intervalDidStart and clears at intervalDidEnd.
         for (idx, rule) in (rules.screenTime?.schedule ?? []).enumerated() where rule.enabled != false {
             guard let start = Self.components(rule.startTime), let end = Self.components(rule.endTime) else { continue }
             let schedule = DeviceActivitySchedule(intervalStart: start, intervalEnd: end, repeats: true)
-            let name = DeviceActivityName("schedule_\(idx)")
-            do {
-                try center.startMonitoring(name, during: schedule)
-            } catch {
-                print("[ScreenTime] schedule monitor error: \(error.localizedDescription)")
+            try? center.startMonitoring(DeviceActivityName("schedule_\(idx)"), during: schedule)
+        }
+
+        let day = DeviceActivitySchedule(
+            intervalStart: DateComponents(hour: 0, minute: 0),
+            intervalEnd: DateComponents(hour: 23, minute: 59),
+            repeats: true
+        )
+
+        // Daily activity: usage ladder (screen-time measurement + activity beacon) on the
+        // measurement selection, plus the whole-day limit threshold when configured.
+        let measured = measurementSelection
+        var dayEvents: [DeviceActivityEvent.Name: DeviceActivityEvent] = [:]
+        if !(measured.applicationTokens.isEmpty && measured.categoryTokens.isEmpty) {
+            for minutes in Self.usageThresholds {
+                dayEvents[DeviceActivityEvent.Name("usage_\(minutes)")] = DeviceActivityEvent(
+                    applications: measured.applicationTokens,
+                    categories: measured.categoryTokens,
+                    webDomains: measured.webDomainTokens,
+                    threshold: DateComponents(minute: minutes)
+                )
+            }
+            if let limit = rules.screenTime?.dailyLimitMin, limit > 0 {
+                dayEvents[DeviceActivityEvent.Name("dailyLimit")] = DeviceActivityEvent(
+                    applications: measured.applicationTokens,
+                    categories: measured.categoryTokens,
+                    webDomains: measured.webDomainTokens,
+                    threshold: DateComponents(minute: limit)
+                )
             }
         }
 
-        // Daily limit → whole-day activity with a threshold event on the parent's selection
-        // (or all apps if nothing selected). The extension shields on eventDidReachThreshold.
-        if let limit = rules.screenTime?.dailyLimitMin, limit > 0 {
-            let day = DeviceActivitySchedule(
-                intervalStart: DateComponents(hour: 0, minute: 0),
-                intervalEnd: DateComponents(hour: 23, minute: 59),
-                repeats: true
-            )
-            let sel = selection
-            let event = DeviceActivityEvent(
+        // Per-app/group limits: one threshold per enabled rule; the extension shields
+        // just that rule's tokens when it fires ("limit_<id>").
+        for rule in SharedStore.loadLimits() where rule.enabled && rule.limitMin > 0 {
+            let sel = Self.decodeSelection(rule.selectionData)
+            guard !(sel.applicationTokens.isEmpty && sel.categoryTokens.isEmpty) else { continue }
+            dayEvents[DeviceActivityEvent.Name("limit_\(rule.id)")] = DeviceActivityEvent(
                 applications: sel.applicationTokens,
                 categories: sel.categoryTokens,
                 webDomains: sel.webDomainTokens,
-                threshold: DateComponents(minute: limit)
+                threshold: DateComponents(minute: rule.limitMin)
             )
-            var events: [DeviceActivityEvent.Name: DeviceActivityEvent] = [
-                DeviceActivityEvent.Name("dailyLimit"): event,
-            ]
-            // Usage measurement: iOS never hands an app the raw minute count, but a threshold
-            // event tells us usage crossed that mark. A ladder of 15-minute thresholds gives the
-            // parent a screen-time figure that climbs through the day (15-minute granularity).
-            for minutes in Self.usageThresholds {
-                events[DeviceActivityEvent.Name("usage_\(minutes)")] = DeviceActivityEvent(
-                    applications: sel.applicationTokens,
-                    categories: sel.categoryTokens,
-                    webDomains: sel.webDomainTokens,
-                    threshold: DateComponents(minute: minutes)
-                )
-            }
-            do {
-                try center.startMonitoring(DeviceActivityName("dailyLimit"), during: day, events: events)
-            } catch {
-                print("[ScreenTime] daily-limit monitor error: \(error.localizedDescription)")
-            }
-        } else {
-            // No daily limit set — still measure usage so the parent sees screen time.
-            let day = DeviceActivitySchedule(
-                intervalStart: DateComponents(hour: 0, minute: 0),
-                intervalEnd: DateComponents(hour: 23, minute: 59),
-                repeats: true
+        }
+
+        if !dayEvents.isEmpty {
+            try? center.startMonitoring(DeviceActivityName("dailyLimit"), during: day, events: dayEvents)
+        }
+
+        // Re-arm a still-running timed pause across monitoring restarts.
+        let until = defaults.double(forKey: SharedKeys.pausedUntil)
+        if defaults.bool(forKey: SharedKeys.devicePaused), until > Date().timeIntervalSince1970 {
+            let cal = Calendar.current
+            let schedule = DeviceActivitySchedule(
+                intervalStart: cal.dateComponents([.hour, .minute], from: Date()),
+                intervalEnd: cal.dateComponents([.hour, .minute], from: Date(timeIntervalSince1970: until)),
+                repeats: false
             )
-            let sel = selection
-            guard !(sel.applicationTokens.isEmpty && sel.categoryTokens.isEmpty) else { return }
-            var events: [DeviceActivityEvent.Name: DeviceActivityEvent] = [:]
-            for minutes in Self.usageThresholds {
-                events[DeviceActivityEvent.Name("usage_\(minutes)")] = DeviceActivityEvent(
-                    applications: sel.applicationTokens,
-                    categories: sel.categoryTokens,
-                    webDomains: sel.webDomainTokens,
-                    threshold: DateComponents(minute: minutes)
-                )
-            }
-            try? center.startMonitoring(DeviceActivityName("dailyLimit"), during: day, events: events)
+            try? center.startMonitoring(DeviceActivityName("pauseWindow"), during: schedule)
         }
     }
 

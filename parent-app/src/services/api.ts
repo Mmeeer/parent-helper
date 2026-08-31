@@ -353,7 +353,7 @@ export async function getRules(childId: string): Promise<Rules> {
 
 export async function updateScreenTime(
   childId: string,
-  data: { dailyLimitMin?: number; perApp?: { appId: string; appName: string; limitMin: number }[]; schedule?: { days: string[]; startTime: string; endTime: string; blocked: boolean }[] },
+  data: { dailyLimitMin?: number; perApp?: { appId: string; appName: string; limitMin: number }[]; schedule?: { days: string[]; startTime: string; endTime: string; blocked: boolean }[]; iosLimits?: { id: string; limitMin?: number; enabled?: boolean }[] },
 ): Promise<Rules> {
   return request<Rules>(`/rules/${childId}/screen-time`, {
     method: 'PUT',
@@ -364,7 +364,7 @@ export async function updateScreenTime(
 export async function updateBlockedApps(
   childId: string,
   blockedApps: string[],
-  extra?: { iosBlockSelected?: boolean },
+  extra?: { iosBlockSelected?: boolean; iosGroups?: { id: string; enabled: boolean }[] },
 ): Promise<Rules> {
   return request<Rules>(`/rules/${childId}/apps`, {
     method: 'PUT',
@@ -374,7 +374,7 @@ export async function updateBlockedApps(
 
 export async function updateWebFilter(
   childId: string,
-  data: { categories?: string[]; customBlock?: string[]; customAllow?: string[] },
+  data: { categories?: string[]; customBlock?: string[]; customAllow?: string[]; mode?: string },
 ): Promise<Rules> {
   return request<Rules>(`/rules/${childId}/web-filter`, {
     method: 'PUT',

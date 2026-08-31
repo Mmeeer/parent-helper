@@ -17,8 +17,8 @@ final class RuleManager: ObservableObject {
                     ScheduleRule(days: [0,1,2,3,4,5,6], startTime: "21:30", endTime: "07:00", enabled: true, blocked: true),
                     ScheduleRule(days: [1,2,3,4,5], startTime: "08:30", endTime: "15:00", enabled: true, blocked: true),
                 ]),
-                blockedApps: nil, iosBlockSelected: true,
-                webFilter: WebFilterRules(categories: ["adult", "gambling", "violence"], customBlock: nil, customAllow: nil)
+                blockedApps: nil, iosBlockSelected: true, iosGroups: nil, iosPerApp: nil,
+                webFilter: WebFilterRules(categories: ["adult", "gambling", "violence"], customBlock: nil, customAllow: nil, mode: nil)
             )
             dailyUsageMin = 80
         }
@@ -33,6 +33,30 @@ final class RuleManager: ObservableObject {
             let newRules = try await APIClient.shared.fetchRules(childId: childId)
             await MainActor.run { self.rules = newRules }
             cacheRules(newRules)
+
+            // Parent-side edits to groups/limits arrive as metadata; merge by id
+            // (tokens themselves never leave this device).
+            if let metas = newRules.iosGroups {
+                var groups = SharedStore.loadGroups()
+                for m in metas {
+                    if let i = groups.firstIndex(where: { $0.id == m.id }) {
+                        if let e = m.enabled { groups[i].enabled = e }
+                        if let n = m.name, !n.isEmpty { groups[i].name = n }
+                    }
+                }
+                SharedStore.saveGroups(groups)
+            }
+            if let metas = newRules.iosPerApp {
+                var limits = SharedStore.loadLimits()
+                for m in metas {
+                    if let i = limits.firstIndex(where: { $0.id == m.id }) {
+                        if let e = m.enabled { limits[i].enabled = e }
+                        if let v = m.limitMin, v > 0 { limits[i].limitMin = v }
+                        if let n = m.name, !n.isEmpty { limits[i].name = n }
+                    }
+                }
+                SharedStore.saveLimits(limits)
+            }
 
             // Apply to ScreenTimeManager if FamilyControls is available
             ScreenTimeManager.shared.applyRules(newRules)

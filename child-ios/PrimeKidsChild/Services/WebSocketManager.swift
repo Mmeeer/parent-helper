@@ -24,7 +24,7 @@ final class WebSocketManager: ObservableObject {
     @Published private(set) var isConnected = false
 
     var onRulesUpdated: (() -> Void)?
-    var onCommand: ((String) -> Void)?
+    var onCommand: ((String, [String: Any]?) -> Void)?
     var onUnpaired: (() -> Void)?
 
     private init() {}
@@ -125,7 +125,8 @@ final class WebSocketManager: ObservableObject {
         case "command":
             // Backend: io.to(room).emit('command', { command, params })
             if let cmd = (body?["command"] as? String) ?? (body?["action"] as? String) {
-                DispatchQueue.main.async { self.onCommand?(cmd) }
+                let p = body?["params"] as? [String: Any]
+                DispatchQueue.main.async { self.onCommand?(cmd, p) }
             }
         case "device:unpaired":
             DispatchQueue.main.async { self.onUnpaired?() }

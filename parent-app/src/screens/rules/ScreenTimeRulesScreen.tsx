@@ -11,6 +11,7 @@ import {
   Pressable,
   ActivityIndicator,
   Image,
+  Switch,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -21,13 +22,16 @@ import { isIosChild } from '../../utils/platform';
 import * as api from '../../services/api';
 import { onSocketEvent } from '../../services/socket';
 import type { RouteProp } from '@react-navigation/native';
-import type { RootStackParamList, Schedule, PerAppLimit } from '../../types';
+import type { RootStackParamList, Schedule, PerAppLimit, IosLimitMeta } from '../../types';
 import type { InstalledApp } from '../../services/api';
 import { C } from '../../theme';
 
 type Props = {
   readonly route: RouteProp<RootStackParamList, 'ScreenTimeRules'>;
 };
+
+// Minute presets for iOS per-app limit rules (created on the child's iPhone).
+const IOS_LIMIT_PRESETS = [15, 30, 45, 60, 90, 120, 180];
 
 export default function ScreenTimeRulesScreen({ route }: Props) {
   const { childId } = route.params;
@@ -43,6 +47,8 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
   const [installedApps, setInstalledApps] = useState<InstalledApp[]>([]);
   // Per-app limits rely on the Android package-name app list; hidden for iPhone children.
   const [iosChild, setIosChild] = useState(false);
+  // iOS: per-app limit rules created on the child's iPhone — editable (minutes + on/off) here.
+  const [iosLimits, setIosLimits] = useState<IosLimitMeta[]>([]);
 
   // Per-app form
   const [pickerVisible, setPickerVisible] = useState(false);
@@ -64,6 +70,7 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
   const loadRules = async () => {
     try {
       const rules = await api.getRules(childId);
+      setIosLimits(rules.iosLimits ?? []);
       if (rules.screenTime) {
         const mins = rules.screenTime.dailyLimitMin ?? 120;
         // Show as hours, drop trailing zeros (2.0 → "2", 2.5 → "2.5")
@@ -123,6 +130,9 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
         dailyLimitMin: limitMin,
         perApp: perAppLimits,
         schedule: scheduleForApi as any,
+        ...(iosChild
+          ? { iosLimits: iosLimits.map((l) => ({ id: l.id, limitMin: l.limitMin, enabled: l.enabled })) }
+          : {}),
       });
       Alert.alert(t('screenTimeRules.saved'), t('screenTimeRules.savedDesc'));
     } catch (error: any) {
@@ -167,6 +177,14 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
 
   const removePerAppLimit = (index: number) => {
     setPerAppLimits(perAppLimits.filter((_, i) => i !== index));
+  };
+
+  const setIosLimitMin = (id: string, limitMin: number) => {
+    setIosLimits(prev => prev.map(l => (l.id === id ? { ...l, limitMin } : l)));
+  };
+
+  const toggleIosLimit = (id: string, enabled: boolean) => {
+    setIosLimits(prev => prev.map(l => (l.id === id ? { ...l, enabled } : l)));
   };
 
   const addSchedule = () => {
@@ -276,11 +294,52 @@ export default function ScreenTimeRulesScreen({ route }: Props) {
         </View>
       </View>
 
-      {/* Per-App Limits (Android only — iOS has no package-name app list) */}
+      {/* Per-App Limits — iOS edits the limit rules created on the child's iPhone */}
       {iosChild ? (
-        <View className="flex-row items-start gap-x-3 bg-nest-50 rounded-2xl p-4 mx-4 mb-3">
-          <Ionicons name="logo-apple" size={18} color={C.nest500} />
-          <Text className="flex-1 text-xs text-gray-700 leading-4">{t('screenTime.iosPerAppUnavailable')}</Text>
+        <View className="bg-white rounded-3xl p-5 mx-4 mb-3 border border-gray-100 shadow-sm">
+          <Text className="text-xs text-gray-400 font-bold uppercase mb-3">{t('screenTimeRules.appLimit')}</Text>
+          <Text className="text-sm font-display font-bold text-gray-900 mb-1">{t('screenTime.iosLimitsTitle')}</Text>
+          {iosLimits.length === 0 ? (
+            <Text className="text-xs text-gray-400 leading-4 mt-1">{t('screenTime.noIosLimits')}</Text>
+          ) : (
+            iosLimits.map((limit) => (
+              <View key={limit.id} className="py-3 border-b border-gray-100">
+                <View className="flex-row justify-between items-center">
+                  <View className="flex-1 mr-3">
+                    <Text className="text-sm font-medium text-gray-900" numberOfLines={1}>
+                      {limit.name}
+                    </Text>
+                    <Text className="text-[11px] text-gray-400 mt-0.5">
+                      {t('screenTime.limitCounts', { apps: limit.appCount, categories: limit.categoryCount })}
+                    </Text>
+                  </View>
+                  <Switch
+                    value={limit.enabled}
+                    onValueChange={(v) => toggleIosLimit(limit.id, v)}
+                    trackColor={{ true: C.safe500, false: C.gray200 }}
+                    thumbColor="#FFFFFF"
+                  />
+                </View>
+                {/* Minute presets (same chip pattern as the daily limit) */}
+                <View className="flex-row mt-2 gap-2 flex-wrap" style={{ opacity: limit.enabled ? 1 : 0.4 }}>
+                  {IOS_LIMIT_PRESETS.map((mins) => (
+                    <TouchableOpacity
+                      key={mins}
+                      onPress={() => setIosLimitMin(limit.id, mins)}
+                      disabled={!limit.enabled}
+                      className={`px-3 py-1.5 rounded-full ${limit.limitMin === mins ? 'bg-nest-500' : 'bg-gray-100'}`}
+                    >
+                      <Text
+                        className={`text-xs font-medium ${limit.limitMin === mins ? 'text-white' : 'text-gray-500'}`}
+                      >
+                        {formatDuration(mins)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            ))
+          )}
         </View>
       ) : (
       <View className="bg-white rounded-3xl p-5 mx-4 mb-3 border border-gray-100 shadow-sm">

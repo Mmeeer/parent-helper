@@ -225,7 +225,12 @@
     "deliveredPush": "Sent to the child’s device. It usually applies within a few seconds.",
     "deliveredQueued": "The child’s device is asleep right now. The command will apply the next time it wakes up (usually within minutes).",
     "screenTimeOn": "Screen Time: set up",
-    "screenTimeOff": "Screen Time: not set up on the child's device — Pause and app limits will not apply until a parent authorises it there"
+    "screenTimeOff": "Screen Time: not set up on the child's device — Pause and app limits will not apply until a parent authorises it there",
+    "pause15": "15 minutes",
+    "pause1h": "1 hour",
+    "pauseUntilTomorrow": "Until tomorrow",
+    "pauseIndefinite": "Until I resume",
+    "activeNow": "Active now"
   },
   "pairDevice": {
     "title": "PAIRING",
@@ -400,7 +405,10 @@
     "iosSelectionTitle": "Apps are chosen on your child's iPhone",
     "iosSelectionDesc": "Open Prime Kids on the child's iPhone → Parent settings → Manage apps to pick which apps and categories are managed. Then turn on blocking here.",
     "iosBlockSelected": "Block selected apps",
-    "iosSelectionCount": "{{apps}} apps · {{categories}} categories selected"
+    "iosSelectionCount": "{{apps}} apps · {{categories}} categories selected",
+    "blockingGroups": "Blocking groups",
+    "groupCounts": "{{apps}} apps · {{categories}} categories",
+    "noGroups": "No blocking groups yet. Create them on the child's iPhone: Prime Kids app → Parent settings → Blocking groups & time limits."
   },
   "webFilter": {
     "title": "CONTROLS",
@@ -423,7 +431,7 @@
     "saved": "Web filter rules updated.",
     "savedDesc": "Rules have been saved successfully.",
     "updateError": "Failed to update rules.",
-    "iosSafariOnly": "On iPhone, filtering applies to Safari only. Set Safari as the default browser on your child's device.",
+    "iosSafariOnly": "On iPhone, category filtering applies to Safari. The adult-content filter and strict allow-list mode also cover most in-app browsers.",
     "categories": {
       "adult": "Adult content",
       "gambling": "Gambling",
@@ -436,7 +444,11 @@
       "social_media": "Social media",
       "gaming": "Gaming",
       "streaming": "Streaming"
-    }
+    },
+    "filterMode": "FILTER MODE",
+    "modeCategories": "Block by category",
+    "modeAllowlist": "Allow only my listed websites (strict)",
+    "allowlistHint": "Only the websites in your allow list will open — in Safari and most in-app browsers."
   },
   "settings": {
     "title": "Settings",
@@ -612,8 +624,10 @@
     "getStarted": "Get Started"
   },
   "screenTime": {
-    "iosPerAppUnavailable": "Per-app limits are not available for iPhone yet. Daily limit and schedules apply to the apps selected on the child's iPhone.",
-    "iosManagedAppsCaption": "Time in the apps your rules manage"
+    "iosManagedAppsCaption": "Time in the apps your rules manage",
+    "iosLimitsTitle": "Per-app limits",
+    "limitCounts": "{{apps}} apps · {{categories}} categories",
+    "noIosLimits": "No per-app limits yet. Create them on the child's iPhone: Parent settings → Blocking groups & time limits."
   },
   "days": {
     "sun": "Sun",

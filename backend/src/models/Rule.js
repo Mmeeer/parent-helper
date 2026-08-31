@@ -32,6 +32,8 @@ const ruleSchema = new mongoose.Schema({
     },
     customBlock: [String],
     customAllow: [String],
+    // iOS filtering strategy: block by category lists vs. allowlist-only browsing.
+    mode: { type: String, enum: ['categories', 'allowlist'], default: 'categories' },
   },
   // ── iOS (Screen Time / FamilyControls) ────────────────────────────────────
   // Parent toggle: when true the child iOS app shields whatever is in iosSelection.
@@ -50,6 +52,29 @@ const ruleSchema = new mongoose.Schema({
     webDomainCount: { type: Number, default: 0 },
     updatedAt: { type: Date, default: null },
   },
+  // Named blocking groups managed on the child iOS device. The opaque Screen-Time
+  // tokens stay on the phone — the backend stores only metadata (name/counts/enabled)
+  // so the parent app can list groups and toggle/rename them remotely. Structure is
+  // uploaded wholesale by the device (POST /rules/:childId/ios-structure).
+  iosGroups: [{
+    id: String,
+    name: String,
+    appCount: Number,
+    categoryCount: Number,
+    enabled: Boolean,
+  }],
+  // Per-app/category time-limit rules managed on the child iOS device. Same
+  // metadata-only model as iosGroups. Do NOT confuse with screenTime.perApp,
+  // which Android uses. Served to the iOS client under the JSON key `iosPerApp`
+  // in the device rules GET (the shipped client decodes that name).
+  iosLimits: [{
+    id: String,
+    name: String,
+    appCount: Number,
+    categoryCount: Number,
+    limitMin: Number,
+    enabled: Boolean,
+  }],
 }, { timestamps: true });
 
 module.exports = mongoose.model('Rule', ruleSchema);

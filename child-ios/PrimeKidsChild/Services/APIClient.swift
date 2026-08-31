@@ -101,6 +101,12 @@ final class APIClient {
         return try await request("/config/app", authenticated: false)
     }
 
+    /// POST /rules/:childId/ios-structure — group/limit metadata (names, counts, minutes).
+    func uploadIosStructure(childId: String, groups: [[String: Any]], limits: [[String: Any]]) async throws {
+        let body = try JSONSerialization.data(withJSONObject: ["groups": groups, "limits": limits])
+        try await requestVoid("/rules/\(childId)/ios-structure", method: "POST", body: body)
+    }
+
     func completePairing(code: String) async throws -> PairingResponse {
         let body = PairingRequest(
             pairingCode: code.uppercased().trimmingCharacters(in: .whitespaces),

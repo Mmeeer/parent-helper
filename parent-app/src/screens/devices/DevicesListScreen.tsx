@@ -52,10 +52,14 @@ export default function DevicesListScreen({ navigation, route }: Props) {
     }, [loadDevices]),
   );
 
-  const sendCommand = async (deviceId: string, command: 'lock' | 'unlock' | 'locate' | 'sync') => {
+  const sendCommand = async (
+    deviceId: string,
+    command: 'lock' | 'unlock' | 'locate' | 'sync',
+    params?: Record<string, unknown>,
+  ) => {
     setCommandingId(deviceId);
     try {
-      const result = await api.sendDeviceCommand(deviceId, command);
+      const result = await api.sendDeviceCommand(deviceId, command, params);
       // Tell the parent HOW it will arrive: live now, or when the child's phone next wakes.
       const detail = result.viaSocket
         ? t('devices.deliveredLive')
@@ -93,6 +97,34 @@ export default function DevicesListScreen({ navigation, route }: Props) {
       ],
     );
   };
+
+  /** Minutes from now until the next local midnight (for "pause until tomorrow"). */
+  const minutesUntilMidnight = () => {
+    const now = new Date();
+    const midnight = new Date(now);
+    midnight.setHours(24, 0, 0, 0);
+    return Math.max(1, Math.round((midnight.getTime() - now.getTime()) / 60000));
+  };
+
+  // iOS Pause: let the parent pick how long the pause lasts (lock command + durationMin).
+  const promptPauseDuration = (deviceId: string) => {
+    Alert.alert(
+      t('devices.pauseDevice'),
+      t('devices.iosPauseHint'),
+      [
+        { text: t('devices.pause15'), onPress: () => { void sendCommand(deviceId, 'lock', { durationMin: 15 }); } },
+        { text: t('devices.pause1h'), onPress: () => { void sendCommand(deviceId, 'lock', { durationMin: 60 }); } },
+        { text: t('devices.pauseUntilTomorrow'), onPress: () => { void sendCommand(deviceId, 'lock', { durationMin: minutesUntilMidnight() }); } },
+        { text: t('devices.pauseIndefinite'), onPress: () => { void sendCommand(deviceId, 'lock'); } },
+        { text: t('common.cancel'), style: 'cancel' },
+      ],
+    );
+  };
+
+  /** True when the child actually used the device within the last 10 minutes. */
+  const isActiveNow = (device: DeviceStatus) =>
+    Boolean(device.lastActivityAt) &&
+    Date.now() - new Date(device.lastActivityAt as string).getTime() < 10 * 60 * 1000;
 
   // On iOS the 'lock' command shields all apps (no screen lock) — same command, different wording.
   const commandsFor = (device: DeviceStatus) => {
@@ -163,24 +195,26 @@ export default function DevicesListScreen({ navigation, route }: Props) {
                   </Text>
                 )}
               </View>
-              {/* Status chip */}
+              {/* Status chip — recent child activity beats the plain online/offline state */}
               <View
                 className="flex-row items-center px-2.5 py-1 rounded-2xl gap-x-1"
                 style={{
-                  backgroundColor: device.status === 'online' ? C.safe50 : C.gray100,
+                  backgroundColor: isActiveNow(device) || device.status === 'online' ? C.safe50 : C.gray100,
                 }}
               >
                 <View
                   className="w-2 h-2 rounded-full"
-                  style={{ backgroundColor: device.status === 'online' ? C.safe400 : C.gray400 }}
+                  style={{ backgroundColor: isActiveNow(device) || device.status === 'online' ? C.safe400 : C.gray400 }}
                 />
                 <Text
                   className="text-[11px] font-bold uppercase tracking-wider"
                   style={{
-                    color: device.status === 'online' ? C.safe600 : C.gray400,
+                    color: isActiveNow(device) || device.status === 'online' ? C.safe600 : C.gray400,
                   }}
                 >
-                  {device.status === 'online' ? t('common.online') : t('common.offline')}
+                  {isActiveNow(device)
+                    ? t('devices.activeNow')
+                    : device.status === 'online' ? t('common.online') : t('common.offline')}
                 </Text>
               </View>
             </View>
@@ -215,7 +249,13 @@ export default function DevicesListScreen({ navigation, route }: Props) {
               {commandsFor(device).map(({ cmd, icon, label, color, bg }) => (
                 <View key={cmd} className="flex-1 items-center py-3 rounded-2xl" style={{ backgroundColor: bg }}>
                   <TouchableOpacity
-                    onPress={() => sendCommand(device.id, cmd)}
+                    onPress={() => {
+                      if (cmd === 'lock' && isIosChild(device)) {
+                        promptPauseDuration(device.id);
+                      } else {
+                        void sendCommand(device.id, cmd);
+                      }
+                    }}
                     disabled={commandingId === device.id}
                     className="p-1"
                   >

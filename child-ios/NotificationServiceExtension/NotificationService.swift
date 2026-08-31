@@ -26,6 +26,15 @@ final class NotificationService: UNNotificationServiceExtension {
         switch command {
         case "lock", "pause":
             defaults.set(true, forKey: SharedKeys.devicePaused)
+            if let raw = request.content.userInfo["params"] as? String,
+               let d = raw.data(using: .utf8),
+               let params = (try? JSONSerialization.jsonObject(with: d)) as? [String: Any],
+               let minutes = params["durationMin"] as? Int, minutes > 0 {
+                defaults.set(Date().addingTimeInterval(TimeInterval(minutes * 60)).timeIntervalSince1970,
+                             forKey: SharedKeys.pausedUntil)
+            } else {
+                defaults.set(0, forKey: SharedKeys.pausedUntil)
+            }
             store.shield.applications = nil
             store.shield.applicationCategories = .all()
             store.shield.webDomainCategories = .all()
@@ -33,6 +42,7 @@ final class NotificationService: UNNotificationServiceExtension {
             content.body = mn ? "Эцэг эх чинь төхөөрөмжийг түр зогсоолоо." : "Your parent paused this device."
         case "unlock", "resume":
             defaults.set(false, forKey: SharedKeys.devicePaused)
+            defaults.set(0, forKey: SharedKeys.pausedUntil)
             restoreBaseline(store: store, defaults: defaults)
             content.title = "Prime Kids"
             content.body = mn ? "Төхөөрөмж дахин ашиглахад бэлэн боллоо." : "Your device is available again."

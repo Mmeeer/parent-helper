@@ -61,8 +61,12 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         // Silent push from the backend: { command: "sync"|"locate"|"lock"|"unlock"|"unpair" } or { type: "rules:updated" }
         let command = (userInfo["command"] as? String) ?? (userInfo["type"] as? String)
         guard let command else { completionHandler(.noData); return }
+        var params: [String: Any]? = nil
+        if let raw = userInfo["params"] as? String, let d = raw.data(using: .utf8) {
+            params = (try? JSONSerialization.jsonObject(with: d)) as? [String: Any]
+        }
         Task {
-            await CommandHandler.handle(command)
+            await CommandHandler.handle(command, params: params)
             completionHandler(.newData)
         }
     }
@@ -88,8 +92,8 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         WebSocketManager.shared.onRulesUpdated = {
             Task { await RuleManager.shared.refreshRules() }
         }
-        WebSocketManager.shared.onCommand = { command in
-            Task { await CommandHandler.handle(command) }
+        WebSocketManager.shared.onCommand = { command, params in
+            Task { await CommandHandler.handle(command, params: params) }
         }
         WebSocketManager.shared.onUnpaired = {
             Task { await CommandHandler.unpair() }

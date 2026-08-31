@@ -5,14 +5,14 @@ import Foundation
 enum CommandHandler {
     /// Runs a command and then heartbeats, so the parent app immediately sees that the
     /// device received it (otherwise a "sync" with nothing to upload looked like a no-op).
-    static func handle(_ command: String) async {
-        await run(command)
+    static func handle(_ command: String, params: [String: Any]? = nil) async {
+        await run(command, params: params)
         if command != "unpair" {
             await ActivitySyncService.shared.sendHeartbeat()
         }
     }
 
-    private static func run(_ command: String) async {
+    private static func run(_ command: String, params: [String: Any]? = nil) async {
         switch command {
         case "sync":
             await ActivitySyncService.shared.syncNow()
@@ -29,8 +29,10 @@ enum CommandHandler {
             try? await APIClient.shared.syncActivity(sync)
 
         case "lock", "pause":
-            // iOS has no device lock; "pause" shields every app until unlock/resume.
-            ScreenTimeManager.shared.setPaused(true)
+            // iOS has no device lock; "pause" shields every app until resume — or for
+            // a parent-chosen duration, after which it lifts itself.
+            let minutes = (params?["durationMin"] as? Int) ?? Int(params?["durationMin"] as? String ?? "")
+            ScreenTimeManager.shared.setPaused(true, durationMin: minutes)
 
         case "unlock", "resume":
             ScreenTimeManager.shared.setPaused(false)
@@ -53,7 +55,7 @@ enum CommandHandler {
         do {
             let pending = try await APIClient.shared.fetchPendingCommands()
             for cmd in pending {
-                await handle(cmd.command)
+                await handle(cmd.command, params: cmd.params?.mapValues { $0.value })
                 try? await APIClient.shared.ackCommand(id: cmd.id)
             }
         } catch {
