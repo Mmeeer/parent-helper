@@ -71,3 +71,6 @@ export const DAY_NUM_TO_NAME: Record<number, string> = {
   5: 'Friday',
   6: 'Saturday',
 };
+
+// Hosted legal documents (fallback when GET /config/app has no inline terms text).
+export const TERMS_URL = 'https://primekids.masterclass.mn/parent-helper/legal/terms-of-service.html';

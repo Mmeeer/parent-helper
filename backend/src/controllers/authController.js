@@ -7,6 +7,10 @@ const { sendVerificationCode, sendPasswordResetCode, sendWelcomeEmail, sendAccou
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCK_TIME_MS = 15 * 60 * 1000; // 15 minutes
 
+// Phones are stored normalized (spaces/dashes stripped) — apply the same
+// normalization to lookups so "99 11-22 33" matches "99112233".
+const normalizePhone = (value) => String(value || '').replace(/[\s-]/g, '');
+
 const generateTokens = (userId, tokenFamily) => {
   const accessToken = jwt.sign({ id: userId }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || '1h',
@@ -26,41 +30,68 @@ exports.register = async (req, res, next) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { email, password, name, phone } = req.body;
+    // Phone-first: phone is required (validated + normalized by the route
+    // validator); email is optional (null allowed from clients).
+    const { email, password, name, acceptedTerms } = req.body;
+    const phone = normalizePhone(req.body.phone);
 
-    const existing = await User.findOne({ email });
-    if (existing) {
-      return res.status(409).json({ error: 'Email already registered' });
+    const phoneTaken = await User.findOne({ phone });
+    if (phoneTaken) {
+      return res.status(409).json({ error: 'This phone number is already registered. Try logging in instead.' });
+    }
+    if (email) {
+      const emailTaken = await User.findOne({ email });
+      if (emailTaken) {
+        return res.status(409).json({ error: 'Email already registered' });
+      }
     }
 
     const tokenFamily = crypto.randomUUID();
-    const verificationCode = crypto.randomInt(100000, 999999).toString();
+    const verificationCode = email ? crypto.randomInt(100000, 999999).toString() : null;
     const user = new User({
-      email, phone: phone || null, passwordHash: password, name, tokenFamily,
+      // IMPORTANT: undefined (not null) when absent — the sparse unique index
+      // skips missing fields but WOULD index an explicit null (collisions).
+      email: email || undefined,
+      phone,
+      passwordHash: password,
+      name,
+      tokenFamily,
       emailVerificationCode: verificationCode,
-      emailVerificationCodeExpiresAt: new Date(Date.now() + 15 * 60 * 1000),
+      emailVerificationCodeExpiresAt: email ? new Date(Date.now() + 15 * 60 * 1000) : null,
+      termsAcceptedAt: acceptedTerms === true ? new Date() : null,
     });
     const tokens = generateTokens(user._id, tokenFamily);
     user.refreshToken = tokens.refreshToken;
     await user.save();
 
-    // Send verification + welcome emails
-    try {
-      await sendVerificationCode(email, verificationCode);
-      await sendWelcomeEmail(email, name);
-    } catch (err) {
-      console.error(`[Email] Failed to send verification/welcome to ${email}:`, err.message);
+    // Send verification + welcome emails (only when an email was provided)
+    if (email) {
+      try {
+        await sendVerificationCode(email, verificationCode);
+        await sendWelcomeEmail(email, name);
+      } catch (err) {
+        console.error(`[Email] Failed to send verification/welcome to ${email}:`, err.message);
+      }
     }
 
     const response = {
-      user: { id: user._id, email: user.email, phone: user.phone, name: user.name, emailVerified: false },
+      user: { id: user._id, email: user.email || null, phone: user.phone, name: user.name, emailVerified: false },
       ...tokens,
     };
-    if (process.env.NODE_ENV !== 'production') {
+    if (process.env.NODE_ENV !== 'production' && verificationCode) {
       response.verificationCode = verificationCode;
     }
     res.status(201).json(response);
   } catch (err) {
+    // Duplicate-key race (two simultaneous registrations, or legacy index
+    // states) — return the same friendly 409s as the pre-checks above.
+    if (err && err.code === 11000) {
+      const field = err.keyPattern ? Object.keys(err.keyPattern)[0] : null;
+      if (field === 'phone') {
+        return res.status(409).json({ error: 'This phone number is already registered. Try logging in instead.' });
+      }
+      return res.status(409).json({ error: 'Email already registered' });
+    }
     next(err);
   }
 };
@@ -72,10 +103,20 @@ exports.login = async (req, res, next) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { email, password } = req.body;
+    // New shape: { identifier, password } where identifier is a phone number
+    // or an email. Legacy shape { email, password } still accepted (old app
+    // builds and the App Store review account log in by email).
+    const { identifier, email, password } = req.body;
+    const rawId = String(identifier || email || '').trim();
+    if (!rawId) {
+      return res.status(400).json({ error: 'Phone number or email is required' });
+    }
 
-    const user = await User.findOne({ email });
+    const user = rawId.includes('@')
+      ? await User.findOne({ email: rawId.toLowerCase() })
+      : await User.findOne({ phone: normalizePhone(rawId) });
     if (!user) {
+      // Same message as a wrong password — don't reveal which part failed
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -119,7 +160,7 @@ exports.login = async (req, res, next) => {
     await user.save();
 
     res.json({
-      user: { id: user._id, email: user.email, phone: user.phone, name: user.name, role: user.role, emailVerified: user.emailVerified },
+      user: { id: user._id, email: user.email || null, phone: user.phone || null, name: user.name, role: user.role, emailVerified: user.emailVerified },
       ...tokens,
       deletionCancelled,
     });
@@ -144,8 +185,8 @@ exports.me = async (req, res, next) => {
 
     res.json({
       id: user._id,
-      email: user.email,
-      phone: user.phone,
+      email: user.email || null,
+      phone: user.phone || null,
       name: user.name,
       role: user.role,
       emailVerified: user.emailVerified,
@@ -207,15 +248,24 @@ exports.refresh = async (req, res, next) => {
 // POST /auth/forgot-password — Generate a 6-digit reset code
 exports.forgotPassword = async (req, res, next) => {
   try {
-    const { email } = req.body;
-    if (!email) {
-      return res.status(400).json({ error: 'Email is required' });
+    // Accepts { email } (legacy) or { identifier } (phone or email). Reset
+    // codes are only ever delivered by email — phone-based reset needs OTP
+    // delivery, which is out of scope for now. Accounts without an email get
+    // the same generic response so we don't reveal account existence.
+    const { email, identifier } = req.body;
+    const rawId = String(identifier || email || '').trim();
+    if (!rawId) {
+      return res.status(400).json({ error: 'Email or phone number is required' });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase().trim() });
-    if (!user) {
-      // Don't reveal whether email exists
-      return res.json({ message: 'If that email is registered, a reset code has been sent.' });
+    const genericMessage = 'If that account is registered, a reset code has been sent to its email address.';
+
+    const user = rawId.includes('@')
+      ? await User.findOne({ email: rawId.toLowerCase() })
+      : await User.findOne({ phone: normalizePhone(rawId) });
+    if (!user || !user.email) {
+      // Don't reveal whether the account exists (or whether it has an email)
+      return res.json({ message: genericMessage });
     }
 
     const resetCode = crypto.randomInt(100000, 999999).toString();
@@ -225,12 +275,12 @@ exports.forgotPassword = async (req, res, next) => {
 
     // Send password reset email
     try {
-      await sendPasswordResetCode(email, resetCode);
+      await sendPasswordResetCode(user.email, resetCode);
     } catch (err) {
-      console.error(`[Email] Failed to send reset code to ${email}:`, err.message);
+      console.error(`[Email] Failed to send reset code to ${user.email}:`, err.message);
     }
 
-    const response = { message: 'If that email is registered, a reset code has been sent.' };
+    const response = { message: genericMessage };
     if (process.env.NODE_ENV !== 'production') {
       response.resetCode = resetCode; // Only in dev/test
     }
@@ -324,6 +374,11 @@ exports.resendVerification = async (req, res, next) => {
       return res.json({ message: 'Email already verified' });
     }
 
+    // Phone-only accounts have no email to verify
+    if (!user.email) {
+      return res.status(400).json({ error: 'No email address on this account' });
+    }
+
     const verificationCode = crypto.randomInt(100000, 999999).toString();
     user.emailVerificationCode = verificationCode;
     user.emailVerificationCodeExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
@@ -414,11 +469,13 @@ exports.deleteAccount = async (req, res, next) => {
     user.tokenFamily = null;
     await user.save();
 
-    // Send deletion confirmation email
-    try {
-      await sendAccountDeletionEmail(user.email, user.name);
-    } catch (err) {
-      console.error(`[Email] Failed to send deletion confirmation to ${user.email}:`, err.message);
+    // Send deletion confirmation email (phone-only accounts have none)
+    if (user.email) {
+      try {
+        await sendAccountDeletionEmail(user.email, user.name);
+      } catch (err) {
+        console.error(`[Email] Failed to send deletion confirmation to ${user.email}:`, err.message);
+      }
     }
 
     console.log(`[Account Deletion] User ${user.email} requested account deletion. Will be purged after 30 days.`);

@@ -96,13 +96,19 @@ final class APIClient {
 
     // MARK: - Pairing
 
+    /// Public app configuration (no auth): legal terms + misc. Used before pairing.
+    func fetchAppConfig() async throws -> AppConfigResponse {
+        return try await request("/config/app", authenticated: false)
+    }
+
     func completePairing(code: String) async throws -> PairingResponse {
         let body = PairingRequest(
             pairingCode: code.uppercased().trimmingCharacters(in: .whitespaces),
             platform: "ios",
             model: DeviceInfo.model,
             osVersion: DeviceInfo.osVersion,
-            appVersion: DeviceInfo.appVersion
+            appVersion: DeviceInfo.appVersion,
+            acceptedTerms: PrefsManager.shared.termsAccepted
         )
         let data = try encoder.encode(body)
         return try await request("/devices/complete-pairing", method: "POST", body: data, authenticated: false)

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
-  View, ScrollView, RefreshControl, Pressable,
+  View, ScrollView, RefreshControl, Pressable, Image,
   Text, TouchableOpacity, ActivityIndicator, TextInput, Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,7 +13,8 @@ import { useAuth } from '../../store/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { C } from '../../theme';
-import type { Child, Alert as AlertType, DeviceStatus, RootStackParamList } from '../../types';
+import TutorialVideoCard from '../../components/TutorialVideoCard';
+import type { Child, Alert as AlertType, DeviceStatus, RootStackParamList, AppConfig } from '../../types';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 type Props = {
@@ -36,6 +37,12 @@ export default function HomeScreen({ navigation }: Props) {
   const [iosOnly, setIosOnly] = useState(false);
   // Per-child device list (used for the online/offline pill on each child card).
   const [devicesByChild, setDevicesByChild] = useState<Record<string, DeviceStatus[]>>({});
+  // Public app config (tutorial video URL). Fetched once; failure just hides the card.
+  const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
+
+  useEffect(() => {
+    api.getAppConfig().then(setAppConfig).catch(() => {});
+  }, []);
 
   const loadData = useCallback(async () => {
     try {
@@ -97,10 +104,11 @@ export default function HomeScreen({ navigation }: Props) {
     return Math.max(0, Math.floor((new Date(sub.expiresAt).getTime() - Date.now()) / 86400000));
   };
 
+  /** Fraction of the subscription period already used (bar grows day by day). */
   const getUsedPct = () => {
     if (!sub) return 0;
-    const total = sub.durationDays || 30;
-    return Math.min(Math.max((total - getDaysLeft()) / total, 0), 1);
+    const total = sub.durationDays || 365;
+    return Math.min(Math.max(1 - getDaysLeft() / total, 0), 1);
   };
 
   const formatExpiry = (d: string) =>
@@ -133,6 +141,18 @@ export default function HomeScreen({ navigation }: Props) {
       showsVerticalScrollIndicator={false}
     >
       <View className="px-7 pb-10" style={{ paddingTop: top * 2 }}>
+
+        {/* ── Brand row: logo + slogan ───────────────────── */}
+        <View className="flex-row items-center">
+          <Image
+            source={require('../../../assets/branding/logo-mark.png')}
+            style={{ width: 36, height: 36 }}
+            resizeMode="contain"
+          />
+          <Text className="ml-2.5 text-[13px] font-semibold text-gray-400">
+            {t('auth.familyProtection')}
+          </Text>
+        </View>
 
         {/* ── Header ─────────────────────────────────────── */}
         {isActive ? (
@@ -302,6 +322,10 @@ export default function HomeScreen({ navigation }: Props) {
                 )}
               </Pressable>
             ))}
+
+            {appConfig?.tutorialVideoUrl && (
+              <TutorialVideoCard url={appConfig.tutorialVideoUrl} />
+            )}
 
             <View className="flex-row gap-4 mt-1">
               <Pressable

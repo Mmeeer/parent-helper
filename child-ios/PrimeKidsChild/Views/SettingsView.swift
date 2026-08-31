@@ -18,7 +18,7 @@ struct SettingsView: View {
         List {
             Section {
                 row("bell.fill", "Notifications", notifications.isAuthorized)
-                row("location.fill", "Location (Always)", location.isAuthorized)
+                row("location.fill", "Location", location.level != .none)
                 row("hourglass", "Screen Time", screenTime.isAuthorized)
                 row("safari.fill", "Safari filtering", safariEnabled)
                 Button { showOnboarding = true } label: {

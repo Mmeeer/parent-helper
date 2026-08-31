@@ -77,6 +77,12 @@ const deviceSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
+  // Set when the child device accepted the Terms of Service during pairing
+  // (completePairing receives `acceptedTerms: true`).
+  termsAcceptedAt: {
+    type: Date,
+    default: null,
+  },
   installedApps: [{
     packageName: { type: String, required: true },
     appName: { type: String, required: true },

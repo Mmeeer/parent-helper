@@ -16,6 +16,23 @@ final class NotificationManager: NSObject, ObservableObject, UNUserNotificationC
         if Demo.isOn { isAuthorized = true }
         UNUserNotificationCenter.current().delegate = self
         Messaging.messaging().delegate = self
+        // The permission survives relaunches; our flag didn't. Read the real state
+        // at startup instead of assuming "off" until the user taps the button again.
+        refreshStatus()
+    }
+
+    /// Reads the actual system permission (call at launch and on every foreground).
+    func refreshStatus() {
+        guard !Demo.isOn else { return }
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            DispatchQueue.main.async {
+                self.isAuthorized = settings.authorizationStatus == .authorized
+                    || settings.authorizationStatus == .provisional
+                if self.isAuthorized {
+                    UIApplication.shared.registerForRemoteNotifications()
+                }
+            }
+        }
     }
 
     func requestPermission() async -> Bool {

@@ -44,6 +44,10 @@ router.get('/filters', adminController.getFilters);
 router.put('/filters', adminController.updateFilter);
 router.delete('/filters/:domain', adminController.deleteFilter);
 
+// App settings (editable legal terms + tutorial video, served publicly at /config/app)
+router.get('/settings', adminController.getSettings);
+router.put('/settings/:key', adminController.updateSetting);
+
 // Subscription key management
 router.post('/subscription-keys', adminController.createKeysBatch);
 router.get('/keys/export', adminController.exportKeys);

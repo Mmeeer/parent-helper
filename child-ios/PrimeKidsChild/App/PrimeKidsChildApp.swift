@@ -42,6 +42,7 @@ struct PrimeKidsChildApp: App {
         if FirebaseApp.app() == nil { FirebaseApp.configure() }
     }
     @State private var isPaired = PrefsManager.shared.isPaired || Demo.isOn
+    @State private var pendingTerms: String? = nil
     @State private var showOnboarding = PrefsManager.shared.isPaired && !PrefsManager.shared.onboardingCompleted && !Demo.isOn
 
     var body: some Scene {
@@ -57,6 +58,8 @@ struct PrimeKidsChildApp: App {
                                 showOnboarding = false
                             }
                         }
+                } else if let terms = pendingTerms {
+                    TermsView(text: terms) { pendingTerms = nil }
                 } else {
                     PairingView(isPaired: $isPaired)
                 }
@@ -69,6 +72,14 @@ struct PrimeKidsChildApp: App {
             }
             .onReceive(NotificationCenter.default.publisher(for: .primeKidsDidUnpair)) { _ in
                 isPaired = false
+            }
+            .task {
+                // Server-managed child terms (skipped silently when none are configured).
+                guard !isPaired, !PrefsManager.shared.termsAccepted else { return }
+                if let cfg = try? await APIClient.shared.fetchAppConfig(),
+                   let t = cfg.termsChild, !t.isEmpty {
+                    pendingTerms = t
+                }
             }
             #if DEBUG
             .task {

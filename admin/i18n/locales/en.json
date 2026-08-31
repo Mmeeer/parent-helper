@@ -52,6 +52,7 @@
     "deletions": "Deletions",
     "systemHealth": "System Health",
     "contentFilters": "Content Filters",
+    "appSettings": "App Settings",
     "signOut": "Sign Out",
     "adminConsole": "Admin Console"
   },
@@ -203,5 +204,23 @@
     "deletionCancelled": "Account deletion cancelled",
     "failedCancelDeletion": "Failed to cancel deletion",
     "purgeFailed": "Purge failed"
+  },
+  "settings": {
+    "title": "App Settings",
+    "subtitle": "Manage terms of service and the tutorial video",
+    "termsTitle": "Terms of Service",
+    "parentTerms": "Parent app terms",
+    "childTerms": "Child app terms",
+    "termsPlaceholder": "Enter the terms of service text...",
+    "characters": "{count} characters",
+    "tutorialTitle": "Tutorial Video",
+    "videoUrl": "YouTube URL",
+    "tutorialHint": "Paste a YouTube link (youtube.com/watch, youtu.be or youtube.com/shorts). Leave empty to clear the video.",
+    "invalidUrl": "Enter a valid YouTube URL",
+    "preview": "Preview",
+    "saving": "Saving...",
+    "saved": "Saved",
+    "saveFailed": "Failed to save",
+    "loadFailed": "Failed to load settings"
   }
 }

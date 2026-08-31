@@ -6,6 +6,14 @@ struct PairingRequest: Codable {
     let model: String
     let osVersion: String
     let appVersion: String
+    let acceptedTerms: Bool
+}
+
+/// Public GET /config/app — server-managed legal terms and app config.
+struct AppConfigResponse: Codable {
+    let termsParent: String?
+    let termsChild: String?
+    let tutorialVideoUrl: String?
 }
 
 struct PairingResponse: Codable {

@@ -31,8 +31,21 @@ final class ScreenTimeManager: ObservableObject {
     static let usageBucketMinutes = 15
     static let usageCeilingMinutes = 480
 
+    private var cancellables = Set<AnyCancellable>()
+
     private init() {
         checkAuthorization()
+        #if canImport(FamilyControls)
+        // The one-shot read above can race the framework at cold launch; the publisher
+        // keeps the flag truthful afterwards (covers revocation while we run, too).
+        AuthorizationCenter.shared.$authorizationStatus
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] status in
+                guard let self, !Demo.isOn else { return }
+                self.isAuthorized = status == .approved
+            }
+            .store(in: &cancellables)
+        #endif
     }
 
     // MARK: - Authorization

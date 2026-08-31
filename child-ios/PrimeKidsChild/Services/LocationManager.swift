@@ -52,6 +52,19 @@ final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelega
         authorizationStatus == .authorizedAlways || authorizationStatus == .authorizedWhenInUse
     }
 
+    /// Three-state display level. iOS grants *provisional* Always and may silently
+    /// downgrade it to While-Using hours later — that is not "permission lost", so the
+    /// UI must show While-Using as active (with a caveat) rather than as "Off".
+    enum Level { case always, whileUsing, none }
+    var level: Level {
+        if Demo.isOn { return .always }
+        switch authorizationStatus {
+        case .authorizedAlways: return .always
+        case .authorizedWhenInUse: return .whileUsing
+        default: return .none
+        }
+    }
+
     // MARK: - Tracking
 
     func startTracking() {

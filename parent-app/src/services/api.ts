@@ -14,6 +14,7 @@ import type {
   LocationEntry,
   AlertsResponse,
   Alert,
+  AppConfig,
 } from '../types';
 
 const STORAGE_KEYS = {
@@ -139,23 +140,48 @@ export class ApiError extends Error {
 }
 
 // ─── Auth ────────────────────────────────────────────────
-export async function login(email: string, password: string): Promise<AuthResponse> {
+/** `identifier` is a phone number or an email — the backend resolves either. */
+export async function login(identifier: string, password: string): Promise<AuthResponse> {
   const data = await request<AuthResponse>('/auth/login', {
     method: 'POST',
-    body: JSON.stringify({ email, password }),
+    // `email` is included when the identifier looks like one, so this build also works
+    // against a backend that predates identifier-based login.
+    body: JSON.stringify({ identifier, password, ...(identifier.includes('@') ? { email: identifier } : {}) }),
   });
   await saveTokens({ accessToken: data.accessToken, refreshToken: data.refreshToken });
   return data;
 }
 
-export async function register(email: string, password: string, name: string, phone?: string): Promise<AuthResponse> {
+export interface RegisterData {
+  name: string;
+  /** Required: 6-20 chars, digits with an optional leading +. */
+  phone: string;
+  password: string;
+  /** Optional; omitted from the request when empty. */
+  email?: string;
+  acceptedTerms: boolean;
+}
+
+export async function register({ name, phone, password, email, acceptedTerms }: RegisterData): Promise<AuthResponse> {
   const data = await request<AuthResponse>('/auth/register', {
     method: 'POST',
-    // Phone is optional; omit the field entirely when empty.
-    body: JSON.stringify({ email, password, name, ...(phone ? { phone } : {}) }),
+    // Email is optional; omit the field entirely when empty.
+    body: JSON.stringify({
+      name,
+      phone,
+      password,
+      acceptedTerms,
+      ...(email?.trim() ? { email: email.trim() } : {}),
+    }),
   });
   await saveTokens({ accessToken: data.accessToken, refreshToken: data.refreshToken });
   return data;
+}
+
+// ─── App Config ──────────────────────────────────────────
+/** Public app configuration (terms texts, tutorial video URL). No auth required. */
+export async function getAppConfig(): Promise<AppConfig> {
+  return request<AppConfig>('/config/app');
 }
 
 export async function logout(): Promise<void> {
@@ -435,8 +461,8 @@ export interface SubscriptionInfo {
     maxKids: number;
     currentKids: number;
     expiresAt: string;
-    activatedAt: string;
-    durationDays: number;
+    activatedAt?: string;
+    durationDays?: number;
     status: string;
   } | null;
 }

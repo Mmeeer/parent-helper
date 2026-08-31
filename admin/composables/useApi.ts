@@ -219,5 +219,14 @@ export function useApi() {
     async purgeDeletions() {
       return request<{ message: string; purged: number }>('/admin/deletions/purge', { method: 'POST' });
     },
+
+    // App settings
+    async getSettings() {
+      return request<{ settings: { key: string; value: string; updatedAt: string }[] }>('/admin/settings');
+    },
+
+    async updateSetting(key: string, value: string) {
+      return request(`/admin/settings/${encodeURIComponent(key)}`, { method: 'PUT', body: JSON.stringify({ value }) });
+    },
   };
 }

@@ -25,6 +25,17 @@ router.get('/', auth, async (req, res, next) => {
 
     const childrenCount = await Child.countDocuments({ parentId: req.user._id });
 
+    // Progress data for the client (elapsed % = (now - activatedAt) / durationDays).
+    // activatedAt is stored on activation; legacy keys activated before the
+    // field existed fall back to the key's updatedAt (the activation was the
+    // last write for such keys — best available approximation).
+    const activatedAt = sub.activatedAt || sub.updatedAt || sub.createdAt || null;
+    // Months vary in length, so derive exact days from the real activation →
+    // expiry window when both ends are known; fall back to durationMonths * 30.
+    const durationDays = activatedAt && sub.expiresAt
+      ? Math.max(1, Math.round((new Date(sub.expiresAt) - new Date(activatedAt)) / 86400000))
+      : (sub.durationMonths ? sub.durationMonths * 30 : null);
+
     res.json({
       active: sub.status === 'active',
       subscription: {
@@ -32,8 +43,10 @@ router.get('/', auth, async (req, res, next) => {
         maxKids: sub.maxKids,
         currentKids: childrenCount,
         expiresAt: sub.expiresAt,
-        activatedAt: sub.activatedAt,
+        activatedAt,
         durationMonths: sub.durationMonths,
+        durationDays,
+        totalDays: durationDays, // alias, same value
         status: sub.status,
       },
     });

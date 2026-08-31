@@ -107,3 +107,5 @@
 "Open parent settings" = "Эцэг эхийн тохиргоо нээх";
 "Your parent can see where this device is and gets an alert if you leave a safe zone. Your location is also attached when you send an SOS." = "Эцэг эх чинь энэ төхөөрөмж хаана байгааг харж, аюулгүй бүсээс гарахад мэдэгдэл авна. SOS илгээхэд байршил чинь мөн хавсаргагдана.";
 "iOS will ask next how you want to share your location. You can change your choice at any time in Settings → Privacy → Location Services." = "iOS дараагийн алхамд байршлаа хэрхэн хуваалцахыг асууна. Сонголтоо Тохиргоо → Нууцлал → Байршлын үйлчилгээ хэсгээс хэдийд ч өөрчилж болно.";
+"I accept" = "Зөвшөөрч байна";
+"While using only" = "Зөвхөн ашиглах үед";

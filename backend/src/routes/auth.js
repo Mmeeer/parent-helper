@@ -4,9 +4,13 @@ const authController = require('../controllers/authController');
 const { authLimiter, resetLimiter } = require('../middleware/rateLimiter');
 
 router.post('/register', authLimiter, [
-  body('email').isEmail().normalizeEmail(),
-  body('phone').optional({ values: 'falsy' }).trim()
+  // Phone-first auth: phone is required, email is optional.
+  body('phone')
+    .exists({ values: 'falsy' }).withMessage('Phone number is required')
+    .customSanitizer((v) => String(v || '').replace(/[\s-]/g, '')) // normalize: strip spaces/dashes
+    .matches(/^\+?\d+$/).withMessage('Phone number may contain only digits and a leading +')
     .isLength({ min: 6, max: 20 }).withMessage('Phone number must be 6-20 characters'),
+  body('email').optional({ values: 'falsy' }).isEmail().withMessage('Invalid email').normalizeEmail(),
   body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
     .matches(/[a-zA-Z]/).withMessage('Password must contain at least one letter')
     .matches(/\d/).withMessage('Password must contain at least one number'),
@@ -14,7 +18,17 @@ router.post('/register', authLimiter, [
 ], authController.register);
 
 router.post('/login', authLimiter, [
-  body('email').isEmail().normalizeEmail(),
+  // Accepts { identifier, password } (identifier = phone or email) OR the
+  // legacy { email, password } shape (old app builds + the App Store review
+  // account log in by email). Presence of one of the two is checked in the
+  // controller so both shapes keep working.
+  // Emails were stored through normalizeEmail() at registration (lowercase,
+  // gmail dot-stripping, ...), so email-shaped identifiers must go through the
+  // exact same normalization or stored values won't match on lookup.
+  body('identifier').optional({ values: 'falsy' }).trim()
+    .if((value) => typeof value === 'string' && value.includes('@'))
+    .isEmail().withMessage('Invalid email').normalizeEmail(),
+  body('email').optional({ values: 'falsy' }).isEmail().withMessage('Invalid email').normalizeEmail(),
   body('password').notEmpty(),
 ], authController.login);
 

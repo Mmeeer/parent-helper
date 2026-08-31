@@ -29,6 +29,11 @@ final class PrefsManager {
 
     // MARK: - UserDefaults (non-sensitive)
 
+    var termsAccepted: Bool {
+        get { defaults.bool(forKey: "termsAccepted") }
+        set { defaults.set(newValue, forKey: "termsAccepted") }
+    }
+
     var onboardingCompleted: Bool {
         get { defaults.bool(forKey: "onboardingCompleted") }
         set { defaults.set(newValue, forKey: "onboardingCompleted") }

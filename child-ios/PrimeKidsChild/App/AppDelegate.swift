@@ -73,6 +73,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         BackgroundTaskManager.shared.scheduleTasks()
         guard PrefsManager.shared.isPaired else { return }
         ScreenTimeManager.shared.checkAuthorization()
+        NotificationManager.shared.refreshStatus()
         Task {
             await NotificationManager.shared.registerTokenWithBackend()
             await ActivitySyncService.shared.sendHeartbeat()

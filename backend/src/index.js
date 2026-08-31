@@ -49,6 +49,7 @@ const geofenceRoutes = require('./routes/geofences');
 const geocodeRoutes = require('./routes/geocode');
 const adminRoutes = require('./routes/admin');
 const subscriptionRoutes = require('./routes/subscription');
+const configRoutes = require('./routes/config');
 
 const { startOfflineDetector } = require('./jobs/offlineDetector');
 const { startSubscriptionChecker } = require('./jobs/subscriptionChecker');
@@ -135,6 +136,9 @@ app.use('/geofences', geofenceRoutes);
 app.use('/geocode', geocodeRoutes);
 app.use('/admin', adminRoutes);
 app.use('/subscription', subscriptionRoutes);
+// Public app config (legal terms, tutorial video) — no auth, like the static
+// legal pages above: both apps need it before login.
+app.use('/config', configRoutes);
 
 // Content filters endpoint for child devices
 const deviceAuth = require('./middleware/deviceAuth');

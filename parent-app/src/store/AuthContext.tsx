@@ -14,8 +14,9 @@ interface AuthState {
 }
 
 interface AuthContextType extends AuthState {
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string, phone?: string) => Promise<void>;
+  /** `identifier` is a phone number or an email. */
+  login: (identifier: string, password: string) => Promise<void>;
+  register: (data: api.RegisterData) => Promise<void>;
   logout: () => Promise<void>;
   verifyEmail: (code: string) => Promise<void>;
   resendVerification: () => Promise<{ message: string }>;
@@ -59,15 +60,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })();
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
-    const data = await api.login(email, password);
+  const login = useCallback(async (identifier: string, password: string) => {
+    const data = await api.login(identifier, password);
     setState({ user: data.user, isLoading: false, isAuthenticated: true });
     connectSocket();
     registerForPushNotifications();
   }, []);
 
-  const register = useCallback(async (email: string, password: string, name: string, phone?: string) => {
-    const data = await api.register(email, password, name, phone);
+  const register = useCallback(async (registerData: api.RegisterData) => {
+    const data = await api.register(registerData);
     setState({ user: data.user, isLoading: false, isAuthenticated: true });
     connectSocket();
     registerForPushNotifications();

@@ -7,6 +7,7 @@ const ContentFilter = require('../models/ContentFilter');
 const SubscriptionKey = require('../models/SubscriptionKey');
 const Rule = require('../models/Rule');
 const Geofence = require('../models/Geofence');
+const AppSetting = require('../models/AppSetting');
 
 // POST /admin/seed — Create initial admin account (only if no admin exists)
 exports.seed = async (req, res, next) => {
@@ -938,6 +939,67 @@ exports.purgeDeletions = async (req, res, next) => {
     }
 
     res.json({ message: `Purged ${purged} account(s)`, purged });
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+// ── App settings (editable legal terms + app config) ────────────────────────
+// Only these keys may be written from the admin panel. They are served
+// publicly (no auth) via GET /config/app.
+const SETTING_KEYS = ['terms.parent', 'terms.child', 'tutorial.videoUrl'];
+const MAX_TERMS_LENGTH = 100 * 1024; // 100KB — terms are long HTML/markdown
+
+// GET /admin/settings — All app settings
+exports.getSettings = async (req, res, next) => {
+  try {
+    const settings = await AppSetting.find().sort({ key: 1 }).lean();
+    res.json({ settings, editableKeys: SETTING_KEYS });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// PUT /admin/settings/:key — Update a whitelisted setting. Body: { value }
+exports.updateSetting = async (req, res, next) => {
+  try {
+    const { key } = req.params;
+    if (!SETTING_KEYS.includes(key)) {
+      return res.status(400).json({ error: `Unknown setting key. Allowed: ${SETTING_KEYS.join(', ')}` });
+    }
+
+    let { value } = req.body;
+    if (typeof value !== 'string') {
+      return res.status(400).json({ error: 'Value must be a string' });
+    }
+
+    if (key === 'tutorial.videoUrl') {
+      value = value.trim();
+      // Empty string clears the tutorial video; otherwise it must be YouTube.
+      if (value !== '') {
+        let host;
+        try {
+          host = new URL(value).hostname.toLowerCase().replace(/^www\./, '');
+        } catch {
+          return res.status(400).json({ error: 'Value must be a valid URL' });
+        }
+        const youtubeHosts = ['youtube.com', 'm.youtube.com', 'youtu.be', 'youtube-nocookie.com'];
+        if (!youtubeHosts.includes(host)) {
+          return res.status(400).json({ error: 'Video URL must be a YouTube URL (youtube.com or youtu.be)' });
+        }
+      }
+    } else if (value.length > MAX_TERMS_LENGTH) {
+      return res.status(400).json({ error: 'Terms text is too large (max 100KB)' });
+    }
+
+    const setting = await AppSetting.findOneAndUpdate(
+      { key },
+      { value },
+      { upsert: true, new: true, setDefaultsOnInsert: true },
+    );
+
+    res.json({ message: 'Setting updated', setting });
   } catch (err) {
     next(err);
   }

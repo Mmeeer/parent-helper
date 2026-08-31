@@ -17,20 +17,20 @@ type Props = {
 export default function LoginScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const { login } = useAuth();
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [secureText, setSecureText] = useState(true);
   const passwordRef = useRef<TextInput>(null);
 
   const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      Alert.alert(t('common.error'), t('auth.enterEmail'));
+    if (!identifier.trim() || !password.trim()) {
+      Alert.alert(t('common.error'), t('auth.enterIdentifier'));
       return;
     }
     setLoading(true);
     try {
-      await login(email.trim(), password);
+      await login(identifier.trim(), password);
     } catch (error: any) {
       Alert.alert(t('auth.loginFailed'), error.message || t('auth.invalidCredentials'));
     } finally {
@@ -67,20 +67,21 @@ export default function LoginScreen({ navigation }: Props) {
 
         {/* Form card */}
         <View className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
-          {/* Email */}
+          {/* Phone or email */}
           <View className="mb-5">
-            <Text className="font-display font-bold text-gray-900 mb-2">{t('auth.email')}</Text>
+            <Text className="font-display font-bold text-gray-900 mb-2">{t('auth.identifier')}</Text>
             <View className="flex-row items-center px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200">
-              <Ionicons name="mail-outline" size={17} color="#9ca3af" />
+              <Ionicons name="person-outline" size={17} color="#9ca3af" />
               <TextInput
                 className="flex-1 text-sm font-semibold text-gray-700 ml-3"
-                placeholder="you@example.com"
+                placeholder="99112233 / you@example.com"
                 placeholderTextColor="#d1d5db"
-                value={email}
-                onChangeText={setEmail}
+                value={identifier}
+                onChangeText={setIdentifier}
                 autoCapitalize="none"
-                keyboardType="email-address"
-                autoComplete="email"
+                keyboardType="default"
+                autoCorrect={false}
+                autoComplete="username"
                 returnKeyType="next"
                 onSubmitEditing={() => passwordRef.current?.focus()}
               />

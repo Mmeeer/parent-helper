@@ -44,6 +44,7 @@
 		8E54FC9B1E9173218E0770B5 /* AppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B3CF5033DE7317062FC16F0 /* AppGroup.swift */; };
 		9FE6E2D9C94465B35F7341F7 /* ContentBlockerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93FFDE50BD1164308315CDB2 /* ContentBlockerService.swift */; };
 		A3D4EBAB19A072E721ADF22A /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = B76C612A1969E12F7AC56BBD /* InfoPlist.strings */; };
+		A4BB833AEC074FD736655F3D /* TermsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABE6E67FD96BB5FE4D684053 /* TermsView.swift */; };
 		AA4FE8B121BB06CAEA425F34 /* DeviceActivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C30E6AC8C18487F083134FF /* DeviceActivity.framework */; };
 		B9C36921B271C29BB220E791 /* RuleManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00C4D17363C6B1882560E2D6 /* RuleManager.swift */; };
 		BC16707F8B5EDD562F740872 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F7BD9BFC77D5F85A0D20D3BA /* Assets.xcassets */; };
@@ -146,6 +147,7 @@
 		93FFDE50BD1164308315CDB2 /* ContentBlockerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentBlockerService.swift; sourceTree = "<group>"; };
 		9C30E6AC8C18487F083134FF /* DeviceActivity.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = DeviceActivity.framework; path = System/Library/Frameworks/DeviceActivity.framework; sourceTree = SDKROOT; };
 		A1F364EACB0EF97BD00088D9 /* ManagedSettings.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ManagedSettings.framework; path = System/Library/Frameworks/ManagedSettings.framework; sourceTree = SDKROOT; };
+		ABE6E67FD96BB5FE4D684053 /* TermsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TermsView.swift; sourceTree = "<group>"; };
 		AC40AC1CF44AE03EF23A4FEA /* PrivacyInfo-Extension.xcprivacy */ = {isa = PBXFileReference; path = "PrivacyInfo-Extension.xcprivacy"; sourceTree = "<group>"; };
 		ACA8E29CC24D57704F341079 /* PrimeKidsChildApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrimeKidsChildApp.swift; sourceTree = "<group>"; };
 		B0474B7080CA95CA3F5A66B2 /* SOSButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SOSButton.swift; sourceTree = "<group>"; };
@@ -358,6 +360,7 @@
 				46B3F71C483766867E69CC24 /* ParentSettingsView.swift */,
 				C69172DC8189A9920E768E64 /* SettingsView.swift */,
 				B0474B7080CA95CA3F5A66B2 /* SOSButton.swift */,
+				ABE6E67FD96BB5FE4D684053 /* TermsView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -648,6 +651,7 @@
 				56DB61B066517DA341A4F657 /* SOSButton.swift in Sources */,
 				7D9A337030C38BB783850091 /* ScreenTimeManager.swift in Sources */,
 				3F4767C3EDE44EA351507856 /* SettingsView.swift in Sources */,
+				A4BB833AEC074FD736655F3D /* TermsView.swift in Sources */,
 				6CFA752B2C978B31873AC88D /* WebSocketManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

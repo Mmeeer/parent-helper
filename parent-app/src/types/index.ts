@@ -1,8 +1,9 @@
 // ─── User / Auth ─────────────────────────────────────────
 export interface User {
   id: string;
-  email: string;
-  phone?: string;
+  /** Optional since phone-first auth: accounts registered by phone may have no email. */
+  email: string | null;
+  phone?: string | null;
   name: string;
   emailVerified: boolean;
   subscription?: {
@@ -24,6 +25,16 @@ export interface AuthResponse {
 export interface TokenPair {
   accessToken: string;
   refreshToken: string;
+}
+
+/** Public app configuration from GET /config/app (no auth). */
+export interface AppConfig {
+  /** Terms of Service text shown in the parent app, or null when not configured. */
+  termsParent: string | null;
+  /** Terms text for the child app, or null. */
+  termsChild: string | null;
+  /** YouTube URL for the dashboard tutorial card, or null to hide it. */
+  tutorialVideoUrl: string | null;
 }
 
 // ─── Child ───────────────────────────────────────────────
@@ -82,8 +93,8 @@ export interface SubscriptionInfo {
     maxKids: number;
     currentKids: number;
     expiresAt: string;
-    activatedAt: string;
-    durationDays: number;
+    activatedAt?: string;
+    durationDays?: number;
     status: string;
   } | null;
 }

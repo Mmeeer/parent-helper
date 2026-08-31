@@ -1,21 +1,31 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, Image,
   KeyboardAvoidingView, Platform, Alert, ScrollView, ActivityIndicator,
+  Modal, Linking, Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../store/AuthContext';
+import * as api from '../../services/api';
 import LanguageToggle from '../../components/LanguageToggle';
+import { TERMS_URL } from '../../utils/constants';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '../../types';
+import type { RootStackParamList, AppConfig } from '../../types';
 
 type Props = {
   readonly navigation: NativeStackNavigationProp<RootStackParamList, 'Register'>;
 };
 
+/** Phone rule (matches the backend): 6-20 chars, digits with an optional leading +. */
+function isValidPhone(phone: string): boolean {
+  return /^\+?\d+$/.test(phone) && phone.length >= 6 && phone.length <= 20;
+}
+
 export default function RegisterScreen({ navigation }: Props) {
   const { t } = useTranslation();
+  const { top, bottom } = useSafeAreaInsets();
   const { register } = useAuth();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -25,15 +35,38 @@ export default function RegisterScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(false);
   const [secureText, setSecureText] = useState(true);
   const [secureConfirm, setSecureConfirm] = useState(true);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsVisible, setTermsVisible] = useState(false);
+  const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
 
   const phoneRef = useRef<TextInput>(null);
   const emailRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
   const confirmRef = useRef<TextInput>(null);
 
+  // Fetch the public app config once so the terms text is ready when tapped.
+  // Failure is fine — we fall back to the hosted terms URL.
+  useEffect(() => {
+    api.getAppConfig().then(setAppConfig).catch(() => {});
+  }, []);
+
+  const openTerms = () => {
+    if (appConfig?.termsParent) {
+      setTermsVisible(true);
+    } else {
+      Linking.openURL(TERMS_URL).catch(() => {});
+    }
+  };
+
   const handleRegister = async () => {
-    if (!name.trim() || !email.trim() || !password.trim()) {
+    // Strip common phone formatting before validating/sending.
+    const cleanedPhone = phone.replace(/[\s\-()]/g, '');
+    if (!name.trim() || !cleanedPhone || !password.trim()) {
       Alert.alert(t('common.error'), t('auth.fillAllFields'));
+      return;
+    }
+    if (!isValidPhone(cleanedPhone)) {
+      Alert.alert(t('common.error'), t('register.phoneInvalid'));
       return;
     }
     if (password.length < 8) {
@@ -44,16 +77,51 @@ export default function RegisterScreen({ navigation }: Props) {
       Alert.alert(t('common.error'), t('auth.passwordMismatch'));
       return;
     }
+    if (!termsAccepted) {
+      Alert.alert(t('common.error'), t('register.termsRequired'));
+      return;
+    }
     setLoading(true);
     try {
-      // Phone is optional — only send it when the user filled it in.
-      await register(email.trim(), password, name.trim(), phone.trim() || undefined);
+      await register({
+        name: name.trim(),
+        phone: cleanedPhone,
+        password,
+        // Email is optional — only sent when the user filled it in.
+        email: email.trim() || undefined,
+        acceptedTerms: true,
+      });
     } catch (error: any) {
       Alert.alert(t('auth.registerFailed'), error.message || t('auth.registerError'));
     } finally {
       setLoading(false);
     }
   };
+
+  /** Checkbox label with the "Terms of Service" words tappable. */
+  const renderTermsLabel = () => {
+    const label = t('register.acceptTerms');
+    const word = t('register.termsWord');
+    const idx = label.indexOf(word);
+    const link = (
+      <Text className="text-nest-500 font-bold" onPress={openTerms}>{word}</Text>
+    );
+    if (idx < 0) {
+      // Translation without the exact terms phrase: make the whole label open the terms.
+      return (
+        <Text className="flex-1 text-[13px] text-gray-600 leading-5" onPress={openTerms}>{label}</Text>
+      );
+    }
+    return (
+      <Text className="flex-1 text-[13px] text-gray-600 leading-5">
+        {label.slice(0, idx)}
+        {link}
+        {label.slice(idx + word.length)}
+      </Text>
+    );
+  };
+
+  const canSubmit = termsAccepted && !loading;
 
   return (
     <KeyboardAvoidingView
@@ -102,9 +170,9 @@ export default function RegisterScreen({ navigation }: Props) {
             </View>
           </View>
 
-          {/* Phone */}
+          {/* Phone (required) */}
           <View className="mb-5">
-            <Text className="font-display font-bold text-gray-900 mb-2">{t('register.phoneOptional')}</Text>
+            <Text className="font-display font-bold text-gray-900 mb-2">{t('register.phone')}</Text>
             <View className="flex-row items-center px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200">
               <Ionicons name="call-outline" size={17} color="#9ca3af" />
               <TextInput
@@ -122,9 +190,9 @@ export default function RegisterScreen({ navigation }: Props) {
             </View>
           </View>
 
-          {/* Email */}
+          {/* Email (optional) */}
           <View className="mb-5">
-            <Text className="font-display font-bold text-gray-900 mb-2">{t('auth.email')}</Text>
+            <Text className="font-display font-bold text-gray-900 mb-2">{t('register.emailOptional')}</Text>
             <View className="flex-row items-center px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200">
               <Ionicons name="mail-outline" size={17} color="#9ca3af" />
               <TextInput
@@ -167,7 +235,7 @@ export default function RegisterScreen({ navigation }: Props) {
           </View>
 
           {/* Confirm password */}
-          <View className="mb-7">
+          <View className="mb-5">
             <Text className="font-display font-bold text-gray-900 mb-2">{t('auth.confirmPassword')}</Text>
             <View className="flex-row items-center px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200">
               <Ionicons name="lock-closed-outline" size={17} color="#9ca3af" />
@@ -188,10 +256,22 @@ export default function RegisterScreen({ navigation }: Props) {
             </View>
           </View>
 
+          {/* Terms acceptance */}
+          <View className="flex-row items-start mb-7">
+            <Pressable
+              onPress={() => setTermsAccepted((v) => !v)}
+              hitSlop={8}
+              className={`w-[22px] h-[22px] rounded-md border items-center justify-center mr-3 mt-0.5 ${termsAccepted ? 'bg-nest-500 border-nest-500' : 'bg-gray-50 border-gray-300'}`}
+            >
+              {termsAccepted && <Ionicons name="checkmark" size={15} color="#fff" />}
+            </Pressable>
+            {renderTermsLabel()}
+          </View>
+
           <TouchableOpacity
-            className={`bg-nest-500 rounded-2xl items-center justify-center py-3.5 shadow-lg ${loading ? 'opacity-60' : 'opacity-100'}`}
+            className={`bg-nest-500 rounded-2xl items-center justify-center py-3.5 shadow-lg ${canSubmit ? 'opacity-100' : 'opacity-60'}`}
             onPress={handleRegister}
-            disabled={loading}
+            disabled={!canSubmit}
             activeOpacity={0.85}
           >
             {loading
@@ -208,6 +288,29 @@ export default function RegisterScreen({ navigation }: Props) {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Terms of Service modal */}
+      <Modal
+        visible={termsVisible}
+        animationType="slide"
+        onRequestClose={() => setTermsVisible(false)}
+      >
+        <View className="flex-1 bg-surface" style={{ paddingTop: top, paddingBottom: bottom }}>
+          <View className="flex-row items-center justify-between px-5 py-3 border-b border-gray-100">
+            <Text className="font-display font-bold text-base text-gray-900">
+              {t('register.termsWord')}
+            </Text>
+            <TouchableOpacity onPress={() => setTermsVisible(false)} className="p-1" hitSlop={8}>
+              <Ionicons name="close" size={22} color="#6b7280" />
+            </TouchableOpacity>
+          </View>
+          <ScrollView className="flex-1 px-5" contentContainerClassName="py-5">
+            <Text className="text-[13px] text-gray-700 leading-6">
+              {appConfig?.termsParent ?? ''}
+            </Text>
+          </ScrollView>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }

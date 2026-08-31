@@ -52,6 +52,7 @@
     "deletions": "Устгалт",
     "systemHealth": "Системийн төлөв",
     "contentFilters": "Контент шүүлтүүр",
+    "appSettings": "Апп тохиргоо",
     "signOut": "Гарах",
     "adminConsole": "Админ удирдлага"
   },
@@ -203,5 +204,23 @@
     "deletionCancelled": "Бүртгэл устгалт цуцлагдлаа",
     "failedCancelDeletion": "Устгалт цуцлаж чадсангүй",
     "purgeFailed": "Устгалт амжилтгүй"
+  },
+  "settings": {
+    "title": "Апп тохиргоо",
+    "subtitle": "Үйлчилгээний нөхцөл болон заавар видеог удирдах",
+    "termsTitle": "Үйлчилгээний нөхцөл",
+    "parentTerms": "Эцэг эхийн аппын нөхцөл",
+    "childTerms": "Хүүхдийн аппын нөхцөл",
+    "termsPlaceholder": "Үйлчилгээний нөхцөлийн текстийг оруулна уу...",
+    "characters": "{count} тэмдэгт",
+    "tutorialTitle": "Заавар видео",
+    "videoUrl": "YouTube линк",
+    "tutorialHint": "YouTube линк оруулна уу (youtube.com/watch, youtu.be эсвэл youtube.com/shorts). Видеог арилгахын тулд хоосон үлдээнэ.",
+    "invalidUrl": "Зөв YouTube линк оруулна уу",
+    "preview": "Урьдчилан харах",
+    "saving": "Хадгалж байна...",
+    "saved": "Хадгалагдлаа",
+    "saveFailed": "Хадгалж чадсангүй",
+    "loadFailed": "Тохиргоог ачааллаж чадсангүй"
   }
 }

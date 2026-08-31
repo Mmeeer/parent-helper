@@ -56,7 +56,9 @@
     "reenterPassword": "Re-enter password",
     "min8Chars": "At least 8 characters",
     "phone": "Phone Number",
-    "confirmLogout": "Are you sure you want to sign out?"
+    "confirmLogout": "Are you sure you want to sign out?",
+    "identifier": "Phone number or email",
+    "enterIdentifier": "Please enter your phone or email and password."
   },
   "forgotPassword": {
     "recoverAccess": "Recover Access",
@@ -119,7 +121,8 @@
     "noChildrenDesc": "Add a child profile to start monitoring.",
     "addChild": "Add Child",
     "alerts": "Alerts",
-    "pending": "Pending"
+    "pending": "Pending",
+    "tutorialVideo": "Tutorial video"
   },
   "alerts": {
     "title": "Alerts",
@@ -644,6 +647,12 @@
     "privacyPolicy": "Privacy Policy"
   },
   "register": {
-    "phoneOptional": "Phone (optional)"
+    "phoneOptional": "Phone (optional)",
+    "phone": "Phone number",
+    "emailOptional": "Email (optional)",
+    "phoneInvalid": "Enter a valid phone number (6-20 digits, + allowed).",
+    "acceptTerms": "I accept the Terms of Service and Privacy Policy",
+    "termsWord": "Terms of Service",
+    "termsRequired": "Please accept the Terms of Service to continue."
   }
 }

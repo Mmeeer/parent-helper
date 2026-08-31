@@ -64,9 +64,12 @@ export default function ActivateSubscriptionScreen({ navigation }: Props) {
     return Math.floor(diff / 86400000);
   };
 
+  // Elapsed share of the subscription period — grows a little every day.
+  // (The old days/30 formula pinned the bar at 100% for any plan longer than a month.)
   const getProgress = (expiresAt: string) => {
-    const days = getDaysRemaining(expiresAt);
-    return Math.min(days / 30, 1);
+    const total = subscription?.subscription?.durationDays || 365;
+    const remaining = Math.max(getDaysRemaining(expiresAt), 0);
+    return Math.min(Math.max((total - remaining) / total, 0), 1);
   };
 
   if (subLoading) {

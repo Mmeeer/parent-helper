@@ -107,3 +107,5 @@
 "Open parent settings" = "Open parent settings";
 "Your parent can see where this device is and gets an alert if you leave a safe zone. Your location is also attached when you send an SOS." = "Your parent can see where this device is and gets an alert if you leave a safe zone. Your location is also attached when you send an SOS.";
 "iOS will ask next how you want to share your location. You can change your choice at any time in Settings → Privacy → Location Services." = "iOS will ask next how you want to share your location. You can change your choice at any time in Settings → Privacy → Location Services.";
+"I accept" = "I accept";
+"While using only" = "While using only";

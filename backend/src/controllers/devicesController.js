@@ -82,8 +82,8 @@ exports.pair = async (req, res, next) => {
 
 exports.completePairing = async (req, res, next) => {
   try {
-    const { pairingCode, platform, model, osVersion, appVersion } = req.body;
-    console.log('[COMPLETE-PAIRING] Request received:', { pairingCode, platform, model, osVersion, appVersion });
+    const { pairingCode, platform, model, osVersion, appVersion, acceptedTerms } = req.body;
+    console.log('[COMPLETE-PAIRING] Request received:', { pairingCode, platform, model, osVersion, appVersion, acceptedTerms });
 
     if (!pairingCode || typeof pairingCode !== 'string') {
       console.log('[COMPLETE-PAIRING] ERROR: Missing or invalid pairing code');
@@ -127,6 +127,7 @@ exports.completePairing = async (req, res, next) => {
       device.status = 'online';
       device.lastSeen = new Date();
       device.deviceToken = crypto.randomBytes(32).toString('hex');
+      if (acceptedTerms === true) device.termsAcceptedAt = new Date();
       device.pairingCode = undefined;
       device.pairingExpiresAt = undefined;
       await device.save();
@@ -179,6 +180,8 @@ exports.completePairing = async (req, res, next) => {
     device.status = 'online';
     device.lastSeen = new Date();
     device.deviceToken = crypto.randomBytes(32).toString('hex');
+    // Child app may confirm ToS acceptance during pairing
+    if (acceptedTerms === true) device.termsAcceptedAt = new Date();
     // Remove the pairing code so the sparse unique index ignores this doc.
     // NOTE: must use `undefined` (which Mongoose translates to `$unset`), not
     // `null`. Sparse indexes still include null-valued documents, so setting

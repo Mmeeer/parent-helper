@@ -202,8 +202,8 @@ struct DashboardView: View {
                 // Status items
                 VStack(spacing: 0) {
                     statusRow(icon: "location.fill", title: "Location",
-                              status: locationManager.isAuthorized ? LocalizedStringKey("Active") : LocalizedStringKey("Off"),
-                              isActive: locationManager.isAuthorized)
+                              status: locationStatusText,
+                              isActive: locationManager.level != .none)
                     Divider().padding(.leading, 48)
                     statusRow(icon: "bell.fill", title: "Notifications",
                               status: notificationManager.isAuthorized ? LocalizedStringKey("Active") : LocalizedStringKey("Off"),
@@ -244,12 +244,14 @@ struct DashboardView: View {
             NavigationView { ParentGateView() }.navigationViewStyle(.stack)
         }
         .onAppear {
+            refreshUsage()
             Task {
                 await ruleManager.refreshRules()
                 safariEnabled = await ContentBlockerService.shared.isEnabled()
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+            refreshUsage()
             Task { safariEnabled = await ContentBlockerService.shared.isEnabled() }
         }
     }
@@ -290,8 +292,26 @@ struct DashboardView: View {
         return Color("Primary")
     }
 
+    /// Pull today's managed-app usage (written by the DeviceActivityMonitor extension)
+    /// into the dashboard counter. 15-minute granularity — see ScreenTimeManager.
+    private func refreshUsage() {
+        let d = AppGroup.defaults
+        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"
+        let minutes = d.string(forKey: SharedKeys.usedMinutesDate) == f.string(from: Date())
+            ? d.integer(forKey: SharedKeys.usedMinutesToday) : 0
+        ruleManager.updateDailyUsage(minutes: Demo.isOn ? 80 : minutes)
+    }
+
+    private var locationStatusText: LocalizedStringKey {
+        switch locationManager.level {
+        case .always: return "Active"
+        case .whileUsing: return "While using only"
+        case .none: return "Off"
+        }
+    }
+
     private var needsPermissions: Bool {
-        !locationManager.isAuthorized || !notificationManager.isAuthorized || !screenTimeManager.isAuthorized
+        locationManager.level == .none || !notificationManager.isAuthorized || !screenTimeManager.isAuthorized
     }
 
     private func statusRow(icon: String, title: LocalizedStringKey, status: LocalizedStringKey, isActive: Bool) -> some View {
