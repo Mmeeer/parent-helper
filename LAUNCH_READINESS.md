@@ -1,4 +1,4 @@
-# Prime Kids — Launch Readiness & Android→iOS Parity (2026-08-31)
+# Prime Kids — Launch Readiness & Android→iOS Parity (2026-08-31, rev 2 — pro features)
 
 Verdict up front: **iOS carries every Android feature that Apple's platform permits, plus honest approximations for the rest.** The one launch blocker is on the *Android* side: the Play Store build is three releases old. Details below.
 
@@ -15,12 +15,12 @@ Verdict up front: **iOS carries every Android feature that Apple's platform perm
 | Push alerts to parent | ✅ | FCM→APNs; cross-account token bug fixed |
 | Daily screen-time limit | ✅ | DeviceActivity threshold → shield |
 | Bedtime/school schedules | ✅ | DeviceActivity intervals → shield |
-| App blocking | 🟡 | Apple model: parent picks apps *on the child device* (PIN-gated FamilyActivityPicker), toggled remotely; no package list |
-| Screen-time measurement | 🟡 | 5-min steps first 2 h then 15-min, managed apps only (Apple never exposes raw minutes); parent UI captions it honestly |
-| Per-app time limits | 🟡 deferred | possible on iOS via tokens; scheduled post-launch (parent UI hides it for iPhone children) |
-| Remote lock/unlock | 🟡 | "Pause/Resume" = shield all apps; iOS forbids screen-locking |
-| Online status | 🟡 | new beacon: DeviceActivity events stamp real usage; server pings quiet devices (silent push) every 5 min to collect it; online on any authenticated call; offline thresholds platform-aware |
-| Web filtering | 🟡 | Safari content blocker (categories + custom lists) + Apple adult filter; **Safari only** — Android's VPN covers all browsers |
+| App blocking | ✅⁺ | **Named blocking groups** ("Games", "Social"…) defined once on the child device, then toggled remotely from the parent app — Android-grade UX |
+| Screen-time measurement | 🟡⁺ | dedicated measurement selection (select-all → near-total device figure), 5-min resolution first 2 h |
+| Per-app time limits | ✅⁺ | real per-app/group daily limits; when exhausted only those apps shield; **minutes editable remotely** |
+| Remote lock/unlock | 🟡⁺ | Pause with duration (15 m/1 h/until tomorrow) + auto-resume, denies app install/removal while paused |
+| Online status | 🟡⁺ | "Active now" presence tier (beacon <10 min) in the parent UI + pinger + online-on-any-call |
+| Web filtering | 🟡⁺ | categories via Safari blocker; adult filter and new **strict allow-list mode** cover Safari **and most WebKit in-app browsers** |
 | Web history | ❌ | no API |
 | Installed-apps list | ❌ | no API |
 | New-app-install alerts | ❌ | no API |
@@ -34,7 +34,7 @@ Verdict up front: **iOS carries every Android feature that Apple's platform perm
 Backend deployed: identifier & legacy login 200, phone-required register 400/phone-only register 201, /config/app 200, admin settings 401-guarded, subscription `durationDays`+`activatedAt`, push channel to the real child device `viaPush:true`. Parent app: tsc clean, Home/geofence/login screens verified in simulator. Child app: builds clean; dashboard/permission rows verified.
 
 ## Launch checklist
-1. **Android parent app — BLOCKER**: Play build is pre-auth-fix. vc10 (same code as iOS build 9+) is building on EAS → upload AAB to Play Console → review (~1–3 d).
+1. **Android parent app — BLOCKER**: upload the freshest AAB to Play Console (vc11 building now includes the remote-controls UI; vc10 link available as fallback).
 2. **iOS 1.0.1 (build 7)** in Apple review. Builds 8–10 (map realtime, beacon, batch fixes) staged → fold into **1.0.2** as soon as 1.0.1 resolves.
 3. **Server**: `git pull` + restart to activate the pinger job + beacon fields (latest commits `4cef404`+). Index migration from commit `4daee94` notes if not yet run.
 4. **Admin panel**: deploy; then write terms (parent+child) and the tutorial YouTube URL in App Settings.
