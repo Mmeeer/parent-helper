@@ -22,8 +22,6 @@
 "Quiet time — apps are limited right now" = "Quiet time — apps are limited right now";
 "Daily screen time limit reached" = "Daily screen time limit reached";
 "SOS" = "SOS";
-"Hold to alert your parent" = "Hold to alert your parent";
-"Keep holding..." = "Keep holding...";
 "Sending alert..." = "Sending alert...";
 "Alert sent to your parent!" = "Alert sent to your parent!";
 "Could not send alert. Try again." = "Could not send alert. Try again.";
@@ -109,3 +107,5 @@
 "iOS will ask next how you want to share your location. You can change your choice at any time in Settings → Privacy → Location Services." = "iOS will ask next how you want to share your location. You can change your choice at any time in Settings → Privacy → Location Services.";
 "I accept" = "I accept";
 "While using only" = "While using only";
+
+"Tap to alert your parent" = "Tap to alert your parent";

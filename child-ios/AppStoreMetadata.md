@@ -28,7 +28,7 @@ Prime Kids: Child is the companion app that a parent or guardian installs on the
 
 **What parents get**
 • Location sharing — see where the child's device is, with alerts when it enters or leaves a safe zone you define.
-• SOS button — the child holds the button to send an alert with their location.
+• SOS button — one tap sends an alert to the parent with the child's location.
 • Screen-time rules — pick which apps and categories are managed (right on the child's iPhone, protected by a parent PIN), set a daily limit and bedtime or school schedules. Rules are enforced with Apple's Screen Time framework and shown as a Prime Kids shield.
 • Pause the device — temporarily shield all apps from the parent app.
 • Safari filtering — block websites by category or by domain with the Prime Kids Safari extension.

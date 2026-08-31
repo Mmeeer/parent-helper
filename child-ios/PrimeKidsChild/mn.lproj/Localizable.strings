@@ -22,8 +22,6 @@
 "Quiet time — apps are limited right now" = "Амралтын цаг — аппууд одоо хязгаарлагдсан";
 "Daily screen time limit reached" = "Өнөөдрийн дэлгэцийн цаг дууссан";
 "SOS" = "SOS";
-"Hold to alert your parent" = "Эцэг эхдээ мэдэгдэхийн тулд дарж барина уу";
-"Keep holding..." = "Барьсаар байгаарай...";
 "Sending alert..." = "Мэдэгдэл илгээж байна...";
 "Alert sent to your parent!" = "Эцэг эхэд мэдэгдэл илгээгдлээ!";
 "Could not send alert. Try again." = "Мэдэгдэл илгээж чадсангүй. Дахин оролдоно уу.";
@@ -109,3 +107,5 @@
 "iOS will ask next how you want to share your location. You can change your choice at any time in Settings → Privacy → Location Services." = "iOS дараагийн алхамд байршлаа хэрхэн хуваалцахыг асууна. Сонголтоо Тохиргоо → Нууцлал → Байршлын үйлчилгээ хэсгээс хэдийд ч өөрчилж болно.";
 "I accept" = "Зөвшөөрч байна";
 "While using only" = "Зөвхөн ашиглах үед";
+
+"Tap to alert your parent" = "Эцэг эхдээ мэдэгдэхийн тулд дарна уу";
