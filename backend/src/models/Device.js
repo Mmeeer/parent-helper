@@ -61,6 +61,13 @@ const deviceSchema = new mongoose.Schema({
     type: Boolean,
     default: null,
   },
+  // Last time the child was actually using managed apps (stamped by the iOS
+  // DeviceActivity extension, uploaded with heartbeats). Distinct from lastSeen,
+  // which only proves our app woke up.
+  lastActivityAt: {
+    type: Date,
+    default: null,
+  },
   deviceToken: {
     type: String,
     unique: true,

@@ -37,6 +37,11 @@ final class DeviceActivityMonitorExtension: DeviceActivityMonitor {
     override func eventDidReachThreshold(_ event: DeviceActivityEvent.Name, activity: DeviceActivityName) {
         super.eventDidReachThreshold(event, activity: activity)
 
+        // Any threshold crossing means the child is using managed apps *right now*.
+        // The extension has no network access, so it stamps the time; the app uploads
+        // the stamp on its next wake (heartbeat / silent-push ping / location).
+        defaults.set(Date().timeIntervalSince1970, forKey: SharedKeys.lastDeviceActivityAt)
+
         // Usage ladder: "usage_45" means the child has now spent 45 minutes in the managed
         // apps today. Record the highest bucket reached; the app uploads it on its next sync.
         if event.rawValue.hasPrefix("usage_"),

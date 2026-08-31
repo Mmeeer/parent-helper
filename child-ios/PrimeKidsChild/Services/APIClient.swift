@@ -116,9 +116,10 @@ final class APIClient {
 
     // MARK: - Heartbeat
 
-    func sendHeartbeat(batteryLevel: Int, screenTimeAuthorized: Bool? = nil) async throws {
+    func sendHeartbeat(batteryLevel: Int, screenTimeAuthorized: Bool? = nil, lastActiveAt: String? = nil) async throws {
         var payload: [String: Any] = ["batteryLevel": batteryLevel]
         if let screenTimeAuthorized { payload["screenTimeAuthorized"] = screenTimeAuthorized }
+        if let lastActiveAt { payload["lastActiveAt"] = lastActiveAt }
         let body = try JSONSerialization.data(withJSONObject: payload)
         try await requestVoid("/devices/heartbeat", method: "POST", body: body)
     }

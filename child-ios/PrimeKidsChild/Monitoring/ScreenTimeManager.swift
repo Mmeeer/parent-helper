@@ -27,9 +27,12 @@ final class ScreenTimeManager: ObservableObject {
 
     private let defaults = AppGroup.defaults
 
-    /// Usage is measured in 15-minute steps up to 8 hours (32 threshold events).
-    static let usageBucketMinutes = 15
-    static let usageCeilingMinutes = 480
+    /// Usage thresholds double as an activity beacon: every crossing wakes our monitor
+    /// extension, which stamps "child is using the phone right now" into the App Group.
+    /// 5-minute steps for the first 2 hours (fresh signal), 15-minute steps to 8 hours.
+    static var usageThresholds: [Int] {
+        Array(stride(from: 5, through: 120, by: 5)) + Array(stride(from: 135, through: 480, by: 15))
+    }
 
     private var cancellables = Set<AnyCancellable>()
 
@@ -209,7 +212,7 @@ final class ScreenTimeManager: ObservableObject {
             // Usage measurement: iOS never hands an app the raw minute count, but a threshold
             // event tells us usage crossed that mark. A ladder of 15-minute thresholds gives the
             // parent a screen-time figure that climbs through the day (15-minute granularity).
-            for minutes in stride(from: Self.usageBucketMinutes, through: Self.usageCeilingMinutes, by: Self.usageBucketMinutes) {
+            for minutes in Self.usageThresholds {
                 events[DeviceActivityEvent.Name("usage_\(minutes)")] = DeviceActivityEvent(
                     applications: sel.applicationTokens,
                     categories: sel.categoryTokens,
@@ -232,7 +235,7 @@ final class ScreenTimeManager: ObservableObject {
             let sel = selection
             guard !(sel.applicationTokens.isEmpty && sel.categoryTokens.isEmpty) else { return }
             var events: [DeviceActivityEvent.Name: DeviceActivityEvent] = [:]
-            for minutes in stride(from: Self.usageBucketMinutes, through: Self.usageCeilingMinutes, by: Self.usageBucketMinutes) {
+            for minutes in Self.usageThresholds {
                 events[DeviceActivityEvent.Name("usage_\(minutes)")] = DeviceActivityEvent(
                     applications: sel.applicationTokens,
                     categories: sel.categoryTokens,

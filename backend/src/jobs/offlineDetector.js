@@ -20,7 +20,13 @@ function startOfflineDetector(io) {
         paired: true,
         status: 'online',
         $or: [
-          { platform: 'ios', lastSeen: { $lt: cutoffIos } },
+          {
+            platform: 'ios',
+            lastSeen: { $lt: cutoffIos },
+            // The DeviceActivity beacon may be fresher than lastSeen right after a
+            // wake-up gap — an active child is not an offline device.
+            $and: [{ $or: [{ lastActivityAt: null }, { lastActivityAt: { $lt: cutoffIos } }] }],
+          },
           { platform: { $ne: 'ios' }, lastSeen: { $lt: cutoffAndroid } },
         ],
       }).populate('childId', 'name');

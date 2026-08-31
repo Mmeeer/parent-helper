@@ -28,4 +28,5 @@ enum SharedKeys {
     static let authorizationMember = "authorizationMember"            // "child" | "individual" — how FamilyControls was granted
     static let usedMinutesToday = "usedMinutesToday"                  // Int — managed-app usage reached today (15-min buckets)
     static let usedMinutesDate = "usedMinutesDate"                    // String "yyyy-MM-dd" the counter belongs to
+    static let lastDeviceActivityAt = "lastDeviceActivityAt"          // TimeInterval — last DeviceActivity event = child actively using managed apps
 }

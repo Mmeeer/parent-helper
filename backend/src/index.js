@@ -54,6 +54,7 @@ const configRoutes = require('./routes/config');
 const { startOfflineDetector } = require('./jobs/offlineDetector');
 const { startSubscriptionChecker } = require('./jobs/subscriptionChecker');
 const { startDeletionPurger } = require('./jobs/deletionPurger');
+const { startDevicePinger } = require('./jobs/devicePinger');
 const { initFirebase } = require('./services/pushNotification');
 const { initEmail } = require('./services/email');
 
@@ -259,6 +260,7 @@ const PORT = process.env.PORT || 3000;
 let offlineDetectorId = null;
 let subscriptionCheckerId = null;
 let deletionPurgerId = null;
+let devicePingerId = null;
 
 const start = async () => {
   await connectDB();
@@ -280,6 +282,7 @@ const start = async () => {
   offlineDetectorId = startOfflineDetector(io);
   subscriptionCheckerId = startSubscriptionChecker(io);
   deletionPurgerId = startDeletionPurger();
+  devicePingerId = startDevicePinger();
   server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
@@ -298,6 +301,7 @@ const shutdown = async (signal) => {
   if (offlineDetectorId) clearInterval(offlineDetectorId);
   if (subscriptionCheckerId) clearInterval(subscriptionCheckerId);
   if (deletionPurgerId) clearInterval(deletionPurgerId);
+  if (devicePingerId) clearInterval(devicePingerId);
 
   // Close Socket.io connections
   io.close(() => {

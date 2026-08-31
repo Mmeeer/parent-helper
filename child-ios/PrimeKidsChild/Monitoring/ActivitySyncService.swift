@@ -70,9 +70,11 @@ final class ActivitySyncService {
         let level = await MainActor.run { Int(UIDevice.current.batteryLevel * 100) }
 
         do {
+            let stamp = AppGroup.defaults.double(forKey: SharedKeys.lastDeviceActivityAt)
             try await APIClient.shared.sendHeartbeat(
                 batteryLevel: max(level, 0),
-                screenTimeAuthorized: ScreenTimeManager.shared.isAuthorized
+                screenTimeAuthorized: ScreenTimeManager.shared.isAuthorized,
+                lastActiveAt: stamp > 0 ? ISO8601DateFormatter().string(from: Date(timeIntervalSince1970: stamp)) : nil
             )
             print("[Heartbeat] Sent (battery: \(level)%)")
         } catch {

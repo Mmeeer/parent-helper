@@ -239,6 +239,7 @@ exports.getStatus = async (req, res, next) => {
       osVersion: device.osVersion,
       appVersion: device.appVersion,
       screenTimeAuthorized: device.screenTimeAuthorized,
+      lastActivityAt: device.lastActivityAt ?? null,
     });
   } catch (err) {
     next(err);
@@ -328,6 +329,7 @@ exports.listByChild = async (req, res, next) => {
       osVersion: d.osVersion,
       appVersion: d.appVersion,
       screenTimeAuthorized: d.screenTimeAuthorized,
+      lastActivityAt: d.lastActivityAt ?? null,
     })));
   } catch (err) {
     next(err);
@@ -600,7 +602,7 @@ exports.reportPermission = async (req, res, next) => {
 
 exports.heartbeat = async (req, res, next) => {
   try {
-    const { batteryLevel, screenTimeAuthorized } = req.body;
+    const { batteryLevel, screenTimeAuthorized, lastActiveAt } = req.body;
 
     req.device.status = 'online';
     req.device.lastSeen = new Date();
@@ -610,6 +612,13 @@ exports.heartbeat = async (req, res, next) => {
     // the device actually sent a boolean — otherwise keep the last known value.
     if (typeof screenTimeAuthorized === 'boolean') {
       req.device.screenTimeAuthorized = screenTimeAuthorized;
+    }
+    if (lastActiveAt && !Number.isNaN(Date.parse(lastActiveAt))) {
+      const d = new Date(lastActiveAt);
+      // Monotonic: never move the activity stamp backwards.
+      if (!req.device.lastActivityAt || d > req.device.lastActivityAt) {
+        req.device.lastActivityAt = d;
+      }
     }
     await req.device.save();
 
