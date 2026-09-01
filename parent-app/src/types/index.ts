@@ -35,6 +35,8 @@ export interface AppConfig {
   termsChild: string | null;
   /** YouTube URL for the dashboard tutorial card, or null to hide it. */
   tutorialVideoUrl: string | null;
+  /** When true, registration and phone-based password reset require an SMS OTP. */
+  otpEnabled?: boolean;
 }
 
 // ─── Child ───────────────────────────────────────────────

@@ -82,6 +82,16 @@
     "goToLogin": "Go to Sign In",
     "enterEmailError": "Please enter your email address."
   },
+  "otp": {
+    "sendCode": "Send code",
+    "resendIn": "Resend in {{s}}s",
+    "codeLabel": "Verification code",
+    "wrongCode": "Wrong or expired code.",
+    "byPhone": "By phone (SMS)",
+    "byEmail": "By email",
+    "enterPhoneDesc": "Enter your phone number and we'll send you a code by SMS.",
+    "enterSmsCodeDesc": "Enter the code we sent by SMS and set a new password."
+  },
   "emailVerification": {
     "title": "Email Verification",
     "codeSent": "We sent a 6-digit code to {{email}}. Please enter the code.",

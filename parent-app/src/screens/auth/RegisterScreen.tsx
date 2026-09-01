@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../store/AuthContext';
 import * as api from '../../services/api';
+import { useResendCooldown } from '../../hooks/useResendCooldown';
 import LanguageToggle from '../../components/LanguageToggle';
 import { TERMS_URL } from '../../utils/constants';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -38,6 +39,12 @@ export default function RegisterScreen({ navigation }: Props) {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [termsVisible, setTermsVisible] = useState(false);
   const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
+  const [otpCode, setOtpCode] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpSending, setOtpSending] = useState(false);
+  const cooldown = useResendCooldown(60);
+
+  const otpEnabled = appConfig?.otpEnabled === true;
 
   const phoneRef = useRef<TextInput>(null);
   const emailRef = useRef<TextInput>(null);
@@ -55,6 +62,26 @@ export default function RegisterScreen({ navigation }: Props) {
       setTermsVisible(true);
     } else {
       Linking.openURL(TERMS_URL).catch(() => {});
+    }
+  };
+
+  const handleSendOtp = async () => {
+    const cleanedPhone = phone.replace(/[\s\-()]/g, '');
+    if (!isValidPhone(cleanedPhone)) {
+      Alert.alert(t('common.error'), t('register.phoneInvalid'));
+      return;
+    }
+    setOtpSending(true);
+    try {
+      const res = await api.requestOtp(cleanedPhone, 'register');
+      setOtpSent(true);
+      cooldown.start();
+      // Dev convenience: when SMS isn't configured, the backend returns the code.
+      if (res.devCode) setOtpCode(res.devCode);
+    } catch (error: any) {
+      Alert.alert(t('common.error'), error.message || t('forgotPassword.sendCodeError'));
+    } finally {
+      setOtpSending(false);
     }
   };
 
@@ -81,8 +108,23 @@ export default function RegisterScreen({ navigation }: Props) {
       Alert.alert(t('common.error'), t('register.termsRequired'));
       return;
     }
+    if (otpEnabled && otpCode.trim().length !== 6) {
+      Alert.alert(t('common.error'), t('emailVerification.invalidCode'));
+      return;
+    }
     setLoading(true);
     try {
+      // With OTP enforced, exchange the SMS code for a one-time token first.
+      let otpToken: string | undefined;
+      if (otpEnabled) {
+        try {
+          const res = await api.verifyOtp(cleanedPhone, otpCode.trim(), 'register');
+          otpToken = res.otpToken;
+        } catch {
+          Alert.alert(t('common.error'), t('otp.wrongCode'));
+          return;
+        }
+      }
       await register({
         name: name.trim(),
         phone: cleanedPhone,
@@ -90,9 +132,14 @@ export default function RegisterScreen({ navigation }: Props) {
         // Email is optional — only sent when the user filled it in.
         email: email.trim() || undefined,
         acceptedTerms: true,
+        otpToken,
       });
     } catch (error: any) {
-      Alert.alert(t('auth.registerFailed'), error.message || t('auth.registerError'));
+      if (error instanceof api.ApiError && error.code === 'OTP_REQUIRED') {
+        Alert.alert(t('common.error'), t('otp.wrongCode'));
+      } else {
+        Alert.alert(t('auth.registerFailed'), error.message || t('auth.registerError'));
+      }
     } finally {
       setLoading(false);
     }
@@ -188,7 +235,42 @@ export default function RegisterScreen({ navigation }: Props) {
                 onSubmitEditing={() => emailRef.current?.focus()}
               />
             </View>
+            {otpEnabled && (
+              <TouchableOpacity
+                className="self-end mt-2 py-1 px-1"
+                onPress={handleSendOtp}
+                disabled={cooldown.active || otpSending}
+                hitSlop={8}
+              >
+                {otpSending
+                  ? <ActivityIndicator size="small" color="#9ca3af" />
+                  : (
+                    <Text className={`text-xs font-bold ${cooldown.active ? 'text-gray-400' : 'text-nest-500'}`}>
+                      {cooldown.active ? t('otp.resendIn', { s: cooldown.remaining }) : t('otp.sendCode')}
+                    </Text>
+                  )}
+              </TouchableOpacity>
+            )}
           </View>
+
+          {/* SMS verification code (only when OTP is enforced and a code was sent) */}
+          {otpEnabled && otpSent && (
+            <View className="mb-5">
+              <Text className="font-display font-bold text-gray-900 mb-2">{t('otp.codeLabel')}</Text>
+              <View className="flex-row items-center px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200">
+                <Ionicons name="keypad-outline" size={17} color="#9ca3af" />
+                <TextInput
+                  className="flex-1 text-gray-700 text-center text-xl font-bold tracking-[4px] ml-3"
+                  placeholder="– – – – – –"
+                  placeholderTextColor="#d1d5db"
+                  value={otpCode}
+                  onChangeText={setOtpCode}
+                  keyboardType="number-pad"
+                  maxLength={6}
+                />
+              </View>
+            </View>
+          )}
 
           {/* Email (optional) */}
           <View className="mb-5">

@@ -100,7 +100,7 @@ async function request<T>(
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Request failed' }));
-    throw new ApiError(response.status, error.error || error.message || 'Request failed');
+    throw new ApiError(response.status, error.error || error.message || 'Request failed', error.code);
   }
 
   return response.json();
@@ -133,9 +133,12 @@ async function tryRefreshToken(): Promise<boolean> {
 
 export class ApiError extends Error {
   status: number;
-  constructor(status: number, message: string) {
+  /** Machine-readable error code from the backend (e.g. 'OTP_REQUIRED'), when provided. */
+  code?: string;
+  constructor(status: number, message: string, code?: string) {
     super(message);
     this.status = status;
+    this.code = code;
   }
 }
 
@@ -160,9 +163,11 @@ export interface RegisterData {
   /** Optional; omitted from the request when empty. */
   email?: string;
   acceptedTerms: boolean;
+  /** Proof of SMS OTP verification; required by the backend when OTP is enforced. */
+  otpToken?: string;
 }
 
-export async function register({ name, phone, password, email, acceptedTerms }: RegisterData): Promise<AuthResponse> {
+export async function register({ name, phone, password, email, acceptedTerms, otpToken }: RegisterData): Promise<AuthResponse> {
   const data = await request<AuthResponse>('/auth/register', {
     method: 'POST',
     // Email is optional; omit the field entirely when empty.
@@ -172,6 +177,7 @@ export async function register({ name, phone, password, email, acceptedTerms }: 
       password,
       acceptedTerms,
       ...(email?.trim() ? { email: email.trim() } : {}),
+      ...(otpToken ? { otpToken } : {}),
     }),
   });
   await saveTokens({ accessToken: data.accessToken, refreshToken: data.refreshToken });
@@ -199,6 +205,36 @@ export async function resetPassword(email: string, code: string, newPassword: st
   return request('/auth/reset-password', {
     method: 'POST',
     body: JSON.stringify({ email, code, newPassword }),
+  });
+}
+
+// ─── SMS OTP ─────────────────────────────────────────────
+export type OtpPurpose = 'register' | 'reset';
+
+/**
+ * Request an SMS one-time code. `devCode` is present only in dev builds of the
+ * backend when SMS isn't configured. Throws ApiError 429 while on cooldown.
+ */
+export async function requestOtp(phone: string, purpose: OtpPurpose): Promise<{ status: 'sent'; devCode?: string }> {
+  return request('/auth/otp/request', {
+    method: 'POST',
+    body: JSON.stringify({ phone, purpose }),
+  });
+}
+
+/** Verify an SMS code; the returned `otpToken` is passed to register(). Throws ApiError 401 on a wrong/expired code. */
+export async function verifyOtp(phone: string, code: string, purpose: OtpPurpose): Promise<{ verified: boolean; otpToken: string }> {
+  return request('/auth/otp/verify', {
+    method: 'POST',
+    body: JSON.stringify({ phone, code, purpose }),
+  });
+}
+
+/** Reset the password via a phone OTP (purpose 'reset'). Throws ApiError 400/401 on a bad code. */
+export async function resetPasswordWithOtp(phone: string, code: string, newPassword: string): Promise<{ message: string }> {
+  return request('/auth/reset-password-otp', {
+    method: 'POST',
+    body: JSON.stringify({ phone, code, newPassword }),
   });
 }
 
