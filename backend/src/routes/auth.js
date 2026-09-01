@@ -2,6 +2,7 @@ const router = require('express').Router();
 const { body } = require('express-validator');
 const authController = require('../controllers/authController');
 const { authLimiter, resetLimiter } = require('../middleware/rateLimiter');
+const otpController = require('../controllers/otpController');
 
 router.post('/register', authLimiter, [
   // Phone-first auth: phone is required, email is optional.
@@ -16,6 +17,11 @@ router.post('/register', authLimiter, [
     .matches(/\d/).withMessage('Password must contain at least one number'),
   body('name').trim().notEmpty().isLength({ max: 100 }),
 ], authController.register);
+
+// Phone OTP (CallPro SMS). Safe when SMS is unconfigured — request degrades gracefully.
+router.post('/otp/request', resetLimiter, otpController.request);
+router.post('/otp/verify', authLimiter, otpController.verify);
+router.post('/reset-password-otp', resetLimiter, otpController.resetPasswordWithOtp);
 
 router.post('/login', authLimiter, [
   // Accepts { identifier, password } (identifier = phone or email) OR the

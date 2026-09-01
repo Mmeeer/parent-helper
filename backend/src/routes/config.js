@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const AppSetting = require('../models/AppSetting');
+const { otpRequired } = require('../controllers/otpController');
 
 // GET /config/app — Public (no auth): app-wide config for both apps.
 // Returns editable legal terms + tutorial video URL. Missing keys → null.
@@ -17,6 +18,7 @@ router.get('/app', async (req, res, next) => {
     }, null);
 
     res.json({
+      otpEnabled: otpRequired(),
       termsParent: valueOf('terms.parent'),
       termsChild: valueOf('terms.child'),
       tutorialVideoUrl: valueOf('tutorial.videoUrl'),

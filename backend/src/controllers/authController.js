@@ -25,6 +25,15 @@ const generateTokens = (userId, tokenFamily) => {
 
 exports.register = async (req, res, next) => {
   try {
+    // When OTP is enforced (CallPro configured + OTP_REQUIRED=true), registration
+    // must present the short-lived proof issued by POST /auth/otp/verify.
+    const otpController = require('./otpController');
+    if (otpController.otpRequired()) {
+      const phoneForOtp = String(req.body.phone || '').replace(/[\s-]/g, '');
+      if (!req.body.otpToken || !otpController.verifyOtpToken(req.body.otpToken, phoneForOtp, 'register')) {
+        return res.status(403).json({ error: 'Phone verification required', code: 'OTP_REQUIRED' });
+      }
+    }
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
