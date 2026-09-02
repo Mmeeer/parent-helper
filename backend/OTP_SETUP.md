@@ -6,14 +6,18 @@ CallPro Text account. They provision three values:
 
 | Env var | What it is | Example |
 |---|---|---|
-| `CALLPRO_API_URL` | API base URL they give you | `https://api.messagepro.mn` |
+| `CALLPRO_API_URL` | API base URL they give you | `https://api-text.callpro.mn/v1/sms` |
 | `CALLPRO_API_KEY` | account API key | `abc123…` |
 | `CALLPRO_FROM` | your sender short number | `72xxxxxx` |
 | `OTP_REQUIRED` | set `true` to enforce OTP at signup | `true` |
 
-Wire format (verified from CallPro's own client library):
-`GET {url}/send?key=…&from=…&to=…&text=…` → `[{"Result":"SUCCESS","Message ID":n}]`
-and `GET {url}/getstatus?key=…&id=…` for delivery status.
+Wire format (official "CallPro Text REST API v1" doc, verified live 2026-09-02):
+`POST {url}/send` with header `x-api-key: <key>` and JSON body `{ from, to, text }`
+→ `{ "status": "queued", "message_id": "…" }`. Delivery check: `GET {url}/{message_id}`.
+8-digit local numbers are fine; `+976`/`976` prefixes also accepted. Cyrillic texts
+split at 70 chars/segment (Latin 160) — keep OTP texts short and Latin.
+The carrier appends the "Prime Kids" brand name to delivered texts.
+
 
 ## Behaviour
 - Without the env vars, everything keeps working: signup has no OTP step
