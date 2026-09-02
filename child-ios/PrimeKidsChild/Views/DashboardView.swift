@@ -76,9 +76,17 @@ struct DashboardView: View {
                     }
 
                     HStack(alignment: .firstTextBaseline) {
-                        Text(formatMinutes(ruleManager.dailyUsageMin))
-                            .font(.system(size: 36, weight: .bold, design: .rounded))
-                            .foregroundColor(Color(.label))
+                        if measuringNothing {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("—").font(.system(size: 36, weight: .bold, design: .rounded))
+                                Text("Not set up — ask a parent to choose apps in Parent settings")
+                                    .font(.caption2).foregroundColor(.secondary)
+                            }
+                        } else {
+                            Text(formatMinutes(ruleManager.dailyUsageMin))
+                                .font(.system(size: 36, weight: .bold, design: .rounded))
+                                .foregroundColor(Color(.label))
+                        }
 
                         Spacer()
 
@@ -254,6 +262,18 @@ struct DashboardView: View {
             refreshUsage()
             Task { safariEnabled = await ContentBlockerService.shared.isEnabled() }
         }
+    }
+
+    /// True when nothing is selected for measurement anywhere (no measurement set,
+    /// no legacy selection, no groups, no limits) — the counter would sit at 0 forever.
+    private var measuringNothing: Bool {
+        #if canImport(FamilyControls)
+        guard !Demo.isOn else { return false }
+        let m = screenTimeManager.measurementSelection
+        return m.applicationTokens.isEmpty && m.categoryTokens.isEmpty
+        #else
+        return true
+        #endif
     }
 
     /// "N apps · M categories" from the selection the parent picked on this device.

@@ -109,3 +109,22 @@
 "While using only" = "Зөвхөн ашиглах үед";
 
 "Tap to alert your parent" = "Эцэг эхдээ мэдэгдэхийн тулд дарна уу";
+
+/* Screen-time measurement (build 15) */
+"Choose what counts as screen time" = "Дэлгэцийн цагт юу тооцогдохыг сонгоно уу";
+"Pick what is measured for the screen-time figure your parent sees. Select every category so (almost) all device usage is counted." = "Эцэг эхэд харагдах дэлгэцийн цагийг юугаар хэмжихийг энд сонгоно. Бүх ангиллыг сонговол төхөөрөмжийн бараг бүх хэрэглээ тоологдоно.";
+"In the picker: tick every row under Categories. You can change this any time in Parent settings → Screen-time measurement." = "Сонгогч дээр: Ангилал (Categories) хэсгийн бүх мөрийг чагтална уу. Дараа нь Эцэг эхийн тохиргоо → Дэлгэцийн цагийн хэмжилт хэсгээс хүссэн үедээ өөрчилж болно.";
+"Screen-time measurement" = "Дэлгэцийн цагийн хэмжилт";
+"Measured now" = "Одоо хэмжиж буй";
+"Choose what to measure" = "Юуг хэмжихийг сонгох";
+"Select every row under Categories to measure (almost) all device usage — this is the recommended setup. The figure updates in 5-minute steps and is reported to the parent app." = "Ангилал (Categories) хэсгийн бүх мөрийг сонговол төхөөрөмжийн бараг бүх хэрэглээг хэмжинэ — ингэж тохируулахыг зөвлөж байна. Тоолуур 5 минутын алхмаар шинэчлэгдэж, эцэг эхийн апп руу илгээгдэнэ.";
+"Screen-time engine" = "Дэлгэцийн цагийн тоолуур";
+"Used today" = "Өнөөдөр ашигласан";
+"Measuring" = "Хэмжиж буй";
+"Set up measurement now" = "Хэмжилтийг одоо тохируулах";
+"%lld apps · %lld categories" = "%lld апп · %lld ангилал";
+"%lld min" = "%lld мин";
+"Monitoring error: %@" = "Хяналтын алдаа: %@";
+"The counter advances in 5-minute steps while measured apps are in use. If a monitoring error shows here, screenshot it and contact support." = "Хэмжиж буй аппуудыг ашиглах үед тоолуур 5 минутын алхмаар нэмэгдэнэ. Хэрэв энд хяналтын алдаа харагдвал дэлгэцийн зургийг авч дэмжлэгтэй холбогдоно уу.";
+"Not set up — ask a parent to choose apps in Parent settings" = "Тохируулаагүй — Эцэг эхийн тохиргооноос хэмжих аппуудыг сонгоно уу";
+"Blocking groups & time limits" = "Хориглох бүлэг ба цагийн хязгаар";

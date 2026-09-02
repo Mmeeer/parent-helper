@@ -1,5 +1,8 @@
 import SwiftUI
 import UIKit
+#if canImport(FamilyControls)
+import FamilyControls
+#endif
 
 /// Post-pairing permission walkthrough (mirrors Android's OnboardingPermissionsActivity).
 /// Each step explains *why* before the system prompt — Apple 5.1.1 + Play "prominent disclosure".
@@ -8,16 +11,20 @@ struct OnboardingView: View {
     @ObservedObject private var notifications = NotificationManager.shared
     @ObservedObject private var screenTime = ScreenTimeManager.shared
     @State private var safariEnabled = false
+    @State private var showMeasurementPicker = false
+    #if canImport(FamilyControls)
+    @State private var measureSel = ScreenTimeManager.shared.measurementSelection
+    #endif
     @State private var requesting = false
     @State private var step: Int
     let onFinished: () -> Void
 
     init(startStep: Int = 0, onFinished: @escaping () -> Void) {
-        _step = State(initialValue: max(0, min(startStep, 3)))
+        _step = State(initialValue: max(0, min(startStep, 4)))
         self.onFinished = onFinished
     }
 
-    private let steps: [Step] = [.notifications, .location, .screenTime, .safari]
+    private let steps: [Step] = [.notifications, .location, .screenTime, .measurement, .safari]
 
     var body: some View {
         VStack(spacing: 0) {
@@ -92,18 +99,27 @@ struct OnboardingView: View {
             refreshSafari()
             screenTime.checkAuthorization()
         }
+        #if canImport(FamilyControls)
+        .familyActivityPicker(isPresented: $showMeasurementPicker, selection: $measureSel)
+        .onChange(of: showMeasurementPicker) { open in
+            guard !open, steps[step] == .measurement else { return }
+            ScreenTimeManager.shared.measurementSelection = measureSel
+            next()
+        }
+        #endif
     }
 
     // MARK: - Steps
 
     enum Step {
-        case notifications, location, screenTime, safari
+        case notifications, location, screenTime, measurement, safari
 
         var icon: String {
             switch self {
             case .notifications: return "bell.badge.fill"
             case .location: return "location.fill"
             case .screenTime: return "hourglass"
+            case .measurement: return "chart.bar.fill"
             case .safari: return "safari.fill"
             }
         }
@@ -112,6 +128,7 @@ struct OnboardingView: View {
             case .notifications: return "Allow notifications"
             case .location: return "Share location with your parent"
             case .screenTime: return "Set up Screen Time"
+            case .measurement: return "Choose what counts as screen time"
             case .safari: return "Turn on Safari filtering"
             }
         }
@@ -120,6 +137,7 @@ struct OnboardingView: View {
             case .notifications: return "Prime Kids uses notifications to confirm SOS alerts and to tell you when your parent changes a rule."
             case .location: return "Your parent can see where this device is and gets an alert if you leave a safe zone. Your location is also attached when you send an SOS."
             case .screenTime: return "Your parent will authorise Prime Kids to manage app limits and bedtime schedules on this device using Apple’s Screen Time."
+            case .measurement: return "Pick what is measured for the screen-time figure your parent sees. Select every category so (almost) all device usage is counted."
             case .safari: return "The Prime Kids Safari extension blocks websites your parent has filtered. Enable it in the Settings app: Apps → Safari → Extensions → Prime Kids."
             }
         }
@@ -127,6 +145,7 @@ struct OnboardingView: View {
             switch self {
             case .location: return "iOS will ask next how you want to share your location. You can change your choice at any time in Settings → Privacy → Location Services."
             case .screenTime: return "A parent or guardian must enter their Apple ID or device passcode."
+            case .measurement: return "In the picker: tick every row under Categories. You can change this any time in Parent settings → Screen-time measurement."
             case .safari: return "iOS will open this app's settings page — go back to the Settings front page, then: Apps → Safari → Extensions → Prime Kids → turn it on. Filtering applies to Safari only."
             default: return nil
             }
@@ -145,6 +164,13 @@ struct OnboardingView: View {
         case .notifications: return notifications.isAuthorized
         case .location: return location.isAuthorized
         case .screenTime: return screenTime.isAuthorized
+        case .measurement:
+            #if canImport(FamilyControls)
+            let m = ScreenTimeManager.shared.measurementSelection
+            return !(m.applicationTokens.isEmpty && m.categoryTokens.isEmpty)
+            #else
+            return false
+            #endif
         case .safari: return safariEnabled
         }
     }
@@ -172,6 +198,9 @@ struct OnboardingView: View {
                 await screenTime.requestAuthorization()
                 await MainActor.run { requesting = false; next() }
             }
+        case .measurement:
+            requesting = false
+            showMeasurementPicker = true
         case .safari:
             if let url = URL(string: UIApplication.openSettingsURLString) {
                 UIApplication.shared.open(url)

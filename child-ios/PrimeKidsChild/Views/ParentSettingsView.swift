@@ -141,14 +141,19 @@ struct ParentSettingsView: View {
                     Text("\(AppGroup.defaults.integer(forKey: SharedKeys.usedMinutesToday)) min").foregroundColor(.secondary)
                 }
                 #if canImport(FamilyControls)
-                HStack {
-                    Text("Measuring")
-                    Spacer()
-                    let m = screenTime.measurementSelection
-                    Text(m.applicationTokens.isEmpty && m.categoryTokens.isEmpty
-                         ? LocalizedStringKey("Nothing — select apps above")
-                         : LocalizedStringKey("\(m.applicationTokens.count) apps · \(m.categoryTokens.count) categories"))
-                        .foregroundColor(.secondary).font(.footnote)
+                let m = screenTime.measurementSelection
+                if m.applicationTokens.isEmpty && m.categoryTokens.isEmpty {
+                    NavigationLink(destination: MeasurementPickerView()) {
+                        Label("Set up measurement now", systemImage: "exclamationmark.triangle.fill")
+                            .foregroundColor(.orange)
+                    }
+                } else {
+                    HStack {
+                        Text("Measuring")
+                        Spacer()
+                        Text("\(m.applicationTokens.count) apps · \(m.categoryTokens.count) categories")
+                            .foregroundColor(.secondary).font(.footnote)
+                    }
                 }
                 #endif
                 if let err = AppGroup.defaults.string(forKey: SharedKeys.lastMonitorError) {

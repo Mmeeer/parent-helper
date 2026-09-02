@@ -27,7 +27,7 @@ struct MeasurementPickerView: View {
                     Label("Choose what to measure", systemImage: "square.grid.2x2")
                 }
             } footer: {
-                Text("Tip: tick every category to measure (almost) all device usage. The figure updates in 5-minute steps and is reported to the parent app.")
+                Text("Select every row under Categories to measure (almost) all device usage — this is the recommended setup. The figure updates in 5-minute steps and is reported to the parent app.")
             }
         }
         .navigationTitle("Screen-time measurement")
