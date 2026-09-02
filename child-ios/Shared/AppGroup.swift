@@ -118,5 +118,7 @@ enum SharedKeys {
     static let limitRules = "limitRules"                              // Data — [LimitRule]
     static let limitExceededIds = "limitExceededIds"                  // [String] — LimitRule ids exhausted today
     static let measurementSelection = "measurementSelection"          // Data — FamilyActivitySelection used for screen-time measurement
-    static let pausedUntil = "pausedUntil"                            // TimeInterval — 0/absent = indefinite while devicePaused
+    static let pausedUntil = "pausedUntil"
+    static let monitorFingerprint = "monitorFingerprint"              // String — config hash; skip restart (and accumulator wipe) when unchanged
+    static let lastMonitorError = "lastMonitorError"                  // String — last DeviceActivity startMonitoring failure, for diagnostics                            // TimeInterval — 0/absent = indefinite while devicePaused
 }

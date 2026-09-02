@@ -135,6 +135,32 @@ struct ParentSettingsView: View {
             }
 
             Section {
+                HStack {
+                    Text("Used today")
+                    Spacer()
+                    Text("\(AppGroup.defaults.integer(forKey: SharedKeys.usedMinutesToday)) min").foregroundColor(.secondary)
+                }
+                #if canImport(FamilyControls)
+                HStack {
+                    Text("Measuring")
+                    Spacer()
+                    let m = screenTime.measurementSelection
+                    Text(m.applicationTokens.isEmpty && m.categoryTokens.isEmpty
+                         ? LocalizedStringKey("Nothing — select apps above")
+                         : LocalizedStringKey("\(m.applicationTokens.count) apps · \(m.categoryTokens.count) categories"))
+                        .foregroundColor(.secondary).font(.footnote)
+                }
+                #endif
+                if let err = AppGroup.defaults.string(forKey: SharedKeys.lastMonitorError) {
+                    Text("Monitoring error: \(err)").font(.footnote).foregroundColor(.red)
+                }
+            } header: {
+                Text("Screen-time engine")
+            } footer: {
+                Text("The counter advances in 5-minute steps while measured apps are in use. If a monitoring error shows here, screenshot it and contact support.")
+            }
+
+            Section {
                 Button { showOnboarding = true } label: { Label("Re-run permission setup", systemImage: "checklist") }
                 HStack {
                     SecureField("New PIN (4–6 digits)", text: $newPin).keyboardType(.numberPad)

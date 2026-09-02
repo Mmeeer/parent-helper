@@ -123,7 +123,9 @@ final class APIClient {
     // MARK: - Heartbeat
 
     func sendHeartbeat(batteryLevel: Int, screenTimeAuthorized: Bool? = nil, lastActiveAt: String? = nil) async throws {
-        var payload: [String: Any] = ["batteryLevel": batteryLevel]
+        let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
+        let b = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
+        var payload: [String: Any] = ["batteryLevel": batteryLevel, "appVersion": "\(v) (\(b))"]
         if let screenTimeAuthorized { payload["screenTimeAuthorized"] = screenTimeAuthorized }
         if let lastActiveAt { payload["lastActiveAt"] = lastActiveAt }
         let body = try JSONSerialization.data(withJSONObject: payload)

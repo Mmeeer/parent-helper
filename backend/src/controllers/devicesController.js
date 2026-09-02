@@ -612,7 +612,7 @@ exports.reportPermission = async (req, res, next) => {
 
 exports.heartbeat = async (req, res, next) => {
   try {
-    const { batteryLevel, screenTimeAuthorized, lastActiveAt } = req.body;
+    const { batteryLevel, screenTimeAuthorized, lastActiveAt, appVersion } = req.body;
 
     req.device.status = 'online';
     req.device.lastSeen = new Date();
@@ -622,6 +622,11 @@ exports.heartbeat = async (req, res, next) => {
     // the device actually sent a boolean — otherwise keep the last known value.
     if (typeof screenTimeAuthorized === 'boolean') {
       req.device.screenTimeAuthorized = screenTimeAuthorized;
+    }
+    // Keep appVersion current — it was previously frozen at pairing time, which
+    // made "which build is this phone actually running?" unanswerable.
+    if (typeof appVersion === 'string' && appVersion.length <= 32) {
+      req.device.appVersion = appVersion;
     }
     if (lastActiveAt && !Number.isNaN(Date.parse(lastActiveAt))) {
       const d = new Date(lastActiveAt);

@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import CryptoKit
 
 // FamilyControls / ManagedSettings / DeviceActivity are only available on iOS 16+
 // with the Family Controls entitlement. Imports are guarded so the target still
@@ -112,8 +113,20 @@ final class ScreenTimeManager: ObservableObject {
     var measurementSelection: FamilyActivitySelection {
         get {
             let stored = Self.decodeSelection(defaults.data(forKey: SharedKeys.measurementSelection))
-            // Fall back to the legacy selection so upgrades keep measuring.
-            return stored.applicationTokens.isEmpty && stored.categoryTokens.isEmpty ? selection : stored
+            if !(stored.applicationTokens.isEmpty && stored.categoryTokens.isEmpty) { return stored }
+            // Fall back to the legacy selection so upgrades keep measuring…
+            let legacy = selection
+            if !(legacy.applicationTokens.isEmpty && legacy.categoryTokens.isEmpty) { return legacy }
+            // …and finally to everything the parent manages (groups + limit rules), so a
+            // family that only ever created groups still gets a screen-time figure.
+            var apps = Set<ApplicationToken>()
+            var cats = Set<ActivityCategoryToken>()
+            for g in SharedStore.loadGroups() { let s = ShieldUnion.decode(g.selectionData); apps.formUnion(s.applicationTokens); cats.formUnion(s.categoryTokens) }
+            for r in SharedStore.loadLimits() { let s = ShieldUnion.decode(r.selectionData); apps.formUnion(s.applicationTokens); cats.formUnion(s.categoryTokens) }
+            var out = FamilyActivitySelection()
+            out.applicationTokens = apps
+            out.categoryTokens = cats
+            return out
         }
         set {
             if let data = try? JSONEncoder().encode(newValue) {
@@ -239,16 +252,47 @@ final class ScreenTimeManager: ObservableObject {
     // MARK: - DeviceActivity monitoring
 
     #if canImport(FamilyControls)
+    /// Builds an event ladder entry, counting activity from before this monitoring
+    /// session where iOS allows it (17.4+) — a restart must not wipe the day's total.
+    private func usageEvent(_ sel: FamilyActivitySelection, minutes: Int) -> DeviceActivityEvent {
+        if #available(iOS 17.4, *) {
+            return DeviceActivityEvent(
+                applications: sel.applicationTokens, categories: sel.categoryTokens,
+                webDomains: sel.webDomainTokens, threshold: DateComponents(minute: minutes),
+                includesPastActivity: true)
+        }
+        return DeviceActivityEvent(
+            applications: sel.applicationTokens, categories: sel.categoryTokens,
+            webDomains: sel.webDomainTokens, threshold: DateComponents(minute: minutes))
+    }
+
+    /// Stable hash of everything monitoring depends on. Stop/start wipes the usage
+    /// accumulator on older iOS, so we only restart when the config truly changed.
+    private func monitoringFingerprint(_ rules: Rules) -> String {
+        var d = Data()
+        d.append((try? JSONEncoder().encode(rules.screenTime)) ?? Data())
+        d.append((try? JSONEncoder().encode(measurementSelection)) ?? Data())
+        d.append(defaults.data(forKey: SharedKeys.blockGroups) ?? Data())
+        d.append(defaults.data(forKey: SharedKeys.limitRules) ?? Data())
+        return SHA256.hash(data: d).map { String(format: "%02x", $0) }.joined()
+    }
+
     private func restartMonitoring(_ rules: Rules) {
         let center = DeviceActivityCenter()
+        let fp = monitoringFingerprint(rules)
+        if fp == defaults.string(forKey: SharedKeys.monitorFingerprint), !center.activities.isEmpty {
+            return // unchanged and already running — do NOT reset the accumulator
+        }
         center.stopMonitoring()
 
         // Bedtime / school schedules → one activity per rule; the monitor extension
         // shields everything at intervalDidStart and clears at intervalDidEnd.
+        var monitorError: String? = nil
         for (idx, rule) in (rules.screenTime?.schedule ?? []).enumerated() where rule.enabled != false {
             guard let start = Self.components(rule.startTime), let end = Self.components(rule.endTime) else { continue }
             let schedule = DeviceActivitySchedule(intervalStart: start, intervalEnd: end, repeats: true)
-            try? center.startMonitoring(DeviceActivityName("schedule_\(idx)"), during: schedule)
+            do { try center.startMonitoring(DeviceActivityName("schedule_\(idx)"), during: schedule) }
+            catch { monitorError = "schedule: \(error)" }
         }
 
         let day = DeviceActivitySchedule(
@@ -263,20 +307,10 @@ final class ScreenTimeManager: ObservableObject {
         var dayEvents: [DeviceActivityEvent.Name: DeviceActivityEvent] = [:]
         if !(measured.applicationTokens.isEmpty && measured.categoryTokens.isEmpty) {
             for minutes in Self.usageThresholds {
-                dayEvents[DeviceActivityEvent.Name("usage_\(minutes)")] = DeviceActivityEvent(
-                    applications: measured.applicationTokens,
-                    categories: measured.categoryTokens,
-                    webDomains: measured.webDomainTokens,
-                    threshold: DateComponents(minute: minutes)
-                )
+                dayEvents[DeviceActivityEvent.Name("usage_\(minutes)")] = usageEvent(measured, minutes: minutes)
             }
             if let limit = rules.screenTime?.dailyLimitMin, limit > 0 {
-                dayEvents[DeviceActivityEvent.Name("dailyLimit")] = DeviceActivityEvent(
-                    applications: measured.applicationTokens,
-                    categories: measured.categoryTokens,
-                    webDomains: measured.webDomainTokens,
-                    threshold: DateComponents(minute: limit)
-                )
+                dayEvents[DeviceActivityEvent.Name("dailyLimit")] = usageEvent(measured, minutes: limit)
             }
         }
 
@@ -285,16 +319,22 @@ final class ScreenTimeManager: ObservableObject {
         for rule in SharedStore.loadLimits() where rule.enabled && rule.limitMin > 0 {
             let sel = Self.decodeSelection(rule.selectionData)
             guard !(sel.applicationTokens.isEmpty && sel.categoryTokens.isEmpty) else { continue }
-            dayEvents[DeviceActivityEvent.Name("limit_\(rule.id)")] = DeviceActivityEvent(
-                applications: sel.applicationTokens,
-                categories: sel.categoryTokens,
-                webDomains: sel.webDomainTokens,
-                threshold: DateComponents(minute: rule.limitMin)
-            )
+            dayEvents[DeviceActivityEvent.Name("limit_\(rule.id)")] = usageEvent(sel, minutes: rule.limitMin)
         }
 
         if !dayEvents.isEmpty {
-            try? center.startMonitoring(DeviceActivityName("dailyLimit"), during: day, events: dayEvents)
+            do { try center.startMonitoring(DeviceActivityName("dailyLimit"), during: day, events: dayEvents) }
+            catch { monitorError = "day: \(error)" }
+        }
+
+        // Success ⇒ remember the config; failure ⇒ surface it instead of hiding it.
+        if let monitorError {
+            defaults.set(monitorError, forKey: SharedKeys.lastMonitorError)
+            defaults.removeObject(forKey: SharedKeys.monitorFingerprint)
+            print("[ScreenTime] monitoring error: \(monitorError)")
+        } else {
+            defaults.removeObject(forKey: SharedKeys.lastMonitorError)
+            defaults.set(fp, forKey: SharedKeys.monitorFingerprint)
         }
 
         // Re-arm a still-running timed pause across monitoring restarts.
