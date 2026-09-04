@@ -11,7 +11,6 @@ struct DashboardView: View {
 
     @State private var showPermissions = false
     @State private var showParent = false
-    @State private var safariEnabled = false
 
     var body: some View {
         NavigationView { content }
@@ -221,9 +220,8 @@ struct DashboardView: View {
                               status: screenTimeManager.isAuthorized ? LocalizedStringKey("Active") : LocalizedStringKey("Not Set Up"),
                               isActive: screenTimeManager.isAuthorized)
                     Divider().padding(.leading, 48)
-                    statusRow(icon: "safari.fill", title: "Safari filtering",
-                              status: safariEnabled ? LocalizedStringKey("Active") : LocalizedStringKey("Off"),
-                              isActive: safariEnabled)
+                    statusRow(icon: "network.badge.shield.half.filled", title: "Web filtering",
+                              status: webFilterStatus.text, isActive: webFilterStatus.on)
                 }
                 .background(Color(.systemBackground))
                 .cornerRadius(16)
@@ -253,15 +251,20 @@ struct DashboardView: View {
         }
         .onAppear {
             refreshUsage()
-            Task {
-                await ruleManager.refreshRules()
-                safariEnabled = await ContentBlockerService.shared.isEnabled()
-            }
+            Task { await ruleManager.refreshRules() }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
             refreshUsage()
-            Task { safariEnabled = await ContentBlockerService.shared.isEnabled() }
         }
+    }
+
+    /// Web filtering is enforced system-wide via ManagedSettings (Screen Time), so its
+    /// status comes from the rules — not from the optional Safari extension.
+    private var webFilterStatus: (text: LocalizedStringKey, on: Bool) {
+        guard screenTimeManager.isAuthorized, let wf = ruleManager.rules?.webFilter else { return ("Off", false) }
+        if wf.mode == "allowlist" { return ("Allowed sites only", true) }
+        if wf.categories?.isEmpty == false || wf.customBlock?.isEmpty == false { return ("Active", true) }
+        return ("Off", false)
     }
 
     /// True when nothing is selected for measurement anywhere (no measurement set,

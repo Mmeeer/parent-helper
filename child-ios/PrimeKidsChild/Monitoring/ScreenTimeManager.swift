@@ -163,11 +163,16 @@ final class ScreenTimeManager: ObservableObject {
         //    enabled the "adult" category; the Safari content blocker handles the
         //    finer category/custom lists.
         let store = ManagedSettingsStore()
-        if rules.webFilter?.mode == "allowlist" {
-            let allowed = Set((rules.webFilter?.customAllow ?? []).map { WebDomain(domain: $0) })
+        let wf = rules.webFilter
+        let deny = Set((defaults.stringArray(forKey: SharedKeys.webDenyDomains) ?? []).map { WebDomain(domain: $0) })
+        let allow = Set((defaults.stringArray(forKey: SharedKeys.webAllowDomains) ?? []).map { WebDomain(domain: $0) })
+        if wf?.mode == "allowlist" {
+            let allowed = Set((wf?.customAllow ?? []).map { WebDomain(domain: $0) })
             store.webContent.blockedByFilter = .specific(allowed)
-        } else if rules.webFilter?.categories?.contains("adult") == true {
-            store.webContent.blockedByFilter = .auto()
+        } else if wf?.categories?.isEmpty == false || !deny.isEmpty {
+            // Adult auto-filter plus the parent's block list (custom + category domains) —
+            // enforced by iOS in Safari AND WebKit-based browsers, no extension needed.
+            store.webContent.blockedByFilter = .auto(allow, except: deny)
         } else {
             store.webContent.blockedByFilter = nil
         }

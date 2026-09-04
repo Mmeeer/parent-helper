@@ -58,10 +58,10 @@ final class RuleManager: ObservableObject {
                 SharedStore.saveLimits(limits)
             }
 
-            // Apply to ScreenTimeManager if FamilyControls is available
-            ScreenTimeManager.shared.applyRules(newRules)
-            // Rebuild the Safari content-blocker list from the web-filter rules
+            // Rebuild the web-filter domain lists first (they feed ManagedSettings),
+            // then apply everything to ScreenTimeManager.
             await ContentBlockerService.shared.refreshBlockList(rules: newRules)
+            ScreenTimeManager.shared.applyRules(newRules)
         } catch {
             print("[RuleManager] Fetch failed: \(error.localizedDescription)")
         }

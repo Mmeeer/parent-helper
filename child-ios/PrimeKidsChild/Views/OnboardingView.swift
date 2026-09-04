@@ -10,7 +10,6 @@ struct OnboardingView: View {
     @ObservedObject private var location = LocationManager.shared
     @ObservedObject private var notifications = NotificationManager.shared
     @ObservedObject private var screenTime = ScreenTimeManager.shared
-    @State private var safariEnabled = false
     @State private var showMeasurementPicker = false
     #if canImport(FamilyControls)
     @State private var measureSel = ScreenTimeManager.shared.measurementSelection
@@ -20,11 +19,11 @@ struct OnboardingView: View {
     let onFinished: () -> Void
 
     init(startStep: Int = 0, onFinished: @escaping () -> Void) {
-        _step = State(initialValue: max(0, min(startStep, 4)))
+        _step = State(initialValue: max(0, min(startStep, 3)))
         self.onFinished = onFinished
     }
 
-    private let steps: [Step] = [.notifications, .location, .screenTime, .measurement, .safari]
+    private let steps: [Step] = [.notifications, .location, .screenTime, .measurement]
 
     var body: some View {
         VStack(spacing: 0) {
@@ -79,24 +78,12 @@ struct OnboardingView: View {
                 }
                 .disabled(requesting)
 
-                // Only the Safari step gets a secondary action: it opens Settings, not a
-                // system permission dialog.
-                if s == .safari {
-                    Button(action: next) {
-                        Text("Finish")
-                            .fontWeight(.medium)
-                            .frame(maxWidth: .infinity).frame(height: 44)
-                            .foregroundColor(Color("Primary"))
-                    }
-                }
             }
             .padding(.horizontal, 24)
             .padding(.bottom, 24)
         }
         .background(Color(.systemGroupedBackground))
-        .onAppear { refreshSafari() }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
-            refreshSafari()
             screenTime.checkAuthorization()
         }
         #if canImport(FamilyControls)
@@ -112,7 +99,7 @@ struct OnboardingView: View {
     // MARK: - Steps
 
     enum Step {
-        case notifications, location, screenTime, measurement, safari
+        case notifications, location, screenTime, measurement
 
         var icon: String {
             switch self {
@@ -120,7 +107,6 @@ struct OnboardingView: View {
             case .location: return "location.fill"
             case .screenTime: return "hourglass"
             case .measurement: return "chart.bar.fill"
-            case .safari: return "safari.fill"
             }
         }
         var title: LocalizedStringKey {
@@ -129,7 +115,6 @@ struct OnboardingView: View {
             case .location: return "Share location with your parent"
             case .screenTime: return "Set up Screen Time"
             case .measurement: return "Choose what counts as screen time"
-            case .safari: return "Turn on Safari filtering"
             }
         }
         var body: LocalizedStringKey {
@@ -138,7 +123,6 @@ struct OnboardingView: View {
             case .location: return "Your parent can see where this device is and gets an alert if you leave a safe zone. Your location is also attached when you send an SOS."
             case .screenTime: return "Your parent will authorise Prime Kids to manage app limits and bedtime schedules on this device using Apple’s Screen Time."
             case .measurement: return "Pick what is measured for the screen-time figure your parent sees. Select every category so (almost) all device usage is counted."
-            case .safari: return "The Prime Kids Safari extension blocks websites your parent has filtered. Enable it in the Settings app: Apps → Safari → Extensions → Prime Kids."
             }
         }
         var hint: LocalizedStringKey? {
@@ -146,17 +130,11 @@ struct OnboardingView: View {
             case .location: return "iOS will ask next how you want to share your location. You can change your choice at any time in Settings → Privacy → Location Services."
             case .screenTime: return "A parent or guardian must enter their Apple ID or device passcode."
             case .measurement: return "In the picker: tick every row under Categories. You can change this any time in Parent settings → Screen-time measurement."
-            case .safari: return "iOS will open this app's settings page — go back to the Settings front page, then: Apps → Safari → Extensions → Prime Kids → turn it on. Filtering applies to Safari only."
             default: return nil
             }
         }
         /// Neutral wording required by App Review guideline 5.1.1(iv).
-        var primaryTitle: LocalizedStringKey {
-            switch self {
-            case .safari: return "Open Settings"
-            default: return "Continue"
-            }
-        }
+        var primaryTitle: LocalizedStringKey { "Continue" }
     }
 
     private func isGranted(_ s: Step) -> Bool {
@@ -171,7 +149,6 @@ struct OnboardingView: View {
             #else
             return false
             #endif
-        case .safari: return safariEnabled
         }
     }
 
@@ -201,11 +178,6 @@ struct OnboardingView: View {
         case .measurement:
             requesting = false
             showMeasurementPicker = true
-        case .safari:
-            if let url = URL(string: UIApplication.openSettingsURLString) {
-                UIApplication.shared.open(url)
-            }
-            requesting = false
         }
     }
 
@@ -213,9 +185,6 @@ struct OnboardingView: View {
         if step < steps.count - 1 { step += 1 } else { onFinished() }
     }
 
-    private func refreshSafari() {
-        Task { safariEnabled = await ContentBlockerService.shared.isEnabled() }
-    }
 
     @ViewBuilder
     private func statusPill(for s: Step) -> some View {

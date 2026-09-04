@@ -128,3 +128,7 @@
 "The counter advances in 5-minute steps while measured apps are in use. If a monitoring error shows here, screenshot it and contact support." = "Хэмжиж буй аппуудыг ашиглах үед тоолуур 5 минутын алхмаар нэмэгдэнэ. Хэрэв энд хяналтын алдаа харагдвал дэлгэцийн зургийг авч дэмжлэгтэй холбогдоно уу.";
 "Not set up — ask a parent to choose apps in Parent settings" = "Тохируулаагүй — Эцэг эхийн тохиргооноос хэмжих аппуудыг сонгоно уу";
 "Blocking groups & time limits" = "Хориглох бүлэг ба цагийн хязгаар";
+
+/* Web filtering (build 17) */
+"Web filtering" = "Веб шүүлтүүр";
+"Allowed sites only" = "Зөвхөн зөвшөөрсөн сайт";

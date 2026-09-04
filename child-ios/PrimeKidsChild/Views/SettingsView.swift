@@ -6,7 +6,6 @@ struct SettingsView: View {
     @ObservedObject private var notifications = NotificationManager.shared
     @ObservedObject private var screenTime = ScreenTimeManager.shared
     @ObservedObject private var socket = WebSocketManager.shared
-    @State private var safariEnabled = false
     @State private var showOnboarding = false
     @State private var showParent = false
 
@@ -14,13 +13,18 @@ struct SettingsView: View {
     static let termsURL = URL(string: "https://primekids.masterclass.mn/parent-helper/legal/terms-of-service.html")!
     static let supportURL = URL(string: "https://primekids.masterclass.mn/parent-helper/support.html")!
 
+    private var webFilterOn: Bool {
+        guard ScreenTimeManager.shared.isAuthorized, let wf = RuleManager.shared.rules?.webFilter else { return false }
+        return wf.mode == "allowlist" || wf.categories?.isEmpty == false || wf.customBlock?.isEmpty == false
+    }
+
     var body: some View {
         List {
             Section {
                 row("bell.fill", "Notifications", notifications.isAuthorized)
                 row("location.fill", "Location", location.level != .none)
                 row("hourglass", "Screen Time", screenTime.isAuthorized)
-                row("safari.fill", "Safari filtering", safariEnabled)
+                row("network.badge.shield.half.filled", "Web filtering", webFilterOn)
                 Button { showOnboarding = true } label: {
                     Label("Review permissions", systemImage: "checklist")
                 }
@@ -75,7 +79,6 @@ struct SettingsView: View {
     }
 
     private func refreshSafari() {
-        Task { safariEnabled = await ContentBlockerService.shared.isEnabled() }
     }
 
     private func row(_ icon: String, _ title: LocalizedStringKey, _ ok: Bool) -> some View {
