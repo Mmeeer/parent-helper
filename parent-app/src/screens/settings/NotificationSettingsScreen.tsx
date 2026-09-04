@@ -10,13 +10,12 @@ import { useTranslation } from 'react-i18next';
 const DEFAULT_SETTINGS: AlertSettings = {
   enabled: true,
   types: {
-    screen_time_limit: true,
     new_app_installed: true,
     blocked_content: true,
     geofence_trigger: true,
     device_offline: true,
-    unusual_pattern: true,
     uninstall_attempt: true,
+    overlay_permission_revoked: true,
     sos: true,
   },
   quietHours: {

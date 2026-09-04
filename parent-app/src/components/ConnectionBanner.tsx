@@ -3,12 +3,14 @@ import { View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getSocketStatus, onSocketStatusChange, SocketConnectionStatus } from '../services/socket';
 import { C } from '../theme';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Shows a small banner when the real-time connection is lost or reconnecting.
  * Hidden when connected.
  */
 export default function ConnectionBanner() {
+  const { t } = useTranslation();
   const [status, setStatus] = useState<SocketConnectionStatus>(getSocketStatus);
 
   useEffect(() => {
@@ -37,7 +39,7 @@ export default function ConnectionBanner() {
         color={C.white}
       />
       <Text style={{ color: C.white, fontSize: 12, fontWeight: '600' }}>
-        {isConnecting ? 'Reconnecting...' : 'No connection'}
+        {isConnecting ? t('common.reconnecting') : t('common.noConnection')}
       </Text>
     </View>
   );

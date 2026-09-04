@@ -214,6 +214,7 @@ export type AlertType =
   | 'device_offline'
   | 'unusual_pattern'
   | 'uninstall_attempt'
+  | 'overlay_permission_revoked'
   | 'sos';
 
 export interface Alert {

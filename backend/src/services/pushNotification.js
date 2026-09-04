@@ -54,12 +54,36 @@ const ALERT_CHANNELS = {
  * @param {string} parentId - User ID
  * @param {object} alert - Alert document (type, message, childId, data, _id)
  */
+/**
+ * Parent's NotificationSettings, enforced at send time. SOS is exempt from every
+ * suppression (master toggle, per-type, quiet hours) — it's a safety feature.
+ * Quiet-hour times are interpreted in server local time (TZ=Asia/Ulaanbaatar).
+ */
+function allowedBySettings(settings, type) {
+  if (type === 'sos' || !settings) return true;
+  if (settings.enabled === false) return false;
+  if (settings.types && settings.types[type] === false) return false;
+  const q = settings.quietHours;
+  if (q?.enabled && /^\d{1,2}:\d{2}$/.test(q.start || '') && /^\d{1,2}:\d{2}$/.test(q.end || '')) {
+    const now = new Date();
+    const cur = now.getHours() * 60 + now.getMinutes();
+    const [sh, sm] = q.start.split(':').map(Number);
+    const [eh, em] = q.end.split(':').map(Number);
+    const start = sh * 60 + sm;
+    const end = eh * 60 + em;
+    const inQuiet = start <= end ? cur >= start && cur < end : cur >= start || cur < end;
+    if (inQuiet) return false;
+  }
+  return true;
+}
+
 async function sendAlertNotification(parentId, alert) {
   if (!firebaseInitialized && !initFirebase()) return;
 
   try {
-    const user = await User.findById(parentId).select('fcmTokens').lean();
+    const user = await User.findById(parentId).select('fcmTokens alertSettings').lean();
     if (!user?.fcmTokens?.length) return;
+    if (!allowedBySettings(user.alertSettings, alert.type)) return;
 
     const tokens = user.fcmTokens.map((t) => t.token);
     const title = ALERT_TITLES[alert.type] || 'Prime Kids Alert';

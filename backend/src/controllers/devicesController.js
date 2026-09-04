@@ -326,7 +326,7 @@ exports.listByChild = async (req, res, next) => {
     }
 
     const devices = await Device.find({ childId, paired: true })
-      .select('_id status lastSeen batteryLevel platform model osVersion appVersion screenTimeAuthorized')
+      .select('_id status lastSeen batteryLevel platform model osVersion appVersion screenTimeAuthorized lastActivityAt')
       .sort({ lastSeen: -1 });
 
     res.json(devices.map((d) => ({

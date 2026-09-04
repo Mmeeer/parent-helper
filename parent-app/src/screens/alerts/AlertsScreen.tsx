@@ -28,6 +28,7 @@ const CATEGORY_MAP: Record<string, AlertCategory> = {
   screen_time_limit: 'app',
   device_offline: 'app',
   unusual_pattern: 'app',
+  overlay_permission_revoked: 'app',
   sos: 'sos',
 };
 
@@ -118,6 +119,7 @@ export default function AlertsScreen() {
     device_offline: t('alerts.device'),
     unusual_pattern: t('alerts.activity'),
     uninstall_attempt: t('alerts.uninstall'),
+    overlay_permission_revoked: t('alertTypes.overlay_permission_revoked'),
     sos: 'SOS',
   };
   const [alerts, setAlerts] = useState<AlertType[]>([]);
@@ -199,10 +201,11 @@ export default function AlertsScreen() {
     const result: (AlertType & { groupCount?: number })[] = [];
     for (const alert of list) {
       const prev = result[result.length - 1];
+      const idOf = (c: any) => (c && typeof c === 'object' ? c._id : c);
       if (
         prev &&
         prev.type === alert.type &&
-        prev.childId === alert.childId &&
+        idOf(prev.childId) === idOf(alert.childId) &&
         Math.abs(new Date(prev.createdAt).getTime() - new Date(alert.createdAt).getTime()) < GROUP_WINDOW_MS
       ) {
         prev.groupCount = (prev.groupCount || 1) + 1;

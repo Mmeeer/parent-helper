@@ -28,7 +28,9 @@
     "saveChanges": "Save Changes",
     "hours": "hours",
     "meters": "m",
-    "notConnected": "Not connected"
+    "notConnected": "Not connected",
+    "reconnecting": "Reconnecting…",
+    "noConnection": "No connection"
   },
   "auth": {
     "login": "Sign In",
@@ -208,7 +210,11 @@
     "ofDailyLimit": "of {{min}} min daily limit",
     "ofSoftCap": "of 4h reference",
     "daysTracked": "Days tracked",
-    "dailyLimitShort": "Limit (min)"
+    "dailyLimitShort": "Limit (min)",
+    "editChild": "Edit child",
+    "childName": "Child's name",
+    "deleteChild": "Delete child",
+    "deleteChildConfirm": "Delete {{childName}}? All devices, rules and history for this child will be removed."
   },
   "devices": {
     "title": "DEVICES",
@@ -537,7 +543,8 @@
     "quietHoursDesc": "No notifications except SOS during quiet hours.",
     "saving": "Saving...",
     "saveError": "Failed to save settings.",
-    "loadError": "Failed to load notification settings."
+    "loadError": "Failed to load notification settings.",
+    "overlay_permission_revoked": "Protection disabled on child device"
   },
   "privacy": {
     "title": "Privacy Policy",
@@ -682,5 +689,8 @@
     "acceptTerms": "I accept the Terms of Service and Privacy Policy",
     "termsWord": "Terms of Service",
     "termsRequired": "Please accept the Terms of Service to continue."
+  },
+  "alertTypes": {
+    "overlay_permission_revoked": "Protection disabled"
   }
 }

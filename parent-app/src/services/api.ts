@@ -286,16 +286,9 @@ export async function changePassword(currentPassword: string, newPassword: strin
 // ─── Alert Settings ─────────────────────────────────────
 export interface AlertSettings {
   enabled: boolean;
-  types: {
-    screen_time_limit: boolean;
-    new_app_installed: boolean;
-    blocked_content: boolean;
-    geofence_trigger: boolean;
-    device_offline: boolean;
-    unusual_pattern: boolean;
-    uninstall_attempt: boolean;
-    sos: boolean;
-  };
+  // Only types the backend actually generates. Older saved settings may carry
+  // extra keys — the backend send-path treats unknown keys as enabled.
+  types: Record<string, boolean>;
   quietHours: {
     enabled: boolean;
     start: string; // "HH:mm"

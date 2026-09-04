@@ -46,25 +46,29 @@ export default function App() {
     // Foreground notification — just update badge
     notificationListener.current = addNotificationReceivedListener(() => {});
 
-    // User tapped a notification — navigate to alerts
-    responseListener.current = addNotificationResponseListener((response) => {
-      const data = response.notification.request.content.data;
-
-      if (navigationRef.current?.isReady()) {
-        if (data?.type === 'sos' && data?.childId) {
-          // SOS goes straight to the live map so parent can see the child's
-          // last location immediately. childName comes from the push data
-          // when the backend is fresh; fall back to empty (LocationMap fetches
-          // the name itself).
-          navigationRef.current.navigate('LocationMap', {
-            childId: data.childId,
-            childName: data.childName ?? '',
-          });
-        } else {
-          navigationRef.current.navigate('MainTabs', { screen: 'Alerts' });
-        }
+    // User tapped a notification — navigate to alerts. When the app is cold-
+    // started by the tap, navigation isn't ready yet: buffer and retry so an
+    // SOS tap is never silently dropped.
+    const navigateForTap = (data: any, attempt = 0) => {
+      if (!navigationRef.current?.isReady()) {
+        if (attempt < 20) setTimeout(() => navigateForTap(data, attempt + 1), 250);
+        return;
       }
-
+      if (data?.type === 'sos' && data?.childId) {
+        // SOS goes straight to the live map so parent can see the child's
+        // last location immediately. childName comes from the push data
+        // when the backend is fresh; fall back to empty (LocationMap fetches
+        // the name itself).
+        navigationRef.current.navigate('LocationMap', {
+          childId: data.childId,
+          childName: data.childName ?? '',
+        });
+      } else {
+        navigationRef.current.navigate('MainTabs', { screen: 'Alerts' });
+      }
+    };
+    responseListener.current = addNotificationResponseListener((response) => {
+      navigateForTap(response.notification.request.content.data);
       setBadgeCount(0);
     });
 

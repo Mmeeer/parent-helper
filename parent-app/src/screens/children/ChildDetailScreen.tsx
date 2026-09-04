@@ -2,6 +2,7 @@ import React, { useCallback, useState, useEffect } from 'react';
 import {
   View, ScrollView, RefreshControl, Pressable, Alert,
   Text, TouchableOpacity, ActivityIndicator,
+  Modal, TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useIsFocused } from '@react-navigation/native';
@@ -48,6 +49,9 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
   const [loading, setLoading] = useState(true);
   // NOSONAR: SonarLint S1854 false-positive on useState destructuring
   const [deviceCount, setDeviceCount] = useState(0);
+  const [anyOnline, setAnyOnline] = useState(false);
+  const [editVisible, setEditVisible] = useState(false);
+  const [editName, setEditName] = useState('');
   // iOS child: no browsing history (Safari content blocker only reports counts).
   const [iosChild, setIosChild] = useState(false);
 
@@ -56,6 +60,7 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
       // Devices first — if none, the rest of the dashboard is meaningless.
       const deviceList = await api.getChildDevices(childId).catch(() => []);
       setDeviceCount(deviceList.length);
+      setAnyOnline(deviceList.some((d: any) => d.status === 'online'));
       setIosChild(isIosChild(deviceList));
       if (deviceList.length === 0) {
         setLoading(false);
@@ -95,7 +100,40 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
     }
   }, [childId, loadData]);
 
-  const handleBlockDomain = useCallback((domain: string) => {
+  const handleRename = useCallback(async () => {
+    const name = editName.trim();
+    if (!name) return;
+    try {
+      await api.updateChild(childId, { name });
+      setEditVisible(false);
+      navigation.setParams({ childName: name } as any);
+    } catch (err: any) {
+      showError(err, t('common.error'));
+    }
+  }, [childId, editName, navigation]);
+
+  const handleDeleteChild = useCallback(() => {
+    Alert.alert(t('childDetail.deleteChild'), t('childDetail.deleteChildConfirm', { childName }), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.delete'),
+        style: 'destructive',
+        onPress: () => { void (async () => {
+          try {
+            await api.deleteChild(childId);
+            navigation.goBack();
+          } catch (err: any) {
+            showError(err, t('common.error'));
+          }
+        })(); },
+      },
+    ]);
+  }, [childId, childName, navigation]);
+
+  const handleBlockDomain = useCallback((raw: string) => {
+    // Web history rows carry full URLs; the child-side matchers expect bare domains.
+    let domain = raw;
+    try { domain = new URL(raw.includes('://') ? raw : `https://${raw}`).hostname.replace(/^www\./, ''); } catch {}
     Alert.alert(t('childDetail.blockDomain'), t('childDetail.blockDomainConfirm', { domain, childName }), [
       { text: t('common.cancel'), style: 'cancel' },
       {
@@ -221,6 +259,7 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
   const screenTimePct = summary ? Math.min(summary.totalScreenTimeMin / screenTimeCapMin, 1) : 0;
 
   return (
+    <>
     <ScrollView
       className="flex-1 bg-surface"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={C.nest500} />}
@@ -248,16 +287,20 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
           {/* Child name & info */}
           <View className="flex-1 ml-3">
             <Text className="font-extrabold text-lg text-gray-900">{childName}</Text>
-            <Text className="text-xs text-gray-400">{t('common.online')}</Text>
+            <Text className={anyOnline ? 'text-xs text-safe-600' : 'text-xs text-gray-400'}>
+              {anyOnline ? t('common.online') : t('common.offline')}
+            </Text>
           </View>
 
-          {/* SOS button */}
-          <View
-            className="w-10 h-10 rounded-full items-center justify-center bg-danger-500 shadow-lg elevation-6"
-            style={{ shadowColor: C.danger500 }}
+          {/* Edit child (rename / delete) */}
+          <Pressable
+            onPress={() => { setEditName(childName); setEditVisible(true); }}
+            className="w-10 h-10 rounded-full items-center justify-center bg-gray-100"
+            accessibilityLabel={t('childDetail.editChild')}
           >
-            <Ionicons name="warning" size={20} color="#fff" />
-          </View>
+            <Ionicons name="pencil" size={16} color={C.gray600} />
+          </Pressable>
+
         </View>
 
         {/* ── Map card ── */}
@@ -306,7 +349,7 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
             <View className="flex-row items-center justify-between mb-3">
               <Text className="font-bold text-gray-900 text-sm">{t('childDetail.screenTime')}</Text>
               <Text className="text-xs text-gray-400 font-semibold">
-                {formatDuration(summary.totalScreenTimeMin)} {t('childDetail.screenTimeToday')}
+                {formatDuration(summary.totalScreenTimeMin)} · {t(`childDetail.${period}`)}
               </Text>
             </View>
 
@@ -368,7 +411,9 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
           </View>
         )}
 
-        {/* ── App usage card ── */}
+        {/* ── App usage card (Android only — iOS reports no per-app usage) ── */}
+        {!iosChild && (
+        <>
         <Text className="text-xs font-semibold text-gray-400 tracking-wide mb-3 mt-2">{t('childDetail.appUsage')}</Text>
         {apps.length === 0 ? (
           <View
@@ -403,6 +448,8 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
               </View>
             ))}
           </View>
+        )}
+        </>
         )}
 
         {/* ── Website access card (Android only — iOS reports no per-URL history) ── */}
@@ -514,5 +561,37 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
 
       </View>
     </ScrollView>
+
+    <Modal visible={editVisible} transparent animationType="fade" onRequestClose={() => setEditVisible(false)}>
+      <View className="flex-1 bg-black/40 items-center justify-center px-8">
+        <View className="bg-white rounded-3xl p-5 w-full">
+          <Text className="font-extrabold text-base text-gray-900 mb-3">{t('childDetail.editChild')}</Text>
+          <TextInput
+            value={editName}
+            onChangeText={setEditName}
+            placeholder={t('childDetail.childName')}
+            className="border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-900 mb-4"
+            autoFocus
+          />
+          <TouchableOpacity
+            onPress={handleRename}
+            disabled={!editName.trim()}
+            className={`rounded-2xl items-center py-3 mb-2 ${editName.trim() ? 'bg-nest-500' : 'bg-gray-200'}`}
+          >
+            <Text className="text-white font-bold text-sm">{t('common.save')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => { setEditVisible(false); handleDeleteChild(); }}
+            className="rounded-2xl items-center py-3 mb-1"
+          >
+            <Text className="text-danger-500 font-bold text-sm">{t('childDetail.deleteChild')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setEditVisible(false)} className="items-center py-2">
+            <Text className="text-gray-400 font-semibold text-sm">{t('common.cancel')}</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+    </>
   );
 }

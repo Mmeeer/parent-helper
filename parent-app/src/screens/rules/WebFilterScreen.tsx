@@ -35,15 +35,21 @@ export default function WebFilterScreen({ route }: Props) {
     // Load the saved filter so the form (and the iOS mode selector) reflects the server state.
     api.getRules(childId)
       .then((rules) => {
-        if (cancelled || !rules.webFilter) return;
-        setCategories(rules.webFilter.categories ?? []);
-        setCustomBlock(rules.webFilter.customBlock ?? []);
-        setCustomAllow(rules.webFilter.customAllow ?? []);
-        setMode(rules.webFilter.mode === 'allowlist' ? 'allowlist' : 'categories');
+        if (cancelled) return;
+        if (rules.webFilter) {
+          setCategories(rules.webFilter.categories ?? []);
+          setCustomBlock(rules.webFilter.customBlock ?? []);
+          setCustomAllow(rules.webFilter.customAllow ?? []);
+          setMode(rules.webFilter.mode === 'allowlist' ? 'allowlist' : 'categories');
+        }
+        setRulesLoaded(true); // safe to save: we know the server state (or that none exists)
       })
-      .catch(() => { /* no rules yet — keep defaults */ });
+      .catch(() => { /* fetch FAILED — saving now would overwrite the server's real filter
+                        with local defaults, so Save stays disabled until a retry succeeds */ });
     return () => { cancelled = true; };
   }, [childId]);
+
+  const [rulesLoaded, setRulesLoaded] = useState(false);
 
   const toggleCategory = (cat: string) => {
     if (categories.includes(cat)) {
@@ -76,6 +82,7 @@ export default function WebFilterScreen({ route }: Props) {
   };
 
   const handleSave = async () => {
+    if (!rulesLoaded) return;
     setSaving(true);
     try {
       await api.updateWebFilter(childId, { categories, customBlock, customAllow, ...(iosChild ? { mode } : {}) });
@@ -242,7 +249,7 @@ export default function WebFilterScreen({ route }: Props) {
       <TouchableOpacity
         className={`bg-nest-500 rounded-2xl items-center justify-center mx-4 mt-2 h-[52px] ${saving ? 'opacity-60' : 'opacity-100'}`}
         onPress={handleSave}
-        disabled={saving}
+        disabled={saving || !rulesLoaded}
       >
         {saving ? (
           <ActivityIndicator color="#FFFFFF" />

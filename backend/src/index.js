@@ -233,6 +233,23 @@ io.on('connection', (socket) => {
         // doesn't see "offline" between heartbeats.
         Device.updateOne({ _id: device._id }, { $set: { status: 'online', lastSeen: new Date() } }).catch(() => {});
         console.log(`[SOCKET] Device joined room: device:${device._id}`);
+        // Replay commands that were issued while the device was unreachable.
+        // (Android has no push/poll path, so without this an offline phone
+        // missed lock/unlock/etc. forever.) Delivery is at-least-once: both
+        // child apps treat repeated commands idempotently, and iOS also acks
+        // them away via the REST queue.
+        try {
+          const DeviceCommand = require('./models/DeviceCommand');
+          const pending = await DeviceCommand.find({
+            deviceId: device._id, status: 'pending', expiresAt: { $gt: new Date() },
+          }).sort({ createdAt: 1 }).limit(20).lean();
+          for (const c of pending) {
+            socket.emit('command', { command: c.command, params: c.params || {} });
+          }
+          if (pending.length) console.log(`[SOCKET] replayed ${pending.length} queued command(s) to device:${device._id}`);
+        } catch (err) {
+          console.log('[SOCKET] queue replay failed:', err.message);
+        }
       } else {
         console.log(`[SOCKET] join:device failed: no paired device found for token`);
         socket.emit('error', { message: 'Invalid device token' });

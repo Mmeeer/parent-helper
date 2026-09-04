@@ -27,6 +27,7 @@ export default function HomeScreen({ navigation }: Props) {
   const { user } = useAuth();
   const [children, setChildren] = useState<Child[]>([]);
   const [alerts, setAlerts] = useState<AlertType[]>([]);
+  const [unreadTotal, setUnreadTotal] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [subscription, setSubscription] = useState<api.SubscriptionInfo | null>(null);
@@ -54,6 +55,7 @@ export default function HomeScreen({ navigation }: Props) {
       ]);
       setChildren(childrenData);
       setAlerts(alertsData.alerts);
+      setUnreadTotal(alertsData.total ?? alertsData.alerts.length);
       setSubscription(subData);
       setPendingCount(approvalsData.length);
       const perChild = await Promise.all(
@@ -337,7 +339,7 @@ export default function HomeScreen({ navigation }: Props) {
                     <View className="w-8 h-8 rounded-xl bg-danger-50 items-center justify-center mb-2">
                       <Ionicons name="notifications-outline" size={16} color={C.danger500} />
                     </View>
-                    <Text className="font-display text-[28px] font-extrabold text-gray-900 leading-8">{alerts.length}</Text>
+                    <Text className="font-display text-[28px] font-extrabold text-gray-900 leading-8">{unreadTotal > 99 ? '99+' : unreadTotal}</Text>
                     <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-wide mt-1">{t('dashboard.alerts')}</Text>
                   </View>
                 )}

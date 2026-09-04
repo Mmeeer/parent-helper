@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { View, ScrollView, Alert, Text, Pressable, TouchableOpacity, Modal, TextInput, ActivityIndicator, AppState } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../store/AuthContext';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as api from '../../services/api';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -36,9 +36,9 @@ export default function SettingsScreen() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [pushHealthy, setPushHealthy] = useState(() => isPushRegistrationHealthy());
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     api.getSubscription().then((data) => { setSubInfo(data); }).catch(() => { setSubInfo(null); });
-  }, []);
+  }, []));
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {
@@ -93,7 +93,7 @@ export default function SettingsScreen() {
       iconColor: C.warm500,
       onPress: () => navigation.navigate('ChangePassword'),
     },
-    ...(!user?.emailVerified ? [{
+    ...(!!user?.email && !user.emailVerified ? [{
       title: t('settings.verifyEmail'),
       icon: 'mail-outline' as keyof typeof Ionicons.glyphMap,
       iconBg: 'bg-blue-50',
