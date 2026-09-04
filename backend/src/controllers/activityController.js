@@ -221,7 +221,9 @@ exports.summary = async (req, res, next) => {
       // iOS never sends per-app usage, only a screenTime.usedMinutes total, so take
       // whichever source reports more for this log.
       totalScreenTimeMin += Math.max(appMinutes, (log.screenTime && log.screenTime.usedMinutes) || 0);
-      totalBlocked += (log.blockedAttempts || []).length;
+      // iOS sends a day counter of shield hits (no per-attempt docs unless the child
+      // asked the parent); Android pushes per-attempt entries. Take the larger.
+      totalBlocked += Math.max((log.blockedAttempts || []).length, (log.screenTime && log.screenTime.shieldEvents) || 0);
       totalWebVisits += (log.web || []).length;
     }
 
@@ -374,7 +376,7 @@ exports.dailyBreakdown = async (req, res, next) => {
         }
         // iOS reports only screenTime.usedMinutes (no per-app breakdown available).
         screenTimeMin += Math.max(appMinutes, (log.screenTime && log.screenTime.usedMinutes) || 0);
-        blocked += (log.blockedAttempts || []).length;
+        blocked += Math.max((log.blockedAttempts || []).length, (log.screenTime && log.screenTime.shieldEvents) || 0);
         webVisits += (log.web || []).length;
       }
 

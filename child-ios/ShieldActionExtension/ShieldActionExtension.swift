@@ -19,7 +19,21 @@ final class ShieldActionExtension: ShieldActionDelegate {
         respond(action, subject: "category", completionHandler: completionHandler)
     }
 
+    /// Every shield interaction is a real blocked attempt — count it for the parent's
+    /// stats regardless of which button was tapped. (Ask-parent additionally queues a
+    /// request below; the count uses its own key so stats don't create alert spam.)
+    private func bumpBlockedCounter() {
+        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"
+        let today = f.string(from: Date())
+        if defaults.string(forKey: SharedKeys.shieldEventsDate) != today {
+            defaults.set(today, forKey: SharedKeys.shieldEventsDate)
+            defaults.set(0, forKey: SharedKeys.shieldEventsToday)
+        }
+        defaults.set(defaults.integer(forKey: SharedKeys.shieldEventsToday) + 1, forKey: SharedKeys.shieldEventsToday)
+    }
+
     private func respond(_ action: ShieldAction, subject: String, completionHandler: @escaping (ShieldActionResponse) -> Void) {
+        bumpBlockedCounter()
         switch action {
         case .primaryButtonPressed:
             completionHandler(.close)

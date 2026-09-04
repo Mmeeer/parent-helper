@@ -31,14 +31,19 @@ final class ActivitySyncService {
         let usedMinutes = defaults.string(forKey: SharedKeys.usedMinutesDate) == today
             ? defaults.integer(forKey: SharedKeys.usedMinutesToday)
             : 0
+        // Shield interactions today (any button — the real "blocked attempts" count;
+        // `attempts` above is only the child's explicit ask-parent requests).
+        let shieldEvents = defaults.string(forKey: SharedKeys.shieldEventsDate) == today
+            ? defaults.integer(forKey: SharedKeys.shieldEventsToday)
+            : 0
         let summary = ScreenTimeSummary(
             limitReachedAt: limitReached ? ISO8601DateFormatter().string(from: Date()) : nil,
-            shieldEvents: attempts.count,
+            shieldEvents: max(shieldEvents, attempts.count),
             usedMinutes: usedMinutes
         )
 
         // Nothing new to upload — but still let the parent know the device is alive.
-        guard !locations.isEmpty || !attempts.isEmpty || limitReached || usedMinutes > 0 else {
+        guard !locations.isEmpty || !attempts.isEmpty || limitReached || usedMinutes > 0 || shieldEvents > 0 else {
             await sendHeartbeat()
             return
         }

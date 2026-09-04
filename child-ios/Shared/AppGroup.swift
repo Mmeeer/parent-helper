@@ -123,4 +123,6 @@ enum SharedKeys {
     static let lastMonitorError = "lastMonitorError"
     static let webDenyDomains = "webDenyDomains"                      // [String] — customBlock + fetched category domains (capped)
     static let webAllowDomains = "webAllowDomains"                   // [String] — customAllow
+    static let shieldEventsToday = "shieldEventsToday"               // Int — shield interactions today (any button)
+    static let shieldEventsDate = "shieldEventsDate"                 // String yyyy-MM-dd — day the counter belongs to
 }
