@@ -56,7 +56,15 @@ exports.request = async (req, res, next) => {
       { upsert: true },
     );
 
-    const result = await sms.sendSms(phone, `Prime Kids: Tanii batalgaajuulakh kod: ${code}`);
+    let result;
+    try {
+      result = await sms.sendSms(phone, `Prime Kids: Tanii batalgaajuulakh kod: ${code}`);
+    } catch (smsErr) {
+      // Roll the cooldown back so the user can retry immediately instead of
+      // waiting out a cooldown for a code that never left the building.
+      await PhoneOtp.updateOne({ phone, purpose }, { $set: { lastSentAt: new Date(0) }, $inc: { sentCount: -1 } }).catch(() => {});
+      throw smsErr;
+    }
 
     const payload = { status: 'sent' };
     // Dev convenience, mirrors forgot-password: expose the code only when SMS is

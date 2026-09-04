@@ -243,10 +243,12 @@ io.on('connection', (socket) => {
           const pending = await DeviceCommand.find({
             deviceId: device._id, status: 'pending', expiresAt: { $gt: new Date() },
           }).sort({ createdAt: 1 }).limit(20).lean();
-          for (const c of pending) {
+          const fresh = pending.filter((c) => !(['locate', 'sync'].includes(c.command)
+            && Date.now() - new Date(c.createdAt).getTime() > 10 * 60 * 1000));
+          for (const c of fresh) {
             socket.emit('command', { command: c.command, params: c.params || {} });
           }
-          if (pending.length) console.log(`[SOCKET] replayed ${pending.length} queued command(s) to device:${device._id}`);
+          if (fresh.length) console.log(`[SOCKET] replayed ${fresh.length} queued command(s) to device:${device._id}`);
         } catch (err) {
           console.log('[SOCKET] queue replay failed:', err.message);
         }

@@ -276,7 +276,12 @@ final class ScreenTimeManager: ObservableObject {
     private func monitoringFingerprint(_ rules: Rules) -> String {
         var d = Data()
         d.append((try? JSONEncoder().encode(rules.screenTime)) ?? Data())
-        d.append((try? JSONEncoder().encode(measurementSelection)) ?? Data())
+        // Raw stored blobs, NOT a decode→re-encode of the selection: Set iteration
+        // order is randomized per process, so re-encoding the same selection could
+        // yield different bytes each launch → spurious restarts → accumulator wipe
+        // on iOS < 17.4. The raw bytes only change when the parent actually re-picks.
+        d.append(defaults.data(forKey: SharedKeys.measurementSelection) ?? Data())
+        d.append(defaults.data(forKey: SharedKeys.familyActivitySelection) ?? Data())
         d.append(defaults.data(forKey: SharedKeys.blockGroups) ?? Data())
         d.append(defaults.data(forKey: SharedKeys.limitRules) ?? Data())
         return SHA256.hash(data: d).map { String(format: "%02x", $0) }.joined()

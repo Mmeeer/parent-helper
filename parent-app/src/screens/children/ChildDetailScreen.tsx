@@ -581,7 +581,7 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
             <Text className="text-white font-bold text-sm">{t('common.save')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() => { setEditVisible(false); handleDeleteChild(); }}
+            onPress={() => { setEditVisible(false); setTimeout(handleDeleteChild, 350); }}
             className="rounded-2xl items-center py-3 mb-1"
           >
             <Text className="text-danger-500 font-bold text-sm">{t('childDetail.deleteChild')}</Text>

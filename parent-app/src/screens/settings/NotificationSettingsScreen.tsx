@@ -34,13 +34,12 @@ export default function NotificationSettingsScreen() {
   const [iosOnly, setIosOnly] = useState(false);
 
   const ALERT_TYPE_LABELS: Record<string, { label: string; icon: keyof typeof Ionicons.glyphMap }> = {
-    screen_time_limit: { label: t('notifications.screenTimeExceeded'), icon: 'time-outline' },
     new_app_installed: { label: t('notifications.newAppInstalled'), icon: 'download-outline' },
     blocked_content: { label: t('notifications.blockedContent'), icon: 'shield-outline' },
     geofence_trigger: { label: t('notifications.geofenceTrigger'), icon: 'location-outline' },
     device_offline: { label: t('notifications.deviceOffline'), icon: 'cloud-offline-outline' },
-    unusual_pattern: { label: t('notifications.unusualPattern'), icon: 'warning-outline' },
     uninstall_attempt: { label: t('notifications.uninstallAttempt'), icon: 'trash-outline' },
+    overlay_permission_revoked: { label: t('notifications.overlay_permission_revoked'), icon: 'shield-half-outline' },
     sos: { label: t('notifications.sosAlert'), icon: 'alert-circle-outline' },
   };
 
@@ -142,7 +141,7 @@ export default function NotificationSettingsScreen() {
           {Object.entries(ALERT_TYPE_LABELS)
             // 'uninstall_attempt' and 'new_app_installed' are Android-only
             // (iOS has no uninstall detection and no installed-app list).
-            .filter(([key]) => !(iosOnly && (key === 'uninstall_attempt' || key === 'new_app_installed')))
+            .filter(([key]) => !(iosOnly && ['uninstall_attempt', 'new_app_installed', 'overlay_permission_revoked'].includes(key)))
             .map(([key, { label, icon }], index, list) => (
             <View
               key={key}

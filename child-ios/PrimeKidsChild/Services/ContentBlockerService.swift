@@ -37,7 +37,13 @@ final class ContentBlockerService {
         // Persist for ManagedSettings web-content enforcement (the primary, system-wide
         // path — works with zero user setup once Screen Time is authorised). The Safari
         // content blocker below is a bonus layer for devices where it happens to be on.
-        AppGroup.defaults.set(Array(unique.prefix(950)), forKey: SharedKeys.webDenyDomains)
+        // The parent's explicit blocks go FIRST so a large category list can never
+        // push them past the cap.
+        let customFirst = customBlock.map { $0.lowercased() }.filter { !$0.isEmpty && !customAllow.contains($0) }
+        let categoryOnly = unique.filter { !customFirst.contains($0) }
+        var managedDeny: [String] = []
+        for d in customFirst + categoryOnly where !managedDeny.contains(d) && managedDeny.count < 950 { managedDeny.append(d) }
+        AppGroup.defaults.set(managedDeny, forKey: SharedKeys.webDenyDomains)
         AppGroup.defaults.set(Array(customAllow).sorted(), forKey: SharedKeys.webAllowDomains)
 
         var ruleList: [[String: Any]] = unique.map { domain in

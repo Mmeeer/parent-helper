@@ -163,16 +163,18 @@ async function sendAlertNotification(parentId, alert) {
  */
 async function sendBatchAlertNotifications(parentId, alerts) {
   if (!alerts?.length) return;
-  // For batch, send a summary notification instead of flooding
-  if (alerts.length === 1) {
-    return sendAlertNotification(parentId, alerts[0]);
-  }
-
   if (!firebaseInitialized && !initFirebase()) return;
 
   try {
-    const user = await User.findById(parentId).select('fcmTokens').lean();
+    const user = await User.findById(parentId).select('fcmTokens alertSettings').lean();
     if (!user?.fcmTokens?.length) return;
+    // Same gate as the single path — quiet hours / toggles apply per alert type.
+    alerts = alerts.filter((a) => allowedBySettings(user.alertSettings, a.type));
+    if (!alerts.length) return;
+    // For a single survivor, send the richer per-alert notification instead.
+    if (alerts.length === 1) {
+      return sendAlertNotification(parentId, alerts[0]);
+    }
 
     const tokens = user.fcmTokens.map((t) => t.token);
     const hasSos = alerts.some((a) => a.type === 'sos');

@@ -293,14 +293,21 @@ exports.sendCommand = async (req, res, next) => {
       pushed = await sendDeviceCommand(device, command, params);
     }
 
-    // Persist to the command queue so a child that missed both the socket emit and the
-    // push (iOS suspended) still picks it up via GET /devices/commands. Non-fatal.
+    // Persist to the command queue ONLY when live delivery may have failed — a
+    // socket in the room means the child received it now, and Android never acks
+    // the queue, so unconditional queueing replayed stale commands on every
+    // reconnect for 24h. A newer lock/unlock supersedes any pending one (they
+    // toggle the same state; replaying both risks out-of-order execution).
     let queued = false;
-    try {
-      await DeviceCommand.create({ deviceId: device._id, command, params: params || {} });
-      queued = true;
-    } catch (queueErr) {
-      console.error('[COMMAND] Failed to queue command:', queueErr.message);
+    if (sockets.length === 0) {
+      try {
+        const supersedes = command === 'lock' || command === 'unlock' ? ['lock', 'unlock'] : [command];
+        await DeviceCommand.deleteMany({ deviceId: device._id, status: 'pending', command: { $in: supersedes } });
+        await DeviceCommand.create({ deviceId: device._id, command, params: params || {} });
+        queued = true;
+      } catch (queueErr) {
+        console.error('[COMMAND] Failed to queue command:', queueErr.message);
+      }
     }
 
     res.json({

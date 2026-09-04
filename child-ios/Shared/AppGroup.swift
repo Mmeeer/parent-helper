@@ -122,5 +122,5 @@ enum SharedKeys {
     static let monitorFingerprint = "monitorFingerprint"              // String — config hash; skip restart (and accumulator wipe) when unchanged
     static let lastMonitorError = "lastMonitorError"
     static let webDenyDomains = "webDenyDomains"                      // [String] — customBlock + fetched category domains (capped)
-    static let webAllowDomains = "webAllowDomains"                    // [String] — customAllow                  // String — last DeviceActivity startMonitoring failure, for diagnostics                            // TimeInterval — 0/absent = indefinite while devicePaused
+    static let webAllowDomains = "webAllowDomains"                   // [String] — customAllow
 }

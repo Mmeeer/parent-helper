@@ -68,8 +68,7 @@ struct SettingsView: View {
         }
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear { refreshSafari() }
-        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in refreshSafari() }
+
         .fullScreenCover(isPresented: $showOnboarding) {
             OnboardingView { showOnboarding = false }
         }
@@ -78,8 +77,6 @@ struct SettingsView: View {
         }
     }
 
-    private func refreshSafari() {
-    }
 
     private func row(_ icon: String, _ title: LocalizedStringKey, _ ok: Bool) -> some View {
         HStack {
