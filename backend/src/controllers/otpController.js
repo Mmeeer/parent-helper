@@ -4,7 +4,10 @@ const PhoneOtp = require('../models/PhoneOtp');
 const User = require('../models/User');
 const sms = require('../services/sms');
 
-const OTP_TTL_MS = 5 * 60 * 1000;      // code valid 5 minutes
+// Code validity is deliberately long (default 60 min, override OTP_TTL_MINUTES):
+// clock skew between the API host and MongoDB must never invalidate a fresh code.
+// The app's UI shows a 2-minute resend timer — that's cosmetic, not the validity.
+const OTP_TTL_MS = Number(process.env.OTP_TTL_MINUTES || 60) * 60 * 1000;
 const RESEND_COOLDOWN_MS = 60 * 1000;  // one SMS per phone per minute
 const MAX_SENDS_PER_CODE = 5;          // per active window
 const MAX_VERIFY_ATTEMPTS = 5;

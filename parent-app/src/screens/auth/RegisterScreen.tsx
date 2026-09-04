@@ -42,7 +42,7 @@ export default function RegisterScreen({ navigation }: Props) {
   const [otpCode, setOtpCode] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [otpSending, setOtpSending] = useState(false);
-  const cooldown = useResendCooldown(60);
+  const cooldown = useResendCooldown(120);
 
   const otpEnabled = appConfig?.otpEnabled === true;
 

@@ -204,7 +204,11 @@
     "loadError": "Failed to load activity data.",
     "connectDeviceTitle": "Connect a device",
     "connectDevice": "Connect Device",
-    "connectDeviceDesc": "Pair {{childName}}'s phone to start monitoring screen time, location, and app usage."
+    "connectDeviceDesc": "Pair {{childName}}'s phone to start monitoring screen time, location, and app usage.",
+    "ofDailyLimit": "of {{min}} min daily limit",
+    "ofSoftCap": "of 4h reference",
+    "daysTracked": "Days tracked",
+    "dailyLimitShort": "Limit (min)"
   },
   "devices": {
     "title": "DEVICES",

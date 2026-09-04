@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { C } from '../../theme';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
-import type { RootStackParamList, ActivitySummary, AppUsageEntry, WebEntry } from '../../types';
+import type { RootStackParamList, ActivitySummary, AppUsageEntry, WebEntry, Rules } from '../../types';
 
 type Props = {
   readonly navigation: NativeStackNavigationProp<RootStackParamList, 'ChildDetail'>;
@@ -40,6 +40,7 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
   ];
   const { childId, childName } = route.params;
   const [summary, setSummary] = useState<ActivitySummary | null>(null);
+  const [rules, setRules] = useState<Rules | null>(null);
   const [period, setPeriod] = useState<'day' | 'week' | 'month'>('day');
   const [apps, setApps] = useState<AppUsageEntry[]>([]);
   const [webHistory, setWebHistory] = useState<WebEntry[]>([]);
@@ -61,14 +62,16 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
         setRefreshing(false);
         return;
       }
-      const [summaryData, appsData, webData] = await Promise.all([
+      const [summaryData, appsData, webData, rulesData] = await Promise.all([
         api.getActivitySummary(childId, period),
         api.getAppUsage(childId),
         api.getWebActivity(childId),
+        api.getRules(childId).catch(() => null),
       ]);
       setSummary(summaryData);
       setApps(appsData);
       setWebHistory(webData);
+      setRules(rulesData);
     } catch (err: any) {
       // 404 expected when child has no activity yet — only show real errors
       if (err?.status && err.status !== 404) {
@@ -209,8 +212,13 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
     );
   }
 
-  // Approximate progress against a 4-hour (240 min) soft cap for the bar
-  const screenTimePct = summary ? Math.min(summary.totalScreenTimeMin / 240, 1) : 0;
+  // Progress against the child's real daily limit when one is set; otherwise a
+  // 4-hour soft reference so the bar still means something. Week/month sums are
+  // compared against the limit × days tracked.
+  const dailyLimitMin = rules?.screenTime?.dailyLimitMin || 0;
+  const periodDays = Math.max(1, summary?.daysTracked || 1);
+  const screenTimeCapMin = (dailyLimitMin > 0 ? dailyLimitMin : 240) * (period === 'day' ? 1 : periodDays);
+  const screenTimePct = summary ? Math.min(summary.totalScreenTimeMin / screenTimeCapMin, 1) : 0;
 
   return (
     <ScrollView
@@ -309,7 +317,15 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
               </Text>
             )}
 
-            {/* Progress bar */}
+            {/* Progress bar + what it's measured against */}
+            <View className="flex-row justify-between mb-1">
+              <Text className="text-[11px] text-gray-400 font-semibold">{Math.round(screenTimePct * 100)}%</Text>
+              <Text className="text-[11px] text-gray-400">
+                {dailyLimitMin > 0
+                  ? t('childDetail.ofDailyLimit', { min: dailyLimitMin })
+                  : t('childDetail.ofSoftCap')}
+              </Text>
+            </View>
             <View className="bg-gray-100 rounded-full h-3 overflow-hidden mb-4">
               <View
                 className="h-3 rounded-full"
@@ -322,11 +338,18 @@ export default function ChildDetailScreen({ navigation, route }: Props) {
 
             {/* Stats row */}
             <View className="flex-row border-t border-gray-100 pt-4">
-              {[
-                { value: String(summary.totalBlocked), label: t('alerts.blocked') },
-                { value: String(summary.totalWebVisits), label: t('childDetail.webVisits') },
-                { value: String(summary.topApps.length), label: t('alerts.app') },
-              ].map((stat, i) => (
+              {(iosChild
+                ? [
+                    { value: String(summary.totalBlocked), label: t('alerts.blocked') },
+                    { value: String(summary.daysTracked), label: t('childDetail.daysTracked') },
+                    { value: dailyLimitMin > 0 ? `${dailyLimitMin}` : '—', label: t('childDetail.dailyLimitShort') },
+                  ]
+                : [
+                    { value: String(summary.totalBlocked), label: t('alerts.blocked') },
+                    { value: String(summary.totalWebVisits), label: t('childDetail.webVisits') },
+                    { value: String(summary.topApps.length), label: t('alerts.app') },
+                  ]
+              ).map((stat, i) => (
                 <React.Fragment key={stat.label}>
                   {i > 0 && <View className="w-px bg-gray-100" />}
                   <View className="flex-1 items-center">

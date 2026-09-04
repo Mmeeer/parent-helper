@@ -13,6 +13,9 @@ const phoneOtpSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 phoneOtpSchema.index({ phone: 1, purpose: 1 }, { unique: true });
-phoneOtpSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+// Grace of 24h: Mongo's TTL monitor runs on the DB server's clock. With 0 grace,
+// a DB clock ahead of the API host deleted codes instantly ("expired" on every
+// signup). Validity is enforced in code (expiresAt); TTL is just garbage collection.
+phoneOtpSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 86400 });
 
 module.exports = mongoose.model('PhoneOtp', phoneOtpSchema);

@@ -40,3 +40,18 @@ curl -s -X POST $B/auth/otp/verify -H 'Content-Type: application/json' -d '{"pho
 ```
 With CallPro live, the same first call sends a real SMS:
 "Prime Kids: Tanii batalgaajuulakh kod: 123456".
+
+## Server clock & timezone (REQUIRED — "code expired" root cause)
+OTP expiry compares the API host's clock against MongoDB's TTL monitor. If the
+server clock drifts, codes died instantly. Two layers of defence now exist in
+code (60-min validity, 24-h TTL grace), but the clock itself must be right:
+
+```bash
+sudo timedatectl set-timezone Asia/Ulaanbaatar
+sudo timedatectl set-ntp true        # enables systemd-timesyncd
+timedatectl status                    # verify: "System clock synchronized: yes"
+```
+
+Then `sudo systemctl daemon-reload && sudo systemctl restart parent-helper-api`
+(the unit now sets TZ=Asia/Ulaanbaatar for logs; copy the updated unit file
+from systemd/ if the server has an old copy: `sudo cp systemd/parent-helper-api.service /etc/systemd/system/`).

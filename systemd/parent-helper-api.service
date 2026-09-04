@@ -21,6 +21,9 @@ WorkingDirectory=/root/projects/parent-helper/backend
 # backend/.env still wins whenever it exists — this only takes over when the
 # in-repo .env has gone missing, turning a hard outage into a no-op.
 EnvironmentFile=-/etc/parent-helper/api.env
+# All server-side date logic is epoch-based, but logs/emails should read in
+# Mongolian time. The real clock-correctness fix is NTP — see backend/OTP_SETUP.md.
+Environment=TZ=Asia/Ulaanbaatar
 ExecStart=/usr/local/bin/node src/index.js
 Restart=always
 RestartSec=3
