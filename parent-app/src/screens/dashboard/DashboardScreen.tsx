@@ -41,11 +41,10 @@ export default function HomeScreen({ navigation }: Props) {
   // Public app config (tutorial video URL). Fetched once; failure just hides the card.
   const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
 
-  useEffect(() => {
-    api.getAppConfig().then(setAppConfig).catch(() => {});
-  }, []);
-
   const loadData = useCallback(async () => {
+    // Refetched on every focus/refresh (not just mount) so an admin-panel change —
+    // e.g. setting the tutorial video URL — appears without an app restart.
+    api.getAppConfig().then(setAppConfig).catch(() => {});
     try {
       const [childrenData, alertsData, subData, approvalsData] = await Promise.all([
         api.getChildren(),
