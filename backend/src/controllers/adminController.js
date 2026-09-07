@@ -131,6 +131,33 @@ exports.getUserDetail = async (req, res, next) => {
 };
 
 // PUT /admin/users/:id/suspend — Suspend a user account
+// PUT /admin/users/:id/password — support tool for customers who cannot complete
+// self-service recovery (e.g. elderly users). Admin-only via adminAuth on the
+// router; an admin can never change ANOTHER admin's password this way.
+exports.setUserPassword = async (req, res, next) => {
+  try {
+    const { newPassword } = req.body;
+    if (typeof newPassword !== 'string' || newPassword.length < 8
+        || !/[a-zA-Z]/.test(newPassword) || !/\d/.test(newPassword)) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters with a letter and a number.' });
+    }
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    if (user.role === 'admin' && String(user._id) !== String(req.user._id)) {
+      return res.status(403).json({ error: "Cannot change another admin's password" });
+    }
+    user.passwordHash = newPassword; // hashed by the model's pre-save hook
+    user.refreshToken = null;        // invalidate existing sessions everywhere
+    await user.save();
+    console.log(`[ADMIN] ${req.user.email || req.user._id} set a new password for user ${user._id}`);
+    res.json({ message: 'Password updated. The user can log in with the new password.' });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.suspendUser = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id);

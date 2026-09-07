@@ -6,6 +6,10 @@
           class="px-3 py-2 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition">
           Verify Email
         </button>
+        <button @click="openPasswordModal"
+          class="px-3 py-2 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition">
+          Set Password
+        </button>
         <button v-if="user?.refreshToken === null" @click="handleUnsuspend"
           class="px-3 py-2 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition">
           Unsuspend
@@ -160,6 +164,35 @@
       </div>
     </template>
 
+    <!-- Set-password modal: support tool for customers who can't self-recover. -->
+    <div v-if="showPasswordModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-5">
+        <h3 class="text-sm font-semibold text-ink-800 mb-1">Set a new password</h3>
+        <p class="text-xs text-ink-400 mb-4">
+          For customers who cannot use SMS/email recovery. The user is logged out of
+          all devices and must log in with this password. Read it to them carefully.
+        </p>
+        <div class="flex gap-2 mb-2">
+          <input v-model="newPassword" type="text" spellcheck="false" autocomplete="off"
+            placeholder="Min 8 chars, letter + number"
+            class="flex-1 px-3 py-2 text-sm font-mono border border-ink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-nest-300" />
+          <button @click="generatePassword"
+            class="px-3 py-2 text-xs font-medium text-ink-600 bg-ink-50 border border-ink-200 rounded-lg hover:bg-ink-100 transition">
+            Generate
+          </button>
+        </div>
+        <p v-if="passwordError" class="text-xs text-red-600 mb-2">{{ passwordError }}</p>
+        <div class="flex justify-end gap-2 mt-4">
+          <button @click="showPasswordModal = false"
+            class="px-3 py-2 text-xs font-medium text-ink-500 rounded-lg hover:bg-ink-50 transition">Cancel</button>
+          <button @click="handleSetPassword" :disabled="settingPassword"
+            class="px-3 py-2 text-xs font-medium text-white bg-nest-500 rounded-lg hover:bg-nest-600 transition disabled:opacity-50">
+            {{ settingPassword ? 'Saving…' : 'Set password' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <ConfirmModal :show="showSuspendModal" title="Suspend Account" message="This will invalidate the user's session and prevent login. Are you sure?"
       confirm-text="Suspend" variant="danger" @confirm="handleSuspend" @cancel="showSuspendModal = false" />
   </div>
@@ -167,7 +200,7 @@
 
 <script setup lang="ts">
 const route = useRoute();
-const { getUserDetail, getUserRules, getUserActivity, getUserAlerts, suspendUser, unsuspendUser, verifyUserEmail } = useApi();
+const { getUserDetail, getUserRules, getUserActivity, getUserAlerts, suspendUser, unsuspendUser, verifyUserEmail, setUserPassword } = useApi();
 const fmt = useFormatters();
 const toast = useToast();
 
@@ -175,6 +208,44 @@ const user = ref<any>(null);
 const loading = ref(true);
 const activeTab = ref('children');
 const showSuspendModal = ref(false);
+const showPasswordModal = ref(false);
+const newPassword = ref('');
+const passwordError = ref('');
+const settingPassword = ref(false);
+
+function openPasswordModal() {
+  newPassword.value = '';
+  passwordError.value = '';
+  showPasswordModal.value = true;
+}
+
+/** Elderly-friendly: pronounceable-ish, no ambiguous chars (0/O, 1/l/I). */
+function generatePassword() {
+  const letters = 'abcdefghjkmnpqrstuvwxyz';
+  const digits = '23456789';
+  let out = '';
+  for (let i = 0; i < 6; i++) out += letters[Math.floor(Math.random() * letters.length)];
+  for (let i = 0; i < 3; i++) out += digits[Math.floor(Math.random() * digits.length)];
+  newPassword.value = out;
+  passwordError.value = '';
+}
+
+async function handleSetPassword() {
+  const p = newPassword.value.trim();
+  if (p.length < 8 || !/[a-zA-Z]/.test(p) || !/\d/.test(p)) {
+    passwordError.value = 'At least 8 characters, with a letter and a number.';
+    return;
+  }
+  settingPassword.value = true;
+  try {
+    await setUserPassword(route.params.id as string, p);
+    toast.success('Password set. Read it to the customer before closing!');
+  } catch (e: any) {
+    passwordError.value = e.message || 'Failed to set password';
+  } finally {
+    settingPassword.value = false;
+  }
+}
 
 const tabs = [
   { key: 'children', label: 'Children & Rules' },

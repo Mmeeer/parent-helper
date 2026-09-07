@@ -100,6 +100,13 @@ export function useApi() {
       return request(`/admin/users/${userId}/verify-email`, { method: 'PUT' });
     },
 
+    async setUserPassword(userId: string, newPassword: string) {
+      return request<{ message: string }>(`/admin/users/${userId}/password`, {
+        method: 'PUT',
+        body: JSON.stringify({ newPassword }),
+      });
+    },
+
     // Analytics
     async getAnalytics() {
       return request<{
