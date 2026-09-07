@@ -146,7 +146,9 @@ exports.setUserPassword = async (req, res, next) => {
       return res.status(404).json({ error: 'User not found' });
     }
     if (user.role === 'admin' && String(user._id) !== String(req.user._id)) {
-      return res.status(403).json({ error: "Cannot change another admin's password" });
+      // 400, not 403: the admin panel's fetch layer treats 403 as an expired
+      // session and would log the acting admin out over a policy refusal.
+      return res.status(400).json({ error: "Cannot change another admin's password" });
     }
     user.passwordHash = newPassword; // hashed by the model's pre-save hook
     user.refreshToken = null;        // invalidate existing sessions everywhere
