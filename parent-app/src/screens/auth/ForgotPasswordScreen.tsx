@@ -39,11 +39,17 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
   const cooldown = useResendCooldown(120);
 
   const otpEnabled = appConfig?.otpEnabled === true;
+  const userChoseMethod = useRef(false);
 
   // Fetch the public config to learn whether SMS OTP reset is available.
-  // On failure the screen simply stays email-only.
+  // On failure the screen simply stays email-only. Accounts are phone-first
+  // (email optional), so when OTP is available default to the phone tab —
+  // unless the user already tapped a tab before the config arrived.
   useEffect(() => {
-    api.getAppConfig().then(setAppConfig).catch(() => {});
+    api.getAppConfig().then((cfg) => {
+      setAppConfig(cfg);
+      if (cfg?.otpEnabled === true && !userChoseMethod.current) setMethod('phone');
+    }).catch(() => {});
   }, []);
 
   const newPasswordRef = useRef<TextInput>(null);
@@ -51,6 +57,7 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
 
   /** Toggle between email and phone recovery, clearing step-specific state. */
   const switchMethod = (m: Method) => {
+    userChoseMethod.current = true;
     if (m === method) return;
     setMethod(m);
     setStep('email');
