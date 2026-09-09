@@ -34,7 +34,7 @@ val keystoreProps = Properties().apply {
 
 android {
     namespace = "com.parenthelper.child"
-    compileSdk = 35
+    compileSdk = 36
 
     kotlinOptions {
         jvmTarget = "17"
@@ -43,9 +43,9 @@ android {
     defaultConfig {
         applicationId = "com.parenthelper.child"
         minSdk = 26
-        targetSdk = 35
-        versionCode = 9
-        versionName = "1.0.6"
+        targetSdk = 36
+        versionCode = 10
+        versionName = "1.0.7"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
