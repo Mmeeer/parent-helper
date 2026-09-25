@@ -66,6 +66,20 @@ exports.request = async (req, res, next) => {
       throw smsErr;
     }
 
+    // Delivery trail. CallPro accepts a message ("queued") long before the
+    // operator delivers it, and its only lookup is GET /{message_id} — there is
+    // no history endpoint. Without logging the id, a code that was accepted but
+    // never arrived leaves nothing to investigate. Phone masked to last 4.
+    if (result && result.messageId) {
+      const tail = phone.slice(-4);
+      console.log(`[OTP] ${purpose} code handed to CallPro for ***${tail} message_id=${result.messageId} status=${result.status}`);
+      setTimeout(() => {
+        sms.getDeliveryStatus(result.messageId)
+          .then((d) => console.log(`[OTP] delivery ***${tail} message_id=${result.messageId}: ${JSON.stringify(d).slice(0, 600)}`))
+          .catch((e) => console.warn(`[OTP] delivery lookup failed message_id=${result.messageId}: ${e.message}`));
+      }, 30000).unref();
+    }
+
     const payload = { status: 'sent' };
     // Dev convenience, mirrors forgot-password: expose the code only when SMS is
     // not configured AND we're not in production.
